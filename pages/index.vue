@@ -1,5 +1,8 @@
 // Transformar em Componente
 <script setup lang="ts">
+definePageMeta({
+  layout: "login",
+});
 async function handleSubmitForm() {
   await navigateTo("/admin");
 }
