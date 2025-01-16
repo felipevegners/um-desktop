@@ -19,14 +19,14 @@
     </div>
     <div class="flex items-center justify-between">
       <Notification />
-      <Theme />
+      <ThemeSelector />
     </div>
   </header>
 </template>
 
 <script setup lang="ts">
-import Notification from "./notification.vue";
-import Theme from "./theme.vue";
+import Notification from "./Notification.vue";
+import ThemeSelector from "./ThemeSelector.vue";
 </script>
 
 <style scoped></style>

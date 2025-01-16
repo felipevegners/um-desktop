@@ -33,7 +33,7 @@ import {
   UserPen,
 } from "lucide-vue-next";
 import { ref } from "vue";
-import Header from "~/components/shared/header.vue";
+import Header from "~/components/shared/Header.vue";
 
 // This is sample data.
 const data = {
@@ -88,7 +88,7 @@ const data = {
       items: [
         {
           title: "Ativos",
-          url: "#",
+          url: "/admin/drivers/active",
         },
         {
           title: "Pendentes",
@@ -282,9 +282,9 @@ function setActiveTeam(team: (typeof data.teams)[number]) {
                       class="hover:bg-zinc-800"
                     >
                       <SidebarMenuSubButton as-child>
-                        <a :href="subItem.url">
+                        <NuxtLink :href="subItem.url">
                           <span>{{ subItem.title }}</span>
-                        </a>
+                        </NuxtLink>
                       </SidebarMenuSubButton>
                     </SidebarMenuSubItem>
                   </SidebarMenuSub>

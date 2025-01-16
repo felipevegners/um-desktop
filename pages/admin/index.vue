@@ -1,5 +1,7 @@
 <script setup lang="ts">
-import Notification from "~/components/shared/notification.vue";
+definePageMeta({
+  layout: "admin",
+});
 </script>
 
 <template>
