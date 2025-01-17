@@ -26,14 +26,18 @@ model Users {
 }
 
 model Customers {
-  id         String  @id @default(auto()) @map("_id") @db.ObjectId
-  name       String?
-  document   String?
-  phone      String
-  website    String
-  logo       String?
-  adminId    String
-  passengers Json
+  id           String  @id @default(auto()) @map("_id") @db.ObjectId
+  name         String?
+  document     String?
+  address      Json
+  phone        String?
+  website      String
+  logo         String
+  adminId      String
+  managerName  String
+  managerPhone String
+  managerEmail String
+  passengers   Json?
 }
 
 model Passengers {
