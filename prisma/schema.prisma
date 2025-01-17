@@ -10,10 +10,37 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-model Customer {
-  id    String @id @default(auto()) @map("_id") @db.ObjectId
-  name  String?
-  email String?  @unique
-  company String?
-  position String
+model Users {
+  id             String   @id @default(auto()) @map("_id") @db.ObjectId
+  username       String
+  hashedPassword String
+  email          String   @unique
+  name           String
+  companyId      String
+  companyName    String?
+  companyArea    String?
+  position       String?
+  role           String
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @default(now())
+}
+
+model Customers {
+  id         String  @id @default(auto()) @map("_id") @db.ObjectId
+  name       String?
+  document   String?
+  phone      String
+  website    String
+  logo       String?
+  adminId    String
+  passengers Json
+}
+
+model Passengers {
+  id           String @id @default(auto()) @map("_id") @db.ObjectId
+  name         String
+  email        String @unique
+  phone        String
+  position     String
+  restrictions Json
 }

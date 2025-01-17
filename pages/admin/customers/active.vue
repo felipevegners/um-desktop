@@ -1,6 +1,11 @@
 <script setup lang="ts">
+import { onMounted, ref } from "vue";
 definePageMeta({
-  layout: "admin",
+  layout: "admin"
+});
+
+useHead({
+  title: "Clientes ativos"
 });
 
 import { Plus } from "lucide-vue-next";
@@ -12,6 +17,12 @@ import { h } from "vue";
 import DropdownAction from "@/components/shared/DataTableDropDown.vue";
 import DataTable from "~/components/shared/DataTable.vue";
 
+const customers = ref<any>([]);
+onMounted(async () => {
+  const data = await $fetch("/api/admin/customers");
+  customers.value = data;
+});
+
 export interface Payment {
   id: string;
   amount: number;
@@ -19,40 +30,40 @@ export interface Payment {
   email: string;
 }
 
-const data = [
+const tableData = [
   {
     id: "m5gr84i9",
     amount: 316,
     status: "success",
-    email: "felipevegners@gmail.com",
+    email: "felipevegners@gmail.com"
   },
   {
     id: "3u1reuv4",
     amount: 242,
     status: "success",
-    email: "Abe45@gmail.com",
+    email: "Abe45@gmail.com"
   },
   {
     id: "derv1ws0",
     amount: 837,
     status: "processing",
-    email: "Monserrat44@gmail.com",
+    email: "Monserrat44@gmail.com"
   },
   {
     id: "5kma53ae",
     amount: 874,
     status: "success",
-    email: "Silas22@gmail.com",
+    email: "Silas22@gmail.com"
   },
   {
     id: "bhqecj4p",
     amount: 721,
     status: "failed",
-    email: "carmella@hotmail.com",
-  },
+    email: "carmella@hotmail.com"
+  }
 ];
 
-const columnHelper = createColumnHelper<Payment>();
+const columnHelper = createColumnHelper<any>();
 
 const columns = [
   columnHelper.display({
@@ -63,50 +74,50 @@ const columns = [
           table.getIsAllPageRowsSelected() ||
           (table.getIsSomePageRowsSelected() && "indeterminate"),
         "onUpdate:checked": (value) => table.toggleAllPageRowsSelected(!!value),
-        ariaLabel: "Select all",
+        ariaLabel: "Select all"
       }),
     cell: ({ row }) => {
       return h(Checkbox, {
         checked: row.getIsSelected(),
         "onUpdate:checked": (value) => row.toggleSelected(!!value),
-        ariaLabel: "Select row",
+        ariaLabel: "Select row"
       });
     },
     enableSorting: false,
-    enableHiding: false,
+    enableHiding: false
   }),
-  columnHelper.accessor("status", {
+  columnHelper.accessor("name", {
     enablePinning: true,
-    header: "Status",
-    cell: ({ row }) =>
-      h("div", { class: "capitalize" }, row.getValue("status")),
+    header: "Nome",
+    cell: ({ row }) => h("div", { class: "capitalize" }, row.getValue("name"))
   }),
-  columnHelper.accessor("email", {
+  columnHelper.accessor("document", {
     header: ({ column }) => {
       return h(
         Button,
         {
           variant: "ghost",
-          onClick: () => column.toggleSorting(column.getIsSorted() === "asc"),
+          onClick: () => column.toggleSorting(column.getIsSorted() === "asc")
         },
-        () => ["Email", h(ArrowUpDown, { class: "ml-2 h-4 w-4" })]
+        () => ["CNPJ", h(ArrowUpDown, { class: "ml-2 h-4 w-4" })]
       );
     },
-    cell: ({ row }) => h("div", { class: "lowercase" }, row.getValue("email")),
+    cell: ({ row }) =>
+      h("div", { class: "lowercase" }, row.getValue("document"))
   }),
-  columnHelper.accessor("amount", {
-    header: () => h("div", { class: "text-right" }, "Amount"),
+  columnHelper.accessor("phone", {
+    header: () => h("div", { class: "text-right" }, "Contato"),
+    cell: ({ row }) => h("div", { class: "capitalize" }, row.getValue("phone"))
+  }),
+  columnHelper.accessor("website", {
+    header: () => h("div", { class: "text-right" }, "Site"),
     cell: ({ row }) => {
-      const amount = Number.parseFloat(row.getValue("amount"));
-
-      // Format the amount as a dollar amount
-      const formatted = new Intl.NumberFormat("en-US", {
-        style: "currency",
-        currency: "USD",
-      }).format(amount);
-
-      return h("div", { class: "text-right font-medium" }, formatted);
-    },
+      return h(
+        "div",
+        { class: "text-right font-medium" },
+        row.getValue("website")
+      );
+    }
   }),
   columnHelper.display({
     id: "actions",
@@ -120,11 +131,11 @@ const columns = [
         { class: "relative text-right" },
         h(DropdownAction, {
           payment,
-          onExpand: row.toggleExpanded,
+          onExpand: row.toggleExpanded
         })
       );
-    },
-  }),
+    }
+  })
 ];
 
 const showAddForm = ref(true);
@@ -158,7 +169,7 @@ const toggleShowAddForm = () => {
       </Card>
     </section>
     <section>
-      <DataTable :columns="columns" :data="data" />
+      <DataTable :columns="columns" :data="customers" sortby="name" />
     </section>
   </main>
 </template>
