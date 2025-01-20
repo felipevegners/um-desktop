@@ -1,6 +1,6 @@
 <script setup lang="ts" generic="TData, TValue">
 definePageMeta({
-  layout: "admin"
+  layout: "admin",
 });
 
 import type {
@@ -8,7 +8,7 @@ import type {
   ColumnFiltersState,
   ExpandedState,
   SortingState,
-  VisibilityState
+  VisibilityState,
 } from "@tanstack/vue-table";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -17,7 +17,7 @@ import {
   DropdownMenu,
   DropdownMenuCheckboxItem,
   DropdownMenuContent,
-  DropdownMenuTrigger
+  DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
 import {
@@ -26,7 +26,7 @@ import {
   TableCell,
   TableHead,
   TableHeader,
-  TableRow
+  TableRow,
 } from "@/components/ui/table";
 import { cn, valueUpdater } from "~/lib/utils";
 import {
@@ -37,7 +37,7 @@ import {
   getFilteredRowModel,
   getPaginationRowModel,
   getSortedRowModel,
-  useVueTable
+  useVueTable,
 } from "@tanstack/vue-table";
 import { ArrowUpDown, ChevronDown, Settings2 } from "lucide-vue-next";
 import { h, ref } from "vue";
@@ -91,9 +91,9 @@ const table = useVueTable({
       return expanded.value;
     },
     columnPinning: {
-      left: ["status"]
-    }
-  }
+      left: ["status"],
+    },
+  },
 });
 </script>
 
@@ -146,7 +146,7 @@ const table = useVueTable({
               :class="
                 cn(
                   {
-                    'sticky bg-background/95': header.column.getIsPinned()
+                    'sticky bg-background/95': header.column.getIsPinned(),
                   },
                   header.column.getIsPinned() === 'left' ? 'left-0' : 'right-0'
                 )
@@ -171,7 +171,7 @@ const table = useVueTable({
                   :class="
                     cn(
                       {
-                        'sticky bg-background/95': cell.column.getIsPinned()
+                        'sticky bg-background/95': cell.column.getIsPinned(),
                       },
                       cell.column.getIsPinned() === 'left'
                         ? 'left-0'
@@ -195,7 +195,7 @@ const table = useVueTable({
 
           <TableRow v-else>
             <TableCell :colspan="columns.length" class="h-24 text-center">
-              No results.
+              Nenhum resultado encontrado.
             </TableCell>
           </TableRow>
         </TableBody>
@@ -205,7 +205,7 @@ const table = useVueTable({
     <div class="flex items-center justify-end space-x-2 py-4">
       <div class="flex-1 text-sm text-muted-foreground">
         {{ table.getFilteredSelectedRowModel().rows.length }} of
-        {{ table.getFilteredRowModel().rows.length }} row(s) selected.
+        {{ table.getFilteredRowModel().rows.length }} linha(s) selecionadas
       </div>
       <div class="space-x-2">
         <Button
@@ -214,7 +214,7 @@ const table = useVueTable({
           :disabled="!table.getCanPreviousPage()"
           @click="table.previousPage()"
         >
-          Previous
+          Anterior
         </Button>
         <Button
           variant="outline"
@@ -222,7 +222,7 @@ const table = useVueTable({
           :disabled="!table.getCanNextPage()"
           @click="table.nextPage()"
         >
-          Next
+          Próxima
         </Button>
       </div>
     </div>

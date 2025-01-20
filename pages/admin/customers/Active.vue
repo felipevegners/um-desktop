@@ -8,7 +8,7 @@ useHead({
   title: "Clientes ativos",
 });
 
-import { Plus, LoaderCircle, Phone } from "lucide-vue-next";
+import { Plus, LoaderCircle, Phone, CircleCheck } from "lucide-vue-next";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { createColumnHelper } from "@tanstack/vue-table";
@@ -21,6 +21,12 @@ import { useForm } from "vee-validate";
 import { toTypedSchema } from "@vee-validate/zod";
 import * as z from "zod";
 
+const customers = ref<any>([]);
+const isLoading = ref<boolean>(false);
+const isLoadingSend = ref<boolean>(false);
+const alertSuccess = ref<boolean>(false);
+const showAddForm = ref(false);
+
 const formSchema = toTypedSchema(
   z.object({
     name: z.string().min(2).max(50),
@@ -32,7 +38,8 @@ const formSchema = toTypedSchema(
     website: z.string().min(2).max(50),
     managerName: z.string().min(2).max(20),
     managerPhone: z.string().min(2).max(12),
-    logo: z.string().min(2).max(200),
+    managerEmail: z.string().min(2),
+    // logo: z.string().min(2).max(200),
   })
 );
 
@@ -40,13 +47,37 @@ const form = useForm({
   validationSchema: formSchema,
 });
 
-const onSubmit = form.handleSubmit((values) => {
-  console.log("Form submitted!", values);
+const onSubmit = form.handleSubmit(async (values) => {
+  const {
+    name,
+    document,
+    street,
+    streetNumber,
+    zipcode,
+    phone,
+    website,
+    managerName,
+    managerPhone,
+    managerEmail,
+  } = values;
+  const newCustomerData = {
+    name,
+    document,
+    address: {
+      street,
+      streetNumber,
+      zipcode,
+    },
+    phone,
+    website,
+    logo: "/",
+    adminId: "",
+    managerName,
+    managerPhone,
+    managerEmail,
+  };
+  await createCustomer(newCustomerData);
 });
-
-const customers = ref<any>([]);
-const isLoading = ref<boolean>(false);
-const showAddForm = ref(false);
 
 async function getCustomers() {
   try {
@@ -56,6 +87,27 @@ async function getCustomers() {
     console.log("Error -> ", error);
   } finally {
     isLoading.value = false;
+  }
+}
+
+async function createCustomer(customerData) {
+  try {
+    isLoadingSend.value = true;
+    return await $fetch("/api/admin/customers", {
+      method: "POST",
+      body: customerData,
+    });
+  } catch (error) {
+    console.log("Error during POST -> ", error);
+  } finally {
+    isLoadingSend.value = false;
+    alertSuccess.value = true;
+
+    setTimeout(async () => {
+      alertSuccess.value = false;
+      showAddForm.value = false;
+      customers.value = await getCustomers();
+    }, 2000);
   }
 }
 
@@ -112,17 +164,18 @@ const columns = [
     cell: ({ row }) =>
       h("div", { class: "lowercase" }, row.getValue("document")),
   }),
-  columnHelper.accessor("phone", {
-    header: () => h("div", { class: "text-left" }, "Contato"),
-    cell: ({ row }) => h("div", { class: "capitalize" }, row.getValue("phone")),
+  columnHelper.accessor("managerName", {
+    header: () => h("div", { class: "text-left" }, "Gerente"),
+    cell: ({ row }) =>
+      h("div", { class: "capitalize" }, row.getValue("managerName")),
   }),
-  columnHelper.accessor("website", {
-    header: () => h("div", { class: "text-left" }, "Site"),
+  columnHelper.accessor("managerEmail", {
+    header: () => h("div", { class: "text-left" }, "E-mail Gerente"),
     cell: ({ row }) => {
       return h(
         "div",
         { class: "text-left font-medium" },
-        row.getValue("website")
+        row.getValue("managerEmail")
       );
     },
   }),
@@ -160,7 +213,13 @@ const toggleShowAddForm = () => {
         </Button>
       </div>
     </section>
-    <section v-if="showAddForm" class="mb-4 py-4 transition-all">
+    <section v-if="showAddForm" class="mb-4 py-4transition-all">
+      <Alert v-if="alertSuccess" class="my-4 flex items-center bg-green-500">
+        <CircleCheck class="mr-4 w-4 h-4" />
+        <AlertTitle class="mb-0 font-bold">
+          Cliente cadastrado com sucesso!</AlertTitle
+        >
+      </Alert>
       <Card class="bg-zinc-200">
         <CardHeader>
           <CardTitle>Cadastrar novo cliente</CardTitle>
@@ -312,7 +371,13 @@ const toggleShowAddForm = () => {
               </div>
             </div>
 
-            <Button type="submit"> Cadastrar </Button>
+            <Button type="submit">
+              <LoaderCircle
+                v-if="isLoadingSend"
+                class="w-10 h-10 animate-spin"
+              />
+              Cadastrar
+            </Button>
             <Button
               variant="ghost"
               class="ml-4"
