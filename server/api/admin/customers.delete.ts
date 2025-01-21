@@ -2,7 +2,6 @@ import { prisma } from "~/utils/prisma";
 
 export default defineEventHandler(async (event) => {
   const payload = await readBody(event);
-  const newCustomer = await prisma.customers.create({ data: payload });
-
-  return newCustomer;
+  const { id } = payload;
+  await prisma.customers.delete({ where: { id } });
 });

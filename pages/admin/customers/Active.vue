@@ -14,7 +14,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { createColumnHelper } from "@tanstack/vue-table";
 import { ArrowUpDown } from "lucide-vue-next";
 import { h } from "vue";
-import DropdownAction from "@/components/shared/DataTableDropDown.vue";
+import DataTableActions from "@/components/admin/customers/DataTableActions.vue";
 import DataTable from "~/components/shared/DataTable.vue";
 import FormSelect from "~/components/shared/FormSelect.vue";
 import { useForm } from "vee-validate";
@@ -184,13 +184,13 @@ const columns = [
     enableHiding: false,
     header: () => h("div", { class: "text-left" }, "Ações"),
     cell: ({ row }) => {
-      const payment = row.original;
+      const customerData = row.original;
 
       return h(
         "div",
         { class: "relative text-left" },
-        h(DropdownAction, {
-          payment,
+        h(DataTableActions, {
+          customerData,
           onExpand: row.toggleExpanded,
         })
       );
