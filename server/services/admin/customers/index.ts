@@ -1,0 +1,24 @@
+import { Customer } from "~/types/customer/customer-types";
+
+export const createCustomer = async (customerData: Customer) => {
+  try {
+    return await $fetch("/api/admin/customers", {
+      method: "POST",
+      body: customerData,
+    });
+  } catch (error) {
+    console.log("Error during POST -> ", error);
+  }
+};
+
+export const getCustomers = async (userId: string) => {
+  try {
+    if (userId) {
+      return await $fetch(`/api/admin/customers?id=${userId}`);
+    }
+
+    return await $fetch("/api/admin/customers");
+  } catch (error) {
+    console.log("Error -> ", error);
+  }
+};

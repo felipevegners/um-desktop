@@ -1,6 +1,21 @@
 import { prisma } from "~/utils/prisma";
 
-export default defineEventHandler(async () => {
+type UserId = {
+  id: string;
+};
+
+export default defineEventHandler(async (event) => {
+  const query = getQuery<UserId>(event);
+  const userId = query.id;
+  if (userId) {
+    const customer = await prisma.customers.findUnique({
+      where: {
+        id: userId,
+      },
+    });
+
+    return customer;
+  }
   const customers = await prisma.customers.findMany();
 
   return customers;

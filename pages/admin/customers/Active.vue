@@ -20,6 +20,11 @@ import FormSelect from "~/components/shared/FormSelect.vue";
 import { useForm } from "vee-validate";
 import { toTypedSchema } from "@vee-validate/zod";
 import * as z from "zod";
+import {
+  createCustomer,
+  getCustomers,
+} from "~/server/services/admin/customers";
+import EditCustomerForm from "~/components/admin/customers/EditCustomerForm.vue";
 
 const customers = ref<any>([]);
 const isLoading = ref<boolean>(false);
@@ -39,7 +44,6 @@ const formSchema = toTypedSchema(
     managerName: z.string().min(2).max(20),
     managerPhone: z.string().min(2).max(12),
     managerEmail: z.string().min(2),
-    // logo: z.string().min(2).max(200),
   })
 );
 
@@ -48,6 +52,8 @@ const form = useForm({
 });
 
 const onSubmit = form.handleSubmit(async (values) => {
+  isLoadingSend.value = true;
+
   const {
     name,
     document,
@@ -76,43 +82,22 @@ const onSubmit = form.handleSubmit(async (values) => {
     managerPhone,
     managerEmail,
   };
-  await createCustomer(newCustomerData);
+  await createCustomer(newCustomerData)
+    .then((res) => {
+      isLoadingSend.value = false;
+      alertSuccess.value = true;
+      setTimeout(() => {
+        alertSuccess.value = false;
+      }, 2000);
+    })
+    .catch((err) => {
+      console.log("Error -> ", err);
+      alert("Erro ao cadastrar cliente");
+    });
 });
 
-async function getCustomers() {
-  try {
-    isLoading.value = true;
-    return await $fetch("/api/admin/customers");
-  } catch (error) {
-    console.log("Error -> ", error);
-  } finally {
-    isLoading.value = false;
-  }
-}
-
-async function createCustomer(customerData) {
-  try {
-    isLoadingSend.value = true;
-    return await $fetch("/api/admin/customers", {
-      method: "POST",
-      body: customerData,
-    });
-  } catch (error) {
-    console.log("Error during POST -> ", error);
-  } finally {
-    isLoadingSend.value = false;
-    alertSuccess.value = true;
-
-    setTimeout(async () => {
-      alertSuccess.value = false;
-      showAddForm.value = false;
-      customers.value = await getCustomers();
-    }, 2000);
-  }
-}
-
 onMounted(async () => {
-  customers.value = await getCustomers();
+  customers.value = await getCustomers("");
 });
 
 export interface Payment {
