@@ -97,7 +97,14 @@ const onSubmit = form.handleSubmit(async (values) => {
 });
 
 onMounted(async () => {
-  customers.value = await getCustomers("");
+  isLoading.value = true;
+  try {
+    customers.value = await getCustomers("");
+  } catch (error) {
+    console.log("Error -> ", error);
+  } finally {
+    isLoading.value = false;
+  }
 });
 
 export interface Payment {
