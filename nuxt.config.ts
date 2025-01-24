@@ -6,7 +6,7 @@ export default defineNuxtConfig({
     "@nuxtjs/tailwindcss",
     "shadcn-nuxt",
     "@nuxtjs/color-mode",
-    "@prisma/nuxt"
+    "@prisma/nuxt",
   ],
   shadcn: {
     /**
@@ -17,6 +17,9 @@ export default defineNuxtConfig({
      * Directory that the component lives in.
      * @default "./components/ui"
      */
-    componentDir: "./components/ui"
-  }
+    componentDir: "./components/ui",
+  },
+  prisma: {
+    skipPrompts: true,
+  },
 });
