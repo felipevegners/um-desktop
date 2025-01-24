@@ -6,6 +6,7 @@ module.exports = {
   darkMode: ["class"],
   safelist: ["dark"],
   prefix: "",
+  modules: ["radix-vue/nuxt"],
   content: ["./src/**/*.{html,js, vue, ts}"],
   theme: {
     container: {
