@@ -18,8 +18,15 @@ export default defineNuxtConfig({
      * @default "./components/ui"
      */
     componentDir: "./components/ui"
-  }
+  },
   // prisma: {
   //   skipPrompts: true
   // },
+  runtimeConfig: {
+    // Make environment variables accessible here
+    public: {
+      DATABASE_URL: process.env.DATABASE_URL
+      // Add more environment variables as needed
+    }
+  }
 });
