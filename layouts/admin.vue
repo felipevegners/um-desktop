@@ -30,7 +30,7 @@ import {
   SquareTerminal,
   SquareUserRound,
   Trash2,
-  UserPen,
+  UserPen
 } from "lucide-vue-next";
 import { ref } from "vue";
 import Header from "~/components/shared/Header.vue";
@@ -41,25 +41,8 @@ const data = {
     name: "Felipe Vegners",
     company: "Urban Mobi",
     email: "m@example.com",
-    avatar: "/avatars/shadcn.jpg",
+    avatar: ""
   },
-  teams: [
-    {
-      name: "Urban Mobi",
-      logo: GalleryVerticalEnd,
-      plan: "Enterprise",
-    },
-    {
-      name: "Acme Corp.",
-      logo: AudioWaveform,
-      plan: "Startup",
-    },
-    {
-      name: "Evil Corp.",
-      logo: Command,
-      plan: "Free",
-    },
-  ],
   navMain: [
     {
       title: "Clientes",
@@ -69,17 +52,17 @@ const data = {
       items: [
         {
           title: "Ativos",
-          url: "/admin/customers/active",
+          url: "/admin/customers/active"
         },
         {
           title: "Pendentes",
-          url: "#",
+          url: "#"
         },
         {
           title: "Inativos",
-          url: "#",
-        },
-      ],
+          url: "#"
+        }
+      ]
     },
     {
       title: "Motoristas",
@@ -88,21 +71,21 @@ const data = {
       items: [
         {
           title: "Ativos",
-          url: "/admin/drivers/active",
+          url: "/admin/drivers/active"
         },
         {
           title: "Pendentes",
-          url: "#",
+          url: "#"
         },
         {
           title: "Inativos",
-          url: "#",
+          url: "#"
         },
         {
           title: "Parceiros",
-          url: "#",
-        },
-      ],
+          url: "#"
+        }
+      ]
     },
     {
       title: "Agendamentos",
@@ -111,21 +94,21 @@ const data = {
       items: [
         {
           title: "Abertos",
-          url: "#",
+          url: "#"
         },
         {
           title: "Realizados",
-          url: "#",
+          url: "#"
         },
         {
           title: "Cancelados",
-          url: "#",
+          url: "#"
         },
         {
           title: "+ Novo agendamento",
-          url: "#",
-        },
-      ],
+          url: "#"
+        }
+      ]
     },
     {
       title: "Financeiro",
@@ -134,47 +117,41 @@ const data = {
       items: [
         {
           title: "Faturas em aberto",
-          url: "#",
+          url: "#"
         },
         {
           title: "Balanço",
-          url: "#",
+          url: "#"
         },
         {
           title: "Canceladas",
-          url: "#",
+          url: "#"
         },
         {
           title: "Pagamento Motoristas",
-          url: "#",
-        },
-      ],
-    },
+          url: "#"
+        }
+      ]
+    }
   ],
   settings: [
     {
       name: "Tarifas",
       url: "#",
-      icon: Coins,
+      icon: Coins
     },
     {
       name: "Repasse Motorista",
       url: "#",
-      icon: SquarePercent,
+      icon: SquarePercent
     },
     {
       name: "Usuários",
       url: "#",
-      icon: UserPen,
-    },
-  ],
+      icon: UserPen
+    }
+  ]
 };
-
-const activeTeam = ref(data.teams[0]);
-
-function setActiveTeam(team: (typeof data.teams)[number]) {
-  activeTeam.value = team;
-}
 </script>
 
 <template>
@@ -187,60 +164,6 @@ function setActiveTeam(team: (typeof data.teams)[number]) {
               <img class="mr-2 w-10 h-10" src="/images/um_symbol.svg" alt="" />
               <h3 class="font-bold text-xl">urbanmobi</h3>
             </div>
-            <!-- <DropdownMenu>
-              <DropdownMenuTrigger as-child>
-                <SidebarMenuButton
-                  size="lg"
-                  class="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
-                >
-                  <div
-                    class="flex aspect-square size-8 items-center justify-center rounded-lg bg-sidebar-primary text-sidebar-primary-foreground"
-                  >
-                    <component :is="activeTeam.logo" class="size-4" />
-                  </div>
-                  <div class="grid flex-1 text-left text-sm leading-tight">
-                    <span class="truncate font-semibold">{{
-                      activeTeam.name
-                    }}</span>
-                    <span class="truncate text-xs">{{ activeTeam.plan }}</span>
-                  </div>
-                  <ChevronsUpDown class="ml-auto" />
-                </SidebarMenuButton>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent
-                class="w-[--radix-dropdown-menu-trigger-width] min-w-56 rounded-lg"
-                align="start"
-                side="bottom"
-                :side-offset="4"
-              >
-                <DropdownMenuLabel class="text-xs text-muted-foreground">
-                  Teams
-                </DropdownMenuLabel>
-                <DropdownMenuItem
-                  v-for="(team, index) in data.teams"
-                  :key="team.name"
-                  class="gap-2 p-2"
-                  @click="setActiveTeam(team)"
-                >
-                  <div
-                    class="flex size-6 items-center justify-center rounded-sm border"
-                  >
-                    <component :is="team.logo" class="size-4 shrink-0" />
-                  </div>
-                  {{ team.name }}
-                  <DropdownMenuShortcut>⌘{{ index + 1 }}</DropdownMenuShortcut>
-                </DropdownMenuItem>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem class="gap-2 p-2">
-                  <div
-                    class="flex size-6 items-center justify-center rounded-md border bg-background"
-                  >
-                    <Plus class="size-4" />
-                  </div>
-                  <div class="font-medium text-muted-foreground">Add team</div>
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu> -->
           </SidebarMenuItem>
         </SidebarMenu>
       </SidebarHeader>

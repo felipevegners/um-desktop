@@ -1,4 +1,5 @@
 export interface Customer {
+  id?: string;
   name: string;
   document: string;
   address: {
@@ -13,4 +14,5 @@ export interface Customer {
   managerName: string;
   managerPhone: string;
   managerEmail: string;
+  passengers?: Record<string, string>;
 }

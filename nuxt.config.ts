@@ -5,8 +5,8 @@ export default defineNuxtConfig({
   modules: [
     "@nuxtjs/tailwindcss",
     "shadcn-nuxt",
-    "@nuxtjs/color-mode"
-    // "@prisma/nuxt"
+    "@nuxtjs/color-mode",
+    "@pinia/nuxt"
   ],
   shadcn: {
     /**
@@ -24,9 +24,14 @@ export default defineNuxtConfig({
   // },
   runtimeConfig: {
     // Make environment variables accessible here
+    DATABASE_URL: process.env.DATABASE_URL,
     public: {
       DATABASE_URL: process.env.DATABASE_URL
       // Add more environment variables as needed
     }
-  }
+  },
+  imports: {
+    dirs: ["stores"]
+  },
+  ssr: false
 });

@@ -34,7 +34,7 @@ const notificationCount = 10;
     font-weight: bold;
     text-align: center;
     color: #ffffff;
-    z-index: 9999;
+    z-index: 49;
   }
 }
 </style>

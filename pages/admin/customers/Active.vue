@@ -1,13 +1,23 @@
 <script setup lang="ts">
-import { onMounted, ref } from "vue";
 definePageMeta({
-  layout: "admin",
+  layout: "admin"
 });
 
 useHead({
-  title: "Clientes ativos",
+  title: "Clientes ativos"
 });
-
+import { onMounted, ref, watch } from "vue";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger
+} from "@/components/ui/alert-dialog";
 import { Plus, LoaderCircle, Phone, CircleCheck } from "lucide-vue-next";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -15,22 +25,31 @@ import { createColumnHelper } from "@tanstack/vue-table";
 import { ArrowUpDown } from "lucide-vue-next";
 import { h } from "vue";
 import DataTableActions from "@/components/admin/customers/DataTableActions.vue";
-import DataTable from "~/components/shared/DataTable.vue";
-import FormSelect from "~/components/shared/FormSelect.vue";
+import DataTable from "@/components/shared/DataTable.vue";
+import FormSelect from "@/components/shared/FormSelect.vue";
 import { useForm } from "vee-validate";
 import { toTypedSchema } from "@vee-validate/zod";
 import * as z from "zod";
-import {
-  createCustomer,
-  getCustomers,
-} from "~/server/services/admin/customers";
-import EditCustomerForm from "~/components/admin/customers/EditCustomerForm.vue";
 
-const customers = ref<any>([]);
+import { useCustomerStore } from "@/stores/admin/customers.store";
+import { storeToRefs } from "pinia";
+
+const customerStore = useCustomerStore();
+const {
+  getCustomersAction,
+  getCustomerByIdAction,
+  createNewCustomerAction,
+  deleteCustomerAction,
+  toggleDeleteModal
+} = customerStore;
+const { customers, viewDeleteModal, customerToDelete, loading } =
+  storeToRefs(customerStore);
+
 const isLoading = ref<boolean>(false);
 const isLoadingSend = ref<boolean>(false);
 const alertSuccess = ref<boolean>(false);
-const showAddForm = ref(false);
+const showAddForm = ref<boolean>(false);
+const deleteModalOpen = ref<boolean>(false);
 
 const formSchema = toTypedSchema(
   z.object({
@@ -43,12 +62,12 @@ const formSchema = toTypedSchema(
     website: z.string().min(2).max(50),
     managerName: z.string().min(2).max(20),
     managerPhone: z.string().min(2).max(12),
-    managerEmail: z.string().min(2),
+    managerEmail: z.string().min(2)
   })
 );
 
 const form = useForm({
-  validationSchema: formSchema,
+  validationSchema: formSchema
 });
 
 const onSubmit = form.handleSubmit(async (values) => {
@@ -64,7 +83,7 @@ const onSubmit = form.handleSubmit(async (values) => {
     website,
     managerName,
     managerPhone,
-    managerEmail,
+    managerEmail
   } = values;
   const newCustomerData = {
     name,
@@ -72,7 +91,7 @@ const onSubmit = form.handleSubmit(async (values) => {
     address: {
       street,
       streetNumber,
-      zipcode,
+      zipcode
     },
     phone,
     website,
@@ -81,40 +100,40 @@ const onSubmit = form.handleSubmit(async (values) => {
     managerName,
     managerPhone,
     managerEmail,
+    passengers: {}
   };
-  await createCustomer(newCustomerData)
+  await createNewCustomerAction(newCustomerData)
     .then((res) => {
-      isLoadingSend.value = false;
-      alertSuccess.value = true;
       setTimeout(() => {
+        isLoadingSend.value = false;
+        alertSuccess.value = true;
+        showAddForm.value = !showAddForm.value;
         alertSuccess.value = false;
-      }, 2000);
+      }, 3000);
     })
     .catch((err) => {
       console.log("Error -> ", err);
       alert("Erro ao cadastrar cliente");
     });
+  await getCustomersAction();
 });
 
 onMounted(async () => {
   isLoading.value = true;
-  try {
-    customers.value = await getCustomers("");
-  } catch (error) {
-    console.log("Error -> ", error);
-  } finally {
+  await getCustomersAction().then(() => {
     isLoading.value = false;
-  }
+  });
 });
 
-export interface Payment {
-  id: string;
-  amount: number;
-  status: "pending" | "processing" | "success" | "failed";
-  email: string;
-}
-
 const columnHelper = createColumnHelper<any>();
+
+const handleDeleteModal = () => {
+  deleteModalOpen.value = !deleteModalOpen.value;
+};
+
+const handleDeleteCustomer = async (id: string) => {
+  await deleteCustomerAction(id);
+};
 
 const columns = [
   columnHelper.display({
@@ -125,17 +144,17 @@ const columns = [
           table.getIsAllPageRowsSelected() ||
           (table.getIsSomePageRowsSelected() && "indeterminate"),
         "onUpdate:checked": (value) => table.toggleAllPageRowsSelected(!!value),
-        ariaLabel: "Select all",
+        ariaLabel: "Select all"
       }),
     cell: ({ row }) => {
       return h(Checkbox, {
         checked: row.getIsSelected(),
         "onUpdate:checked": (value) => row.toggleSelected(!!value),
-        ariaLabel: "Select row",
+        ariaLabel: "Select row"
       });
     },
     enableSorting: false,
-    enableHiding: false,
+    enableHiding: false
   }),
   columnHelper.accessor("name", {
     enablePinning: true,
@@ -144,22 +163,22 @@ const columns = [
         Button,
         {
           variant: "ghost",
-          onClick: () => column.toggleSorting(column.getIsSorted() === "asc"),
+          onClick: () => column.toggleSorting(column.getIsSorted() === "asc")
         },
         () => ["Nome", h(ArrowUpDown, { class: "ml-2 h-4 w-4" })]
       );
     },
-    cell: ({ row }) => h("div", { class: "capitalize" }, row.getValue("name")),
+    cell: ({ row }) => h("div", { class: "capitalize" }, row.getValue("name"))
   }),
   columnHelper.accessor("document", {
     header: () => h("div", { class: "text-left" }, "CNPJ"),
     cell: ({ row }) =>
-      h("div", { class: "lowercase" }, row.getValue("document")),
+      h("div", { class: "lowercase" }, row.getValue("document"))
   }),
   columnHelper.accessor("managerName", {
     header: () => h("div", { class: "text-left" }, "Gerente"),
     cell: ({ row }) =>
-      h("div", { class: "capitalize" }, row.getValue("managerName")),
+      h("div", { class: "capitalize" }, row.getValue("managerName"))
   }),
   columnHelper.accessor("managerEmail", {
     header: () => h("div", { class: "text-left" }, "E-mail Gerente"),
@@ -169,7 +188,7 @@ const columns = [
         { class: "text-left font-medium" },
         row.getValue("managerEmail")
       );
-    },
+    }
   }),
   columnHelper.display({
     id: "actions",
@@ -177,17 +196,20 @@ const columns = [
     header: () => h("div", { class: "text-left" }, "Ações"),
     cell: ({ row }) => {
       const customerData = row.original;
-
       return h(
         "div",
         { class: "relative text-left" },
         h(DataTableActions, {
           customerData,
-          onExpand: row.toggleExpanded,
+          isLoadingSend,
+          deleteModalOpen,
+          handleModal: handleDeleteModal,
+          delete: handleDeleteCustomer,
+          onExpand: row.toggleExpanded
         })
       );
-    },
-  }),
+    }
+  })
 ];
 
 const toggleShowAddForm = () => {
@@ -205,7 +227,7 @@ const toggleShowAddForm = () => {
         </Button>
       </div>
     </section>
-    <section v-if="showAddForm" class="mb-4 py-4transition-all">
+    <section v-if="showAddForm" class="mb-4 py-4">
       <Alert v-if="alertSuccess" class="my-4 flex items-center bg-green-500">
         <CircleCheck class="mr-4 w-4 h-4" />
         <AlertTitle class="mb-0 font-bold">
@@ -387,5 +409,33 @@ const toggleShowAddForm = () => {
     <section v-else>
       <DataTable :columns="columns" :data="customers" sortby="name" />
     </section>
+
+    <AlertDialog :open="viewDeleteModal">
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle
+            >Deseja realmente excluir:
+            {{ customerToDelete.name }}?</AlertDialogTitle
+          >
+          {{ customerToDelete.id }}
+          <AlertDialogDescription>
+            Essa ação é irreversível e excluirá permanentemente da base de
+            dados.
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel @click="toggleDeleteModal('')"
+            >Cancelar</AlertDialogCancel
+          >
+          <AlertDialogAction
+            class="bg-red-500 hover:bg-red-600"
+            @click="handleDeleteCustomer(customerToDelete.id)"
+          >
+            <LoaderCircle v-if="loading" class="w-10 h-10 animate-spin" />
+            Excluir
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
   </main>
 </template>
