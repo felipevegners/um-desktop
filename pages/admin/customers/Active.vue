@@ -86,6 +86,7 @@ const onSubmit = form.handleSubmit(async (values) => {
     managerEmail
   } = values;
   const newCustomerData = {
+    status: "pendente",
     name,
     document,
     address: {

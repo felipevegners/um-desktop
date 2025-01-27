@@ -39,7 +39,7 @@ export const useCustomerStore = defineStore("customer", {
     async getCustomerByIdAction(customerId: string) {
       try {
         const data = await getCustomers(customerId);
-        this.customers = data as any;
+        return data;
       } catch (error) {
         console.log("Store Error -> ", error);
       }

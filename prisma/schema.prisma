@@ -27,8 +27,9 @@ model Users {
 
 model Customers {
   id           String    @id @default(auto()) @map("_id") @db.ObjectId
+  status       String?
   name         String?
-  document     String?
+  document     String?   @unique
   address      Json
   phone        String?
   website      String
