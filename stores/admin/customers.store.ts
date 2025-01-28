@@ -2,7 +2,8 @@ import { defineStore } from "pinia";
 import {
   getCustomers,
   createCustomer,
-  deleteCustomer
+  deleteCustomer,
+  updateCustomer,
 } from "~/server/services/admin/customers";
 import type { Customer } from "~/types/customer/customer-types";
 
@@ -24,7 +25,7 @@ export const useCustomerStore = defineStore("customer", {
       editCustomer: {},
       loading: false,
       viewDeleteModal: false,
-      customerToDelete: { id: "", name: "" }
+      customerToDelete: { id: "", name: "" },
     };
   },
   actions: {
@@ -51,6 +52,13 @@ export const useCustomerStore = defineStore("customer", {
         console.log("Store Error Create -> ", error);
       }
     },
+    async editCustomer(customerData: any) {
+      try {
+        await updateCustomer(customerData);
+      } catch (error) {
+        console.log("Store Error Create -> ", error);
+      }
+    },
     async deleteCustomerAction(customerId: string) {
       try {
         this.loading = true;
@@ -71,8 +79,8 @@ export const useCustomerStore = defineStore("customer", {
       this.viewDeleteModal = !this.viewDeleteModal;
       this.customerToDelete = {
         id: id,
-        name: name
+        name: name,
       };
-    }
-  }
+    },
+  },
 });

@@ -1,6 +1,6 @@
 <script setup lang="ts">
 definePageMeta({
-  layout: "admin"
+  layout: "admin",
 });
 
 import { ref } from "vue";
@@ -10,17 +10,17 @@ import { useForm } from "vee-validate";
 import { toTypedSchema } from "@vee-validate/zod";
 import * as z from "zod";
 
-import { Plus, LoaderCircle, Phone, CircleCheck } from "lucide-vue-next";
+import { LoaderCircle, ArrowLeft } from "lucide-vue-next";
 import { Button } from "@/components/ui/button";
 
 const isLoading = ref<boolean>(false);
-const editCustomerData = ref("");
+const editCustomerData = ref<any>();
 
 const store = useCustomerStore();
-const { getCustomerByIdAction } = store;
+const { getCustomerByIdAction, editCustomer } = store;
 
 const route = useRoute();
-const data = await getCustomerByIdAction(route.params.id);
+const data = await getCustomerByIdAction(route?.params?.id as string);
 editCustomerData.value = data;
 
 const formSchema = toTypedSchema(
@@ -34,37 +34,53 @@ const formSchema = toTypedSchema(
     website: z.string().min(2).max(50),
     managerName: z.string().min(2).max(20),
     managerPhone: z.string().min(2).max(12),
-    managerEmail: z.string().min(2)
+    managerEmail: z.string().min(2),
   })
 );
 
 const form = useForm({
   validationSchema: formSchema,
   initialValues: {
-    name: editCustomerData.value.name,
-    document: editCustomerData.value.document,
-    street: editCustomerData.value.address.street,
-    phone: editCustomerData.value.phone,
-    website: editCustomerData.value.website,
-    managerName: editCustomerData.value.managerName,
-    managerEmail: editCustomerData.value.managerEmail,
-    managerPhone: editCustomerData.value.managerPhone
-  }
+    name: editCustomerData?.value.name,
+    document: editCustomerData?.value.document,
+    street: editCustomerData?.value.address.street,
+    phone: editCustomerData?.value.phone,
+    website: editCustomerData?.value.website,
+    managerName: editCustomerData?.value.managerName,
+    managerEmail: editCustomerData?.value.managerEmail,
+    managerPhone: editCustomerData?.value.managerPhone,
+  },
 });
 
 const onSubmit = form.handleSubmit(async (values) => {
-  console.log("New values ->", values);
+  const newCustomerData = {
+    id: editCustomerData.value.id,
+    ...values,
+  };
+  isLoading.value = true;
+  await editCustomer(newCustomerData).then(() => {
+    isLoading.value = false;
+    navigateTo("/admin/customers/active");
+  });
 });
 </script>
 <template>
   <main class="p-6">
+    <header>
+      <div class="mb-8 flex items-center">
+        <ArrowLeft class="mr-2" />
+        <NuxtLink to="/admin/customers/active" class="hover:font-bold">
+          Voltar
+        </NuxtLink>
+      </div>
+    </header>
     <section class="mb-6">
       <Card class="bg-zinc-200">
         <CardHeader>
           <CardTitle>Editar cliente</CardTitle>
         </CardHeader>
         <CardContent>
-          <form @submit.prevent="onSubmit" :initial-values="formInitialValues">
+          <form @submit.prevent="onSubmit">
             <div class="mb-4 w-full grid grid-cols-2 gap-8">
               <FormField v-slot="{ componentField }" name="name">
                 <FormItem>
@@ -214,7 +230,11 @@ const onSubmit = form.handleSubmit(async (values) => {
                 <LoaderCircle v-if="isLoading" class="w-10 h-10 animate-spin" />
                 Salvar alterações
               </Button>
-              <Button variant="outline" class="ml-4" @click="">
+              <Button
+                variant="ghost"
+                class="ml-4"
+                @click="navigateTo('/admin/customers/active')"
+              >
                 Cancelar
               </Button>
             </div>
