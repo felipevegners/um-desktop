@@ -1,23 +1,22 @@
 <script lang="ts" setup>
-// const props = defineProps<{
-//   items?: any;
-// }>();
+defineProps<{
+  items?: any;
+  label?: string;
+}>();
 </script>
 
 <template>
   <Select>
     <FormControl>
       <SelectTrigger>
-        <SelectValue placeholder="Selecione o nome" />
+        <SelectValue :placeholder="label" />
       </SelectTrigger>
     </FormControl>
     <SelectContent>
       <SelectGroup>
-        <SelectLabel>Usuários Ativos</SelectLabel>
-        <SelectItem value="Felipe Vegners"> Felipe Vegners </SelectItem>
-        <SelectItem value="João Silva"> João Silva </SelectItem>
-        <SelectItem value="Manoel Batista"> Manoel Batista </SelectItem>
-        <SelectItem value="Joana Silva"> Joana Silva </SelectItem>
+        <SelectItem v-for="item in items" :value="item.value">
+          {{ item.label }}
+        </SelectItem>
       </SelectGroup>
     </SelectContent>
   </Select>

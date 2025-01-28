@@ -5,6 +5,7 @@ export default defineEventHandler(async (event) => {
   console.log(payload);
   const {
     name,
+    status,
     document,
     street,
     streetNumber,
@@ -22,6 +23,7 @@ export default defineEventHandler(async (event) => {
     },
     data: {
       name,
+      status,
       document,
       address: {
         street,

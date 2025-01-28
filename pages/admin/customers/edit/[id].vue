@@ -12,6 +12,7 @@ import * as z from "zod";
 
 import { LoaderCircle, ArrowLeft } from "lucide-vue-next";
 import { Button } from "@/components/ui/button";
+import type Label from "~/components/ui/label/Label.vue";
 
 const isLoading = ref<boolean>(false);
 const editCustomerData = ref<any>();
@@ -25,6 +26,7 @@ editCustomerData.value = data;
 
 const formSchema = toTypedSchema(
   z.object({
+    status: z.string(),
     name: z.string().min(2).max(50),
     document: z.string().min(2).max(50),
     street: z.string().min(2).max(50),
@@ -41,9 +43,12 @@ const formSchema = toTypedSchema(
 const form = useForm({
   validationSchema: formSchema,
   initialValues: {
+    status: editCustomerData?.value.status,
     name: editCustomerData?.value.name,
     document: editCustomerData?.value.document,
     street: editCustomerData?.value.address.street,
+    streetNumber: editCustomerData?.value.address.streetNumber,
+    zipcode: editCustomerData?.value.address.zipcode,
     phone: editCustomerData?.value.phone,
     website: editCustomerData?.value.website,
     managerName: editCustomerData?.value.managerName,
@@ -81,6 +86,24 @@ const onSubmit = form.handleSubmit(async (values) => {
         </CardHeader>
         <CardContent>
           <form @submit.prevent="onSubmit">
+            <div class="mb-8 py-4 max-w-[200px]">
+              <FormField v-slot="{ componentField }" name="status">
+                <FormItem>
+                  <FormLabel>Status</FormLabel>
+                  <FormControl>
+                    <FormSelect
+                      v-bind="componentField"
+                      :items="[
+                        { label: 'Ativo', value: 'active' },
+                        { label: 'Inativo', value: 'inactive' },
+                        { label: 'Pendente', value: 'pending' },
+                      ]"
+                      :label="'Selecione o Status'"
+                    />
+                  </FormControl>
+                </FormItem>
+              </FormField>
+            </div>
             <div class="mb-4 w-full grid grid-cols-2 gap-8">
               <FormField v-slot="{ componentField }" name="name">
                 <FormItem>
@@ -177,15 +200,6 @@ const onSubmit = form.handleSubmit(async (values) => {
                   <FormMessage />
                 </FormItem>
               </FormField>
-              <FormField v-slot="{ componentField }" name="logo">
-                <FormItem>
-                  <FormLabel>Logo da Empresa</FormLabel>
-                  <FormControl>
-                    <Input type="file" v-bind="componentField" />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              </FormField>
             </div>
             <div class="my-10">
               <h2 class="mb-4 text-lg font-bold">Gerente da Conta</h2>
@@ -195,7 +209,28 @@ const onSubmit = form.handleSubmit(async (values) => {
                   <FormItem>
                     <FormLabel>Nome</FormLabel>
                     <FormControl>
-                      <FormSelect v-bind="componentField" />
+                      <FormSelect
+                        v-bind="componentField"
+                        :items="[
+                          {
+                            label: 'Felipe Vegners',
+                            value: 'Felipe Vegners',
+                          },
+                          {
+                            label: 'Humberto Pansica',
+                            value: 'Humberto Pansica',
+                          },
+                          {
+                            label: 'Maria dos Santos',
+                            value: 'Maria dos Santos',
+                          },
+                          {
+                            label: 'João da Silva',
+                            value: 'João da Silva',
+                          },
+                        ]"
+                        :label="'Selecione o gerente'"
+                      />
                     </FormControl>
                   </FormItem>
                 </FormField>
