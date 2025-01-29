@@ -81,11 +81,11 @@ const onSubmit = form.handleSubmit(async (values) => {
     </header>
     <section class="mb-6">
       <Card class="bg-zinc-200">
-        <CardHeader>
-          <CardTitle>Editar cliente</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <form @submit.prevent="onSubmit">
+        <form @submit.prevent="onSubmit">
+          <CardHeader>
+            <CardTitle>Editar cliente</CardTitle>
+          </CardHeader>
+          <CardContent>
             <div class="mb-8 py-4 max-w-[200px]">
               <FormField v-slot="{ componentField }" name="status">
                 <FormItem>
@@ -260,6 +260,11 @@ const onSubmit = form.handleSubmit(async (values) => {
                 </FormField>
               </div>
             </div>
+            <section v-if="editCustomerData.status === 'pending'">
+              <h2 class="font-bold text-xl">Pendências do Cliente</h2>
+            </section>
+          </CardContent>
+          <CardFooter>
             <div class="flex items-center">
               <Button type="submit">
                 <LoaderCircle v-if="isLoading" class="w-10 h-10 animate-spin" />
@@ -273,8 +278,8 @@ const onSubmit = form.handleSubmit(async (values) => {
                 Cancelar
               </Button>
             </div>
-          </form>
-        </CardContent>
+          </CardFooter>
+        </form>
       </Card>
     </section>
   </main>

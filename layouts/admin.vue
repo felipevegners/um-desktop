@@ -1,36 +1,24 @@
 <script setup lang="ts">
 import {
-  AudioWaveform,
   BadgeCheck,
   Bell,
-  BookOpen,
-  Bot,
   Building2,
   CalendarDays,
   Car,
   ChevronRight,
   ChevronsUpDown,
   Coins,
-  Command,
   CreditCard,
   LayoutDashboard,
   Folder,
   Forward,
-  Frame,
-  GalleryVerticalEnd,
   HandCoins,
   LogOut,
-  Map,
   MoreHorizontal,
-  PieChart,
-  Plus,
-  Settings2,
   Sparkles,
   SquarePercent,
-  SquareTerminal,
-  SquareUserRound,
   Trash2,
-  UserPen
+  UserPen,
 } from "lucide-vue-next";
 import { ref } from "vue";
 import Header from "~/components/shared/Header.vue";
@@ -41,7 +29,7 @@ const data = {
     name: "Felipe Vegners",
     company: "Urban Mobi",
     email: "m@example.com",
-    avatar: ""
+    avatar: "",
   },
   navMain: [
     {
@@ -51,18 +39,14 @@ const data = {
       isActive: false,
       items: [
         {
-          title: "Ativos",
-          url: "/admin/customers/active"
-        },
-        {
-          title: "Pendentes",
-          url: "#"
+          title: "Base de Clientes",
+          url: "/admin/customers/active",
         },
         {
           title: "Inativos",
-          url: "#"
-        }
-      ]
+          url: "#",
+        },
+      ],
     },
     {
       title: "Motoristas",
@@ -70,22 +54,18 @@ const data = {
       icon: Car,
       items: [
         {
-          title: "Ativos",
-          url: "/admin/drivers/active"
-        },
-        {
-          title: "Pendentes",
-          url: "#"
-        },
-        {
-          title: "Inativos",
-          url: "#"
+          title: "Base de Motoristas",
+          url: "/admin/drivers/active",
         },
         {
           title: "Parceiros",
-          url: "#"
-        }
-      ]
+          url: "#",
+        },
+        {
+          title: "Inativos",
+          url: "#",
+        },
+      ],
     },
     {
       title: "Agendamentos",
@@ -94,21 +74,21 @@ const data = {
       items: [
         {
           title: "Abertos",
-          url: "#"
+          url: "#",
         },
         {
           title: "Realizados",
-          url: "#"
+          url: "#",
         },
         {
           title: "Cancelados",
-          url: "#"
+          url: "#",
         },
         {
           title: "+ Novo agendamento",
-          url: "#"
-        }
-      ]
+          url: "#",
+        },
+      ],
     },
     {
       title: "Financeiro",
@@ -117,47 +97,52 @@ const data = {
       items: [
         {
           title: "Faturas em aberto",
-          url: "#"
+          url: "#",
         },
         {
           title: "Balanço",
-          url: "#"
+          url: "#",
         },
         {
           title: "Canceladas",
-          url: "#"
+          url: "#",
         },
         {
           title: "Pagamento Motoristas",
-          url: "#"
-        }
-      ]
-    }
+          url: "#",
+        },
+      ],
+    },
   ],
   settings: [
     {
       name: "Tarifas",
       url: "#",
-      icon: Coins
+      icon: Coins,
     },
     {
       name: "Repasse Motorista",
       url: "#",
-      icon: SquarePercent
+      icon: SquarePercent,
     },
     {
       name: "Usuários",
       url: "#",
-      icon: UserPen
-    }
-  ]
+      icon: UserPen,
+    },
+    {
+      name: "Configurar Dashboards",
+      url: "#",
+      icon: LayoutDashboard,
+    },
+  ],
 };
 </script>
 
 <template>
   <SidebarProvider>
-    <Sidebar collapsible="icon" class="bg-zinc-900 text-white">
-      <SidebarHeader>
+    <Sidebar collapsible="icon" class="text-white bg-zinc-900 border-none">
+      <SidebarHeader class="sidebar">
         <SidebarMenu>
           <SidebarMenuItem>
             <div class="px-2 py-4 flex items-center">
@@ -167,7 +152,7 @@ const data = {
           </SidebarMenuItem>
         </SidebarMenu>
       </SidebarHeader>
-      <SidebarContent class="scrollbar-hidden">
+      <SidebarContent class="scrollbar-hidden sidebar">
         <SidebarGroup>
           <SidebarGroupLabel class="mb-2 text-lg"
             >Platforma de Gestão</SidebarGroupLabel
@@ -264,7 +249,7 @@ const data = {
           </SidebarMenu>
         </SidebarGroup>
       </SidebarContent>
-      <SidebarFooter class="bg-zinc-800">
+      <SidebarFooter class="bg-zinc-800 sidebar-footer">
         <SidebarMenu>
           <SidebarMenuItem>
             <DropdownMenu>
@@ -359,3 +344,12 @@ const data = {
     </SidebarInset>
   </SidebarProvider>
 </template>
+
+<style scoped>
+.sidebar {
+  @apply md:bg-transparent bg-zinc-900 text-white;
+}
+.sidebar-footer {
+  @apply md:bg-transparent bg-zinc-800 text-white;
+}
+</style>
