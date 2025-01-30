@@ -10,8 +10,11 @@ export default defineEventHandler(async (event) => {
   if (userId) {
     const customer = await prisma.customers.findUnique({
       where: {
-        id: userId,
+        id: userId
       },
+      include: {
+        passengers: true
+      }
     });
 
     return customer;

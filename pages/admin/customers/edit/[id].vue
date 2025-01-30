@@ -384,7 +384,7 @@ const onSubmit = form.handleSubmit(async (values) => {
             <section class="mb-6 px-4 rounded-md bg-white">
               <DataTable
                 :columns="passengerColumns"
-                :data="editCustomerData?.passengers"
+                :data="editCustomerData?.passengers || []"
                 sortby="name"
               />
             </section>
