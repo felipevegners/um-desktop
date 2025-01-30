@@ -101,7 +101,7 @@ const onSubmit = form.handleSubmit(async (values) => {
     managerName,
     managerPhone,
     managerEmail,
-    passengers: {}
+    passengers: []
   };
   await createNewCustomerAction(newCustomerData)
     .then((res) => {

@@ -101,7 +101,7 @@ const passengerColumns = [
   }),
   columnHelper.accessor("email", {
     header: () => h("div", { class: "text-left" }, "E-mail"),
-    cell: ({ row }) => h("div", { class: "capitalize" }, row.getValue("email"))
+    cell: ({ row }) => h("div", { class: "lowercase" }, row.getValue("email"))
   })
   // columnHelper.display({
   //   id: "actions",
@@ -161,6 +161,7 @@ const form = useForm({
 const onSubmit = form.handleSubmit(async (values) => {
   const newCustomerData = {
     id: editCustomerData.value.id,
+    passengers: [],
     ...values
   };
   isLoading.value = true;
@@ -380,15 +381,19 @@ const onSubmit = form.handleSubmit(async (values) => {
                 <Plus class="w-4 h-4" /> Adicionar passageiro
               </Button>
             </div>
-            <section class="px-4 rounded-md bg-white">
+            <section class="mb-6 px-4 rounded-md bg-white">
               <DataTable
                 :columns="passengerColumns"
-                :data="editCustomerData.passengers"
+                :data="editCustomerData?.passengers"
                 sortby="name"
               />
             </section>
-            <section v-if="editCustomerData.status === 'pending'">
-              <h2 class="font-bold text-xl">Pendências do Cliente</h2>
+            <h2 class="mb-6 font-bold text-xl">Pendências do Cliente</h2>
+            <section
+              v-if="editCustomerData.status === 'pending'"
+              class="mb-6 p-4 rounded-md bg-white"
+            >
+              <p>Nenhuma pendência encontrada</p>
             </section>
           </CardContent>
           <CardFooter>
