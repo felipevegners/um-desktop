@@ -1,6 +1,7 @@
 <script setup lang="ts">
 definePageMeta({
   layout: "admin",
+  title: "Editar cliente"
 });
 
 import { ref } from "vue";
@@ -10,9 +11,19 @@ import { useForm } from "vee-validate";
 import { toTypedSchema } from "@vee-validate/zod";
 import * as z from "zod";
 
-import { LoaderCircle, ArrowLeft } from "lucide-vue-next";
 import { Button } from "@/components/ui/button";
-import type Label from "~/components/ui/label/Label.vue";
+// import type Label from "~/components/ui/label/Label.vue";
+import DataTable from "~/components/shared/DataTable.vue";
+import { createColumnHelper } from "@tanstack/vue-table";
+import {
+  ArrowLeft,
+  ArrowUpDown,
+  Plus,
+  LoaderCircle,
+  Phone,
+  CircleCheck
+} from "lucide-vue-next";
+import Separator from "~/components/ui/separator/Separator.vue";
 
 const isLoading = ref<boolean>(false);
 const editCustomerData = ref<any>();
@@ -23,6 +34,96 @@ const { getCustomerByIdAction, editCustomer } = store;
 const route = useRoute();
 const data = await getCustomerByIdAction(route?.params?.id as string);
 editCustomerData.value = data;
+
+const columnHelper = createColumnHelper<any>();
+
+const passengerColumns = [
+  // columnHelper.display({
+  //   id: "select",
+  //   header: ({ table }) =>
+  //     h(Checkbox, {
+  //       checked:
+  //         table.getIsAllPageRowsSelected() ||
+  //         (table.getIsSomePageRowsSelected() && "indeterminate"),
+  //       "onUpdate:checked": (value) => table.toggleAllPageRowsSelected(!!value),
+  //       ariaLabel: "Select all",
+  //     }),
+  //   cell: ({ row }) => {
+  //     return h(Checkbox, {
+  //       checked: row.getIsSelected(),
+  //       "onUpdate:checked": (value) => row.toggleSelected(!!value),
+  //       ariaLabel: "Select row",
+  //     });
+  //   },
+  //   enableSorting: false,
+  //   enableHiding: false,
+  // }),
+  columnHelper.accessor("status", {
+    header: () => h("div", { class: "text-left" }, "Situação"),
+    cell: ({ row }) => {
+      const status = row.getValue("status");
+      return h(
+        "div",
+        {
+          class: `px-2 flex items-center justify-center h-6 rounded-lg text-white ${
+            status === "active"
+              ? "bg-green-600"
+              : status === "inactive"
+              ? "bg-red-700"
+              : "bg-yellow-500"
+          }`
+        },
+        status === "active"
+          ? "Ativo"
+          : status === "inactive"
+          ? "Inativo"
+          : "Pendente"
+      );
+    }
+  }),
+  columnHelper.accessor("name", {
+    enablePinning: true,
+    header: ({ column }) => {
+      return h(
+        Button,
+        {
+          variant: "ghost",
+          onClick: () => column.toggleSorting(column.getIsSorted() === "asc")
+        },
+        () => ["Nome", h(ArrowUpDown, { class: "ml-2 h-4 w-4" })]
+      );
+    },
+    cell: ({ row }) => h("div", { class: "capitalize" }, row.getValue("name"))
+  }),
+  columnHelper.accessor("phone", {
+    header: () => h("div", { class: "text-left" }, "Telefone"),
+    cell: ({ row }) => h("div", { class: "lowercase" }, row.getValue("phone"))
+  }),
+  columnHelper.accessor("email", {
+    header: () => h("div", { class: "text-left" }, "E-mail"),
+    cell: ({ row }) => h("div", { class: "capitalize" }, row.getValue("email"))
+  })
+  // columnHelper.display({
+  //   id: "actions",
+  //   enableHiding: false,
+  //   header: () => h("div", { class: "text-left" }, "Ações"),
+  //   cell: ({ row }) => {
+  //     const customerData = row.original;
+  //     return h(
+  //       "div",
+  //       { class: "relative text-left" },
+  //       h(DataTableActions, {
+  //         customerData,
+  //         isLoadingSend,
+  //         deleteModalOpen,
+  //         handleModal: handleDeleteModal,
+  //         delete: handleDeleteCustomer,
+  //         onExpand: row.toggleExpanded
+  //       })
+  //     );
+  //   }
+  // })
+];
 
 const formSchema = toTypedSchema(
   z.object({
@@ -36,7 +137,7 @@ const formSchema = toTypedSchema(
     website: z.string().min(2).max(50),
     managerName: z.string().min(2).max(20),
     managerPhone: z.string().min(2).max(12),
-    managerEmail: z.string().min(2),
+    managerEmail: z.string().min(2)
   })
 );
 
@@ -53,14 +154,14 @@ const form = useForm({
     website: editCustomerData?.value.website,
     managerName: editCustomerData?.value.managerName,
     managerEmail: editCustomerData?.value.managerEmail,
-    managerPhone: editCustomerData?.value.managerPhone,
-  },
+    managerPhone: editCustomerData?.value.managerPhone
+  }
 });
 
 const onSubmit = form.handleSubmit(async (values) => {
   const newCustomerData = {
     id: editCustomerData.value.id,
-    ...values,
+    ...values
   };
   isLoading.value = true;
   await editCustomer(newCustomerData).then(() => {
@@ -73,8 +174,8 @@ const onSubmit = form.handleSubmit(async (values) => {
   <main class="p-6">
     <header>
       <div class="mb-8 flex items-center">
-        <ArrowLeft class="mr-2" />
-        <NuxtLink to="/admin/customers/active" class="hover:font-bold">
+        <NuxtLink to="/admin/customers/active" class="flex hover:font-bold">
+          <ArrowLeft class="mr-2" />
           Voltar
         </NuxtLink>
       </div>
@@ -83,7 +184,13 @@ const onSubmit = form.handleSubmit(async (values) => {
       <Card class="bg-zinc-200">
         <form @submit.prevent="onSubmit">
           <CardHeader>
-            <CardTitle>Editar cliente</CardTitle>
+            <CardTitle class="text-md"
+              >Dados do Cliente
+              <br />
+              <span class="font-normal text-3xl">{{
+                editCustomerData.name
+              }}</span></CardTitle
+            >
           </CardHeader>
           <CardContent>
             <div class="mb-8 py-4 max-w-[200px]">
@@ -96,7 +203,7 @@ const onSubmit = form.handleSubmit(async (values) => {
                       :items="[
                         { label: 'Ativo', value: 'active' },
                         { label: 'Inativo', value: 'inactive' },
-                        { label: 'Pendente', value: 'pending' },
+                        { label: 'Pendente', value: 'pending' }
                       ]"
                       :label="'Selecione o Status'"
                     />
@@ -214,20 +321,20 @@ const onSubmit = form.handleSubmit(async (values) => {
                         :items="[
                           {
                             label: 'Felipe Vegners',
-                            value: 'Felipe Vegners',
+                            value: 'Felipe Vegners'
                           },
                           {
                             label: 'Humberto Pansica',
-                            value: 'Humberto Pansica',
+                            value: 'Humberto Pansica'
                           },
                           {
                             label: 'Maria dos Santos',
-                            value: 'Maria dos Santos',
+                            value: 'Maria dos Santos'
                           },
                           {
                             label: 'João da Silva',
-                            value: 'João da Silva',
-                          },
+                            value: 'João da Silva'
+                          }
                         ]"
                         :label="'Selecione o gerente'"
                       />
@@ -260,12 +367,32 @@ const onSubmit = form.handleSubmit(async (values) => {
                 </FormField>
               </div>
             </div>
+            <Separator class="my-8 bg-zinc-300" />
+            <div class="mb-6 flex">
+              <h2 class="mb-6 mr-6 font-bold text-xl">
+                Passageiros Cadastrados
+              </h2>
+              <Button
+                type="button"
+                class="flex items-center justify-center"
+                @click.prevent="() => console.log('Tonto!!!!')"
+              >
+                <Plus class="w-4 h-4" /> Adicionar passageiro
+              </Button>
+            </div>
+            <section class="px-4 rounded-md bg-white">
+              <DataTable
+                :columns="passengerColumns"
+                :data="editCustomerData.passengers"
+                sortby="name"
+              />
+            </section>
             <section v-if="editCustomerData.status === 'pending'">
               <h2 class="font-bold text-xl">Pendências do Cliente</h2>
             </section>
           </CardContent>
           <CardFooter>
-            <div class="flex items-center">
+            <div class="mt-8 flex items-center">
               <Button type="submit">
                 <LoaderCircle v-if="isLoading" class="w-10 h-10 animate-spin" />
                 Salvar alterações

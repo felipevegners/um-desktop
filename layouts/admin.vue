@@ -1,142 +1,26 @@
 <script setup lang="ts">
+import { sideMenuData } from "~/config/admin/dashboard-menu";
+import Header from "~/components/shared/Header.vue";
 import {
   BadgeCheck,
   Bell,
-  Building2,
-  CalendarDays,
-  Car,
   ChevronRight,
   ChevronsUpDown,
-  Coins,
   CreditCard,
   LayoutDashboard,
   Folder,
   Forward,
-  HandCoins,
   LogOut,
   MoreHorizontal,
   Sparkles,
-  SquarePercent,
-  Trash2,
-  UserPen,
+  Trash2
 } from "lucide-vue-next";
-import { ref } from "vue";
-import Header from "~/components/shared/Header.vue";
+import { ref, computed } from "vue";
 
-// This is sample data.
-const data = {
-  user: {
-    name: "Felipe Vegners",
-    company: "Urban Mobi",
-    email: "m@example.com",
-    avatar: "",
-  },
-  navMain: [
-    {
-      title: "Clientes",
-      url: "#",
-      icon: Building2,
-      isActive: false,
-      items: [
-        {
-          title: "Base de Clientes",
-          url: "/admin/customers/active",
-        },
-        {
-          title: "Inativos",
-          url: "#",
-        },
-      ],
-    },
-    {
-      title: "Motoristas",
-      url: "#",
-      icon: Car,
-      items: [
-        {
-          title: "Base de Motoristas",
-          url: "/admin/drivers/active",
-        },
-        {
-          title: "Parceiros",
-          url: "#",
-        },
-        {
-          title: "Inativos",
-          url: "#",
-        },
-      ],
-    },
-    {
-      title: "Agendamentos",
-      url: "#",
-      icon: CalendarDays,
-      items: [
-        {
-          title: "Abertos",
-          url: "#",
-        },
-        {
-          title: "Realizados",
-          url: "#",
-        },
-        {
-          title: "Cancelados",
-          url: "#",
-        },
-        {
-          title: "+ Novo agendamento",
-          url: "#",
-        },
-      ],
-    },
-    {
-      title: "Financeiro",
-      url: "#",
-      icon: HandCoins,
-      items: [
-        {
-          title: "Faturas em aberto",
-          url: "#",
-        },
-        {
-          title: "Balanço",
-          url: "#",
-        },
-        {
-          title: "Canceladas",
-          url: "#",
-        },
-        {
-          title: "Pagamento Motoristas",
-          url: "#",
-        },
-      ],
-    },
-  ],
-  settings: [
-    {
-      name: "Tarifas",
-      url: "#",
-      icon: Coins,
-    },
-    {
-      name: "Repasse Motorista",
-      url: "#",
-      icon: SquarePercent,
-    },
-    {
-      name: "Usuários",
-      url: "#",
-      icon: UserPen,
-    },
-    {
-      name: "Configurar Dashboards",
-      url: "#",
-      icon: LayoutDashboard,
-    },
-  ],
-};
+const userNameInitials = computed(() => {
+  const splited = sideMenuData.user.name.split(" ");
+  return splited.map((word) => word[0]).join("");
+});
 </script>
 
 <template>
@@ -166,7 +50,7 @@ const data = {
             </SidebarMenuItem>
             <SidebarSeparator class="mb-4 border-b border-zinc-800" />
             <Collapsible
-              v-for="item in data.navMain"
+              v-for="item in sideMenuData.navMain"
               :key="item.title"
               as-child
               :default-open="item.isActive"
@@ -205,7 +89,10 @@ const data = {
         <SidebarGroup class="group-data-[collapsible=icon]:hidden">
           <SidebarGroupLabel>Configurações</SidebarGroupLabel>
           <SidebarMenu>
-            <SidebarMenuItem v-for="item in data.settings" :key="item.name">
+            <SidebarMenuItem
+              v-for="item in sideMenuData.settings"
+              :key="item.name"
+            >
               <SidebarMenuButton as-child>
                 <a :href="item.url">
                   <component :is="item.icon" />
@@ -260,18 +147,19 @@ const data = {
                 >
                   <Avatar class="h-8 w-8 rounded-lg">
                     <AvatarImage
-                      :src="data.user.avatar"
-                      :alt="data.user.name"
+                      :src="sideMenuData.user.avatar"
+                      :alt="sideMenuData.user.name"
                     />
-                    <AvatarFallback class="rounded-lg"> CN </AvatarFallback>
+                    <AvatarFallback class="rounded-lg">
+                      {{ userNameInitials }}
+                    </AvatarFallback>
                   </Avatar>
                   <div class="grid flex-1 text-left text-sm leading-tight">
                     <span class="truncate font-semibold">{{
-                      data.user.name
+                      sideMenuData.user.name
                     }}</span>
-                    <!-- <span class="truncate text-xs">{{ data.user.email }}</span> -->
                     <span class="truncate text-xs">{{
-                      data.user.company
+                      sideMenuData.user.company
                     }}</span>
                   </div>
                   <ChevronsUpDown class="ml-auto size-4" />
@@ -289,17 +177,19 @@ const data = {
                   >
                     <Avatar class="h-8 w-8 rounded-lg">
                       <AvatarImage
-                        :src="data.user.avatar"
-                        :alt="data.user.name"
+                        :src="sideMenuData.user.avatar"
+                        :alt="sideMenuData.user.name"
                       />
-                      <AvatarFallback class="rounded-lg"> CN </AvatarFallback>
+                      <AvatarFallback class="rounded-lg">
+                        {{ userNameInitials }}
+                      </AvatarFallback>
                     </Avatar>
                     <div class="grid flex-1 text-left text-sm leading-tight">
                       <span class="truncate font-semibold">{{
-                        data.user.name
+                        sideMenuData.user.name
                       }}</span>
                       <span class="truncate text-xs">{{
-                        data.user.email
+                        sideMenuData.user.email
                       }}</span>
                     </div>
                   </div>

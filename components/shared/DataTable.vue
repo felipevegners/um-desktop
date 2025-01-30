@@ -4,7 +4,7 @@ import type {
   ColumnFiltersState,
   ExpandedState,
   SortingState,
-  VisibilityState,
+  VisibilityState
 } from "@tanstack/vue-table";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -13,7 +13,7 @@ import {
   DropdownMenu,
   DropdownMenuCheckboxItem,
   DropdownMenuContent,
-  DropdownMenuTrigger,
+  DropdownMenuTrigger
 } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
 import {
@@ -22,7 +22,7 @@ import {
   TableCell,
   TableHead,
   TableHeader,
-  TableRow,
+  TableRow
 } from "@/components/ui/table";
 import { cn, valueUpdater } from "~/lib/utils";
 import {
@@ -33,7 +33,7 @@ import {
   getFilteredRowModel,
   getPaginationRowModel,
   getSortedRowModel,
-  useVueTable,
+  useVueTable
 } from "@tanstack/vue-table";
 import { ArrowUpDown, ChevronDown, Settings2 } from "lucide-vue-next";
 import { h, ref } from "vue";
@@ -47,7 +47,7 @@ const expanded = ref<ExpandedState>({});
 const props = defineProps<{
   columns: ColumnDef<TData, TValue>[];
   data: TData[];
-  sortby: String;
+  sortby: string;
 }>();
 
 const table = useVueTable({
@@ -87,9 +87,9 @@ const table = useVueTable({
       return expanded.value;
     },
     columnPinning: {
-      left: ["name", "document"],
-    },
-  },
+      left: ["name"]
+    }
+  }
 });
 </script>
 
@@ -98,7 +98,7 @@ const table = useVueTable({
     <div class="flex gap-2 items-center py-4">
       <Input
         class="max-w-sm"
-        placeholder="Filtrar clientes..."
+        placeholder="Filtrar por nome"
         :model-value="table.getColumn(sortby)?.getFilterValue() as string"
         @update:model-value="table.getColumn(sortby)?.setFilterValue($event)"
       />
@@ -142,7 +142,7 @@ const table = useVueTable({
               :class="
                 cn(
                   {
-                    'sticky bg-background/95': header.column.getIsPinned(),
+                    'sticky bg-background/95': header.column.getIsPinned()
                   },
                   header.column.getIsPinned() === 'left' ? 'left-0' : 'right-0'
                 )
@@ -167,7 +167,7 @@ const table = useVueTable({
                   :class="
                     cn(
                       {
-                        'sticky bg-background/95': cell.column.getIsPinned(),
+                        'sticky bg-background/95': cell.column.getIsPinned()
                       },
                       cell.column.getIsPinned() === 'left'
                         ? 'left-0'

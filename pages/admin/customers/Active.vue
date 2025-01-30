@@ -1,10 +1,10 @@
 <script setup lang="ts">
 definePageMeta({
-  layout: "admin",
+  layout: "admin"
 });
 
 useHead({
-  title: "Clientes ativos",
+  title: "Clientes ativos"
 });
 import { onMounted, ref, watch } from "vue";
 import {
@@ -16,7 +16,7 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-  AlertDialogTrigger,
+  AlertDialogTrigger
 } from "@/components/ui/alert-dialog";
 import { Plus, LoaderCircle, Phone, CircleCheck } from "lucide-vue-next";
 import { Button } from "@/components/ui/button";
@@ -40,7 +40,7 @@ const {
   getCustomerByIdAction,
   createNewCustomerAction,
   deleteCustomerAction,
-  toggleDeleteModal,
+  toggleDeleteModal
 } = customerStore;
 const { customers, viewDeleteModal, customerToDelete, loading } =
   storeToRefs(customerStore);
@@ -62,12 +62,12 @@ const formSchema = toTypedSchema(
     website: z.string().min(2).max(50),
     managerName: z.string().min(2).max(20),
     managerPhone: z.string().min(2).max(12),
-    managerEmail: z.string().min(2),
+    managerEmail: z.string().min(2)
   })
 );
 
 const form = useForm({
-  validationSchema: formSchema,
+  validationSchema: formSchema
 });
 
 const onSubmit = form.handleSubmit(async (values) => {
@@ -83,7 +83,7 @@ const onSubmit = form.handleSubmit(async (values) => {
     website,
     managerName,
     managerPhone,
-    managerEmail,
+    managerEmail
   } = values;
   const newCustomerData = {
     status: "pendente",
@@ -92,7 +92,7 @@ const onSubmit = form.handleSubmit(async (values) => {
     address: {
       street,
       streetNumber,
-      zipcode,
+      zipcode
     },
     phone,
     website,
@@ -101,7 +101,7 @@ const onSubmit = form.handleSubmit(async (values) => {
     managerName,
     managerPhone,
     managerEmail,
-    passengers: {},
+    passengers: {}
   };
   await createNewCustomerAction(newCustomerData)
     .then((res) => {
@@ -164,13 +164,13 @@ const columns = [
       return h(
         "div",
         {
-          class: `flex items-center justify-center h-6 rounded-lg text-white ${
+          class: `px-2 flex items-center justify-center h-6 rounded-lg text-white ${
             status === "active"
               ? "bg-green-600"
               : status === "inactive"
               ? "bg-red-700"
               : "bg-yellow-500"
-          }`,
+          }`
         },
         status === "active"
           ? "Ativo"
@@ -178,7 +178,7 @@ const columns = [
           ? "Inativo"
           : "Pendente"
       );
-    },
+    }
   }),
   columnHelper.accessor("name", {
     enablePinning: true,
@@ -187,22 +187,22 @@ const columns = [
         Button,
         {
           variant: "ghost",
-          onClick: () => column.toggleSorting(column.getIsSorted() === "asc"),
+          onClick: () => column.toggleSorting(column.getIsSorted() === "asc")
         },
         () => ["Nome", h(ArrowUpDown, { class: "ml-2 h-4 w-4" })]
       );
     },
-    cell: ({ row }) => h("div", { class: "capitalize" }, row.getValue("name")),
+    cell: ({ row }) => h("div", { class: "capitalize" }, row.getValue("name"))
   }),
   columnHelper.accessor("document", {
     header: () => h("div", { class: "text-left" }, "CNPJ"),
     cell: ({ row }) =>
-      h("div", { class: "lowercase" }, row.getValue("document")),
+      h("div", { class: "lowercase" }, row.getValue("document"))
   }),
   columnHelper.accessor("managerName", {
     header: () => h("div", { class: "text-left" }, "Gerente"),
     cell: ({ row }) =>
-      h("div", { class: "capitalize" }, row.getValue("managerName")),
+      h("div", { class: "capitalize" }, row.getValue("managerName"))
   }),
   columnHelper.accessor("managerEmail", {
     header: () => h("div", { class: "text-left" }, "E-mail Gerente"),
@@ -212,7 +212,7 @@ const columns = [
         { class: "text-left font-medium" },
         row.getValue("managerEmail")
       );
-    },
+    }
   }),
   columnHelper.display({
     id: "actions",
@@ -229,11 +229,11 @@ const columns = [
           deleteModalOpen,
           handleModal: handleDeleteModal,
           delete: handleDeleteCustomer,
-          onExpand: row.toggleExpanded,
+          onExpand: row.toggleExpanded
         })
       );
-    },
-  }),
+    }
+  })
 ];
 
 const toggleShowAddForm = () => {
