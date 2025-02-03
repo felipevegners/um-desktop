@@ -3,13 +3,13 @@ import {
   getCustomers,
   createCustomer,
   deleteCustomer,
-  updateCustomer,
+  updateCustomer
 } from "~/server/services/admin/customers";
 import type { Customer } from "~/types/customer/customer-types";
 
 interface ICustomerState {
   customers: Customer[];
-  editCustomer: any;
+  customer: any;
   loading: boolean;
   viewDeleteModal: boolean;
   customerToDelete: {
@@ -22,10 +22,10 @@ export const useCustomerStore = defineStore("customer", {
   state: (): ICustomerState => {
     return {
       customers: [],
-      editCustomer: {},
+      customer: {},
       loading: false,
       viewDeleteModal: false,
-      customerToDelete: { id: "", name: "" },
+      customerToDelete: { id: "", name: "" }
     };
   },
   actions: {
@@ -40,6 +40,7 @@ export const useCustomerStore = defineStore("customer", {
     async getCustomerByIdAction(customerId: string) {
       try {
         const data = await getCustomers(customerId);
+        this.customer = data;
         return data;
       } catch (error) {
         console.log("Store Error -> ", error);
@@ -79,8 +80,8 @@ export const useCustomerStore = defineStore("customer", {
       this.viewDeleteModal = !this.viewDeleteModal;
       this.customerToDelete = {
         id: id,
-        name: name,
+        name: name
       };
-    },
-  },
+    }
+  }
 });

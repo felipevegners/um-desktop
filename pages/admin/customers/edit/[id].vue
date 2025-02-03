@@ -4,7 +4,7 @@ definePageMeta({
   title: "Editar cliente"
 });
 
-import { ref } from "vue";
+import { ref, onMounted, onBeforeMount, reactive } from "vue";
 import { useCustomerStore } from "@/stores/admin/customers.store";
 import FormSelect from "@/components/shared/FormSelect.vue";
 import { useForm } from "vee-validate";
@@ -26,15 +26,21 @@ import {
 import Separator from "~/components/ui/separator/Separator.vue";
 import AddPassengerForm from "~/components/admin/customers/AddPassengerForm.vue";
 
-const isLoading = ref<boolean>(false);
-const editCustomerData = ref<any>();
-
 const store = useCustomerStore();
 const { getCustomerByIdAction, editCustomer } = store;
 
 const route = useRoute();
-const data = await getCustomerByIdAction(route?.params?.id as string);
-editCustomerData.value = data;
+
+const fetchCustomerData = async () => {
+  const data = await getCustomerByIdAction(route?.params?.id as string);
+  editCustomerData.value = data;
+  return data;
+};
+const isLoading = ref<boolean>(false);
+const editCustomerData = ref<any>();
+const showAddPassengerForm = ref<boolean>(false);
+
+editCustomerData.value = await fetchCustomerData();
 
 const columnHelper = createColumnHelper<any>();
 
@@ -141,16 +147,15 @@ const formSchema = toTypedSchema(
     managerEmail: z.string().min(2)
   })
 );
-
 const form = useForm({
   validationSchema: formSchema,
   initialValues: {
     status: editCustomerData?.value.status,
     name: editCustomerData?.value.name,
     document: editCustomerData?.value.document,
-    street: editCustomerData?.value.address.street,
-    streetNumber: editCustomerData?.value.address.streetNumber,
-    zipcode: editCustomerData?.value.address.zipcode,
+    street: editCustomerData?.value.address?.street,
+    streetNumber: editCustomerData?.value.address?.streetNumber,
+    zipcode: editCustomerData?.value.address?.zipcode,
     phone: editCustomerData?.value.phone,
     website: editCustomerData?.value.website,
     managerName: editCustomerData?.value.managerName,
@@ -171,6 +176,10 @@ const onSubmit = form.handleSubmit(async (values) => {
     navigateTo("/admin/customers/active");
   });
 });
+
+const toggleAddPassengerForm = () => {
+  showAddPassengerForm.value = !showAddPassengerForm.value;
+};
 </script>
 <template>
   <main class="p-6">
@@ -377,13 +386,17 @@ const onSubmit = form.handleSubmit(async (values) => {
               <Button
                 type="button"
                 class="flex items-center justify-center"
-                @click.prevent="() => console.log('Tonto!!!!')"
+                @click="toggleAddPassengerForm"
               >
                 <Plus class="w-4 h-4" /> Adicionar passageiro
               </Button>
             </div>
-            <section>
-              <AddPassengerForm :customerId="editCustomerData.id" />
+            <section v-if="showAddPassengerForm">
+              <AddPassengerForm
+                :customerId="editCustomerData.id"
+                @show-form="toggleAddPassengerForm"
+                @fetch-customer="fetchCustomerData"
+              />
             </section>
             <section class="mb-6 px-4 rounded-md bg-white">
               <DataTable

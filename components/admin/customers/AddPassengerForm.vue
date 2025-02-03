@@ -15,6 +15,11 @@ const props = defineProps<{
   customerId: string;
 }>();
 
+const emit = defineEmits(["show-form", "fetch-customer"]);
+const showPassengerForm = () => {
+  emit("show-form");
+};
+
 const passengersformSchema = toTypedSchema(
   z.object({
     passengerName: z.string().min(2).max(50),
@@ -28,12 +33,9 @@ const passengersformSchema = toTypedSchema(
 
 const passengersForm = useForm({
   validationSchema: passengersformSchema
-  //   initialValues: {}
 });
 
 const onSubmitPassengers = passengersForm.handleSubmit(async (values) => {
-  //   console.log("customer id -> ", props.customerId);
-
   const newPassengerData = {
     name: values.passengerName,
     email: values.passengerEmail,
@@ -45,11 +47,14 @@ const onSubmitPassengers = passengersForm.handleSubmit(async (values) => {
   };
 
   try {
-    await createNewPassengerAction(newPassengerData).then((res) =>
-      console.log("Response -> ", res)
-    );
+    await createNewPassengerAction(newPassengerData).then(() => {
+      alert("Passageiro Adicionado!");
+    });
   } catch (error) {
     console.log("Erro no envio do passageiro -> ", error);
+  } finally {
+    emit("fetch-customer");
+    emit("show-form");
   }
 });
 </script>
@@ -105,7 +110,9 @@ const onSubmitPassengers = passengersForm.handleSubmit(async (values) => {
             <LoaderCircle v-if="store.loading" class="w-10 h-10 animate-spin" />
             Salvar</Button
           >
-          <Button variant="outline">Cancelar</Button>
+          <Button variant="outline" @click.prevent="showPassengerForm"
+            >Cancelar</Button
+          >
         </div>
       </div>
     </form>

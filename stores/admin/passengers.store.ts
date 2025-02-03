@@ -16,7 +16,9 @@ export const usePassengerStore = defineStore("passengers", {
       } catch (error) {
         console.log("Store Error Create Passenger -> ", error);
       } finally {
-        this.loading = false;
+        setTimeout(() => {
+          this.loading = false;
+        }, 2000);
       }
     }
   }
