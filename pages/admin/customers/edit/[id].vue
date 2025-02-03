@@ -24,6 +24,7 @@ import {
   CircleCheck
 } from "lucide-vue-next";
 import Separator from "~/components/ui/separator/Separator.vue";
+import AddPassengerForm from "~/components/admin/customers/AddPassengerForm.vue";
 
 const isLoading = ref<boolean>(false);
 const editCustomerData = ref<any>();
@@ -381,6 +382,9 @@ const onSubmit = form.handleSubmit(async (values) => {
                 <Plus class="w-4 h-4" /> Adicionar passageiro
               </Button>
             </div>
+            <section>
+              <AddPassengerForm :customerId="editCustomerData.id" />
+            </section>
             <section class="mb-6 px-4 rounded-md bg-white">
               <DataTable
                 :columns="passengerColumns"

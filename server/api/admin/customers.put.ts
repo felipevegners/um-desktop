@@ -2,7 +2,7 @@ import { prisma } from "~/utils/prisma";
 
 export default defineEventHandler(async (event) => {
   const payload = await readBody(event);
-  console.log(payload);
+  console.log("create customer payload -> ", payload);
   const {
     name,
     status,
@@ -14,29 +14,44 @@ export default defineEventHandler(async (event) => {
     website,
     managerName,
     managerPhone,
-    managerEmail,
+    managerEmail
   } = payload;
 
-  const updateCustomer = await prisma.customers.update({
-    where: {
-      id: payload.id,
-    },
-    data: {
-      name,
-      status,
-      document,
-      address: {
-        street,
-        streetNumber,
-        zipcode,
+  if (payload.passengers) {
+    const updateCustomerPassegners = await prisma.customers.update({
+      where: {
+        id: payload.customer.id
       },
-      phone,
-      website,
-      managerName,
-      managerPhone,
-      managerEmail,
-    },
-  });
+      data: {
+        passengers: {
+          connect: payload.passengers
+          // [{id: 123}, {id: 345}, ...]
+        }
+      }
+    });
 
-  return updateCustomer;
+    return updateCustomerPassegners;
+  } else {
+    const updateCustomer = await prisma.customers.update({
+      where: {
+        id: payload.id
+      },
+      data: {
+        name,
+        status,
+        document,
+        address: {
+          street,
+          streetNumber,
+          zipcode
+        },
+        phone,
+        website,
+        managerName,
+        managerPhone,
+        managerEmail
+      }
+    });
+    return updateCustomer;
+  }
 });
