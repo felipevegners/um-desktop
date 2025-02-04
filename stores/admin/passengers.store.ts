@@ -1,7 +1,7 @@
 import { defineStore } from "pinia";
 import {
   createPassenger,
-  deletePassenger,
+  deletePassenger
 } from "~/server/services/admin/passengers";
 
 interface IPassengerState {
@@ -17,7 +17,7 @@ export const usePassengerStore = defineStore("passengers", {
       passengers: [],
       passenger: {},
       loading: false,
-      viewDeleteModal: false,
+      viewDeleteModal: false
     };
   },
   actions: {
@@ -49,5 +49,8 @@ export const usePassengerStore = defineStore("passengers", {
         }, 3000);
       }
     },
-  },
+    toggleDeleteModal() {
+      this.viewDeleteModal = !this.viewDeleteModal;
+    }
+  }
 });

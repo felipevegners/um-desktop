@@ -1,7 +1,7 @@
 <script setup lang="ts">
 definePageMeta({
   layout: "admin",
-  title: "Editar cliente",
+  title: "Editar cliente"
 });
 
 import { ref, h } from "vue";
@@ -20,11 +20,11 @@ import {
   ArrowUpDown,
   Plus,
   LoaderCircle,
-  Proportions,
+  Proportions
 } from "lucide-vue-next";
 import Separator from "~/components/ui/separator/Separator.vue";
 import AddPassengerForm from "~/components/admin/customers/AddPassengerForm.vue";
-import EditDeleteActions from "~/components/shared/EditDeleteActions.vue";
+import EditDeleteActions from "~/components/admin/passengers/EditDeleteActions.vue";
 
 const store = useCustomerStore();
 const { getCustomerByIdAction, editCustomer } = store;
@@ -46,8 +46,7 @@ const showAddPassengerForm = ref<boolean>(false);
 editCustomerData.value = await fetchCustomerData();
 
 const deletePassenger = async (id: string) => {
-  await deletePassengerAction(id);
-  console.log("Deleting passenger from customer id -> ", route.params.id, id);
+  await deletePassengerAction(id).then(() => fetchCustomerData());
 };
 
 const columnHelper = createColumnHelper<any>();
@@ -60,25 +59,25 @@ const passengerColumns = [
         Button,
         {
           variant: "ghost",
-          onClick: () => column.toggleSorting(column.getIsSorted() === "asc"),
+          onClick: () => column.toggleSorting(column.getIsSorted() === "asc")
         },
         () => ["Nome", h(ArrowUpDown, { class: "ml-2 h-4 w-4" })]
       );
     },
-    cell: ({ row }) => h("div", { class: "capitalize" }, row.getValue("name")),
+    cell: ({ row }) => h("div", { class: "capitalize" }, row.getValue("name"))
   }),
   columnHelper.accessor("position", {
     header: () => h("div", { class: "text-left" }, "Posição"),
     cell: ({ row }) =>
-      h("div", { class: "capitalize" }, row.getValue("position")),
+      h("div", { class: "capitalize" }, row.getValue("position"))
   }),
   columnHelper.accessor("phone", {
     header: () => h("div", { class: "text-left" }, "Telefone"),
-    cell: ({ row }) => h("div", { class: "lowercase" }, row.getValue("phone")),
+    cell: ({ row }) => h("div", { class: "lowercase" }, row.getValue("phone"))
   }),
   columnHelper.accessor("email", {
     header: () => h("div", { class: "text-left" }, "E-mail"),
-    cell: ({ row }) => h("div", { class: "lowercase" }, row.getValue("email")),
+    cell: ({ row }) => h("div", { class: "lowercase" }, row.getValue("email"))
   }),
   columnHelper.accessor("status", {
     header: () => h("div", { class: "text-left" }, "Situação"),
@@ -93,7 +92,7 @@ const passengerColumns = [
               : status === "inactive"
               ? "bg-red-700"
               : "bg-yellow-500"
-          }`,
+          }`
         },
         status === "active"
           ? "Ativo"
@@ -101,7 +100,7 @@ const passengerColumns = [
           ? "Inativo"
           : "Pendente"
       );
-    },
+    }
   }),
   columnHelper.display({
     id: "actions",
@@ -114,11 +113,11 @@ const passengerColumns = [
         { class: "relative text-left" },
         h(EditDeleteActions, {
           data: passengerData,
-          remove: deletePassenger,
+          remove: deletePassenger
         })
       );
-    },
-  }),
+    }
+  })
 ];
 
 const formSchema = toTypedSchema(
@@ -133,7 +132,7 @@ const formSchema = toTypedSchema(
     website: z.string().min(2).max(50),
     managerName: z.string().min(2).max(20),
     managerPhone: z.string().min(2).max(12),
-    managerEmail: z.string().min(2),
+    managerEmail: z.string().min(2)
   })
 );
 const form = useForm({
@@ -149,15 +148,15 @@ const form = useForm({
     website: editCustomerData?.value.website,
     managerName: editCustomerData?.value.managerName,
     managerEmail: editCustomerData?.value.managerEmail,
-    managerPhone: editCustomerData?.value.managerPhone,
-  },
+    managerPhone: editCustomerData?.value.managerPhone
+  }
 });
 
 const onSubmit = form.handleSubmit(async (values) => {
   const newCustomerData = {
     id: editCustomerData.value.id,
     passengers: [],
-    ...values,
+    ...values
   };
   isLoading.value = true;
   await editCustomer(newCustomerData).then(() => {
@@ -203,7 +202,7 @@ const toggleAddPassengerForm = () => {
                       :items="[
                         { label: 'Ativo', value: 'active' },
                         { label: 'Inativo', value: 'inactive' },
-                        { label: 'Pendente', value: 'pending' },
+                        { label: 'Pendente', value: 'pending' }
                       ]"
                       :label="'Selecione o Status'"
                     />
@@ -321,20 +320,20 @@ const toggleAddPassengerForm = () => {
                         :items="[
                           {
                             label: 'Felipe Vegners',
-                            value: 'Felipe Vegners',
+                            value: 'Felipe Vegners'
                           },
                           {
                             label: 'Humberto Pansica',
-                            value: 'Humberto Pansica',
+                            value: 'Humberto Pansica'
                           },
                           {
                             label: 'Maria dos Santos',
-                            value: 'Maria dos Santos',
+                            value: 'Maria dos Santos'
                           },
                           {
                             label: 'João da Silva',
-                            value: 'João da Silva',
-                          },
+                            value: 'João da Silva'
+                          }
                         ]"
                         :label="'Selecione o gerente'"
                       />
@@ -396,10 +395,10 @@ const toggleAddPassengerForm = () => {
             </section>
             <h2 class="mb-6 font-bold text-xl">Pendências do Cliente</h2>
             <section
-              v-if="editCustomerData.status === 'pending'"
-              class="mb-6 p-4 rounded-md bg-white"
+              v-if="editCustomerData.status !== 'pending'"
+              class="mb-6 p-6 flex items-center justify-center rounded-md bg-white"
             >
-              <p>Nenhuma pendência encontrada</p>
+              <p class="text-zinc-400">Nenhuma pendência encontrada</p>
             </section>
           </CardContent>
           <CardFooter>

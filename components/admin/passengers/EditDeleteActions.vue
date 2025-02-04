@@ -4,16 +4,12 @@ defineProps<{
   data: any;
 }>();
 import { Edit, Trash, LoaderCircle } from "lucide-vue-next";
-import { ref } from "vue";
 import { usePassengerStore } from "@/stores/admin/passengers.store";
+import { storeToRefs } from "pinia";
 
 const passengerStore = usePassengerStore();
-
-const viewDeleteModal = ref<boolean>(false);
-
-const toggleDeleteModal = () => {
-  viewDeleteModal.value = !viewDeleteModal.value;
-};
+const { toggleDeleteModal } = passengerStore;
+const { loading, viewDeleteModal } = storeToRefs(passengerStore);
 </script>
 <template>
   <div class="flex gap-2">
