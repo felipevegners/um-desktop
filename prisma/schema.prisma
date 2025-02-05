@@ -52,5 +52,7 @@ model Passengers {
   passengerId  String    @db.ObjectId
   position     String
   restrictions Json
+  status       String
+  active       Boolean       
   history      Json
 }

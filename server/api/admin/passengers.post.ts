@@ -2,8 +2,17 @@ import { prisma } from "~/utils/prisma";
 
 export default defineEventHandler(async (event) => {
   const payload = await readBody(event);
-  const { name, email, phone, position, restrictions, history, customerId } =
-    payload;
+  const {
+    name,
+    email,
+    phone,
+    position,
+    status,
+    active,
+    restrictions,
+    history,
+    customerId,
+  } = payload;
   const newPassenger = await prisma.passengers.create({
     data: {
       name,
@@ -11,13 +20,15 @@ export default defineEventHandler(async (event) => {
       phone,
       position,
       restrictions,
+      status,
+      active,
       history,
       company: {
         connect: {
-          id: customerId
-        }
-      }
-    }
+          id: customerId,
+        },
+      },
+    },
   });
 
   return newPassenger;
