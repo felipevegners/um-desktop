@@ -79,11 +79,11 @@ const passengerColumns = [
     header: () => h("div", { class: "text-left" }, "Telefone"),
     cell: ({ row }) => h("div", { class: "lowercase" }, row.getValue("phone"))
   }),
-  columnHelper.accessor("restrictions", {
-    header: () => h("div", { class: "text-left" }, "Restrições"),
-    cell: ({ row }) =>
-      h("div", { class: "lowercase" }, row.getValue("restrictions"))
-  }),
+  // columnHelper.accessor("restrictions", {
+  //   header: () => h("div", { class: "text-left" }, "Restrições"),
+  //   cell: ({ row }) =>
+  //     h("div", { class: "lowercase" }, row.getValue("restrictions"))
+  // }),
   columnHelper.accessor("status", {
     header: () => h("div", { class: "text-left" }, "Situação"),
     cell: ({ row }) => {
