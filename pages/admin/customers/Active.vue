@@ -97,11 +97,10 @@ const onSubmit = form.handleSubmit(async (values) => {
     phone,
     website,
     logo: "/",
-    adminId: "",
+    adminId: "679b712a87c5c92d2c6cb3fe",
     managerName,
     managerPhone,
-    managerEmail,
-    passengers: []
+    managerEmail
   };
   await createNewCustomerAction(newCustomerData)
     .then((res) => {
@@ -378,7 +377,28 @@ const toggleShowAddForm = () => {
                   <FormItem>
                     <FormLabel>Nome</FormLabel>
                     <FormControl>
-                      <FormSelect v-bind="componentField" />
+                      <FormSelect
+                        v-bind="componentField"
+                        :items="[
+                          {
+                            label: 'Felipe Vegners',
+                            value: 'Felipe Vegners'
+                          },
+                          {
+                            label: 'Humberto Pansica',
+                            value: 'Humberto Pansica'
+                          },
+                          {
+                            label: 'Maria dos Santos',
+                            value: 'Maria dos Santos'
+                          },
+                          {
+                            label: 'João da Silva',
+                            value: 'João da Silva'
+                          }
+                        ]"
+                        :label="'Selecione o gerente'"
+                      />
                     </FormControl>
                   </FormItem>
                 </FormField>
