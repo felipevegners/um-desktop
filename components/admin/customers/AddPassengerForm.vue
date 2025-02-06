@@ -8,7 +8,9 @@ import { usePassengerStore } from "~/stores/admin/passengers.store";
 import FormSelect from "@/components/shared/FormSelect.vue";
 import CheckBoxGroup from "@/components/shared/CheckBoxGroup.vue";
 
-import { toast } from "@/components/ui/toast";
+import { useToast } from "@/components/ui/toast/use-toast";
+
+const { toast } = useToast();
 
 const store = usePassengerStore();
 const { createNewPassengerAction } = store;
@@ -22,28 +24,28 @@ const props = defineProps<{
 const restrictions = [
   {
     id: "week",
-    label: "Semana",
+    label: "Semana"
   },
   {
     id: "weekend",
-    label: "Final de Semana",
+    label: "Final de Semana"
   },
   {
     id: "holiday",
-    label: "Feriados",
+    label: "Feriados"
   },
   {
     id: "daylight",
-    label: "Diurno",
+    label: "Diurno"
   },
   {
     id: "night",
-    label: "Noturno",
+    label: "Noturno"
   },
   {
     id: "vacations",
-    label: "Férias",
-  },
+    label: "Férias"
+  }
 ] as const;
 
 const emit = defineEmits(["show-form", "fetch-customer"]);
@@ -61,29 +63,30 @@ const passengersformSchema = toTypedSchema(
     restrictions: z
       .array(z.string())
       .refine((value) => value.some((item) => item), {
-        message: "You have to select at least one item.",
+        message: "You have to select at least one item."
       }),
-    status: z.string().min(2).max(50),
+    status: z.string().min(2).max(50)
   })
 );
 
 const passengersForm = useForm({
   validationSchema: passengersformSchema,
   initialValues: {
-    restrictions: ["week", "weekend"],
-  },
+    restrictions: ["week", "weekend"]
+  }
 });
 
 const onSubmitPassengers = passengersForm.handleSubmit(async (values) => {
-  console.log("values -> ", values);
-  toast({
-    title: "You submitted the following values:",
-    description: h(
-      "pre",
-      { class: "mt-2 w-[340px] rounded-md bg-slate-950 p-4" },
-      h("code", { class: "text-white" }, JSON.stringify(values, null, 2))
-    ),
-  });
+  // console.log("values -> ", values);
+  // toast({
+  //   variant: "default",
+  //   title: "You submitted the following values:",
+  //   description: h(
+  //     "pre",
+  //     { class: "mt-2 w-[340px] rounded-md bg-slate-950 p-4" },
+  //     h("code", { class: "text-white" }, JSON.stringify(values, null, 2))
+  //   )
+  // });
   const newPassengerData = {
     name: values.passengerName,
     email: values.passengerEmail,
@@ -93,19 +96,20 @@ const onSubmitPassengers = passengersForm.handleSubmit(async (values) => {
     customerId: props.customerId,
     history: [],
     active: true,
-    status: values.status,
+    status: values.status
   };
 
   try {
-    await createNewPassengerAction(newPassengerData).then(() => {
-      toast({
-        title: "Passageiro adicionado com sucesso!",
-      });
-    });
+    await createNewPassengerAction(newPassengerData);
   } catch (error) {
     console.log("Erro no envio do passageiro -> ", error);
   } finally {
     emit("fetch-customer");
+    toast({
+      title: "Feito!",
+      class: "bg-green-600 border-0 text-white text-2xl",
+      description: "Passageiro adicionado com sucesso."
+    });
     emit("show-form");
   }
 });
@@ -113,10 +117,8 @@ const onSubmitPassengers = passengersForm.handleSubmit(async (values) => {
 <template>
   <div>
     <form @submit="onSubmitPassengers">
-      <div
-        class="mb-8 p-8 flex items-center justify-between gap-4 bg-zinc-300 rounded-md"
-      >
-        <div class="grid grid-cols-4 gap-4 items-center">
+      <div class="mb-8 p-8 gap-4 bg-zinc-300 rounded-md">
+        <div class="grid grid-cols-5 gap-4 items-center">
           <FormField v-slot="{ componentField }" name="passengerName">
             <FormItem class="relative">
               <FormLabel>Nome do Passageiro</FormLabel>
@@ -158,7 +160,7 @@ const onSubmitPassengers = passengersForm.handleSubmit(async (values) => {
           </FormField>
           <FormField v-slot="{ componentField }" name="department">
             <FormItem>
-              <FormLabel>Centro de Custo / Departamento</FormLabel>
+              <FormLabel>CC / Depto.</FormLabel>
               <FormControl>
                 <Input
                   type="text"
@@ -176,12 +178,12 @@ const onSubmitPassengers = passengersForm.handleSubmit(async (values) => {
                 <FormSelect
                   v-bind="componentField"
                   :items="[
-                    { label: 'Presidente', value: 'president' },
-                    { label: 'Diretor', value: 'director' },
-                    { label: 'Gerente', value: 'manager' },
-                    { label: 'Coordenador', value: 'coordinator' },
-                    { label: 'Visitante', value: 'visitor' },
-                    { label: 'Outro', value: 'others' },
+                    { label: 'Presidente', value: 'presidente' },
+                    { label: 'Diretor', value: 'diretor' },
+                    { label: 'Gerente', value: 'gerente' },
+                    { label: 'Coordenador', value: 'coordenador' },
+                    { label: 'Visitante', value: 'visitante' },
+                    { label: 'Outro', value: 'outros' }
                   ]"
                   :label="'Selecione um cargo'"
                 />
@@ -198,44 +200,27 @@ const onSubmitPassengers = passengersForm.handleSubmit(async (values) => {
                     { label: 'Ativo', value: 'active' },
                     { label: 'Inativo', value: 'inactive' },
                     { label: 'Férias', value: 'vacation' },
-                    { label: 'Desligado', value: 'disabled' },
+                    { label: 'Desligado', value: 'disabled' }
                   ]"
                   :label="'Selecione a situação'"
                 />
               </FormControl>
             </FormItem>
           </FormField>
-          <FormField v-slot="{ componentField }" name="restrictions">
+          <FormField
+            v-slot="{ componentField }"
+            name="restrictionssssss"
+            class="barretos"
+          >
             <CheckBoxGroup v-bind="componentField" />
           </FormField>
-          <!-- <FormField
-            v-for="item in restrictions"
-            v-slot="{ value, handleChange }"
-            :key="item.id"
-            type="checkbox"
-            :value="item.id"
-            :unchecked-value="false"
-            name="restrictions"
-          >
-            <FormItem class="flex flex-row items-start space-x-3 space-y-0">
-              <FormControl>
-                <Checkbox
-                  :checked="value.includes(item.id)"
-                  @update:checked="handleChange"
-                />
-              </FormControl>
-              <FormLabel class="font-normal">
-                {{ item.label }}
-              </FormLabel>
-            </FormItem>
-          </FormField> -->
         </div>
-        <div class="flex items-center justify-center gap-4">
+        <div class="mt-4 py-4 flex gap-4">
           <Button type="submit">
             <LoaderCircle v-if="store.loading" class="w-10 h-10 animate-spin" />
             Salvar</Button
           >
-          <Button variant="outline" @click.prevent="showPassengerForm"
+          <Button variant="ghost" @click.prevent="showPassengerForm"
             >Cancelar</Button
           >
         </div>

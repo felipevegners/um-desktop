@@ -1,7 +1,7 @@
 <script setup lang="ts">
 definePageMeta({
   layout: "admin",
-  title: "Editar cliente",
+  title: "Editar cliente"
 });
 
 import { ref, h } from "vue";
@@ -20,7 +20,7 @@ import {
   ArrowUpDown,
   Plus,
   LoaderCircle,
-  Proportions,
+  Proportions
 } from "lucide-vue-next";
 import Separator from "~/components/ui/separator/Separator.vue";
 import AddPassengerForm from "~/components/admin/customers/AddPassengerForm.vue";
@@ -59,25 +59,30 @@ const passengerColumns = [
         Button,
         {
           variant: "ghost",
-          onClick: () => column.toggleSorting(column.getIsSorted() === "asc"),
+          onClick: () => column.toggleSorting(column.getIsSorted() === "asc")
         },
         () => ["Nome", h(ArrowUpDown, { class: "ml-2 h-4 w-4" })]
       );
     },
-    cell: ({ row }) => h("div", { class: "capitalize" }, row.getValue("name")),
+    cell: ({ row }) => h("div", { class: "capitalize" }, row.getValue("name"))
   }),
   columnHelper.accessor("position", {
-    header: () => h("div", { class: "text-left" }, "Posição"),
+    header: () => h("div", { class: "text-left" }, "Cargo"),
     cell: ({ row }) =>
-      h("div", { class: "capitalize" }, row.getValue("position")),
-  }),
-  columnHelper.accessor("phone", {
-    header: () => h("div", { class: "text-left" }, "Telefone"),
-    cell: ({ row }) => h("div", { class: "lowercase" }, row.getValue("phone")),
+      h("div", { class: "capitalize" }, row.getValue("position"))
   }),
   columnHelper.accessor("email", {
     header: () => h("div", { class: "text-left" }, "E-mail"),
-    cell: ({ row }) => h("div", { class: "lowercase" }, row.getValue("email")),
+    cell: ({ row }) => h("div", { class: "lowercase" }, row.getValue("email"))
+  }),
+  columnHelper.accessor("phone", {
+    header: () => h("div", { class: "text-left" }, "Telefone"),
+    cell: ({ row }) => h("div", { class: "lowercase" }, row.getValue("phone"))
+  }),
+  columnHelper.accessor("restrictions", {
+    header: () => h("div", { class: "text-left" }, "Restrições"),
+    cell: ({ row }) =>
+      h("div", { class: "lowercase" }, row.getValue("restrictions"))
   }),
   columnHelper.accessor("status", {
     header: () => h("div", { class: "text-left" }, "Situação"),
@@ -92,7 +97,7 @@ const passengerColumns = [
               : status === "inactive"
               ? "bg-red-700"
               : "bg-yellow-500"
-          }`,
+          }`
         },
         status === "active"
           ? "Ativo"
@@ -100,7 +105,7 @@ const passengerColumns = [
           ? "Inativo"
           : "Pendente"
       );
-    },
+    }
   }),
   columnHelper.display({
     id: "actions",
@@ -113,11 +118,11 @@ const passengerColumns = [
         { class: "relative text-left" },
         h(EditDeleteActions, {
           data: passengerData,
-          remove: deletePassenger,
+          remove: deletePassenger
         })
       );
-    },
-  }),
+    }
+  })
 ];
 
 const formSchema = toTypedSchema(
@@ -132,7 +137,7 @@ const formSchema = toTypedSchema(
     website: z.string().min(2).max(50),
     managerName: z.string().min(2).max(20),
     managerPhone: z.string().min(2).max(12),
-    managerEmail: z.string().min(2),
+    managerEmail: z.string().min(2)
   })
 );
 const form = useForm({
@@ -148,14 +153,14 @@ const form = useForm({
     website: editCustomerData?.value.website,
     managerName: editCustomerData?.value.managerName,
     managerEmail: editCustomerData?.value.managerEmail,
-    managerPhone: editCustomerData?.value.managerPhone,
-  },
+    managerPhone: editCustomerData?.value.managerPhone
+  }
 });
 
 const onSubmit = form.handleSubmit(async (values) => {
   const newCustomerData = {
     id: editCustomerData.value.id,
-    ...values,
+    ...values
   };
   isLoading.value = true;
   await editCustomer(newCustomerData).then(() => {
@@ -201,7 +206,7 @@ const toggleAddPassengerForm = () => {
                       :items="[
                         { label: 'Ativo', value: 'active' },
                         { label: 'Inativo', value: 'inactive' },
-                        { label: 'Pendente', value: 'pending' },
+                        { label: 'Pendente', value: 'pending' }
                       ]"
                       :label="'Selecione o Status'"
                     />
@@ -319,20 +324,20 @@ const toggleAddPassengerForm = () => {
                         :items="[
                           {
                             label: 'Felipe Vegners',
-                            value: 'Felipe Vegners',
+                            value: 'Felipe Vegners'
                           },
                           {
                             label: 'Humberto Pansica',
-                            value: 'Humberto Pansica',
+                            value: 'Humberto Pansica'
                           },
                           {
                             label: 'Maria dos Santos',
-                            value: 'Maria dos Santos',
+                            value: 'Maria dos Santos'
                           },
                           {
                             label: 'João da Silva',
-                            value: 'João da Silva',
-                          },
+                            value: 'João da Silva'
+                          }
                         ]"
                         :label="'Selecione o gerente'"
                       />

@@ -24,12 +24,20 @@ export const sideMenuData = {
       isActive: false,
       items: [
         {
-          title: "Base de Clientes",
+          title: "Ativos",
           url: "/admin/customers/active"
         },
         {
-          title: "Passageiros",
+          title: "Inativos",
+          url: "/admin/customers/inactive"
+        },
+        {
+          title: "Passageiros Ativos",
           url: "admin/passengers/active"
+        },
+        {
+          title: "Passageiros Inativos",
+          url: "admin/passengers/inactive"
         }
       ]
     },
