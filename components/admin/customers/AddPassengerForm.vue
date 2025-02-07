@@ -9,43 +9,44 @@ import FormSelect from "@/components/shared/FormSelect.vue";
 import CheckBoxGroup from "@/components/shared/CheckBoxGroup.vue";
 
 import { useToast } from "@/components/ui/toast/use-toast";
+import { storeToRefs } from "pinia";
 
 const { toast } = useToast();
 
 const store = usePassengerStore();
-const { createNewPassengerAction } = store;
-
-// const isLoading = ref<boolean>(loading);
+const { createNewPassengerAction, updatePassengerAction } = store;
+const { loading, passenger, isEditing } = storeToRefs(store);
 
 const props = defineProps<{
   customerId: string;
 }>();
 
+// Passar para uma colletcion no banco
 const restrictions = [
   {
     id: "week",
-    label: "Semana"
+    label: "Semana",
   },
   {
     id: "weekend",
-    label: "Final de Semana"
+    label: "Final de Semana",
   },
   {
     id: "holiday",
-    label: "Feriados"
+    label: "Feriados",
   },
   {
     id: "daylight",
-    label: "Diurno"
+    label: "Diurno",
   },
   {
     id: "night",
-    label: "Noturno"
+    label: "Noturno",
   },
   {
     id: "vacations",
-    label: "Férias"
-  }
+    label: "Férias",
+  },
 ] as const;
 
 const emit = defineEmits(["show-form", "fetch-customer"]);
@@ -55,62 +56,68 @@ const showPassengerForm = () => {
 
 const passengersformSchema = toTypedSchema(
   z.object({
-    passengerName: z.string().min(2).max(50),
-    passengerEmail: z.string().min(2).max(50),
-    passengerPhone: z.string().min(2).max(50),
-    position: z.string().min(2).max(50),
+    name: z.string().min(2).max(50),
+    email: z.string().min(2).max(50),
+    phone: z.string().min(2).max(50),
     department: z.string().min(2).max(50),
+    position: z.string().min(2).max(50),
+    status: z.string().min(2).max(50),
     restrictions: z
       .array(z.string())
       .refine((value) => value.some((item) => item), {
-        message: "You have to select at least one item."
+        message: "Selecione ao menos uma restrição!",
       }),
-    status: z.string().min(2).max(50)
   })
 );
 
 const passengersForm = useForm({
   validationSchema: passengersformSchema,
-  initialValues: {
-    restrictions: ["week", "weekend"]
-  }
+  initialValues: passenger ? passenger : { restrictions: ["week"] },
 });
 
 const onSubmitPassengers = passengersForm.handleSubmit(async (values) => {
-  // console.log("values -> ", values);
-  // toast({
-  //   variant: "default",
-  //   title: "You submitted the following values:",
-  //   description: h(
-  //     "pre",
-  //     { class: "mt-2 w-[340px] rounded-md bg-slate-950 p-4" },
-  //     h("code", { class: "text-white" }, JSON.stringify(values, null, 2))
-  //   )
-  // });
   const newPassengerData = {
-    name: values.passengerName,
-    email: values.passengerEmail,
-    phone: values.passengerPhone,
+    id: passenger?.value.id,
+    name: values.name,
+    email: values.email,
+    phone: values.phone,
+    department: values.department,
     position: values.position,
+    status: values.status,
     restrictions: values.restrictions,
     customerId: props.customerId,
-    history: [],
     active: true,
-    status: values.status
+    history: [],
   };
 
-  try {
-    await createNewPassengerAction(newPassengerData);
-  } catch (error) {
-    console.log("Erro no envio do passageiro -> ", error);
-  } finally {
-    emit("fetch-customer");
-    toast({
-      title: "Feito!",
-      class: "bg-green-600 border-0 text-white text-2xl",
-      description: "Passageiro adicionado com sucesso."
-    });
-    emit("show-form");
+  if (isEditing) {
+    try {
+      await updatePassengerAction(newPassengerData);
+    } catch (error) {
+      console.log("Erro na atualização do passageiro -> ", error);
+    } finally {
+      emit("fetch-customer");
+      toast({
+        title: "Feito!",
+        class: "bg-green-600 border-0 text-white text-2xl",
+        description: "Passageiro atualizado com sucesso!",
+      });
+      emit("show-form");
+    }
+  } else {
+    try {
+      await createNewPassengerAction(newPassengerData);
+    } catch (error) {
+      console.log("Erro no envio do passageiro -> ", error);
+    } finally {
+      emit("fetch-customer");
+      toast({
+        title: "Feito!",
+        class: "bg-green-600 border-0 text-white text-2xl",
+        description: "Passageiro adicionado com sucesso!",
+      });
+      emit("show-form");
+    }
   }
 });
 </script>
@@ -119,7 +126,7 @@ const onSubmitPassengers = passengersForm.handleSubmit(async (values) => {
     <form @submit="onSubmitPassengers">
       <div class="mb-8 p-8 gap-4 bg-zinc-300 rounded-md">
         <div class="grid grid-cols-5 gap-4 items-center">
-          <FormField v-slot="{ componentField }" name="passengerName">
+          <FormField v-slot="{ componentField }" name="name">
             <FormItem class="relative">
               <FormLabel>Nome do Passageiro</FormLabel>
               <FormControl>
@@ -132,7 +139,7 @@ const onSubmitPassengers = passengersForm.handleSubmit(async (values) => {
               <!-- <FormMessage class="absolute" /> -->
             </FormItem>
           </FormField>
-          <FormField v-slot="{ componentField }" name="passengerEmail">
+          <FormField v-slot="{ componentField }" name="email">
             <FormItem class="relative">
               <FormLabel>E-mail</FormLabel>
               <FormControl>
@@ -145,7 +152,7 @@ const onSubmitPassengers = passengersForm.handleSubmit(async (values) => {
               <!-- <FormMessage class="absolute" /> -->
             </FormItem>
           </FormField>
-          <FormField v-slot="{ componentField }" name="passengerPhone">
+          <FormField v-slot="{ componentField }" name="phone">
             <FormItem>
               <FormLabel>Celular</FormLabel>
               <FormControl>
@@ -183,7 +190,7 @@ const onSubmitPassengers = passengersForm.handleSubmit(async (values) => {
                     { label: 'Gerente', value: 'gerente' },
                     { label: 'Coordenador', value: 'coordenador' },
                     { label: 'Visitante', value: 'visitante' },
-                    { label: 'Outro', value: 'outros' }
+                    { label: 'Outro', value: 'outros' },
                   ]"
                   :label="'Selecione um cargo'"
                 />
@@ -200,7 +207,7 @@ const onSubmitPassengers = passengersForm.handleSubmit(async (values) => {
                     { label: 'Ativo', value: 'active' },
                     { label: 'Inativo', value: 'inactive' },
                     { label: 'Férias', value: 'vacation' },
-                    { label: 'Desligado', value: 'disabled' }
+                    { label: 'Desligado', value: 'disabled' },
                   ]"
                   :label="'Selecione a situação'"
                 />

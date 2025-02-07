@@ -50,9 +50,10 @@ model Passengers {
   phone        String
   company      Customers @relation(fields: [passengerId], references: [id])
   passengerId  String    @db.ObjectId
+  department   String?
   position     String
   restrictions Json
   status       String
-  active       Boolean       
+  active       Boolean     
   history      Json
 }

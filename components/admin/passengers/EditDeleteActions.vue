@@ -1,20 +1,35 @@
 <script setup lang="ts">
-defineProps<{
+const props = defineProps<{
   remove: any;
   data: any;
+  formControl: Function;
 }>();
 import { Edit, Trash, LoaderCircle } from "lucide-vue-next";
 import { usePassengerStore } from "@/stores/admin/passengers.store";
 import { storeToRefs } from "pinia";
 
 const passengerStore = usePassengerStore();
-const { toggleDeleteModal } = passengerStore;
+const { toggleDeleteModal, getPassengerById } = passengerStore;
 const { loading, viewDeleteModal } = storeToRefs(passengerStore);
+
+const handleEditPassenger = async (passId) => {
+  try {
+    await getPassengerById(passId);
+  } catch (error) {
+    console.log(error);
+  } finally {
+    props.formControl();
+  }
+};
 </script>
 <template>
   <div class="flex gap-2">
-    <Button variant="ghost" class="p-1" @click="">
-      <Edit class="w-4 h-4 text-zinc-500" />
+    <Button
+      variant="ghost"
+      class="p-1"
+      @click.prevent="handleEditPassenger(data.id)"
+    >
+      <Edit class="w-4 h-4 text-blue-700" />
     </Button>
     <Button variant="ghost" class="p-1" @click.prevent="toggleDeleteModal">
       <Trash class="w-4 h-4 text-red-500" />

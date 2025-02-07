@@ -1,12 +1,15 @@
 import { defineStore } from "pinia";
 import {
   createPassenger,
-  deletePassenger
+  deletePassenger,
+  getPassenger,
+  updatePassenger,
 } from "~/server/services/admin/passengers";
 
 interface IPassengerState {
   passengers: any[];
   passenger: any;
+  isEditing: boolean;
   loading: boolean;
   viewDeleteModal: boolean;
 }
@@ -16,17 +19,46 @@ export const usePassengerStore = defineStore("passengers", {
     return {
       passengers: [],
       passenger: {},
+      isEditing: false,
       loading: false,
-      viewDeleteModal: false
+      viewDeleteModal: false,
     };
   },
   actions: {
+    async getPassengerById(passengerId: string) {
+      try {
+        this.loading = true;
+        this.isEditing = true;
+        this.passenger = await getPassenger(passengerId);
+      } catch (error) {
+        console.log("Store Error Get Passenger By Id -> ", error);
+      } finally {
+        setTimeout(() => {
+          this.loading = false;
+        }, 2000);
+      }
+    },
     async createNewPassengerAction(passengerData: any) {
       try {
         this.loading = true;
+        this.isEditing = false;
         await createPassenger(passengerData);
       } catch (error) {
         console.log("Store Error Create Passenger -> ", error);
+      } finally {
+        setTimeout(() => {
+          this.loading = false;
+        }, 2000);
+      }
+    },
+
+    async updatePassengerAction(passengerData: any) {
+      try {
+        this.loading = true;
+        this.isEditing = false;
+        await updatePassenger(passengerData);
+      } catch (error) {
+        console.log("Store Error Update Passenger -> ", error);
       } finally {
         setTimeout(() => {
           this.loading = false;
@@ -51,6 +83,6 @@ export const usePassengerStore = defineStore("passengers", {
     },
     toggleDeleteModal() {
       this.viewDeleteModal = !this.viewDeleteModal;
-    }
-  }
+    },
+  },
 });
