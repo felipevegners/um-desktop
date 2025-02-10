@@ -22,32 +22,32 @@ const props = defineProps<{
 }>();
 
 // Passar para uma colletcion no banco
-const restrictions = [
-  {
-    id: "week",
-    label: "Semana",
-  },
-  {
-    id: "weekend",
-    label: "Final de Semana",
-  },
-  {
-    id: "holiday",
-    label: "Feriados",
-  },
-  {
-    id: "daylight",
-    label: "Diurno",
-  },
-  {
-    id: "night",
-    label: "Noturno",
-  },
-  {
-    id: "vacations",
-    label: "Férias",
-  },
-] as const;
+// const restrictions = [
+//   {
+//     id: "week",
+//     label: "Semana",
+//   },
+//   {
+//     id: "weekend",
+//     label: "Final de Semana",
+//   },
+//   {
+//     id: "holiday",
+//     label: "Feriados",
+//   },
+//   {
+//     id: "daylight",
+//     label: "Diurno",
+//   },
+//   {
+//     id: "night",
+//     label: "Noturno",
+//   },
+//   {
+//     id: "vacations",
+//     label: "Férias",
+//   },
+// ] as const;
 
 const emit = defineEmits(["show-form", "fetch-customer"]);
 const showPassengerForm = () => {
@@ -72,7 +72,7 @@ const passengersformSchema = toTypedSchema(
 
 const passengersForm = useForm({
   validationSchema: passengersformSchema,
-  initialValues: passenger ? passenger : { restrictions: ["week"] },
+  initialValues: passenger ? (passenger as any) : { restrictions: ["week"] },
 });
 
 const onSubmitPassengers = passengersForm.handleSubmit(async (values) => {
@@ -94,13 +94,13 @@ const onSubmitPassengers = passengersForm.handleSubmit(async (values) => {
     try {
       await updatePassengerAction(newPassengerData);
     } catch (error) {
-      console.log("Erro na atualização do passageiro -> ", error);
+      console.log("Erro na atualização do usuário -> ", error);
     } finally {
       emit("fetch-customer");
       toast({
         title: "Feito!",
         class: "bg-green-600 border-0 text-white text-2xl",
-        description: "Passageiro atualizado com sucesso!",
+        description: "Usuário atualizado com sucesso!",
       });
       emit("show-form");
     }
@@ -108,13 +108,13 @@ const onSubmitPassengers = passengersForm.handleSubmit(async (values) => {
     try {
       await createNewPassengerAction(newPassengerData);
     } catch (error) {
-      console.log("Erro no envio do passageiro -> ", error);
+      console.log("Erro no envio do usuário -> ", error);
     } finally {
       emit("fetch-customer");
       toast({
         title: "Feito!",
         class: "bg-green-600 border-0 text-white text-2xl",
-        description: "Passageiro adicionado com sucesso!",
+        description: "Usuário adicionado com sucesso!",
       });
       emit("show-form");
     }
@@ -128,11 +128,11 @@ const onSubmitPassengers = passengersForm.handleSubmit(async (values) => {
         <div class="grid grid-cols-5 gap-4 items-center">
           <FormField v-slot="{ componentField }" name="name">
             <FormItem class="relative">
-              <FormLabel>Nome do Passageiro</FormLabel>
+              <FormLabel>Nome do Usuário</FormLabel>
               <FormControl>
                 <Input
                   type="text"
-                  placeholder="Nome do passageiro"
+                  placeholder="Nome do usuário"
                   v-bind="componentField"
                 />
               </FormControl>
@@ -145,7 +145,7 @@ const onSubmitPassengers = passengersForm.handleSubmit(async (values) => {
               <FormControl>
                 <Input
                   type="text"
-                  placeholder="passageiro@exemplo.com.br"
+                  placeholder="usuario@exemplo.com.br"
                   v-bind="componentField"
                 />
               </FormControl>

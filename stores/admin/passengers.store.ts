@@ -26,6 +26,7 @@ export const usePassengerStore = defineStore("passengers", {
   },
   actions: {
     async getPassengerById(passengerId: string) {
+      console.log("Chamou a store");
       try {
         this.loading = true;
         this.isEditing = true;

@@ -114,7 +114,7 @@ const passengerColumns = [
   columnHelper.accessor("restrictions", {
     header: () => h("div", { class: "text-left" }, "Restrições"),
     cell: ({ row }) =>
-      row.getValue("restrictions").map((item) => {
+      row.getValue<any>("restrictions").map((item: string) => {
         return h("div", { class: "lowercase" }, item);
       }),
   }),
@@ -380,15 +380,13 @@ const onSubmit = form.handleSubmit(async (values) => {
             </div>
             <Separator class="my-8 bg-zinc-300" />
             <div class="mb-6 flex">
-              <h2 class="mb-6 mr-6 font-bold text-xl">
-                Passageiros Cadastrados
-              </h2>
+              <h2 class="mb-6 mr-6 font-bold text-xl">Usuários Cadastrados</h2>
               <Button
                 type="button"
                 class="flex items-center justify-center"
                 @click="toggleAddPassengerForm"
               >
-                <Plus class="w-4 h-4" /> Adicionar passageiro
+                <Plus class="w-4 h-4" /> Adicionar usuário
               </Button>
             </div>
             <section v-if="showAddPassengerForm">

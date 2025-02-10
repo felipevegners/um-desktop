@@ -4,28 +4,28 @@ import { Checkbox } from "@/components/ui/checkbox";
 const restrictions = [
   {
     id: "week",
-    label: "Semana"
+    label: "Semana",
   },
   {
     id: "weekend",
-    label: "Sáb/Dom"
+    label: "Sáb/Dom",
   },
   {
     id: "holiday",
-    label: "Feriados"
+    label: "Feriados",
   },
   {
     id: "daylight",
-    label: "Diurno"
+    label: "Diurno",
   },
   {
     id: "night",
-    label: "Noturno"
+    label: "Noturno",
   },
   {
     id: "vacations",
-    label: "Férias"
-  }
+    label: "Férias",
+  },
 ] as const;
 </script>
 
@@ -45,7 +45,7 @@ const restrictions = [
         <FormItem class="max-w-[100px] flex items-start space-x-2 space-y-0">
           <FormControl>
             <Checkbox
-              :checked="value.includes(item.id)"
+              :checked="value?.includes(item.id)"
               @update:checked="handleChange"
             />
           </FormControl>

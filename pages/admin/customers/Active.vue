@@ -1,12 +1,12 @@
 <script setup lang="ts">
 definePageMeta({
-  layout: "admin"
+  layout: "admin",
 });
 
 useHead({
-  title: "Clientes ativos"
+  title: "Clientes ativos",
 });
-import { onMounted, ref, watch } from "vue";
+import { onMounted, ref } from "vue";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -16,11 +16,9 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-  AlertDialogTrigger
 } from "@/components/ui/alert-dialog";
-import { Plus, LoaderCircle, Phone, CircleCheck } from "lucide-vue-next";
+import { Plus, LoaderCircle, CircleCheck } from "lucide-vue-next";
 import { Button } from "@/components/ui/button";
-import { Checkbox } from "@/components/ui/checkbox";
 import { createColumnHelper } from "@tanstack/vue-table";
 import { ArrowUpDown } from "lucide-vue-next";
 import { h } from "vue";
@@ -40,7 +38,7 @@ const {
   getCustomerByIdAction,
   createNewCustomerAction,
   deleteCustomerAction,
-  toggleDeleteModal
+  toggleDeleteModal,
 } = customerStore;
 const { customers, viewDeleteModal, customerToDelete, loading } =
   storeToRefs(customerStore);
@@ -62,12 +60,12 @@ const formSchema = toTypedSchema(
     website: z.string().min(2).max(50),
     managerName: z.string().min(2).max(20),
     managerPhone: z.string().min(2).max(12),
-    managerEmail: z.string().min(2)
+    managerEmail: z.string().min(2),
   })
 );
 
 const form = useForm({
-  validationSchema: formSchema
+  validationSchema: formSchema,
 });
 
 const onSubmit = form.handleSubmit(async (values) => {
@@ -83,7 +81,7 @@ const onSubmit = form.handleSubmit(async (values) => {
     website,
     managerName,
     managerPhone,
-    managerEmail
+    managerEmail,
   } = values;
   const newCustomerData = {
     status: "pendente",
@@ -92,7 +90,7 @@ const onSubmit = form.handleSubmit(async (values) => {
     address: {
       street,
       streetNumber,
-      zipcode
+      zipcode,
     },
     phone,
     website,
@@ -100,7 +98,7 @@ const onSubmit = form.handleSubmit(async (values) => {
     adminId: "679b712a87c5c92d2c6cb3fe",
     managerName,
     managerPhone,
-    managerEmail
+    managerEmail,
   };
   await createNewCustomerAction(newCustomerData)
     .then((res) => {
@@ -169,7 +167,7 @@ const columns = [
               : status === "inactive"
               ? "bg-red-700"
               : "bg-yellow-500"
-          }`
+          }`,
         },
         status === "active"
           ? "Ativo"
@@ -177,7 +175,7 @@ const columns = [
           ? "Inativo"
           : "Pendente"
       );
-    }
+    },
   }),
   columnHelper.accessor("name", {
     enablePinning: true,
@@ -186,22 +184,22 @@ const columns = [
         Button,
         {
           variant: "ghost",
-          onClick: () => column.toggleSorting(column.getIsSorted() === "asc")
+          onClick: () => column.toggleSorting(column.getIsSorted() === "asc"),
         },
         () => ["Nome", h(ArrowUpDown, { class: "ml-2 h-4 w-4" })]
       );
     },
-    cell: ({ row }) => h("div", { class: "capitalize" }, row.getValue("name"))
+    cell: ({ row }) => h("div", { class: "capitalize" }, row.getValue("name")),
   }),
   columnHelper.accessor("document", {
     header: () => h("div", { class: "text-left" }, "CNPJ"),
     cell: ({ row }) =>
-      h("div", { class: "lowercase" }, row.getValue("document"))
+      h("div", { class: "lowercase" }, row.getValue("document")),
   }),
   columnHelper.accessor("managerName", {
     header: () => h("div", { class: "text-left" }, "Gerente"),
     cell: ({ row }) =>
-      h("div", { class: "capitalize" }, row.getValue("managerName"))
+      h("div", { class: "capitalize" }, row.getValue("managerName")),
   }),
   columnHelper.accessor("managerEmail", {
     header: () => h("div", { class: "text-left" }, "E-mail Gerente"),
@@ -211,7 +209,7 @@ const columns = [
         { class: "text-left font-medium" },
         row.getValue("managerEmail")
       );
-    }
+    },
   }),
   columnHelper.display({
     id: "actions",
@@ -228,11 +226,11 @@ const columns = [
           deleteModalOpen,
           handleModal: handleDeleteModal,
           delete: handleDeleteCustomer,
-          onExpand: row.toggleExpanded
+          onExpand: row.toggleExpanded,
         })
       );
-    }
-  })
+    },
+  }),
 ];
 
 const toggleShowAddForm = () => {
@@ -264,19 +262,6 @@ const toggleShowAddForm = () => {
         <CardContent>
           <form @submit.prevent="onSubmit">
             <div class="mb-4 w-full grid grid-cols-2 gap-8">
-              <FormField v-slot="{ componentField }" name="name">
-                <FormItem>
-                  <FormLabel>Nome da empresa</FormLabel>
-                  <FormControl>
-                    <Input
-                      type="text"
-                      placeholder="Insira o nome"
-                      v-bind="componentField"
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              </FormField>
               <FormField v-slot="{ componentField }" name="document">
                 <FormItem>
                   <FormLabel>CNPJ</FormLabel>
@@ -290,6 +275,60 @@ const toggleShowAddForm = () => {
                   <FormMessage />
                 </FormItem>
               </FormField>
+              <FormField v-slot="{ componentField }" name="name">
+                <FormItem>
+                  <FormLabel>Razão Social</FormLabel>
+                  <FormControl>
+                    <Input
+                      type="text"
+                      placeholder="Insira o nome"
+                      v-bind="componentField"
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              </FormField>
+              <div class="p-6 rounded-md col-span-2 bg-zinc-100">
+                <h3 class="mb-4 font-bold">Centro de Custo / Área</h3>
+                <div class="grid grid-cols-3 gap-4 items-end">
+                  <FormField v-slot="{ componentField }" name="areaCode">
+                    <FormItem>
+                      <FormLabel>Código</FormLabel>
+                      <FormControl>
+                        <Input
+                          type="text"
+                          placeholder="Insira o código do CC se houver"
+                          v-bind="componentField"
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  </FormField>
+                  <FormField v-slot="{ componentField }" name="areaName">
+                    <FormItem>
+                      <FormLabel>Nome do CC ou Área</FormLabel>
+                      <FormControl>
+                        <Input
+                          type="text"
+                          placeholder="Insira o centro de custo ou área"
+                          v-bind="componentField"
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  </FormField>
+                </div>
+                <div class="mt-2 flex gap-2 items-center">
+                  <Button
+                    class="px-0"
+                    variant="ghost"
+                    @click.prevent="() => {}"
+                  >
+                    <Plus class="text-white bg-black h-4 w-4 rounded-full" />
+                    Adicionar
+                  </Button>
+                </div>
+              </div>
             </div>
             <div class="mb-4 w-full grid grid-cols-4 gap-8">
               <FormField v-slot="{ componentField }" name="street">
@@ -382,20 +421,20 @@ const toggleShowAddForm = () => {
                         :items="[
                           {
                             label: 'Felipe Vegners',
-                            value: 'Felipe Vegners'
+                            value: 'Felipe Vegners',
                           },
                           {
                             label: 'Humberto Pansica',
-                            value: 'Humberto Pansica'
+                            value: 'Humberto Pansica',
                           },
                           {
                             label: 'Maria dos Santos',
-                            value: 'Maria dos Santos'
+                            value: 'Maria dos Santos',
                           },
                           {
                             label: 'João da Silva',
-                            value: 'João da Silva'
-                          }
+                            value: 'João da Silva',
+                          },
                         ]"
                         :label="'Selecione o gerente'"
                       />

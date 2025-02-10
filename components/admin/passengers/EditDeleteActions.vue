@@ -12,7 +12,7 @@ const passengerStore = usePassengerStore();
 const { toggleDeleteModal, getPassengerById } = passengerStore;
 const { loading, viewDeleteModal } = storeToRefs(passengerStore);
 
-const handleEditPassenger = async (passId) => {
+const handleEditPassenger = async (passId: string) => {
   try {
     await getPassengerById(passId);
   } catch (error) {
