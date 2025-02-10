@@ -12,6 +12,7 @@ export default defineEventHandler(async (event) => {
     restrictions,
     history,
     customerId,
+    department,
   } = payload;
   const newPassenger = await prisma.passengers.create({
     data: {
@@ -23,6 +24,7 @@ export default defineEventHandler(async (event) => {
       status,
       active,
       history,
+      department,
       company: {
         connect: {
           id: customerId,

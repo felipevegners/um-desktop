@@ -2,9 +2,11 @@ import { prisma } from "~/utils/prisma";
 
 export default defineEventHandler(async (event) => {
   const payload = await readBody(event);
+  console.log("PAYLOAD ID -> ", payload.id);
   const {
     name,
     status,
+    fantasyName,
     document,
     street,
     streetNumber,
@@ -14,6 +16,8 @@ export default defineEventHandler(async (event) => {
     managerName,
     managerPhone,
     managerEmail,
+    ccAreas,
+    enabled,
   } = payload;
 
   if (payload.passengers) {
@@ -36,8 +40,9 @@ export default defineEventHandler(async (event) => {
         id: payload.id,
       },
       data: {
-        name,
         status,
+        name,
+        fantasyName,
         document,
         address: {
           street,
@@ -49,6 +54,8 @@ export default defineEventHandler(async (event) => {
         managerName,
         managerPhone,
         managerEmail,
+        ccAreas,
+        enabled,
       },
     });
     return updateCustomer;

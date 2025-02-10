@@ -2,6 +2,7 @@ import { prisma } from "~/utils/prisma";
 
 export default defineEventHandler(async (event) => {
   const payload = await readBody(event);
+  console.log("Passengers Payload -> ", payload);
   const {
     id,
     name,

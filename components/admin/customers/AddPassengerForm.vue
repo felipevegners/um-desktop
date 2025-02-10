@@ -90,7 +90,7 @@ const onSubmitPassengers = passengersForm.handleSubmit(async (values) => {
     history: [],
   };
 
-  if (isEditing) {
+  if (isEditing && passenger?.value.id) {
     try {
       await updatePassengerAction(newPassengerData);
     } catch (error) {

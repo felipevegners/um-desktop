@@ -36,6 +36,7 @@ export const usePassengerStore = defineStore("passengers", {
       } finally {
         setTimeout(() => {
           this.loading = false;
+          this.isEditing = false;
         }, 2000);
       }
     },

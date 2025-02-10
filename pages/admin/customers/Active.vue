@@ -6,7 +6,7 @@ definePageMeta({
 useHead({
   title: "Clientes ativos",
 });
-import { onMounted, ref } from "vue";
+import { onMounted, ref, h, reactive } from "vue";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -21,8 +21,8 @@ import { Plus, LoaderCircle, CircleCheck } from "lucide-vue-next";
 import { Button } from "@/components/ui/button";
 import { createColumnHelper } from "@tanstack/vue-table";
 import { ArrowUpDown } from "lucide-vue-next";
-import { h } from "vue";
 import DataTableActions from "@/components/admin/customers/DataTableActions.vue";
+import AddCCAreaForm from "@/components/admin/customers/AddCCAreaForm.vue";
 import DataTable from "@/components/shared/DataTable.vue";
 import FormSelect from "@/components/shared/FormSelect.vue";
 import { useForm } from "vee-validate";
@@ -49,10 +49,13 @@ const alertSuccess = ref<boolean>(false);
 const showAddForm = ref<boolean>(false);
 const deleteModalOpen = ref<boolean>(false);
 
+const ccAreas = reactive([{ areaCode: "", areaName: "" }]);
+
 const formSchema = toTypedSchema(
   z.object({
     name: z.string().min(2).max(50),
     document: z.string().min(2).max(50),
+    fantasyName: z.string().min(2).max(50),
     street: z.string().min(2).max(50),
     streetNumber: z.string().min(2).max(50),
     zipcode: z.string().min(2).max(50),
@@ -74,6 +77,7 @@ const onSubmit = form.handleSubmit(async (values) => {
   const {
     name,
     document,
+    fantasyName,
     street,
     streetNumber,
     zipcode,
@@ -83,10 +87,11 @@ const onSubmit = form.handleSubmit(async (values) => {
     managerPhone,
     managerEmail,
   } = values;
+
   const newCustomerData = {
-    status: "pendente",
     name,
     document,
+    fantasyName,
     address: {
       street,
       streetNumber,
@@ -99,9 +104,12 @@ const onSubmit = form.handleSubmit(async (values) => {
     managerName,
     managerPhone,
     managerEmail,
+    ccAreas: [...ccAreas],
+    status: "pending",
+    enabled: true,
   };
   await createNewCustomerAction(newCustomerData)
-    .then((res) => {
+    .then(() => {
       setTimeout(() => {
         isLoadingSend.value = false;
         alertSuccess.value = true;
@@ -134,26 +142,6 @@ const handleDeleteCustomer = async (id: string) => {
 };
 
 const columns = [
-  // columnHelper.display({
-  //   id: "select",
-  //   header: ({ table }) =>
-  //     h(Checkbox, {
-  //       checked:
-  //         table.getIsAllPageRowsSelected() ||
-  //         (table.getIsSomePageRowsSelected() && "indeterminate"),
-  //       "onUpdate:checked": (value) => table.toggleAllPageRowsSelected(!!value),
-  //       ariaLabel: "Select all",
-  //     }),
-  //   cell: ({ row }) => {
-  //     return h(Checkbox, {
-  //       checked: row.getIsSelected(),
-  //       "onUpdate:checked": (value) => row.toggleSelected(!!value),
-  //       ariaLabel: "Select row",
-  //     });
-  //   },
-  //   enableSorting: false,
-  //   enableHiding: false,
-  // }),
   columnHelper.accessor("status", {
     header: () => h("div", { class: "text-left" }, "Situação"),
     cell: ({ row }) => {
@@ -261,7 +249,7 @@ const toggleShowAddForm = () => {
         </CardHeader>
         <CardContent>
           <form @submit.prevent="onSubmit">
-            <div class="mb-4 w-full grid grid-cols-2 gap-8">
+            <div class="mb-4 w-full grid grid-cols-3 gap-8">
               <FormField v-slot="{ componentField }" name="document">
                 <FormItem>
                   <FormLabel>CNPJ</FormLabel>
@@ -288,47 +276,20 @@ const toggleShowAddForm = () => {
                   <FormMessage />
                 </FormItem>
               </FormField>
-              <div class="p-6 rounded-md col-span-2 bg-zinc-100">
-                <h3 class="mb-4 font-bold">Centro de Custo / Área</h3>
-                <div class="grid grid-cols-3 gap-4 items-end">
-                  <FormField v-slot="{ componentField }" name="areaCode">
-                    <FormItem>
-                      <FormLabel>Código</FormLabel>
-                      <FormControl>
-                        <Input
-                          type="text"
-                          placeholder="Insira o código do CC se houver"
-                          v-bind="componentField"
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  </FormField>
-                  <FormField v-slot="{ componentField }" name="areaName">
-                    <FormItem>
-                      <FormLabel>Nome do CC ou Área</FormLabel>
-                      <FormControl>
-                        <Input
-                          type="text"
-                          placeholder="Insira o centro de custo ou área"
-                          v-bind="componentField"
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  </FormField>
-                </div>
-                <div class="mt-2 flex gap-2 items-center">
-                  <Button
-                    class="px-0"
-                    variant="ghost"
-                    @click.prevent="() => {}"
-                  >
-                    <Plus class="text-white bg-black h-4 w-4 rounded-full" />
-                    Adicionar
-                  </Button>
-                </div>
-              </div>
+              <FormField v-slot="{ componentField }" name="fantasyName">
+                <FormItem>
+                  <FormLabel>Nome Fantasia</FormLabel>
+                  <FormControl>
+                    <Input
+                      type="text"
+                      placeholder="Insira o nome"
+                      v-bind="componentField"
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              </FormField>
+              <AddCCAreaForm v-model="ccAreas" class="col-span-3" />
             </div>
             <div class="mb-4 w-full grid grid-cols-4 gap-8">
               <FormField v-slot="{ componentField }" name="street">

@@ -20,7 +20,9 @@ import {
   ArrowUpDown,
   Plus,
   LoaderCircle,
-  Proportions,
+  Lock,
+  LockKeyhole,
+  LockKeyholeOpen,
 } from "lucide-vue-next";
 import Separator from "~/components/ui/separator/Separator.vue";
 import AddPassengerForm from "~/components/admin/customers/AddPassengerForm.vue";
@@ -142,6 +144,7 @@ const formSchema = toTypedSchema(
     status: z.string(),
     name: z.string().min(2).max(50),
     document: z.string().min(2).max(50),
+    fantasyName: z.string().min(2).max(50),
     street: z.string().min(2).max(50),
     streetNumber: z.string().min(2).max(50),
     zipcode: z.string().min(2).max(50),
@@ -158,6 +161,7 @@ const form = useForm({
     status: editCustomerData?.value.status,
     name: editCustomerData?.value.name,
     document: editCustomerData?.value.document,
+    fantasyName: editCustomerData?.value.fantasyName,
     street: editCustomerData?.value.address?.street,
     streetNumber: editCustomerData?.value.address?.streetNumber,
     zipcode: editCustomerData?.value.address?.zipcode,
@@ -171,7 +175,7 @@ const form = useForm({
 
 const onSubmit = form.handleSubmit(async (values) => {
   const newCustomerData = {
-    id: editCustomerData.value.id,
+    id: route?.params?.id,
     ...values,
   };
   isLoading.value = true;
@@ -195,19 +199,21 @@ const onSubmit = form.handleSubmit(async (values) => {
       <Card class="bg-zinc-200">
         <form @submit.prevent="onSubmit">
           <CardHeader>
-            <CardTitle class="text-md"
-              >Dados do Cliente
-              <br />
-              <span class="font-normal text-3xl">{{
-                editCustomerData.name
-              }}</span></CardTitle
-            >
+            <div class="flex items-center justify-between">
+              <CardTitle class="text-md"
+                >Dados do Cliente
+                <br />
+                <span class="font-normal text-3xl">{{
+                  editCustomerData.name
+                }}</span></CardTitle
+              >
+            </div>
           </CardHeader>
           <CardContent>
             <div class="mb-8 py-4 max-w-[200px]">
               <FormField v-slot="{ componentField }" name="status">
                 <FormItem>
-                  <FormLabel>Status</FormLabel>
+                  <FormLabel>Situação do Cadastro</FormLabel>
                   <FormControl>
                     <FormSelect
                       v-bind="componentField"
@@ -222,20 +228,7 @@ const onSubmit = form.handleSubmit(async (values) => {
                 </FormItem>
               </FormField>
             </div>
-            <div class="mb-4 w-full grid grid-cols-2 gap-8">
-              <FormField v-slot="{ componentField }" name="name">
-                <FormItem>
-                  <FormLabel>Nome da empresa</FormLabel>
-                  <FormControl>
-                    <Input
-                      type="text"
-                      placeholder="Insira o nome"
-                      v-bind="componentField"
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              </FormField>
+            <div class="mb-4 w-full grid grid-cols-3 gap-8">
               <FormField v-slot="{ componentField }" name="document">
                 <FormItem>
                   <FormLabel>CNPJ</FormLabel>
@@ -249,6 +242,34 @@ const onSubmit = form.handleSubmit(async (values) => {
                   <FormMessage />
                 </FormItem>
               </FormField>
+              <FormField v-slot="{ componentField }" name="name">
+                <FormItem>
+                  <FormLabel>Razão Social</FormLabel>
+                  <FormControl>
+                    <Input
+                      type="text"
+                      placeholder="Insira o nome"
+                      v-bind="componentField"
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              </FormField>
+              <FormField v-slot="{ componentField }" name="fantasyName">
+                <FormItem>
+                  <FormLabel>Nome Fantasia</FormLabel>
+                  <FormControl>
+                    <Input
+                      type="text"
+                      placeholder="Insira o nome"
+                      v-bind="componentField"
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              </FormField>
+
+              <pre>{{ editCustomerData.ccAreas }}</pre>
             </div>
             <div class="mb-4 w-full grid grid-cols-4 gap-8">
               <FormField v-slot="{ componentField }" name="street">
@@ -391,7 +412,7 @@ const onSubmit = form.handleSubmit(async (values) => {
             </div>
             <section v-if="showAddPassengerForm">
               <AddPassengerForm
-                :customerId="editCustomerData.id"
+                :customerId="editCustomerData?.id"
                 @show-form="toggleAddPassengerForm"
                 @fetch-customer="fetchCustomerData"
               />
@@ -409,6 +430,21 @@ const onSubmit = form.handleSubmit(async (values) => {
               class="mb-6 p-6 flex items-center justify-center rounded-md bg-white"
             >
               <p class="text-zinc-400">Nenhuma pendência encontrada</p>
+            </section>
+            <section
+              class="p-6 flex gap-8 rounded-md border-4 border-red-500 bg-white"
+            >
+              <h2 class="font-bold text-xl">Acesso ao sistema</h2>
+              <div class="flex items-center space-x-3">
+                <Label for="customer-enabled" class="text-md">
+                  <LockKeyhole />
+                </Label>
+
+                <Switch id="customer-enabled" />
+                <Label for="customer-enabled" class="text-md">
+                  <LockKeyholeOpen />
+                </Label>
+              </div>
             </section>
           </CardContent>
           <CardFooter>
