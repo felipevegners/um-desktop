@@ -1,7 +1,7 @@
 <script setup lang="ts">
 definePageMeta({
   layout: "admin",
-  title: "Editar cliente",
+  title: "Editar Cliente | Urban Mobi"
 });
 
 import { ref, h } from "vue";
@@ -22,11 +22,16 @@ import {
   LoaderCircle,
   Lock,
   LockKeyhole,
-  LockKeyholeOpen,
+  LockKeyholeOpen
 } from "lucide-vue-next";
 import Separator from "~/components/ui/separator/Separator.vue";
 import AddPassengerForm from "~/components/admin/customers/AddPassengerForm.vue";
 import EditDeleteActions from "~/components/admin/passengers/EditDeleteActions.vue";
+import AddCCAreaForm from "~/components/admin/customers/AddCCAreaForm.vue";
+
+import { useToast } from "@/components/ui/toast/use-toast";
+import { dateFormat } from "~/lib/utils";
+const { toast } = useToast();
 
 const store = useCustomerStore();
 const { getCustomerByIdAction, editCustomer } = store;
@@ -65,12 +70,12 @@ const passengerColumns = [
         Button,
         {
           variant: "ghost",
-          onClick: () => column.toggleSorting(column.getIsSorted() === "asc"),
+          onClick: () => column.toggleSorting(column.getIsSorted() === "asc")
         },
         () => ["Nome", h(ArrowUpDown, { class: "ml-2 h-4 w-4" })]
       );
     },
-    cell: ({ row }) => h("div", { class: "capitalize" }, row.getValue("name")),
+    cell: ({ row }) => h("div", { class: "capitalize" }, row.getValue("name"))
   }),
   columnHelper.accessor("status", {
     header: () => h("div", { class: "text-left" }, "Situação"),
@@ -85,7 +90,7 @@ const passengerColumns = [
               : status === "inactive"
               ? "bg-red-700"
               : "bg-yellow-500"
-          }`,
+          }`
         },
         status === "active"
           ? "Ativo"
@@ -93,32 +98,32 @@ const passengerColumns = [
           ? "Inativo"
           : "Pendente"
       );
-    },
+    }
   }),
   columnHelper.accessor("position", {
     header: () => h("div", { class: "text-left" }, "Cargo"),
     cell: ({ row }) =>
-      h("div", { class: "capitalize" }, row.getValue("position")),
+      h("div", { class: "capitalize" }, row.getValue("position"))
   }),
   columnHelper.accessor("department", {
     header: () => h("div", { class: "text-left" }, "CC/Depto."),
     cell: ({ row }) =>
-      h("div", { class: "capitalize" }, row.getValue("department")),
+      h("div", { class: "capitalize" }, row.getValue("department"))
   }),
   columnHelper.accessor("email", {
     header: () => h("div", { class: "text-left" }, "E-mail"),
-    cell: ({ row }) => h("div", { class: "lowercase" }, row.getValue("email")),
+    cell: ({ row }) => h("div", { class: "lowercase" }, row.getValue("email"))
   }),
   columnHelper.accessor("phone", {
     header: () => h("div", { class: "text-left" }, "Telefone"),
-    cell: ({ row }) => h("div", { class: "lowercase" }, row.getValue("phone")),
+    cell: ({ row }) => h("div", { class: "lowercase" }, row.getValue("phone"))
   }),
   columnHelper.accessor("restrictions", {
     header: () => h("div", { class: "text-left" }, "Restrições"),
     cell: ({ row }) =>
       row.getValue<any>("restrictions").map((item: string) => {
         return h("div", { class: "lowercase" }, item);
-      }),
+      })
   }),
   columnHelper.display({
     id: "actions",
@@ -132,11 +137,11 @@ const passengerColumns = [
         h(EditDeleteActions, {
           data: passengerData,
           remove: deletePassenger,
-          formControl: toggleAddPassengerForm,
+          formControl: toggleAddPassengerForm
         })
       );
-    },
-  }),
+    }
+  })
 ];
 
 const formSchema = toTypedSchema(
@@ -153,6 +158,7 @@ const formSchema = toTypedSchema(
     managerName: z.string().min(2).max(20),
     managerPhone: z.string().min(2).max(12),
     managerEmail: z.string().min(2),
+    enabled: z.boolean()
   })
 );
 const form = useForm({
@@ -170,19 +176,38 @@ const form = useForm({
     managerName: editCustomerData?.value.managerName,
     managerEmail: editCustomerData?.value.managerEmail,
     managerPhone: editCustomerData?.value.managerPhone,
-  },
+    enabled: editCustomerData.value.enabled
+  }
 });
 
 const onSubmit = form.handleSubmit(async (values) => {
   const newCustomerData = {
     id: route?.params?.id,
-    ...values,
+    ccAreas: [...editCustomerData.value.ccAreas],
+    ...values
   };
   isLoading.value = true;
-  await editCustomer(newCustomerData).then(() => {
-    isLoading.value = false;
-    navigateTo("/admin/customers/active");
-  });
+  await editCustomer(newCustomerData)
+    .then(() => {
+      isLoading.value = false;
+    })
+    .catch((err) => {
+      console.log("Error -> ", err);
+      toast({
+        title: "Opss!",
+        class: "bg-red-500 border-0 text-white text-2xl",
+        description: `Ocorreu um erro (${err.message}) ao cadastrar o cliente. Tente novamente.`
+      });
+      alert("Erro ao cadastrar cliente");
+    })
+    .finally(() => {
+      toast({
+        title: "Sucesso!",
+        class: "bg-green-600 border-0 text-white text-2xl",
+        description: `A empresa ${newCustomerData.fantasyName} foi atualizada com sucesso!`
+      });
+      navigateTo("/admin/customers/active");
+    });
 });
 </script>
 <template>
@@ -205,8 +230,22 @@ const onSubmit = form.handleSubmit(async (values) => {
                 <br />
                 <span class="font-normal text-3xl">{{
                   editCustomerData.name
-                }}</span></CardTitle
-              >
+                }}</span>
+                <div class="my-4">
+                  <div class="mb-4 flex flex-col">
+                    <small class="text-zinc-500">Cadastrado em:</small>
+                    <p class="font-bold">
+                      {{ dateFormat(editCustomerData.createdAt) }}
+                    </p>
+                  </div>
+                  <div class="mb-2 flex flex-col">
+                    <small class="text-zinc-500">Modificado em:</small>
+                    <p class="font-bold">
+                      {{ dateFormat(editCustomerData.updatedAt) }}
+                    </p>
+                  </div>
+                </div>
+              </CardTitle>
             </div>
           </CardHeader>
           <CardContent>
@@ -218,9 +257,8 @@ const onSubmit = form.handleSubmit(async (values) => {
                     <FormSelect
                       v-bind="componentField"
                       :items="[
-                        { label: 'Ativo', value: 'active' },
-                        { label: 'Inativo', value: 'inactive' },
-                        { label: 'Pendente', value: 'pending' },
+                        { label: 'Aprovado', value: 'active' },
+                        { label: 'Pendente', value: 'pending' }
                       ]"
                       :label="'Selecione o Status'"
                     />
@@ -268,8 +306,10 @@ const onSubmit = form.handleSubmit(async (values) => {
                   <FormMessage />
                 </FormItem>
               </FormField>
-
-              <pre>{{ editCustomerData.ccAreas }}</pre>
+              <AddCCAreaForm
+                v-model="editCustomerData.ccAreas"
+                class="col-span-3"
+              />
             </div>
             <div class="mb-4 w-full grid grid-cols-4 gap-8">
               <FormField v-slot="{ componentField }" name="street">
@@ -353,20 +393,20 @@ const onSubmit = form.handleSubmit(async (values) => {
                         :items="[
                           {
                             label: 'Felipe Vegners',
-                            value: 'Felipe Vegners',
+                            value: 'Felipe Vegners'
                           },
                           {
                             label: 'Humberto Pansica',
-                            value: 'Humberto Pansica',
+                            value: 'Humberto Pansica'
                           },
                           {
                             label: 'Maria dos Santos',
-                            value: 'Maria dos Santos',
+                            value: 'Maria dos Santos'
                           },
                           {
                             label: 'João da Silva',
-                            value: 'João da Silva',
-                          },
+                            value: 'João da Silva'
+                          }
                         ]"
                         :label="'Selecione o gerente'"
                       />
@@ -426,7 +466,7 @@ const onSubmit = form.handleSubmit(async (values) => {
             </section>
             <h2 class="mb-6 font-bold text-xl">Pendências do Cliente</h2>
             <section
-              v-if="editCustomerData.status !== 'pending'"
+              v-if="editCustomerData.pendingItems === null"
               class="mb-6 p-6 flex items-center justify-center rounded-md bg-white"
             >
               <p class="text-zinc-400">Nenhuma pendência encontrada</p>
@@ -434,17 +474,27 @@ const onSubmit = form.handleSubmit(async (values) => {
             <section
               class="p-6 flex gap-8 rounded-md border-4 border-red-500 bg-white"
             >
-              <h2 class="font-bold text-xl">Acesso ao sistema</h2>
-              <div class="flex items-center space-x-3">
-                <Label for="customer-enabled" class="text-md">
-                  <LockKeyhole />
-                </Label>
+              <h2 class="font-bold">Acesso ao sistema</h2>
+              <FormField v-slot="{ value, handleChange }" name="enabled">
+                <FormItem>
+                  <div class="flex items-center space-x-3">
+                    <Label for="customer-enabled" class="text-md">
+                      <LockKeyhole />
+                    </Label>
 
-                <Switch id="customer-enabled" />
-                <Label for="customer-enabled" class="text-md">
-                  <LockKeyholeOpen />
-                </Label>
-              </div>
+                    <FormControl>
+                      <Switch
+                        :checked="value"
+                        aria-readonly
+                        @update:checked="handleChange"
+                      />
+                    </FormControl>
+                    <Label for="customer-enabled" class="text-md">
+                      <LockKeyholeOpen />
+                    </Label>
+                  </div>
+                </FormItem>
+              </FormField>
             </section>
           </CardContent>
           <CardFooter>

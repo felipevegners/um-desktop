@@ -1,10 +1,10 @@
 <script setup lang="ts">
 definePageMeta({
-  layout: "admin",
+  layout: "admin"
 });
 
 useHead({
-  title: "Clientes ativos",
+  title: "Clientes ativos"
 });
 import { onMounted, ref, h, reactive } from "vue";
 import {
@@ -15,7 +15,7 @@ import {
   AlertDialogDescription,
   AlertDialogFooter,
   AlertDialogHeader,
-  AlertDialogTitle,
+  AlertDialogTitle
 } from "@/components/ui/alert-dialog";
 import { Plus, LoaderCircle, CircleCheck } from "lucide-vue-next";
 import { Button } from "@/components/ui/button";
@@ -32,13 +32,16 @@ import * as z from "zod";
 import { useCustomerStore } from "@/stores/admin/customers.store";
 import { storeToRefs } from "pinia";
 
+import { useToast } from "@/components/ui/toast/use-toast";
+const { toast } = useToast();
+
 const customerStore = useCustomerStore();
 const {
   getCustomersAction,
   getCustomerByIdAction,
   createNewCustomerAction,
   deleteCustomerAction,
-  toggleDeleteModal,
+  toggleDeleteModal
 } = customerStore;
 const { customers, viewDeleteModal, customerToDelete, loading } =
   storeToRefs(customerStore);
@@ -63,12 +66,12 @@ const formSchema = toTypedSchema(
     website: z.string().min(2).max(50),
     managerName: z.string().min(2).max(20),
     managerPhone: z.string().min(2).max(12),
-    managerEmail: z.string().min(2),
+    managerEmail: z.string().min(2)
   })
 );
 
 const form = useForm({
-  validationSchema: formSchema,
+  validationSchema: formSchema
 });
 
 const onSubmit = form.handleSubmit(async (values) => {
@@ -85,7 +88,7 @@ const onSubmit = form.handleSubmit(async (values) => {
     website,
     managerName,
     managerPhone,
-    managerEmail,
+    managerEmail
   } = values;
 
   const newCustomerData = {
@@ -95,31 +98,41 @@ const onSubmit = form.handleSubmit(async (values) => {
     address: {
       street,
       streetNumber,
-      zipcode,
+      zipcode
     },
     phone,
     website,
     logo: "/",
-    adminId: "679b712a87c5c92d2c6cb3fe",
+    adminId: "67aa5bb449afb9acc3ce86f6",
     managerName,
     managerPhone,
     managerEmail,
     ccAreas: [...ccAreas],
     status: "pending",
-    enabled: true,
+    enabled: true
   };
   await createNewCustomerAction(newCustomerData)
     .then(() => {
-      setTimeout(() => {
-        isLoadingSend.value = false;
-        alertSuccess.value = true;
-        showAddForm.value = !showAddForm.value;
-        alertSuccess.value = false;
-      }, 3000);
+      isLoadingSend.value = false;
     })
     .catch((err) => {
       console.log("Error -> ", err);
+      toast({
+        title: "Opss!",
+        class: "bg-red-500 border-0 text-white text-2xl",
+        description: `Ocorreu um erro (${err.message}) ao cadastrar o cliente. Tente novamente.`
+      });
       alert("Erro ao cadastrar cliente");
+    })
+    .finally(() => {
+      setTimeout(() => {
+        showAddForm.value = !showAddForm.value;
+      }, 2000);
+      toast({
+        title: "Tudo pronto!",
+        class: "bg-green-600 border-0 text-white text-2xl",
+        description: `A empresa ${newCustomerData.fantasyName} foi cadastrada com sucesso!`
+      });
     });
   await getCustomersAction();
 });
@@ -150,20 +163,12 @@ const columns = [
         "div",
         {
           class: `px-2 flex items-center justify-center h-6 rounded-lg text-white ${
-            status === "active"
-              ? "bg-green-600"
-              : status === "inactive"
-              ? "bg-red-700"
-              : "bg-yellow-500"
-          }`,
+            status === "active" ? "bg-green-600" : "bg-yellow-600"
+          }`
         },
-        status === "active"
-          ? "Ativo"
-          : status === "inactive"
-          ? "Inativo"
-          : "Pendente"
+        status === "active" ? "Aprovado" : "Pendente"
       );
-    },
+    }
   }),
   columnHelper.accessor("name", {
     enablePinning: true,
@@ -172,22 +177,22 @@ const columns = [
         Button,
         {
           variant: "ghost",
-          onClick: () => column.toggleSorting(column.getIsSorted() === "asc"),
+          onClick: () => column.toggleSorting(column.getIsSorted() === "asc")
         },
         () => ["Nome", h(ArrowUpDown, { class: "ml-2 h-4 w-4" })]
       );
     },
-    cell: ({ row }) => h("div", { class: "capitalize" }, row.getValue("name")),
+    cell: ({ row }) => h("div", { class: "capitalize" }, row.getValue("name"))
   }),
   columnHelper.accessor("document", {
     header: () => h("div", { class: "text-left" }, "CNPJ"),
     cell: ({ row }) =>
-      h("div", { class: "lowercase" }, row.getValue("document")),
+      h("div", { class: "lowercase" }, row.getValue("document"))
   }),
   columnHelper.accessor("managerName", {
     header: () => h("div", { class: "text-left" }, "Gerente"),
     cell: ({ row }) =>
-      h("div", { class: "capitalize" }, row.getValue("managerName")),
+      h("div", { class: "capitalize" }, row.getValue("managerName"))
   }),
   columnHelper.accessor("managerEmail", {
     header: () => h("div", { class: "text-left" }, "E-mail Gerente"),
@@ -197,7 +202,7 @@ const columns = [
         { class: "text-left font-medium" },
         row.getValue("managerEmail")
       );
-    },
+    }
   }),
   columnHelper.display({
     id: "actions",
@@ -214,11 +219,11 @@ const columns = [
           deleteModalOpen,
           handleModal: handleDeleteModal,
           delete: handleDeleteCustomer,
-          onExpand: row.toggleExpanded,
+          onExpand: row.toggleExpanded
         })
       );
-    },
-  }),
+    }
+  })
 ];
 
 const toggleShowAddForm = () => {
@@ -237,12 +242,6 @@ const toggleShowAddForm = () => {
       </div>
     </section>
     <section v-if="showAddForm" class="mb-4 py-4">
-      <Alert v-if="alertSuccess" class="my-4 flex items-center bg-green-500">
-        <CircleCheck class="mr-4 w-4 h-4" />
-        <AlertTitle class="mb-0 font-bold">
-          Cliente cadastrado com sucesso!</AlertTitle
-        >
-      </Alert>
       <Card class="bg-zinc-200">
         <CardHeader>
           <CardTitle>Cadastrar novo cliente</CardTitle>
@@ -269,7 +268,7 @@ const toggleShowAddForm = () => {
                   <FormControl>
                     <Input
                       type="text"
-                      placeholder="Insira o nome"
+                      placeholder="Insira a razão social"
                       v-bind="componentField"
                     />
                   </FormControl>
@@ -282,7 +281,7 @@ const toggleShowAddForm = () => {
                   <FormControl>
                     <Input
                       type="text"
-                      placeholder="Insira o nome"
+                      placeholder="Insira o nome fantasia"
                       v-bind="componentField"
                     />
                   </FormControl>
@@ -298,7 +297,7 @@ const toggleShowAddForm = () => {
                   <FormControl>
                     <Input
                       type="text"
-                      placeholder="Insira o endereço"
+                      placeholder="Insira o nome da rua"
                       v-bind="componentField"
                     />
                   </FormControl>
@@ -311,7 +310,7 @@ const toggleShowAddForm = () => {
                   <FormControl>
                     <Input
                       type="text"
-                      placeholder="ex. 1876"
+                      placeholder="ex. 1376"
                       v-bind="componentField"
                     />
                   </FormControl>
@@ -324,7 +323,7 @@ const toggleShowAddForm = () => {
                   <FormControl>
                     <Input
                       type="text"
-                      placeholder="12345-678"
+                      placeholder="12345-000"
                       v-bind="componentField"
                     />
                   </FormControl>
@@ -382,20 +381,20 @@ const toggleShowAddForm = () => {
                         :items="[
                           {
                             label: 'Felipe Vegners',
-                            value: 'Felipe Vegners',
+                            value: 'Felipe Vegners'
                           },
                           {
                             label: 'Humberto Pansica',
-                            value: 'Humberto Pansica',
+                            value: 'Humberto Pansica'
                           },
                           {
                             label: 'Maria dos Santos',
-                            value: 'Maria dos Santos',
+                            value: 'Maria dos Santos'
                           },
                           {
                             label: 'João da Silva',
-                            value: 'João da Silva',
-                          },
+                            value: 'João da Silva'
+                          }
                         ]"
                         :label="'Selecione o gerente'"
                       />
