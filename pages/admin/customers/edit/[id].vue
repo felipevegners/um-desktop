@@ -20,7 +20,6 @@ import {
   ArrowUpDown,
   Plus,
   LoaderCircle,
-  Lock,
   LockKeyhole,
   LockKeyholeOpen
 } from "lucide-vue-next";
@@ -46,6 +45,7 @@ const fetchCustomerData = async () => {
   editCustomerData.value = data;
   return data;
 };
+
 const isLoading = ref<boolean>(false);
 const editCustomerData = ref<any>();
 const showAddPassengerForm = ref<boolean>(false);
@@ -220,7 +220,10 @@ const onSubmit = form.handleSubmit(async (values) => {
         </NuxtLink>
       </div>
     </header>
-    <section class="mb-6">
+    <section v-if="loading" class="p-10 flex items-center justify-center">
+      <LoaderCircle class="w-10 h-10 animate-spin" />
+    </section>
+    <section v-else class="mb-6">
       <Card class="bg-zinc-200">
         <form @submit.prevent="onSubmit">
           <CardHeader>

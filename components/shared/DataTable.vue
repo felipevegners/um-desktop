@@ -7,7 +7,6 @@ import type {
   VisibilityState
 } from "@tanstack/vue-table";
 import { Button } from "@/components/ui/button";
-import { Checkbox } from "@/components/ui/checkbox";
 
 import {
   DropdownMenu,
@@ -26,7 +25,6 @@ import {
 } from "@/components/ui/table";
 import { cn, valueUpdater } from "~/lib/utils";
 import {
-  createColumnHelper,
   FlexRender,
   getCoreRowModel,
   getExpandedRowModel,
@@ -35,8 +33,8 @@ import {
   getSortedRowModel,
   useVueTable
 } from "@tanstack/vue-table";
-import { ArrowUpDown, ChevronDown, Settings2 } from "lucide-vue-next";
-import { h, ref } from "vue";
+import { ChevronDown, Settings2 } from "lucide-vue-next";
+import { ref } from "vue";
 
 const sorting = ref<SortingState>([]);
 const columnFilters = ref<ColumnFiltersState>([]);
@@ -48,6 +46,7 @@ const props = defineProps<{
   columns: ColumnDef<TData, TValue>[];
   data: TData[];
   sortby: string;
+  columnPin?: string[];
 }>();
 
 const table = useVueTable({
@@ -87,7 +86,7 @@ const table = useVueTable({
       return expanded.value;
     },
     columnPinning: {
-      left: ["name"]
+      left: props.columnPin
     }
   }
 });

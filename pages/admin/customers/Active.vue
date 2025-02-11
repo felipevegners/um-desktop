@@ -170,7 +170,7 @@ const columns = [
       );
     }
   }),
-  columnHelper.accessor("name", {
+  columnHelper.accessor("fantasyName", {
     enablePinning: true,
     header: ({ column }) => {
       return h(
@@ -179,10 +179,11 @@ const columns = [
           variant: "ghost",
           onClick: () => column.toggleSorting(column.getIsSorted() === "asc")
         },
-        () => ["Nome", h(ArrowUpDown, { class: "ml-2 h-4 w-4" })]
+        () => ["Nome Fantasia", h(ArrowUpDown, { class: "ml-2 h-4 w-4" })]
       );
     },
-    cell: ({ row }) => h("div", { class: "capitalize" }, row.getValue("name"))
+    cell: ({ row }) =>
+      h("div", { class: "capitalize" }, row.getValue("fantasyName"))
   }),
   columnHelper.accessor("document", {
     header: () => h("div", { class: "text-left" }, "CNPJ"),
@@ -450,7 +451,12 @@ const toggleShowAddForm = () => {
       <LoaderCircle class="w-10 h-10 animate-spin" />
     </section>
     <section v-else>
-      <DataTable :columns="columns" :data="customers" sortby="name" />
+      <DataTable
+        :columns="columns"
+        :data="customers"
+        sortby="fantasyName"
+        :columnPin="['fantasyName']"
+      />
     </section>
 
     <AlertDialog :open="viewDeleteModal">
