@@ -289,7 +289,6 @@ const toggleShowAddForm = () => {
                   <FormMessage />
                 </FormItem>
               </FormField>
-              <AddCCAreaForm v-model="ccAreas" class="col-span-3" />
             </div>
             <div class="mb-4 w-full grid grid-cols-4 gap-8">
               <FormField v-slot="{ componentField }" name="street">
@@ -369,7 +368,7 @@ const toggleShowAddForm = () => {
                 </FormItem>
               </FormField>
             </div>
-            <div class="my-10">
+            <section class="my-10">
               <h2 class="mb-4 text-lg font-bold">Gerente da Conta</h2>
               <Separator class="mb-4" />
               <div class="grid grid-cols-3 gap-8">
@@ -427,22 +426,69 @@ const toggleShowAddForm = () => {
                   </FormItem>
                 </FormField>
               </div>
-            </div>
-
-            <Button type="submit">
-              <LoaderCircle
-                v-if="isLoadingSend"
-                class="w-10 h-10 animate-spin"
-              />
-              Cadastrar
-            </Button>
-            <Button
-              variant="ghost"
-              class="ml-4"
-              @click.prevent="toggleShowAddForm"
-            >
-              Cancelar
-            </Button>
+            </section>
+            <section class="my-6">
+              <h2 class="mb-4 text-lg font-bold">Centro de Custo</h2>
+              <AddCCAreaForm v-model="ccAreas" class="col-span-3" />
+            </section>
+            <section class="my-6">
+              <h2 class="mb-4 text-lg font-bold">Faturamento</h2>
+              <div class="grid grid-cols-2 gap-6">
+                <FormField v-slot="{ componentField }" name="paymentTerm">
+                  <FormItem>
+                    <FormLabel>Tipo de Faturamento</FormLabel>
+                    <FormControl>
+                      <FormSelect
+                        v-bind="componentField"
+                        :items="[
+                          {
+                            label: '1 a 30 dias',
+                            value: '01-30'
+                          },
+                          {
+                            label: '1 a 15',
+                            value: '01-15'
+                          },
+                          {
+                            label: 'Aberto',
+                            value: '00-00'
+                          }
+                        ]"
+                        :label="'Selecione'"
+                      />
+                    </FormControl>
+                  </FormItem>
+                </FormField>
+                <FormField v-slot="{ componentField }" name="paymentDueDate">
+                  <FormItem>
+                    <FormLabel>Prazo de Pagamento</FormLabel>
+                    <FormControl>
+                      <Input
+                        type="number"
+                        placeholder="ex.: 30"
+                        v-bind="componentField"
+                      />
+                    </FormControl>
+                  </FormItem>
+                </FormField>
+              </div>
+            </section>
+            <section class="mt-6">
+              <Button type="submit">
+                <LoaderCircle
+                  v-if="isLoadingSend"
+                  class="w-10 h-10 animate-spin"
+                />
+                Cadastrar
+              </Button>
+              <Button
+                variant="ghost"
+                class="ml-4"
+                @click.prevent="toggleShowAddForm"
+              >
+                Cancelar
+              </Button>
+            </section>
           </form>
         </CardContent>
       </Card>

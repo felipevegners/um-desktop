@@ -15,7 +15,7 @@ const removeRow = (index: any) => {
 
 <template>
   <div class="p-6 rounded-md bg-zinc-100">
-    <h3 class="mb-4 font-bold">Centro de Custo / Área</h3>
+    <h3 class="mb-4 font-bold">Adicionar CC ou Área</h3>
     <div
       class="mb-4 grid grid-cols-3 gap-4 items-end"
       v-for="(area, index) in props.modelValue"
@@ -26,7 +26,7 @@ const removeRow = (index: any) => {
           <FormControl>
             <Input
               type="text"
-              placeholder="Insira o código do CC se houver"
+              placeholder="ex.: CC0001"
               v-model="area.areaCode"
             />
           </FormControl>
@@ -35,11 +35,11 @@ const removeRow = (index: any) => {
       </FormField>
       <FormField name="areaName">
         <FormItem>
-          <FormLabel>Nome do CC ou Área</FormLabel>
+          <FormLabel>Nome</FormLabel>
           <FormControl>
             <Input
               type="text"
-              placeholder="Insira o centro de custo ou área"
+              placeholder="ex.: Jurídico"
               v-model="area.areaName"
             />
           </FormControl>

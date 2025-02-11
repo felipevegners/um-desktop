@@ -7,6 +7,7 @@ import {
   HandCoins,
   SquarePercent,
   UserPen,
+  User
 } from "lucide-vue-next";
 
 export const sideMenuData = {
@@ -14,7 +15,7 @@ export const sideMenuData = {
     name: "Felipe Vegners",
     company: "Urban Mobi",
     email: "vegners@urbanmobi.com.br",
-    avatar: "",
+    avatar: ""
   },
   navMain: [
     {
@@ -24,22 +25,22 @@ export const sideMenuData = {
       isActive: false,
       items: [
         {
-          title: "Ativos",
-          url: "/admin/customers/active",
-        },
+          title: "Base de Clientes",
+          url: "/admin/customers/active"
+        }
+      ]
+    },
+    {
+      title: "Usuários",
+      url: "#",
+      icon: User,
+      isActive: false,
+      items: [
         {
-          title: "Inativos",
-          url: "/admin/customers/inactive",
-        },
-        {
-          title: "Usuários Ativos",
-          url: "admin/passengers/active",
-        },
-        {
-          title: "Usuários Inativos",
-          url: "admin/passengers/inactive",
-        },
-      ],
+          title: "Base de Usuários",
+          url: "/admin/passengers/active"
+        }
+      ]
     },
     {
       title: "Motoristas",
@@ -48,17 +49,17 @@ export const sideMenuData = {
       items: [
         {
           title: "Base de Motoristas",
-          url: "/admin/drivers/active",
+          url: "/admin/drivers/active"
         },
         {
           title: "Parceiros",
-          url: "#",
+          url: "#"
         },
         {
           title: "Inativos",
-          url: "#",
-        },
-      ],
+          url: "#"
+        }
+      ]
     },
     {
       title: "Agendamentos",
@@ -67,21 +68,21 @@ export const sideMenuData = {
       items: [
         {
           title: "Abertos",
-          url: "#",
+          url: "#"
         },
         {
           title: "Realizados",
-          url: "#",
+          url: "#"
         },
         {
           title: "Cancelados",
-          url: "#",
+          url: "#"
         },
         {
           title: "+ Novo agendamento",
-          url: "#",
-        },
-      ],
+          url: "#"
+        }
+      ]
     },
     {
       title: "Financeiro",
@@ -90,43 +91,43 @@ export const sideMenuData = {
       items: [
         {
           title: "Faturas em aberto",
-          url: "#",
+          url: "#"
         },
         {
           title: "Balanço",
-          url: "#",
+          url: "#"
         },
         {
           title: "Canceladas",
-          url: "#",
+          url: "#"
         },
         {
           title: "Pagamento Motoristas",
-          url: "#",
-        },
-      ],
-    },
+          url: "#"
+        }
+      ]
+    }
   ],
   settings: [
     {
       name: "Tarifas",
       url: "#",
-      icon: Coins,
+      icon: Coins
     },
     {
       name: "Repasse Motorista",
       url: "#",
-      icon: SquarePercent,
+      icon: SquarePercent
     },
     {
       name: "Usuários",
       url: "#",
-      icon: UserPen,
+      icon: UserPen
     },
     {
       name: "Configurar Dashboards",
       url: "#",
-      icon: LayoutDashboard,
-    },
-  ],
+      icon: LayoutDashboard
+    }
+  ]
 };
