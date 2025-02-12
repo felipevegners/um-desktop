@@ -9,6 +9,8 @@ export default defineEventHandler(async (event) => {
     position,
     status,
     active,
+    type,
+    document,
     restrictions,
     history,
     customerId,
@@ -23,6 +25,8 @@ export default defineEventHandler(async (event) => {
       restrictions,
       status,
       active,
+      type,
+      document,
       history,
       department,
       company: {

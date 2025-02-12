@@ -9,10 +9,12 @@ useHead({
 
 import { ref } from "vue";
 import { Plus, LoaderCircle } from "lucide-vue-next";
-import AddPassengerForm from "~/components/admin/customers/AddPassengerForm.vue";
+import AddRegularUserForm from "@/components/admin/users/AddRegularUserForm.vue";
+import AddCorpUserForm from "@/components/admin/users/AddCorpUserForm.vue";
+
 import DataTable from "~/components/shared/DataTable.vue";
 import { createColumnHelper } from "@tanstack/vue-table";
-import EditDeleteActions from "~/components/admin/passengers/EditDeleteActions.vue";
+import EditDeleteActions from "~/components/admin/users/EditDeleteActions.vue";
 import { Button } from "@/components/ui/button";
 import { ArrowUpDown } from "lucide-vue-next";
 import { usePassengerStore } from "~/stores/admin/passengers.store";
@@ -40,12 +42,11 @@ const toggleShowAddForm = () => {
   showAddForm.value = !showAddForm.value;
 };
 
-const onSubmit = () => {};
-
 const columnHelper = createColumnHelper<any>();
 
 const deletePassenger = async (id: string) => {
-  await deletePassengerAction(id);
+  console.log("ID ---> ", id);
+  // await deletePassengerAction(id);
 };
 
 const passengerColumns = [
@@ -63,6 +64,29 @@ const passengerColumns = [
     },
     cell: ({ row }) => h("div", { class: "capitalize" }, row.getValue("name")),
   }),
+  columnHelper.accessor("email", {
+    header: () => h("div", { class: "text-left" }, "E-mail"),
+    cell: ({ row }) => h("div", { class: "lowercase" }, row.getValue("email")),
+  }),
+  columnHelper.accessor("phone", {
+    header: () => h("div", { class: "text-left" }, "Telefone"),
+    cell: ({ row }) => h("div", { class: "lowercase" }, row.getValue("phone")),
+  }),
+  columnHelper.accessor("cpf", {
+    header: () => h("div", { class: "text-left" }, "CPF"),
+    cell: ({ row }) => h("div", { class: "lowercase" }, row.getValue("cpf")),
+  }),
+  columnHelper.accessor("position", {
+    header: () => h("div", { class: "text-left" }, "Cargo"),
+    cell: ({ row }) =>
+      h("div", { class: "capitalize" }, row.getValue("position")),
+  }),
+  columnHelper.accessor("department", {
+    header: () => h("div", { class: "text-left" }, "CC/Depto."),
+    cell: ({ row }) =>
+      h("div", { class: "capitalize" }, row.getValue("department")),
+  }),
+
   columnHelper.accessor("status", {
     header: () => h("div", { class: "text-left" }, "Situação"),
     cell: ({ row }) => {
@@ -86,37 +110,13 @@ const passengerColumns = [
       );
     },
   }),
-  columnHelper.accessor("position", {
-    header: () => h("div", { class: "text-left" }, "Cargo"),
-    cell: ({ row }) =>
-      h("div", { class: "capitalize" }, row.getValue("position")),
-  }),
-  columnHelper.accessor("department", {
-    header: () => h("div", { class: "text-left" }, "CC/Depto."),
-    cell: ({ row }) =>
-      h("div", { class: "capitalize" }, row.getValue("department")),
-  }),
-  columnHelper.accessor("email", {
-    header: () => h("div", { class: "text-left" }, "E-mail"),
-    cell: ({ row }) => h("div", { class: "lowercase" }, row.getValue("email")),
-  }),
-  columnHelper.accessor("phone", {
-    header: () => h("div", { class: "text-left" }, "Telefone"),
-    cell: ({ row }) => h("div", { class: "lowercase" }, row.getValue("phone")),
-  }),
-  columnHelper.accessor("restrictions", {
-    header: () => h("div", { class: "text-left" }, "Restrições"),
-    cell: ({ row }) =>
-      row.getValue<any>("restrictions").map((item: string) => {
-        return h("div", { class: "lowercase" }, item);
-      }),
-  }),
   columnHelper.display({
     id: "actions",
     enableHiding: false,
     header: () => h("div", { class: "text-left" }, "Ações"),
     cell: ({ row }) => {
       const passengerData = row.original;
+      console.log("passengerData-> ", passengerData);
       return h(
         "div",
         { class: "relative text-left" },
@@ -160,19 +160,19 @@ const passengerColumns = [
               Corporativo
             </Label>
           </div>
-          <form @submit.prevent="onSubmit">
-            <AddPassengerForm
-              :regularMode="isRegularUser"
-              @show-form="toggleShowAddForm"
-            />
-          </form>
+          <div v-if="isRegularUser">
+            <AddRegularUserForm @show-form="toggleShowAddForm" />
+          </div>
+          <div v-else>
+            <AddCorpUserForm @show-form="toggleShowAddForm" :isNewUser="true" />
+          </div>
         </CardContent>
       </Card>
     </section>
     <section v-if="isLoading" class="p-10 flex items-center justify-center">
       <LoaderCircle class="w-10 h-10 animate-spin" />
     </section>
-    <section class="mb-6 px-4 rounded-md bg-white">
+    <section v-else class="mb-6 px-4 rounded-md bg-white">
       <DataTable :columns="passengerColumns" :data="passengers" sortby="name" />
     </section>
   </main>

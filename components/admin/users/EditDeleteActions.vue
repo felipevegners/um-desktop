@@ -41,6 +41,7 @@ const handleEditPassenger = async (passId: string) => {
       <AlertDialogHeader>
         <AlertDialogTitle>Deseja realmente excluir?</AlertDialogTitle>
         <AlertDialogDescription>
+          {{ data }}
           Essa ação é irreversível e excluirá permanentemente da base de dados.
         </AlertDialogDescription>
       </AlertDialogHeader>
@@ -52,10 +53,7 @@ const handleEditPassenger = async (passId: string) => {
           class="bg-red-500 hover:bg-red-600"
           @click="remove(data.id)"
         >
-          <LoaderCircle
-            v-if="passengerStore.loading"
-            class="w-10 h-10 animate-spin"
-          />
+          <LoaderCircle v-if="loading" class="w-10 h-10 animate-spin" />
           Excluir
         </AlertDialogAction>
       </AlertDialogFooter>

@@ -58,6 +58,8 @@ model Passengers {
   restrictions Json
   status       String
   active       Boolean
+  type         String?
+  document     String?
   history      Json
   createdAt    DateTime? @default(now())
   updatedAt    DateTime? @updatedAt()

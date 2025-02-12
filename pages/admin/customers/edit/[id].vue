@@ -1,7 +1,7 @@
 <script setup lang="ts">
 definePageMeta({
   layout: "admin",
-  title: "Editar Cliente | Urban Mobi"
+  title: "Editar Cliente | Urban Mobi",
 });
 
 import { ref, h } from "vue";
@@ -21,11 +21,11 @@ import {
   Plus,
   LoaderCircle,
   LockKeyhole,
-  LockKeyholeOpen
+  LockKeyholeOpen,
 } from "lucide-vue-next";
 import Separator from "~/components/ui/separator/Separator.vue";
-import AddPassengerForm from "~/components/admin/customers/AddPassengerForm.vue";
-import EditDeleteActions from "~/components/admin/passengers/EditDeleteActions.vue";
+import AddCorpUserForm from "@/components/admin/users/AddCorpUserForm.vue";
+import EditDeleteActions from "@/components/admin/users/EditDeleteActions.vue";
 import AddCCAreaForm from "~/components/admin/customers/AddCCAreaForm.vue";
 
 import { useToast } from "@/components/ui/toast/use-toast";
@@ -70,12 +70,12 @@ const passengerColumns = [
         Button,
         {
           variant: "ghost",
-          onClick: () => column.toggleSorting(column.getIsSorted() === "asc")
+          onClick: () => column.toggleSorting(column.getIsSorted() === "asc"),
         },
         () => ["Nome", h(ArrowUpDown, { class: "ml-2 h-4 w-4" })]
       );
     },
-    cell: ({ row }) => h("div", { class: "capitalize" }, row.getValue("name"))
+    cell: ({ row }) => h("div", { class: "capitalize" }, row.getValue("name")),
   }),
   columnHelper.accessor("status", {
     header: () => h("div", { class: "text-left" }, "Situação"),
@@ -90,7 +90,7 @@ const passengerColumns = [
               : status === "inactive"
               ? "bg-red-700"
               : "bg-yellow-500"
-          }`
+          }`,
         },
         status === "active"
           ? "Ativo"
@@ -98,32 +98,25 @@ const passengerColumns = [
           ? "Inativo"
           : "Pendente"
       );
-    }
+    },
   }),
   columnHelper.accessor("position", {
     header: () => h("div", { class: "text-left" }, "Cargo"),
     cell: ({ row }) =>
-      h("div", { class: "capitalize" }, row.getValue("position"))
+      h("div", { class: "capitalize" }, row.getValue("position")),
   }),
   columnHelper.accessor("department", {
     header: () => h("div", { class: "text-left" }, "CC/Depto."),
     cell: ({ row }) =>
-      h("div", { class: "capitalize" }, row.getValue("department"))
+      h("div", { class: "capitalize" }, row.getValue("department")),
   }),
   columnHelper.accessor("email", {
     header: () => h("div", { class: "text-left" }, "E-mail"),
-    cell: ({ row }) => h("div", { class: "lowercase" }, row.getValue("email"))
+    cell: ({ row }) => h("div", { class: "lowercase" }, row.getValue("email")),
   }),
   columnHelper.accessor("phone", {
     header: () => h("div", { class: "text-left" }, "Telefone"),
-    cell: ({ row }) => h("div", { class: "lowercase" }, row.getValue("phone"))
-  }),
-  columnHelper.accessor("restrictions", {
-    header: () => h("div", { class: "text-left" }, "Restrições"),
-    cell: ({ row }) =>
-      row.getValue<any>("restrictions").map((item: string) => {
-        return h("div", { class: "lowercase" }, item);
-      })
+    cell: ({ row }) => h("div", { class: "lowercase" }, row.getValue("phone")),
   }),
   columnHelper.display({
     id: "actions",
@@ -137,11 +130,11 @@ const passengerColumns = [
         h(EditDeleteActions, {
           data: passengerData,
           remove: deletePassenger,
-          formControl: toggleAddPassengerForm
+          formControl: toggleAddPassengerForm,
         })
       );
-    }
-  })
+    },
+  }),
 ];
 
 const formSchema = toTypedSchema(
@@ -158,7 +151,7 @@ const formSchema = toTypedSchema(
     managerName: z.string().min(2).max(20),
     managerPhone: z.string().min(2).max(12),
     managerEmail: z.string().min(2),
-    enabled: z.boolean()
+    enabled: z.boolean(),
   })
 );
 const form = useForm({
@@ -176,15 +169,15 @@ const form = useForm({
     managerName: editCustomerData?.value.managerName,
     managerEmail: editCustomerData?.value.managerEmail,
     managerPhone: editCustomerData?.value.managerPhone,
-    enabled: editCustomerData.value.enabled
-  }
+    enabled: editCustomerData.value.enabled,
+  },
 });
 
 const onSubmit = form.handleSubmit(async (values) => {
   const newCustomerData = {
     id: route?.params?.id,
     ccAreas: [...editCustomerData.value.ccAreas],
-    ...values
+    ...values,
   };
   isLoading.value = true;
   await editCustomer(newCustomerData)
@@ -196,7 +189,7 @@ const onSubmit = form.handleSubmit(async (values) => {
       toast({
         title: "Opss!",
         class: "bg-red-500 border-0 text-white text-2xl",
-        description: `Ocorreu um erro (${err.message}) ao cadastrar o cliente. Tente novamente.`
+        description: `Ocorreu um erro (${err.message}) ao cadastrar o cliente. Tente novamente.`,
       });
       alert("Erro ao cadastrar cliente");
     })
@@ -204,9 +197,9 @@ const onSubmit = form.handleSubmit(async (values) => {
       toast({
         title: "Sucesso!",
         class: "bg-green-600 border-0 text-white text-2xl",
-        description: `A empresa ${newCustomerData.fantasyName} foi atualizada com sucesso!`
+        description: `A empresa ${newCustomerData.fantasyName} foi atualizada com sucesso!`,
       });
-      navigateTo("/admin/customers/active");
+      navigateTo("/admin/customers");
     });
 });
 </script>
@@ -214,7 +207,7 @@ const onSubmit = form.handleSubmit(async (values) => {
   <main class="p-6">
     <header>
       <div class="mb-8 flex items-center">
-        <NuxtLink to="/admin/customers/active" class="flex hover:font-bold">
+        <NuxtLink to="/admin/customers" class="flex hover:font-bold">
           <ArrowLeft class="mr-2" />
           Voltar
         </NuxtLink>
@@ -261,7 +254,7 @@ const onSubmit = form.handleSubmit(async (values) => {
                       v-bind="componentField"
                       :items="[
                         { label: 'Aprovado', value: 'active' },
-                        { label: 'Pendente', value: 'pending' }
+                        { label: 'Pendente', value: 'pending' },
                       ]"
                       :label="'Selecione o Status'"
                     />
@@ -396,20 +389,20 @@ const onSubmit = form.handleSubmit(async (values) => {
                         :items="[
                           {
                             label: 'Felipe Vegners',
-                            value: 'Felipe Vegners'
+                            value: 'Felipe Vegners',
                           },
                           {
                             label: 'Humberto Pansica',
-                            value: 'Humberto Pansica'
+                            value: 'Humberto Pansica',
                           },
                           {
                             label: 'Maria dos Santos',
-                            value: 'Maria dos Santos'
+                            value: 'Maria dos Santos',
                           },
                           {
                             label: 'João da Silva',
-                            value: 'João da Silva'
-                          }
+                            value: 'João da Silva',
+                          },
                         ]"
                         :label="'Selecione o gerente'"
                       />
@@ -454,7 +447,8 @@ const onSubmit = form.handleSubmit(async (values) => {
               </Button>
             </div>
             <section v-if="showAddPassengerForm">
-              <AddPassengerForm
+              <AddCorpUserForm
+                :isNewUser="false"
                 :customerId="editCustomerData?.id"
                 @show-form="toggleAddPassengerForm"
                 @fetch-customer="fetchCustomerData"

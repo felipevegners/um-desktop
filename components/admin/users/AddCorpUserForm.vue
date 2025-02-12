@@ -3,7 +3,7 @@ import { ref, h } from "vue";
 import { useForm } from "vee-validate";
 import { toTypedSchema } from "@vee-validate/zod";
 import * as z from "zod";
-import { Plus, LoaderCircle } from "lucide-vue-next";
+import { LoaderCircle } from "lucide-vue-next";
 import { usePassengerStore } from "~/stores/admin/passengers.store";
 import FormSelect from "@/components/shared/FormSelect.vue";
 import CheckBoxGroup from "@/components/shared/CheckBoxGroup.vue";
@@ -19,48 +19,21 @@ const { loading, passenger, isEditing } = storeToRefs(store);
 
 const props = defineProps<{
   customerId?: string;
-  regularMode?: boolean;
+  isNewUser?: boolean;
 }>();
-
-// Passar para uma colletcion no banco
-// const restrictions = [
-//   {
-//     id: "week",
-//     label: "Semana",
-//   },
-//   {
-//     id: "weekend",
-//     label: "Final de Semana",
-//   },
-//   {
-//     id: "holiday",
-//     label: "Feriados",
-//   },
-//   {
-//     id: "daylight",
-//     label: "Diurno",
-//   },
-//   {
-//     id: "night",
-//     label: "Noturno",
-//   },
-//   {
-//     id: "vacations",
-//     label: "Férias",
-//   },
-// ] as const;
 
 const emit = defineEmits(["show-form", "fetch-customer"]);
 const showPassengerForm = () => {
   emit("show-form");
 };
 
-const passengersformSchema = toTypedSchema(
+const corpPassengesFormSchema = toTypedSchema(
   z.object({
     name: z.string().min(2).max(50),
     email: z.string().min(2).max(50),
     phone: z.string().min(2).max(50),
     department: z.string().min(2).max(50),
+    document: z.string().min(2).max(16),
     position: z.string().min(2).max(50),
     status: z.string().min(2).max(50),
     restrictions: z
@@ -72,8 +45,12 @@ const passengersformSchema = toTypedSchema(
 );
 
 const passengersForm = useForm({
-  validationSchema: passengersformSchema,
-  initialValues: passenger ? (passenger as any) : { restrictions: ["week"] },
+  validationSchema: corpPassengesFormSchema,
+  initialValues: isEditing.value
+    ? passenger.value
+    : {
+        restrictions: ["week"],
+      },
 });
 
 const onSubmitPassengers = passengersForm.handleSubmit(async (values) => {
@@ -83,11 +60,13 @@ const onSubmitPassengers = passengersForm.handleSubmit(async (values) => {
     email: values.email,
     phone: values.phone,
     department: values.department,
+    document: values.document,
     position: values.position,
     status: values.status,
     restrictions: values.restrictions,
     customerId: props.customerId,
     active: true,
+    type: "corp",
     history: [],
   };
 
@@ -126,7 +105,7 @@ const onSubmitPassengers = passengersForm.handleSubmit(async (values) => {
   <div>
     <form @submit="onSubmitPassengers">
       <div class="mb-8 p-8 gap-4 bg-zinc-300 rounded-md">
-        <div class="grid grid-cols-5 gap-4 items-center">
+        <div class="grid grid-cols-4 gap-4 items-center">
           <FormField v-slot="{ componentField }" name="name">
             <FormItem class="relative">
               <FormLabel>Nome</FormLabel>
@@ -167,17 +146,13 @@ const onSubmitPassengers = passengersForm.handleSubmit(async (values) => {
             </FormItem>
           </FormField>
 
-          <FormField
-            v-if="!regularMode"
-            v-slot="{ componentField }"
-            name="department"
-          >
+          <FormField v-slot="{ componentField }" name="document">
             <FormItem>
-              <FormLabel>CC / Depto.</FormLabel>
+              <FormLabel>CPF</FormLabel>
               <FormControl>
                 <Input
                   type="text"
-                  placeholder="ex.: "
+                  placeholder="ex.: 123.345.567-89 "
                   v-bind="componentField"
                 />
               </FormControl>
@@ -185,70 +160,82 @@ const onSubmitPassengers = passengersForm.handleSubmit(async (values) => {
             </FormItem>
           </FormField>
 
-          <FormField v-else v-slot="{ componentField }" name="cpf">
-            <FormItem>
-              <FormLabel>CPF</FormLabel>
-              <FormControl>
-                <Input
-                  type="text"
-                  placeholder="ex.: "
-                  v-bind="componentField"
-                />
-              </FormControl>
-              <!-- <FormMessage class="absolute" /> -->
-            </FormItem>
-          </FormField>
-          <FormField
-            v-if="!regularMode"
-            v-slot="{ componentField }"
-            name="position"
-          >
-            <FormItem>
-              <FormLabel>Cargo</FormLabel>
-              <FormControl>
-                <FormSelect
-                  v-bind="componentField"
-                  :items="[
-                    { label: 'Presidente', value: 'presidente' },
-                    { label: 'Diretor', value: 'diretor' },
-                    { label: 'Gerente', value: 'gerente' },
-                    { label: 'Coordenador', value: 'coordenador' },
-                    { label: 'Visitante', value: 'visitante' },
-                    { label: 'Outro', value: 'outros' },
-                  ]"
-                  :label="'Selecione um cargo'"
-                />
-              </FormControl>
-            </FormItem>
-          </FormField>
-          <FormField
-            v-if="!regularMode"
-            v-slot="{ componentField }"
-            name="status"
-          >
-            <FormItem>
-              <FormLabel>Situação</FormLabel>
-              <FormControl>
-                <FormSelect
-                  v-bind="componentField"
-                  :items="[
-                    { label: 'Ativo', value: 'active' },
-                    { label: 'Inativo', value: 'inactive' },
-                    { label: 'Férias', value: 'vacation' },
-                    { label: 'Desligado', value: 'disabled' },
-                  ]"
-                  :label="'Selecione a situação'"
-                />
-              </FormControl>
-            </FormItem>
-          </FormField>
-          <FormField
-            v-if="!regularMode"
-            v-slot="{ componentField }"
-            name="restrictions"
-          >
-            <CheckBoxGroup v-bind="componentField" />
-          </FormField>
+          <div class="p-6 col-span-4 border-2 border-zinc-600 rounded-md">
+            <h4 class="mb-8 font-bold">Dados Corporativos</h4>
+            <div class="grid grid-cols-3 gap-4 items-center">
+              <FormField
+                v-if="isNewUser"
+                v-slot="{ componentField }"
+                name="customer"
+              >
+                <FormItem>
+                  <FormLabel>Empresa</FormLabel>
+                  <FormControl>
+                    <FormSelect
+                      v-bind="componentField"
+                      :items="[
+                        { label: 'Empresa A', value: 'empresa-a' },
+                        { label: 'Empresa B', value: 'empresa-b' },
+                      ]"
+                      :label="'Selecione a empresa'"
+                    />
+                  </FormControl>
+                </FormItem>
+              </FormField>
+              <FormField v-slot="{ componentField }" name="department">
+                <FormItem>
+                  <FormLabel>CC / Depto.</FormLabel>
+                  <FormControl>
+                    <Input
+                      type="text"
+                      placeholder="ex.: "
+                      v-bind="componentField"
+                    />
+                  </FormControl>
+                  <!-- <FormMessage class="absolute" /> -->
+                </FormItem>
+              </FormField>
+              <FormField v-slot="{ componentField }" name="position">
+                <FormItem>
+                  <FormLabel>Cargo</FormLabel>
+                  <FormControl>
+                    <FormSelect
+                      v-bind="componentField"
+                      :items="[
+                        { label: 'Presidente', value: 'presidente' },
+                        { label: 'Diretor', value: 'diretor' },
+                        { label: 'Gerente', value: 'gerente' },
+                        { label: 'Coordenador', value: 'coordenador' },
+                        { label: 'Visitante', value: 'visitante' },
+                        { label: 'Outro', value: 'outros' },
+                      ]"
+                      :label="'Selecione um cargo'"
+                    />
+                  </FormControl>
+                </FormItem>
+              </FormField>
+              <FormField v-slot="{ componentField }" name="status">
+                <FormItem>
+                  <FormLabel>Situação</FormLabel>
+                  <FormControl>
+                    <FormSelect
+                      v-bind="componentField"
+                      :items="[
+                        { label: 'Ativo', value: 'active' },
+                        { label: 'Inativo', value: 'inactive' },
+                        { label: 'Férias', value: 'vacation' },
+                        { label: 'Desligado', value: 'disabled' },
+                      ]"
+                      :label="'Selecione a situação'"
+                    />
+                  </FormControl>
+                </FormItem>
+              </FormField>
+              <FormField v-slot="{ componentField }" name="restrictions">
+                <CheckBoxGroup v-bind="componentField" />
+              </FormField>
+            </div>
+          </div>
         </div>
         <div class="mt-4 py-4 flex gap-4">
           <Button type="submit">

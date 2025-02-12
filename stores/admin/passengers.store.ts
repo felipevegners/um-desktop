@@ -27,18 +27,14 @@ export const usePassengerStore = defineStore("passengers", {
   },
   actions: {
     async getPassengerByIdAction(passengerId: string) {
-      console.log("Chamou a store");
+      this.isEditing = true;
+      this.loading = true;
       try {
-        this.loading = true;
-        this.isEditing = true;
         this.passenger = await getPassenger(passengerId);
       } catch (error) {
         console.log("Store Error Get Passenger By Id -> ", error);
       } finally {
-        setTimeout(() => {
-          this.loading = false;
-          this.isEditing = false;
-        }, 2000);
+        this.loading = false;
       }
     },
     async getPassengersAction() {
