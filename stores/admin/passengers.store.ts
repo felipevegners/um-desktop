@@ -3,11 +3,12 @@ import {
   createPassenger,
   deletePassenger,
   getPassenger,
+  getPassengers,
   updatePassenger,
 } from "~/server/services/admin/passengers";
 
 interface IPassengerState {
-  passengers: any[];
+  passengers: any;
   passenger: any;
   isEditing: boolean;
   loading: boolean;
@@ -25,7 +26,7 @@ export const usePassengerStore = defineStore("passengers", {
     };
   },
   actions: {
-    async getPassengerById(passengerId: string) {
+    async getPassengerByIdAction(passengerId: string) {
       console.log("Chamou a store");
       try {
         this.loading = true;
@@ -38,6 +39,14 @@ export const usePassengerStore = defineStore("passengers", {
           this.loading = false;
           this.isEditing = false;
         }, 2000);
+      }
+    },
+    async getPassengersAction() {
+      try {
+        const data = await getPassengers();
+        this.passengers = data;
+      } catch (error) {
+        console.log("Store Error Get Passengers -> ", error);
       }
     },
     async createNewPassengerAction(passengerData: any) {
@@ -78,7 +87,7 @@ export const usePassengerStore = defineStore("passengers", {
           this.loading = false;
           this.viewDeleteModal = false;
           this.passengers = this.passengers.filter(
-            (passenger) => passenger.id !== passengerId
+            (passenger: any) => passenger.id !== passengerId
           );
         }, 3000);
       }

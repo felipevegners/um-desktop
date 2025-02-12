@@ -2,10 +2,13 @@ import { Passenger } from "~/types/passengers/passenger-types";
 
 export const getPassenger = async (passId: string) => {
   try {
-    if (passId) {
-      return await $fetch(`/api/admin/passengers?id=${passId}`);
-    }
-
+    return await $fetch(`/api/admin/passengers?id=${passId}`);
+  } catch (error) {
+    console.log("Error -> ", error);
+  }
+};
+export const getPassengers = async () => {
+  try {
     return await $fetch("/api/admin/passengers");
   } catch (error) {
     console.log("Error -> ", error);

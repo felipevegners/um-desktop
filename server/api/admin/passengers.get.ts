@@ -10,13 +10,13 @@ export default defineEventHandler(async (event) => {
   if (PassengerId) {
     const passenger = await prisma.passengers.findUnique({
       where: {
-        id: PassengerId
-      }
+        id: PassengerId,
+      },
     });
 
     return passenger;
+  } else {
+    const passengers = await prisma.passengers.findMany();
+    return passengers;
   }
-  const passengers = await prisma.passengers.findMany();
-
-  return passengers;
 });

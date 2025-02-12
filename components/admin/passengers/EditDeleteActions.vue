@@ -9,12 +9,12 @@ import { usePassengerStore } from "@/stores/admin/passengers.store";
 import { storeToRefs } from "pinia";
 
 const passengerStore = usePassengerStore();
-const { toggleDeleteModal, getPassengerById } = passengerStore;
+const { toggleDeleteModal, getPassengerByIdAction } = passengerStore;
 const { loading, viewDeleteModal } = storeToRefs(passengerStore);
 
 const handleEditPassenger = async (passId: string) => {
   try {
-    await getPassengerById(passId);
+    await getPassengerByIdAction(passId);
   } catch (error) {
     console.log(error);
   } finally {

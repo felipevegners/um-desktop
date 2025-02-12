@@ -8,21 +8,33 @@ useHead({
 });
 
 import { ref } from "vue";
-import { Plus, LoaderCircle, CircleCheck } from "lucide-vue-next";
+import { Plus, LoaderCircle } from "lucide-vue-next";
 import AddPassengerForm from "~/components/admin/customers/AddPassengerForm.vue";
 import DataTable from "~/components/shared/DataTable.vue";
 import { createColumnHelper } from "@tanstack/vue-table";
 import EditDeleteActions from "~/components/admin/passengers/EditDeleteActions.vue";
 import { Button } from "@/components/ui/button";
 import { ArrowUpDown } from "lucide-vue-next";
-import { useCustomerStore } from "~/stores/admin/customers.store";
 import { usePassengerStore } from "~/stores/admin/passengers.store";
+import { storeToRefs } from "pinia";
 
 const passengerStore = usePassengerStore();
-const { deletePassengerAction, loading } = passengerStore;
+const { deletePassengerAction, loading, getPassengersAction } = passengerStore;
+
+const { passengers } = storeToRefs(passengerStore);
 
 const showAddForm = ref<boolean>(false);
+const isLoading = ref<boolean>(false);
 const isRegularUser = ref<boolean>(true);
+
+onMounted(async () => {
+  isLoading.value = true;
+  await getPassengersAction().then(() => {
+    isLoading.value = false;
+  });
+});
+
+// usersList.value = fetchUsersData();
 
 const toggleShowAddForm = () => {
   showAddForm.value = !showAddForm.value;
@@ -157,8 +169,11 @@ const passengerColumns = [
         </CardContent>
       </Card>
     </section>
+    <section v-if="isLoading" class="p-10 flex items-center justify-center">
+      <LoaderCircle class="w-10 h-10 animate-spin" />
+    </section>
     <section class="mb-6 px-4 rounded-md bg-white">
-      <DataTable :columns="passengerColumns" :data="[]" sortby="name" />
+      <DataTable :columns="passengerColumns" :data="passengers" sortby="name" />
     </section>
   </main>
 </template>
