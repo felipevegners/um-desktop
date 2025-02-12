@@ -1,10 +1,10 @@
 <script setup lang="ts">
 definePageMeta({
-  layout: "admin"
+  layout: "admin",
 });
 
 useHead({
-  title: "Clientes ativos"
+  title: "Clientes ativos",
 });
 import { onMounted, ref, h, reactive } from "vue";
 import {
@@ -15,7 +15,7 @@ import {
   AlertDialogDescription,
   AlertDialogFooter,
   AlertDialogHeader,
-  AlertDialogTitle
+  AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Plus, LoaderCircle, CircleCheck } from "lucide-vue-next";
 import { Button } from "@/components/ui/button";
@@ -41,7 +41,7 @@ const {
   getCustomerByIdAction,
   createNewCustomerAction,
   deleteCustomerAction,
-  toggleDeleteModal
+  toggleDeleteModal,
 } = customerStore;
 const { customers, viewDeleteModal, customerToDelete, loading } =
   storeToRefs(customerStore);
@@ -66,12 +66,12 @@ const formSchema = toTypedSchema(
     website: z.string().min(2).max(50),
     managerName: z.string().min(2).max(20),
     managerPhone: z.string().min(2).max(12),
-    managerEmail: z.string().min(2)
+    managerEmail: z.string().min(2),
   })
 );
 
 const form = useForm({
-  validationSchema: formSchema
+  validationSchema: formSchema,
 });
 
 const onSubmit = form.handleSubmit(async (values) => {
@@ -88,7 +88,7 @@ const onSubmit = form.handleSubmit(async (values) => {
     website,
     managerName,
     managerPhone,
-    managerEmail
+    managerEmail,
   } = values;
 
   const newCustomerData = {
@@ -98,7 +98,7 @@ const onSubmit = form.handleSubmit(async (values) => {
     address: {
       street,
       streetNumber,
-      zipcode
+      zipcode,
     },
     phone,
     website,
@@ -109,7 +109,7 @@ const onSubmit = form.handleSubmit(async (values) => {
     managerEmail,
     ccAreas: [...ccAreas],
     status: "pending",
-    enabled: true
+    enabled: true,
   };
   await createNewCustomerAction(newCustomerData)
     .then(() => {
@@ -120,7 +120,7 @@ const onSubmit = form.handleSubmit(async (values) => {
       toast({
         title: "Opss!",
         class: "bg-red-500 border-0 text-white text-2xl",
-        description: `Ocorreu um erro (${err.message}) ao cadastrar o cliente. Tente novamente.`
+        description: `Ocorreu um erro (${err.message}) ao cadastrar o cliente. Tente novamente.`,
       });
       alert("Erro ao cadastrar cliente");
     })
@@ -131,7 +131,7 @@ const onSubmit = form.handleSubmit(async (values) => {
       toast({
         title: "Tudo pronto!",
         class: "bg-green-600 border-0 text-white text-2xl",
-        description: `A empresa ${newCustomerData.fantasyName} foi cadastrada com sucesso!`
+        description: `A empresa ${newCustomerData.fantasyName} foi cadastrada com sucesso!`,
       });
     });
   await getCustomersAction();
@@ -164,11 +164,11 @@ const columns = [
         {
           class: `px-2 flex items-center justify-center h-6 rounded-lg text-white ${
             status === "active" ? "bg-green-600" : "bg-yellow-600"
-          }`
+          }`,
         },
         status === "active" ? "Aprovado" : "Pendente"
       );
-    }
+    },
   }),
   columnHelper.accessor("fantasyName", {
     enablePinning: true,
@@ -177,23 +177,23 @@ const columns = [
         Button,
         {
           variant: "ghost",
-          onClick: () => column.toggleSorting(column.getIsSorted() === "asc")
+          onClick: () => column.toggleSorting(column.getIsSorted() === "asc"),
         },
         () => ["Nome Fantasia", h(ArrowUpDown, { class: "ml-2 h-4 w-4" })]
       );
     },
     cell: ({ row }) =>
-      h("div", { class: "capitalize" }, row.getValue("fantasyName"))
+      h("div", { class: "capitalize" }, row.getValue("fantasyName")),
   }),
   columnHelper.accessor("document", {
     header: () => h("div", { class: "text-left" }, "CNPJ"),
     cell: ({ row }) =>
-      h("div", { class: "lowercase" }, row.getValue("document"))
+      h("div", { class: "lowercase" }, row.getValue("document")),
   }),
   columnHelper.accessor("managerName", {
     header: () => h("div", { class: "text-left" }, "Gerente"),
     cell: ({ row }) =>
-      h("div", { class: "capitalize" }, row.getValue("managerName"))
+      h("div", { class: "capitalize" }, row.getValue("managerName")),
   }),
   columnHelper.accessor("managerEmail", {
     header: () => h("div", { class: "text-left" }, "E-mail Gerente"),
@@ -203,7 +203,7 @@ const columns = [
         { class: "text-left font-medium" },
         row.getValue("managerEmail")
       );
-    }
+    },
   }),
   columnHelper.display({
     id: "actions",
@@ -220,11 +220,11 @@ const columns = [
           deleteModalOpen,
           handleModal: handleDeleteModal,
           delete: handleDeleteCustomer,
-          onExpand: row.toggleExpanded
+          onExpand: row.toggleExpanded,
         })
       );
-    }
-  })
+    },
+  }),
 ];
 
 const toggleShowAddForm = () => {
@@ -235,7 +235,7 @@ const toggleShowAddForm = () => {
 <template>
   <main class="p-6">
     <section class="mb-6 flex items-center gap-6">
-      <h1 class="font-bold text-black text-3xl">Clientes ativos</h1>
+      <h1 class="font-bold text-black text-3xl">Base de Clientes</h1>
       <div v-if="!showAddForm">
         <Button @click="toggleShowAddForm">
           <Plus class="w-4 h-4" /> Cadastrar cliente
@@ -381,20 +381,20 @@ const toggleShowAddForm = () => {
                         :items="[
                           {
                             label: 'Felipe Vegners',
-                            value: 'Felipe Vegners'
+                            value: 'Felipe Vegners',
                           },
                           {
                             label: 'Humberto Pansica',
-                            value: 'Humberto Pansica'
+                            value: 'Humberto Pansica',
                           },
                           {
                             label: 'Maria dos Santos',
-                            value: 'Maria dos Santos'
+                            value: 'Maria dos Santos',
                           },
                           {
                             label: 'João da Silva',
-                            value: 'João da Silva'
-                          }
+                            value: 'João da Silva',
+                          },
                         ]"
                         :label="'Selecione o gerente'"
                       />
@@ -443,16 +443,16 @@ const toggleShowAddForm = () => {
                         :items="[
                           {
                             label: '1 a 30 dias',
-                            value: '01-30'
+                            value: '01-30',
                           },
                           {
                             label: '1 a 15',
-                            value: '01-15'
+                            value: '01-15',
                           },
                           {
                             label: 'Aberto',
-                            value: '00-00'
-                          }
+                            value: '00-00',
+                          },
                         ]"
                         :label="'Selecione'"
                       />

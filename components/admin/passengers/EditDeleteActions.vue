@@ -1,7 +1,7 @@
 <script setup lang="ts">
 const props = defineProps<{
-  remove: any;
-  data: any;
+  remove?: any;
+  data?: any;
   formControl: Function;
 }>();
 import { Edit, Trash, LoaderCircle } from "lucide-vue-next";

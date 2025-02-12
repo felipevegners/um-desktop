@@ -18,7 +18,8 @@ const { createNewPassengerAction, updatePassengerAction } = store;
 const { loading, passenger, isEditing } = storeToRefs(store);
 
 const props = defineProps<{
-  customerId: string;
+  customerId?: string;
+  regularMode?: boolean;
 }>();
 
 // Passar para uma colletcion no banco
@@ -128,11 +129,11 @@ const onSubmitPassengers = passengersForm.handleSubmit(async (values) => {
         <div class="grid grid-cols-5 gap-4 items-center">
           <FormField v-slot="{ componentField }" name="name">
             <FormItem class="relative">
-              <FormLabel>Nome do Usuário</FormLabel>
+              <FormLabel>Nome</FormLabel>
               <FormControl>
                 <Input
                   type="text"
-                  placeholder="Nome do usuário"
+                  placeholder="ex.: João Silva"
                   v-bind="componentField"
                 />
               </FormControl>
@@ -145,7 +146,7 @@ const onSubmitPassengers = passengersForm.handleSubmit(async (values) => {
               <FormControl>
                 <Input
                   type="text"
-                  placeholder="usuario@exemplo.com.br"
+                  placeholder="ex.: joao_silva@email.com.br"
                   v-bind="componentField"
                 />
               </FormControl>
@@ -158,27 +159,50 @@ const onSubmitPassengers = passengersForm.handleSubmit(async (values) => {
               <FormControl>
                 <Input
                   type="text"
-                  placeholder="Telefone celular"
+                  placeholder="ex.: 11-9987605432"
                   v-bind="componentField"
                 />
               </FormControl>
               <!-- <FormMessage class="absolute" /> -->
             </FormItem>
           </FormField>
-          <FormField v-slot="{ componentField }" name="department">
+
+          <FormField
+            v-if="!regularMode"
+            v-slot="{ componentField }"
+            name="department"
+          >
             <FormItem>
               <FormLabel>CC / Depto.</FormLabel>
               <FormControl>
                 <Input
                   type="text"
-                  placeholder="Insira o CC / Depto"
+                  placeholder="ex.: "
                   v-bind="componentField"
                 />
               </FormControl>
               <!-- <FormMessage class="absolute" /> -->
             </FormItem>
           </FormField>
-          <FormField v-slot="{ componentField }" name="position">
+
+          <FormField v-else v-slot="{ componentField }" name="cpf">
+            <FormItem>
+              <FormLabel>CPF</FormLabel>
+              <FormControl>
+                <Input
+                  type="text"
+                  placeholder="ex.: "
+                  v-bind="componentField"
+                />
+              </FormControl>
+              <!-- <FormMessage class="absolute" /> -->
+            </FormItem>
+          </FormField>
+          <FormField
+            v-if="!regularMode"
+            v-slot="{ componentField }"
+            name="position"
+          >
             <FormItem>
               <FormLabel>Cargo</FormLabel>
               <FormControl>
@@ -197,7 +221,11 @@ const onSubmitPassengers = passengersForm.handleSubmit(async (values) => {
               </FormControl>
             </FormItem>
           </FormField>
-          <FormField v-slot="{ componentField }" name="status">
+          <FormField
+            v-if="!regularMode"
+            v-slot="{ componentField }"
+            name="status"
+          >
             <FormItem>
               <FormLabel>Situação</FormLabel>
               <FormControl>
@@ -215,9 +243,9 @@ const onSubmitPassengers = passengersForm.handleSubmit(async (values) => {
             </FormItem>
           </FormField>
           <FormField
+            v-if="!regularMode"
             v-slot="{ componentField }"
-            name="restrictionssssss"
-            class="barretos"
+            name="restrictions"
           >
             <CheckBoxGroup v-bind="componentField" />
           </FormField>
