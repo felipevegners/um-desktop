@@ -46,7 +46,7 @@ export const useCustomerStore = defineStore("customer", {
         console.log("Store Error -> ", error);
       }
     },
-    async createNewCustomerAction(customerData: any) {
+    async createNewCustomerAction(customerData: Customer) {
       try {
         await createCustomer(customerData);
       } catch (error) {

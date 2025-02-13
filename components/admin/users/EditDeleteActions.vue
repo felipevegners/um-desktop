@@ -29,7 +29,7 @@ const handleEditPassenger = async (passId: string) => {
       class="p-1"
       @click.prevent="handleEditPassenger(data.id)"
     >
-      <Edit class="w-4 h-4 text-blue-700" />
+      <Edit class="w-4 h-4 text-zinc-700" />
     </Button>
     <Button variant="ghost" class="p-1" @click.prevent="toggleDeleteModal">
       <Trash class="w-4 h-4 text-red-500" />

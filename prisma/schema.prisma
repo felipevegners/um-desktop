@@ -41,6 +41,7 @@ model Customers {
   pendingItems Json?
   passengers   Passengers[]
   ccAreas      Json?
+  billingInfo  Json?
   enabled      Boolean
   createdAt    DateTime?    @default(now())
   updatedAt    DateTime?    @updatedAt()
@@ -51,14 +52,14 @@ model Passengers {
   name         String
   email        String    @unique
   phone        String
-  company      Customers @relation(fields: [passengerId], references: [id])
-  passengerId  String    @db.ObjectId
+  company      Customers @relation(fields: [customerId], references: [id])
+  customerId   String    @db.ObjectId
   department   String?
   position     String
   restrictions Json
   status       String
   active       Boolean
-  type         String?
+  type         String? //Corp or Regular
   document     String?
   history      Json
   createdAt    DateTime? @default(now())

@@ -3,9 +3,11 @@ export interface Customer {
   name: string;
   document: string;
   address: {
-    street: string;
-    streetNumber: string;
     zipcode: string;
+    streetName: string;
+    streetNumber: string;
+    city: string;
+    state: string;
   };
   phone: string;
   website?: string;

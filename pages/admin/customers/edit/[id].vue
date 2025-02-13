@@ -1,7 +1,7 @@
 <script setup lang="ts">
 definePageMeta({
   layout: "admin",
-  title: "Editar Cliente | Urban Mobi",
+  title: "Editar Cliente | Urban Mobi"
 });
 
 import { ref, h } from "vue";
@@ -21,7 +21,7 @@ import {
   Plus,
   LoaderCircle,
   LockKeyhole,
-  LockKeyholeOpen,
+  LockKeyholeOpen
 } from "lucide-vue-next";
 import Separator from "~/components/ui/separator/Separator.vue";
 import AddCorpUserForm from "@/components/admin/users/AddCorpUserForm.vue";
@@ -70,12 +70,12 @@ const passengerColumns = [
         Button,
         {
           variant: "ghost",
-          onClick: () => column.toggleSorting(column.getIsSorted() === "asc"),
+          onClick: () => column.toggleSorting(column.getIsSorted() === "asc")
         },
         () => ["Nome", h(ArrowUpDown, { class: "ml-2 h-4 w-4" })]
       );
     },
-    cell: ({ row }) => h("div", { class: "capitalize" }, row.getValue("name")),
+    cell: ({ row }) => h("div", { class: "capitalize" }, row.getValue("name"))
   }),
   columnHelper.accessor("status", {
     header: () => h("div", { class: "text-left" }, "Situação"),
@@ -90,7 +90,7 @@ const passengerColumns = [
               : status === "inactive"
               ? "bg-red-700"
               : "bg-yellow-500"
-          }`,
+          }`
         },
         status === "active"
           ? "Ativo"
@@ -98,25 +98,25 @@ const passengerColumns = [
           ? "Inativo"
           : "Pendente"
       );
-    },
+    }
   }),
   columnHelper.accessor("position", {
     header: () => h("div", { class: "text-left" }, "Cargo"),
     cell: ({ row }) =>
-      h("div", { class: "capitalize" }, row.getValue("position")),
+      h("div", { class: "capitalize" }, row.getValue("position"))
   }),
   columnHelper.accessor("department", {
     header: () => h("div", { class: "text-left" }, "CC/Depto."),
     cell: ({ row }) =>
-      h("div", { class: "capitalize" }, row.getValue("department")),
+      h("div", { class: "capitalize" }, row.getValue("department"))
   }),
   columnHelper.accessor("email", {
     header: () => h("div", { class: "text-left" }, "E-mail"),
-    cell: ({ row }) => h("div", { class: "lowercase" }, row.getValue("email")),
+    cell: ({ row }) => h("div", { class: "lowercase" }, row.getValue("email"))
   }),
   columnHelper.accessor("phone", {
     header: () => h("div", { class: "text-left" }, "Telefone"),
-    cell: ({ row }) => h("div", { class: "lowercase" }, row.getValue("phone")),
+    cell: ({ row }) => h("div", { class: "lowercase" }, row.getValue("phone"))
   }),
   columnHelper.display({
     id: "actions",
@@ -130,28 +130,32 @@ const passengerColumns = [
         h(EditDeleteActions, {
           data: passengerData,
           remove: deletePassenger,
-          formControl: toggleAddPassengerForm,
+          formControl: toggleAddPassengerForm
         })
       );
-    },
-  }),
+    }
+  })
 ];
 
 const formSchema = toTypedSchema(
   z.object({
-    status: z.string(),
+    status: z.string().min(2).max(50),
     name: z.string().min(2).max(50),
     document: z.string().min(2).max(50),
     fantasyName: z.string().min(2).max(50),
-    street: z.string().min(2).max(50),
-    streetNumber: z.string().min(2).max(50),
     zipcode: z.string().min(2).max(50),
-    phone: z.string().min(2).max(12),
+    streetName: z.string().min(2).max(50),
+    streetNumber: z.string().min(2).max(50),
+    city: z.string().min(2).max(50),
+    state: z.string().min(2).max(50),
+    phone: z.string().min(2).max(15),
     website: z.string().min(2).max(50),
     managerName: z.string().min(2).max(20),
     managerPhone: z.string().min(2).max(12),
     managerEmail: z.string().min(2),
-    enabled: z.boolean(),
+    paymentTerm: z.string().min(2).max(12),
+    paymentDueDate: z.number().min(0).max(30),
+    enabled: z.boolean()
   })
 );
 const form = useForm({
@@ -161,23 +165,27 @@ const form = useForm({
     name: editCustomerData?.value.name,
     document: editCustomerData?.value.document,
     fantasyName: editCustomerData?.value.fantasyName,
-    street: editCustomerData?.value.address?.street,
-    streetNumber: editCustomerData?.value.address?.streetNumber,
     zipcode: editCustomerData?.value.address?.zipcode,
+    streetName: editCustomerData?.value.address?.streetName,
+    streetNumber: editCustomerData?.value.address?.streetNumber,
+    city: editCustomerData?.value.address?.city,
+    state: editCustomerData?.value.address?.state,
     phone: editCustomerData?.value.phone,
     website: editCustomerData?.value.website,
     managerName: editCustomerData?.value.managerName,
     managerEmail: editCustomerData?.value.managerEmail,
     managerPhone: editCustomerData?.value.managerPhone,
-    enabled: editCustomerData.value.enabled,
-  },
+    paymentTerm: editCustomerData?.value.billingInfo.billing,
+    paymentDueDate: editCustomerData?.value.billingInfo.dueDate,
+    enabled: editCustomerData.value.enabled
+  }
 });
 
 const onSubmit = form.handleSubmit(async (values) => {
   const newCustomerData = {
     id: route?.params?.id,
     ccAreas: [...editCustomerData.value.ccAreas],
-    ...values,
+    ...values
   };
   isLoading.value = true;
   await editCustomer(newCustomerData)
@@ -189,7 +197,7 @@ const onSubmit = form.handleSubmit(async (values) => {
       toast({
         title: "Opss!",
         class: "bg-red-500 border-0 text-white text-2xl",
-        description: `Ocorreu um erro (${err.message}) ao cadastrar o cliente. Tente novamente.`,
+        description: `Ocorreu um erro (${err.message}) ao cadastrar o cliente. Tente novamente.`
       });
       alert("Erro ao cadastrar cliente");
     })
@@ -197,7 +205,7 @@ const onSubmit = form.handleSubmit(async (values) => {
       toast({
         title: "Sucesso!",
         class: "bg-green-600 border-0 text-white text-2xl",
-        description: `A empresa ${newCustomerData.fantasyName} foi atualizada com sucesso!`,
+        description: `A empresa ${newCustomerData.fantasyName} foi atualizada com sucesso!`
       });
       navigateTo("/admin/customers");
     });
@@ -254,7 +262,7 @@ const onSubmit = form.handleSubmit(async (values) => {
                       v-bind="componentField"
                       :items="[
                         { label: 'Aprovado', value: 'active' },
-                        { label: 'Pendente', value: 'pending' },
+                        { label: 'Pendente', value: 'pending' }
                       ]"
                       :label="'Selecione o Status'"
                     />
@@ -302,13 +310,22 @@ const onSubmit = form.handleSubmit(async (values) => {
                   <FormMessage />
                 </FormItem>
               </FormField>
-              <AddCCAreaForm
-                v-model="editCustomerData.ccAreas"
-                class="col-span-3"
-              />
             </div>
             <div class="mb-4 w-full grid grid-cols-4 gap-8">
-              <FormField v-slot="{ componentField }" name="street">
+              <FormField v-slot="{ componentField }" name="zipcode">
+                <FormItem class="col-span-1">
+                  <FormLabel>CEP</FormLabel>
+                  <FormControl>
+                    <Input
+                      type="text"
+                      placeholder="12345-678"
+                      v-bind="componentField"
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              </FormField>
+              <FormField v-slot="{ componentField }" name="streetName">
                 <FormItem class="col-span-2">
                   <FormLabel>Endereço</FormLabel>
                   <FormControl>
@@ -334,21 +351,32 @@ const onSubmit = form.handleSubmit(async (values) => {
                   <FormMessage />
                 </FormItem>
               </FormField>
-              <FormField v-slot="{ componentField }" name="zipcode">
+              <FormField v-slot="{ componentField }" name="city">
                 <FormItem class="col-span-1">
-                  <FormLabel>CEP</FormLabel>
+                  <FormLabel>Cidade</FormLabel>
                   <FormControl>
                     <Input
                       type="text"
-                      placeholder="12345-678"
+                      placeholder="ex.: São Paulo"
                       v-bind="componentField"
                     />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
               </FormField>
-            </div>
-            <div class="mb-4 w-full grid grid-cols-3 gap-8">
+              <FormField v-slot="{ componentField }" name="state">
+                <FormItem class="col-span-1">
+                  <FormLabel>Estado</FormLabel>
+                  <FormControl>
+                    <Input
+                      type="text"
+                      placeholder="ex.: São Paulo"
+                      v-bind="componentField"
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              </FormField>
               <FormField v-slot="{ componentField }" name="phone">
                 <FormItem>
                   <FormLabel>Telefone</FormLabel>
@@ -376,6 +404,7 @@ const onSubmit = form.handleSubmit(async (values) => {
                 </FormItem>
               </FormField>
             </div>
+            <div class="mb-4 w-full grid grid-cols-3 gap-8"></div>
             <div class="my-10">
               <h2 class="mb-4 text-lg font-bold">Gerente da Conta</h2>
               <Separator class="mb-4" />
@@ -389,20 +418,20 @@ const onSubmit = form.handleSubmit(async (values) => {
                         :items="[
                           {
                             label: 'Felipe Vegners',
-                            value: 'Felipe Vegners',
+                            value: 'Felipe Vegners'
                           },
                           {
                             label: 'Humberto Pansica',
-                            value: 'Humberto Pansica',
+                            value: 'Humberto Pansica'
                           },
                           {
                             label: 'Maria dos Santos',
-                            value: 'Maria dos Santos',
+                            value: 'Maria dos Santos'
                           },
                           {
                             label: 'João da Silva',
-                            value: 'João da Silva',
-                          },
+                            value: 'João da Silva'
+                          }
                         ]"
                         :label="'Selecione o gerente'"
                       />
@@ -435,8 +464,57 @@ const onSubmit = form.handleSubmit(async (values) => {
                 </FormField>
               </div>
             </div>
-            <Separator class="my-8 bg-zinc-300" />
-            <div class="mb-6 flex">
+            <div class="my-10">
+              <h2 class="mb-4 text-lg font-bold">Centro de Custo</h2>
+              <AddCCAreaForm
+                v-model="editCustomerData.ccAreas"
+                class="col-span-3"
+              />
+            </div>
+            <div class="my-6">
+              <h2 class="mb-6 text-lg font-bold">Faturamento</h2>
+              <div class="grid grid-cols-2 gap-6">
+                <FormField v-slot="{ componentField }" name="paymentTerm">
+                  <FormItem>
+                    <FormLabel>Tipo de Faturamento</FormLabel>
+                    <FormControl>
+                      <FormSelect
+                        v-bind="componentField"
+                        :items="[
+                          {
+                            label: '1 a 30 dias',
+                            value: '01-30'
+                          },
+                          {
+                            label: '1 a 15',
+                            value: '01-15'
+                          },
+                          {
+                            label: 'Aberto',
+                            value: '00-00'
+                          }
+                        ]"
+                        :label="'Selecione'"
+                      />
+                    </FormControl>
+                  </FormItem>
+                </FormField>
+                <FormField v-slot="{ componentField }" name="paymentDueDate">
+                  <FormItem>
+                    <FormLabel>Prazo de Pagamento</FormLabel>
+                    <FormControl>
+                      <Input
+                        type="number"
+                        placeholder="ex.: 30"
+                        v-bind="componentField"
+                      />
+                    </FormControl>
+                  </FormItem>
+                </FormField>
+              </div>
+            </div>
+            <Separator class="my-6 border-b border-zinc-300" />
+            <div class="my-6 flex">
               <h2 class="mb-6 mr-6 font-bold text-xl">Usuários Cadastrados</h2>
               <Button
                 type="button"
@@ -450,6 +528,7 @@ const onSubmit = form.handleSubmit(async (values) => {
               <AddCorpUserForm
                 :isNewUser="false"
                 :customerId="editCustomerData?.id"
+                :ccAreas="editCustomerData?.ccAreas"
                 @show-form="toggleAddPassengerForm"
                 @fetch-customer="fetchCustomerData"
               />
@@ -475,7 +554,7 @@ const onSubmit = form.handleSubmit(async (values) => {
               <FormField v-slot="{ value, handleChange }" name="enabled">
                 <FormItem>
                   <div class="flex items-center space-x-3">
-                    <Label for="customer-enabled" class="text-md">
+                    <Label for="enabled" class="text-md">
                       <LockKeyhole />
                     </Label>
 
@@ -503,7 +582,7 @@ const onSubmit = form.handleSubmit(async (values) => {
               <Button
                 variant="ghost"
                 class="ml-4"
-                @click="navigateTo('/admin/customers/active')"
+                @click="navigateTo('/admin/customers')"
               >
                 Cancelar
               </Button>

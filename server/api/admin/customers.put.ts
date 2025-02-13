@@ -7,9 +7,11 @@ export default defineEventHandler(async (event) => {
     status,
     fantasyName,
     document,
-    street,
-    streetNumber,
     zipcode,
+    streetName,
+    streetNumber,
+    city,
+    state,
     phone,
     website,
     managerName,
@@ -44,9 +46,11 @@ export default defineEventHandler(async (event) => {
         fantasyName,
         document,
         address: {
-          street,
+          zipcode,
+          streetName,
           streetNumber,
-          zipcode
+          city,
+          state
         },
         phone,
         website,

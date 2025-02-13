@@ -1,10 +1,10 @@
 <script setup lang="ts">
 definePageMeta({
-  layout: "admin",
+  layout: "admin"
 });
 
 useHead({
-  title: "Clientes ativos",
+  title: "Clientes ativos"
 });
 import { onMounted, ref, h, reactive } from "vue";
 import {
@@ -15,7 +15,7 @@ import {
   AlertDialogDescription,
   AlertDialogFooter,
   AlertDialogHeader,
-  AlertDialogTitle,
+  AlertDialogTitle
 } from "@/components/ui/alert-dialog";
 import { Plus, LoaderCircle, CircleCheck } from "lucide-vue-next";
 import { Button } from "@/components/ui/button";
@@ -41,7 +41,7 @@ const {
   getCustomerByIdAction,
   createNewCustomerAction,
   deleteCustomerAction,
-  toggleDeleteModal,
+  toggleDeleteModal
 } = customerStore;
 const { customers, viewDeleteModal, customerToDelete, loading } =
   storeToRefs(customerStore);
@@ -59,19 +59,23 @@ const formSchema = toTypedSchema(
     name: z.string().min(2).max(50),
     document: z.string().min(2).max(50),
     fantasyName: z.string().min(2).max(50),
-    street: z.string().min(2).max(50),
-    streetNumber: z.string().min(2).max(50),
     zipcode: z.string().min(2).max(50),
-    phone: z.string().min(2).max(12),
+    streetName: z.string().min(2).max(50),
+    streetNumber: z.string().min(2).max(50),
+    city: z.string().min(2).max(50),
+    state: z.string().min(2).max(50),
+    phone: z.string().min(2).max(15),
     website: z.string().min(2).max(50),
     managerName: z.string().min(2).max(20),
     managerPhone: z.string().min(2).max(12),
     managerEmail: z.string().min(2),
+    paymentTerm: z.string().min(2).max(12),
+    paymentDueDate: z.number().min(0).max(30)
   })
 );
 
 const form = useForm({
-  validationSchema: formSchema,
+  validationSchema: formSchema
 });
 
 const onSubmit = form.handleSubmit(async (values) => {
@@ -81,14 +85,18 @@ const onSubmit = form.handleSubmit(async (values) => {
     name,
     document,
     fantasyName,
-    street,
+    streetName,
     streetNumber,
+    city,
+    state,
     zipcode,
     phone,
     website,
     managerName,
     managerPhone,
     managerEmail,
+    paymentTerm,
+    paymentDueDate
   } = values;
 
   const newCustomerData = {
@@ -96,9 +104,15 @@ const onSubmit = form.handleSubmit(async (values) => {
     document,
     fantasyName,
     address: {
-      street,
-      streetNumber,
       zipcode,
+      streetName,
+      streetNumber,
+      city,
+      state
+    },
+    billingInfo: {
+      billing: paymentTerm,
+      dueDate: paymentDueDate
     },
     phone,
     website,
@@ -109,7 +123,7 @@ const onSubmit = form.handleSubmit(async (values) => {
     managerEmail,
     ccAreas: [...ccAreas],
     status: "pending",
-    enabled: true,
+    enabled: true
   };
   await createNewCustomerAction(newCustomerData)
     .then(() => {
@@ -120,7 +134,7 @@ const onSubmit = form.handleSubmit(async (values) => {
       toast({
         title: "Opss!",
         class: "bg-red-500 border-0 text-white text-2xl",
-        description: `Ocorreu um erro (${err.message}) ao cadastrar o cliente. Tente novamente.`,
+        description: `Ocorreu um erro (${err.message}) ao cadastrar o cliente. Tente novamente.`
       });
       alert("Erro ao cadastrar cliente");
     })
@@ -131,7 +145,7 @@ const onSubmit = form.handleSubmit(async (values) => {
       toast({
         title: "Tudo pronto!",
         class: "bg-green-600 border-0 text-white text-2xl",
-        description: `A empresa ${newCustomerData.fantasyName} foi cadastrada com sucesso!`,
+        description: `A empresa ${newCustomerData.fantasyName} foi cadastrada com sucesso!`
       });
     });
   await getCustomersAction();
@@ -156,19 +170,19 @@ const handleDeleteCustomer = async (id: string) => {
 
 const columns = [
   columnHelper.accessor("status", {
-    header: () => h("div", { class: "text-left" }, "Situação"),
+    header: () => h("div", { class: "text-left" }, "Cadastro"),
     cell: ({ row }) => {
       const status = row.getValue("status");
       return h(
         "div",
         {
-          class: `px-2 flex items-center justify-center h-6 rounded-lg text-white ${
+          class: `px-2 flex items-center justify-center h-6 rounded-lg text-white text-xs max-w-[80px] ${
             status === "active" ? "bg-green-600" : "bg-yellow-600"
-          }`,
+          }`
         },
         status === "active" ? "Aprovado" : "Pendente"
       );
-    },
+    }
   }),
   columnHelper.accessor("fantasyName", {
     enablePinning: true,
@@ -177,23 +191,23 @@ const columns = [
         Button,
         {
           variant: "ghost",
-          onClick: () => column.toggleSorting(column.getIsSorted() === "asc"),
+          onClick: () => column.toggleSorting(column.getIsSorted() === "asc")
         },
         () => ["Nome Fantasia", h(ArrowUpDown, { class: "ml-2 h-4 w-4" })]
       );
     },
     cell: ({ row }) =>
-      h("div", { class: "capitalize" }, row.getValue("fantasyName")),
+      h("div", { class: "capitalize" }, row.getValue("fantasyName"))
   }),
   columnHelper.accessor("document", {
     header: () => h("div", { class: "text-left" }, "CNPJ"),
     cell: ({ row }) =>
-      h("div", { class: "lowercase" }, row.getValue("document")),
+      h("div", { class: "lowercase" }, row.getValue("document"))
   }),
   columnHelper.accessor("managerName", {
     header: () => h("div", { class: "text-left" }, "Gerente"),
     cell: ({ row }) =>
-      h("div", { class: "capitalize" }, row.getValue("managerName")),
+      h("div", { class: "capitalize" }, row.getValue("managerName"))
   }),
   columnHelper.accessor("managerEmail", {
     header: () => h("div", { class: "text-left" }, "E-mail Gerente"),
@@ -203,7 +217,22 @@ const columns = [
         { class: "text-left font-medium" },
         row.getValue("managerEmail")
       );
-    },
+    }
+  }),
+  columnHelper.accessor("enabled", {
+    header: () => h("div", { class: "text-left" }, "Acesso"),
+    cell: ({ row }) => {
+      const enabled = row.getValue("enabled");
+      return h(
+        "div",
+        {
+          class: `px-1 flex items-center justify-center h-6 rounded-lg text-white text-xs max-w-[80px] ${
+            enabled === true ? "bg-blue-600" : "bg-zinc-600"
+          }`
+        },
+        enabled === true ? "Liberado" : "Negado"
+      );
+    }
   }),
   columnHelper.display({
     id: "actions",
@@ -220,11 +249,11 @@ const columns = [
           deleteModalOpen,
           handleModal: handleDeleteModal,
           delete: handleDeleteCustomer,
-          onExpand: row.toggleExpanded,
+          onExpand: row.toggleExpanded
         })
       );
-    },
-  }),
+    }
+  })
 ];
 
 const toggleShowAddForm = () => {
@@ -291,7 +320,20 @@ const toggleShowAddForm = () => {
               </FormField>
             </div>
             <div class="mb-4 w-full grid grid-cols-4 gap-8">
-              <FormField v-slot="{ componentField }" name="street">
+              <FormField v-slot="{ componentField }" name="zipcode">
+                <FormItem class="col-span-1">
+                  <FormLabel>CEP</FormLabel>
+                  <FormControl>
+                    <Input
+                      type="text"
+                      placeholder="12345-000"
+                      v-bind="componentField"
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              </FormField>
+              <FormField v-slot="{ componentField }" name="streetName">
                 <FormItem class="col-span-2">
                   <FormLabel>Endereço</FormLabel>
                   <FormControl>
@@ -317,13 +359,26 @@ const toggleShowAddForm = () => {
                   <FormMessage />
                 </FormItem>
               </FormField>
-              <FormField v-slot="{ componentField }" name="zipcode">
+              <FormField v-slot="{ componentField }" name="city">
                 <FormItem class="col-span-1">
-                  <FormLabel>CEP</FormLabel>
+                  <FormLabel>Cidade</FormLabel>
                   <FormControl>
                     <Input
                       type="text"
-                      placeholder="12345-000"
+                      placeholder="ex.: São Paulo"
+                      v-bind="componentField"
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              </FormField>
+              <FormField v-slot="{ componentField }" name="state">
+                <FormItem class="col-span-1">
+                  <FormLabel>Estado</FormLabel>
+                  <FormControl>
+                    <Input
+                      type="text"
+                      placeholder="ex.: São Paulo"
                       v-bind="componentField"
                     />
                   </FormControl>
@@ -381,20 +436,20 @@ const toggleShowAddForm = () => {
                         :items="[
                           {
                             label: 'Felipe Vegners',
-                            value: 'Felipe Vegners',
+                            value: 'Felipe Vegners'
                           },
                           {
                             label: 'Humberto Pansica',
-                            value: 'Humberto Pansica',
+                            value: 'Humberto Pansica'
                           },
                           {
                             label: 'Maria dos Santos',
-                            value: 'Maria dos Santos',
+                            value: 'Maria dos Santos'
                           },
                           {
                             label: 'João da Silva',
-                            value: 'João da Silva',
-                          },
+                            value: 'João da Silva'
+                          }
                         ]"
                         :label="'Selecione o gerente'"
                       />
@@ -443,16 +498,16 @@ const toggleShowAddForm = () => {
                         :items="[
                           {
                             label: '1 a 30 dias',
-                            value: '01-30',
+                            value: '01-30'
                           },
                           {
                             label: '1 a 15',
-                            value: '01-15',
+                            value: '01-15'
                           },
                           {
                             label: 'Aberto',
-                            value: '00-00',
-                          },
+                            value: '00-00'
+                          }
                         ]"
                         :label="'Selecione'"
                       />

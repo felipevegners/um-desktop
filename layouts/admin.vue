@@ -30,8 +30,11 @@ const userNameInitials = computed(() => {
         <SidebarMenu>
           <SidebarMenuItem>
             <div class="px-2 py-4 flex items-center">
-              <img class="mr-2 w-10 h-10" src="/images/um_symbol.svg" alt="" />
-              <h3 class="font-bold text-xl">urbanmobi</h3>
+              <img
+                class="my-6 h-9"
+                src="/images/logo_horizontal_white.svg"
+                alt=""
+              />
             </div>
           </SidebarMenuItem>
         </SidebarMenu>
@@ -145,7 +148,7 @@ const userNameInitials = computed(() => {
                   size="lg"
                   class="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
                 >
-                  <Avatar class="h-8 w-8 rounded-lg">
+                  <Avatar class="h-8 w-8 rounded-lg bg-um-primary">
                     <AvatarImage
                       :src="sideMenuData.user.avatar"
                       :alt="sideMenuData.user.name"
