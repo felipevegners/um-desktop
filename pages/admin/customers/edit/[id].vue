@@ -27,6 +27,7 @@ import Separator from "~/components/ui/separator/Separator.vue";
 import AddCorpUserForm from "@/components/admin/users/AddCorpUserForm.vue";
 import EditDeleteActions from "@/components/admin/users/EditDeleteActions.vue";
 import AddCCAreaForm from "~/components/admin/customers/AddCCAreaForm.vue";
+import { storeToRefs } from "pinia";
 
 import { useToast } from "@/components/ui/toast/use-toast";
 import { dateFormat } from "~/lib/utils";
@@ -36,7 +37,9 @@ const store = useCustomerStore();
 const { getCustomerByIdAction, editCustomer } = store;
 
 const passengerStore = usePassengerStore();
-const { deletePassengerAction, loading } = passengerStore;
+const { deletePassengerAction, resetPassengerState, toggleIsEditing, loading } =
+  passengerStore;
+const { isEditing } = storeToRefs(passengerStore);
 
 const route = useRoute();
 
@@ -519,7 +522,14 @@ const onSubmit = form.handleSubmit(async (values) => {
               <Button
                 type="button"
                 class="flex items-center justify-center"
-                @click="toggleAddPassengerForm"
+                @click="
+                  (event) => {
+                    toggleAddPassengerForm();
+                    resetPassengerState();
+                    toggleIsEditing();
+                  }
+                "
+                :disabled="isEditing"
               >
                 <Plus class="w-4 h-4" /> Adicionar usuário
               </Button>

@@ -4,7 +4,7 @@ import {
   deletePassenger,
   getPassenger,
   getPassengers,
-  updatePassenger,
+  updatePassenger
 } from "~/server/services/admin/passengers";
 
 interface IPassengerState {
@@ -22,7 +22,7 @@ export const usePassengerStore = defineStore("passengers", {
       passenger: {},
       isEditing: false,
       loading: false,
-      viewDeleteModal: false,
+      viewDeleteModal: false
     };
   },
   actions: {
@@ -91,5 +91,11 @@ export const usePassengerStore = defineStore("passengers", {
     toggleDeleteModal() {
       this.viewDeleteModal = !this.viewDeleteModal;
     },
-  },
+    resetPassengerState() {
+      this.passenger = {};
+    },
+    toggleIsEditing() {
+      this.isEditing = false;
+    }
+  }
 });

@@ -2,7 +2,6 @@ import { prisma } from "~/utils/prisma";
 
 export default defineEventHandler(async (event) => {
   const payload = await readBody(event);
-  console.log("Passengers Payload -> ", payload);
   const {
     id,
     name,
@@ -13,12 +12,12 @@ export default defineEventHandler(async (event) => {
     status,
     restrictions,
     active,
-    history,
+    history
   } = payload;
 
   const updateCustomer = await prisma.passengers.update({
     where: {
-      id: id,
+      id: id
     },
     data: {
       name,
@@ -29,8 +28,8 @@ export default defineEventHandler(async (event) => {
       status,
       restrictions,
       active,
-      history,
-    },
+      history
+    }
   });
   return updateCustomer;
 });

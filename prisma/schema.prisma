@@ -48,20 +48,20 @@ model Customers {
 }
 
 model Passengers {
-  id           String    @id @default(auto()) @map("_id") @db.ObjectId
+  id           String     @id @default(auto()) @map("_id") @db.ObjectId
   name         String
-  email        String    @unique
+  email        String
   phone        String
-  company      Customers @relation(fields: [customerId], references: [id])
-  customerId   String    @db.ObjectId
+  company      Customers? @relation(fields: [customerId], references: [id])
+  customerId   String?    @db.ObjectId
   department   String?
-  position     String
-  restrictions Json
+  position     String?
+  restrictions Json?
   status       String
   active       Boolean
-  type         String? //Corp or Regular
-  document     String?
-  history      Json
-  createdAt    DateTime? @default(now())
-  updatedAt    DateTime? @updatedAt()
+  type         String //Corp or Regular
+  document     String     @unique
+  history      Json?
+  createdAt    DateTime?  @default(now())
+  updatedAt    DateTime?  @updatedAt()
 }

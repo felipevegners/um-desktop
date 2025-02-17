@@ -14,28 +14,43 @@ export default defineEventHandler(async (event) => {
     restrictions,
     history,
     customerId,
-    department,
+    department
   } = payload;
-  const newPassenger = await prisma.passengers.create({
-    data: {
-      name,
-      email,
-      phone,
-      position,
-      restrictions,
-      status,
-      active,
-      type,
-      document,
-      history,
-      department,
-      company: {
-        connect: {
-          id: customerId,
-        },
-      },
-    },
-  });
 
-  return newPassenger;
+  if (type === "corp") {
+    const newPassenger = await prisma.passengers.create({
+      data: {
+        name,
+        email,
+        phone,
+        position,
+        restrictions,
+        status,
+        active,
+        type,
+        document,
+        history,
+        department,
+        company: {
+          connect: {
+            id: customerId
+          }
+        }
+      }
+    });
+    return newPassenger;
+  } else {
+    const newPassenger = await prisma.passengers.create({
+      data: {
+        name,
+        email,
+        phone,
+        document,
+        status,
+        active,
+        type
+      }
+    });
+    return newPassenger;
+  }
 });

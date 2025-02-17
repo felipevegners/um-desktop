@@ -9,16 +9,32 @@ import { usePassengerStore } from "@/stores/admin/passengers.store";
 import { storeToRefs } from "pinia";
 
 const passengerStore = usePassengerStore();
-const { toggleDeleteModal, getPassengerByIdAction } = passengerStore;
-const { loading, viewDeleteModal } = storeToRefs(passengerStore);
+const { getPassengerByIdAction, toggleIsEditing } = passengerStore;
+const { loading } = storeToRefs(passengerStore);
+
+const showConfirmationModal = ref<boolean>(false);
+const toggleConfirmationModal = () => {
+  showConfirmationModal.value = !showConfirmationModal.value;
+};
+
+const route = useRoute();
 
 const handleEditPassenger = async (passId: string) => {
-  try {
-    await getPassengerByIdAction(passId);
-  } catch (error) {
-    console.log(error);
-  } finally {
-    props.formControl();
+  if (route.path.includes("customers")) {
+    try {
+      await getPassengerByIdAction(passId);
+    } catch (error) {
+      console.log(error);
+    } finally {
+      props.formControl();
+    }
+  } else {
+    toggleIsEditing();
+    console.log("Editando passageiro externo!!!!");
+    navigateTo({
+      name: "admin-users-edit-id",
+      params: { id: passId }
+    });
   }
 };
 </script>
@@ -31,12 +47,16 @@ const handleEditPassenger = async (passId: string) => {
     >
       <Edit class="w-4 h-4 text-zinc-700" />
     </Button>
-    <Button variant="ghost" class="p-1" @click.prevent="toggleDeleteModal">
+    <Button
+      variant="ghost"
+      class="p-1"
+      @click.prevent="toggleConfirmationModal"
+    >
       <Trash class="w-4 h-4 text-red-500" />
     </Button>
   </div>
 
-  <AlertDialog :open="viewDeleteModal">
+  <AlertDialog :open="showConfirmationModal">
     <AlertDialogContent>
       <AlertDialogHeader>
         <AlertDialogTitle>Deseja realmente excluir?</AlertDialogTitle>
@@ -46,7 +66,7 @@ const handleEditPassenger = async (passId: string) => {
         </AlertDialogDescription>
       </AlertDialogHeader>
       <AlertDialogFooter>
-        <AlertDialogCancel @click="toggleDeleteModal"
+        <AlertDialogCancel @click="toggleConfirmationModal"
           >Cancelar</AlertDialogCancel
         >
         <AlertDialogAction

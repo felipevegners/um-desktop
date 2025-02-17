@@ -14,7 +14,8 @@ import { storeToRefs } from "pinia";
 const { toast } = useToast();
 
 const store = usePassengerStore();
-const { createNewPassengerAction, updatePassengerAction } = store;
+const { createNewPassengerAction, updatePassengerAction, toggleIsEditing } =
+  store;
 const { loading, passenger, isEditing } = storeToRefs(store);
 
 const props = defineProps<{
@@ -24,6 +25,7 @@ const props = defineProps<{
 }>();
 
 const emit = defineEmits(["show-form", "fetch-customer"]);
+
 const showPassengerForm = () => {
   emit("show-form");
 };
@@ -103,14 +105,19 @@ const onSubmitPassengers = passengersForm.handleSubmit(async (values) => {
 });
 
 const sanitezedCCAreas = computed(() => {
-  return props.ccAreas.map((area) => ({
-    label: `${area.areaCode} - ${area.areaName}`,
-    value: area.areaCode
-  }));
+  if (!props.isNewUser) {
+    return props.ccAreas.map((area: any) => ({
+      label: `${area.areaCode} - ${area.areaName}`,
+      value: area.areaCode
+    }));
+  } else return;
 });
 </script>
 <template>
-  <div>
+  <div v-if="!Object.keys(passenger)">
+    <LoaderCircle class="w-10 h-10 animate-spin" />
+  </div>
+  <div v-else>
     <form @submit="onSubmitPassengers">
       <div class="mb-8 p-8 gap-4 bg-zinc-300 rounded-md">
         <div class="grid grid-cols-4 gap-4 items-center">
@@ -247,10 +254,17 @@ const sanitezedCCAreas = computed(() => {
         </div>
         <div class="mt-4 py-4 flex gap-4">
           <Button type="submit">
-            <LoaderCircle v-if="store.loading" class="w-10 h-10 animate-spin" />
+            <LoaderCircle v-if="loading" class="w-10 h-10 animate-spin" />
             Salvar</Button
           >
-          <Button variant="ghost" @click.prevent="showPassengerForm"
+          <Button
+            variant="ghost"
+            @click="
+              () => {
+                showPassengerForm();
+                toggleIsEditing();
+              }
+            "
             >Cancelar</Button
           >
         </div>
