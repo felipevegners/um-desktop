@@ -178,7 +178,11 @@ const sanitezedCCAreas = computed(() => {
           <div class="p-6 col-span-4 border-2 border-zinc-600 rounded-md">
             <h4 class="mb-8 font-bold">Dados Corporativos</h4>
             <div class="grid grid-cols-3 gap-4 items-center">
-              <FormField v-slot="{ componentField }" name="customer">
+              <FormField
+                v-if="isNewUser"
+                v-slot="{ componentField }"
+                name="customer"
+              >
                 <FormItem>
                   <FormLabel>Empresa</FormLabel>
                   <FormControl>
