@@ -24,7 +24,7 @@ const props = defineProps<{
   ccAreas?: any;
 }>();
 
-const emit = defineEmits(["show-form", "fetch-customer"]);
+const emit = defineEmits(["show-form", "fetch-customer", "regular-user"]);
 
 const showPassengerForm = () => {
   emit("show-form");
@@ -42,8 +42,8 @@ const corpPassengesFormSchema = toTypedSchema(
     restrictions: z
       .array(z.string())
       .refine((value) => value.some((item) => item), {
-        message: "Selecione ao menos uma restrição!"
-      })
+        message: "Selecione ao menos uma restrição!",
+      }),
   })
 );
 
@@ -52,8 +52,8 @@ const passengersForm = useForm({
   initialValues: isEditing.value
     ? passenger.value
     : {
-        restrictions: ["week"]
-      }
+        restrictions: ["week"],
+      },
 });
 
 const onSubmitPassengers = passengersForm.handleSubmit(async (values) => {
@@ -70,7 +70,7 @@ const onSubmitPassengers = passengersForm.handleSubmit(async (values) => {
     customerId: props.customerId,
     active: true,
     type: "corp",
-    history: []
+    history: [],
   };
 
   if (isEditing && passenger?.value.id) {
@@ -83,7 +83,7 @@ const onSubmitPassengers = passengersForm.handleSubmit(async (values) => {
       toast({
         title: "Feito!",
         class: "bg-green-600 border-0 text-white text-2xl",
-        description: "Usuário atualizado com sucesso!"
+        description: "Usuário atualizado com sucesso!",
       });
       emit("show-form");
     }
@@ -97,7 +97,7 @@ const onSubmitPassengers = passengersForm.handleSubmit(async (values) => {
       toast({
         title: "Feito!",
         class: "bg-green-600 border-0 text-white text-2xl",
-        description: "Usuário adicionado com sucesso!"
+        description: "Usuário adicionado com sucesso!",
       });
       emit("show-form");
     }
@@ -108,7 +108,7 @@ const sanitezedCCAreas = computed(() => {
   if (!props.isNewUser) {
     return props.ccAreas.map((area: any) => ({
       label: `${area.areaCode} - ${area.areaName}`,
-      value: area.areaCode
+      value: area.areaCode,
     }));
   } else return;
 });
@@ -178,11 +178,7 @@ const sanitezedCCAreas = computed(() => {
           <div class="p-6 col-span-4 border-2 border-zinc-600 rounded-md">
             <h4 class="mb-8 font-bold">Dados Corporativos</h4>
             <div class="grid grid-cols-3 gap-4 items-center">
-              <FormField
-                v-if="isNewUser"
-                v-slot="{ componentField }"
-                name="customer"
-              >
+              <FormField v-slot="{ componentField }" name="customer">
                 <FormItem>
                   <FormLabel>Empresa</FormLabel>
                   <FormControl>
@@ -190,7 +186,7 @@ const sanitezedCCAreas = computed(() => {
                       v-bind="componentField"
                       :items="[
                         { label: 'Empresa A', value: 'empresa-a' },
-                        { label: 'Empresa B', value: 'empresa-b' }
+                        { label: 'Empresa B', value: 'empresa-b' },
                       ]"
                       :label="'Selecione a empresa'"
                     />
@@ -222,7 +218,7 @@ const sanitezedCCAreas = computed(() => {
                         { label: 'Gerente', value: 'gerente' },
                         { label: 'Coordenador', value: 'coordenador' },
                         { label: 'Visitante', value: 'visitante' },
-                        { label: 'Outro', value: 'outros' }
+                        { label: 'Outro', value: 'outros' },
                       ]"
                       :label="'Selecione um cargo'"
                     />
@@ -239,7 +235,7 @@ const sanitezedCCAreas = computed(() => {
                         { label: 'Ativo', value: 'active' },
                         { label: 'Inativo', value: 'inactive' },
                         { label: 'Férias', value: 'vacation' },
-                        { label: 'Desligado', value: 'disabled' }
+                        { label: 'Desligado', value: 'disabled' },
                       ]"
                       :label="'Selecione a situação'"
                     />
@@ -263,6 +259,7 @@ const sanitezedCCAreas = computed(() => {
               () => {
                 showPassengerForm();
                 toggleIsEditing();
+                emit('regular-user');
               }
             "
             >Cancelar</Button
