@@ -43,15 +43,15 @@ const { isEditing } = storeToRefs(passengerStore);
 
 const route = useRoute();
 
+const isLoading = ref<boolean>(false);
+const editCustomerData = ref<any>();
+const showAddPassengerForm = ref<boolean>(false);
+
 const fetchCustomerData = async () => {
   const data = await getCustomerByIdAction(route?.params?.id as string);
   editCustomerData.value = data;
   return data;
 };
-
-const isLoading = ref<boolean>(false);
-const editCustomerData = ref<any>();
-const showAddPassengerForm = ref<boolean>(false);
 
 editCustomerData.value = await fetchCustomerData();
 
@@ -224,7 +224,10 @@ const onSubmit = form.handleSubmit(async (values) => {
         </NuxtLink>
       </div>
     </header>
-    <section v-if="loading" class="p-10 flex items-center justify-center">
+    <section
+      v-if="loading"
+      class="p-10 h-40 bg-zinc-200 flex items-center justify-center"
+    >
       <LoaderCircle class="w-10 h-10 animate-spin" />
     </section>
     <section v-else class="mb-6">

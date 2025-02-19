@@ -30,11 +30,16 @@ export const usePassengerStore = defineStore("passengers", {
       this.isEditing = true;
       this.loading = true;
       try {
-        this.passenger = await getPassenger(passengerId);
+        const data = await getPassenger(passengerId);
+        this.passenger = data;
+        return data;
       } catch (error) {
         console.log("Store Error Get Passenger By Id -> ", error);
       } finally {
-        this.loading = false;
+        setTimeout(() => {
+          this.loading = false;
+          this.isEditing = false;
+        }, 500);
       }
     },
     async getPassengersAction() {

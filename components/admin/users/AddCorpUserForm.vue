@@ -36,14 +36,14 @@ const corpPassengesFormSchema = toTypedSchema(
     email: z.string().min(2).max(50),
     phone: z.string().min(2).max(50),
     department: z.string().min(2).max(50),
-    document: z.string().min(2).max(16),
+    // document: z.string().min(2).max(16),
     position: z.string().min(2).max(50),
     status: z.string().min(2).max(50),
     restrictions: z
       .array(z.string())
       .refine((value) => value.some((item) => item), {
-        message: "Selecione ao menos uma restrição!",
-      }),
+        message: "Selecione ao menos uma restrição!"
+      })
   })
 );
 
@@ -52,8 +52,8 @@ const passengersForm = useForm({
   initialValues: isEditing.value
     ? passenger.value
     : {
-        restrictions: ["week"],
-      },
+        restrictions: ["week"]
+      }
 });
 
 const onSubmitPassengers = passengersForm.handleSubmit(async (values) => {
@@ -63,14 +63,14 @@ const onSubmitPassengers = passengersForm.handleSubmit(async (values) => {
     email: values.email,
     phone: values.phone,
     department: values.department,
-    document: values.document,
+    // document: values.document,
     position: values.position,
     status: values.status,
     restrictions: values.restrictions,
     customerId: props.customerId,
     active: true,
     type: "corp",
-    history: [],
+    history: []
   };
 
   if (isEditing && passenger?.value.id) {
@@ -83,7 +83,7 @@ const onSubmitPassengers = passengersForm.handleSubmit(async (values) => {
       toast({
         title: "Feito!",
         class: "bg-green-600 border-0 text-white text-2xl",
-        description: "Usuário atualizado com sucesso!",
+        description: "Usuário atualizado com sucesso!"
       });
       emit("show-form");
     }
@@ -97,7 +97,7 @@ const onSubmitPassengers = passengersForm.handleSubmit(async (values) => {
       toast({
         title: "Feito!",
         class: "bg-green-600 border-0 text-white text-2xl",
-        description: "Usuário adicionado com sucesso!",
+        description: "Usuário adicionado com sucesso!"
       });
       emit("show-form");
     }
@@ -108,7 +108,7 @@ const sanitezedCCAreas = computed(() => {
   if (!props.isNewUser) {
     return props.ccAreas.map((area: any) => ({
       label: `${area.areaCode} - ${area.areaName}`,
-      value: area.areaCode,
+      value: area.areaCode
     }));
   } else return;
 });
@@ -161,7 +161,7 @@ const sanitezedCCAreas = computed(() => {
             </FormItem>
           </FormField>
 
-          <FormField v-slot="{ componentField }" name="document">
+          <!-- <FormField v-slot="{ componentField }" name="document">
             <FormItem>
               <FormLabel>CPF</FormLabel>
               <FormControl>
@@ -171,9 +171,8 @@ const sanitezedCCAreas = computed(() => {
                   v-bind="componentField"
                 />
               </FormControl>
-              <!-- <FormMessage class="absolute" /> -->
             </FormItem>
-          </FormField>
+          </FormField> -->
 
           <div class="p-6 col-span-4 border-2 border-zinc-600 rounded-md">
             <h4 class="mb-8 font-bold">Dados Corporativos</h4>
@@ -190,7 +189,7 @@ const sanitezedCCAreas = computed(() => {
                       v-bind="componentField"
                       :items="[
                         { label: 'Empresa A', value: 'empresa-a' },
-                        { label: 'Empresa B', value: 'empresa-b' },
+                        { label: 'Empresa B', value: 'empresa-b' }
                       ]"
                       :label="'Selecione a empresa'"
                     />
@@ -222,7 +221,7 @@ const sanitezedCCAreas = computed(() => {
                         { label: 'Gerente', value: 'gerente' },
                         { label: 'Coordenador', value: 'coordenador' },
                         { label: 'Visitante', value: 'visitante' },
-                        { label: 'Outro', value: 'outros' },
+                        { label: 'Outro', value: 'outros' }
                       ]"
                       :label="'Selecione um cargo'"
                     />
@@ -239,7 +238,7 @@ const sanitezedCCAreas = computed(() => {
                         { label: 'Ativo', value: 'active' },
                         { label: 'Inativo', value: 'inactive' },
                         { label: 'Férias', value: 'vacation' },
-                        { label: 'Desligado', value: 'disabled' },
+                        { label: 'Desligado', value: 'disabled' }
                       ]"
                       :label="'Selecione a situação'"
                     />

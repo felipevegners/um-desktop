@@ -4,26 +4,39 @@ definePageMeta({
   title: "Editar Usuário | Urban Mobi"
 });
 
-import { ref, h, computed } from "vue";
+import { ref, computed } from "vue";
 import { useForm } from "vee-validate";
 import { toTypedSchema } from "@vee-validate/zod";
 import * as z from "zod";
-import { LoaderCircle } from "lucide-vue-next";
+import { ArrowLeft, LoaderCircle } from "lucide-vue-next";
 import { usePassengerStore } from "~/stores/admin/passengers.store";
 import FormSelect from "@/components/shared/FormSelect.vue";
 import CheckBoxGroup from "@/components/shared/CheckBoxGroup.vue";
 
 import { useToast } from "@/components/ui/toast/use-toast";
 import { storeToRefs } from "pinia";
+import { dateFormat } from "~/lib/utils";
 
 const { toast } = useToast();
 
 const store = usePassengerStore();
-const { createNewPassengerAction, updatePassengerAction, toggleIsEditing } =
+const { getPassengerByIdAction, updatePassengerAction, toggleIsEditing } =
   store;
-const { loading, passenger, isEditing } = storeToRefs(store);
+const { loading } = storeToRefs(store);
 
 const route = useRoute();
+
+const fetchUserData = async () => {
+  return await getPassengerByIdAction(route.params.id as string);
+};
+
+const userData = ref<any>();
+
+userData.value = await fetchUserData();
+
+const regularUser = computed(() => {
+  return userData?.value.type === "regular";
+});
 
 const editPassengerSchema = toTypedSchema(
   z.object({
@@ -34,6 +47,7 @@ const editPassengerSchema = toTypedSchema(
     document: z.string().min(2).max(16),
     position: z.string().min(2).max(50),
     status: z.string().min(2).max(50),
+    active: z.boolean(),
     restrictions: z
       .array(z.string())
       .refine((value) => value.some((item) => item), {
@@ -42,14 +56,20 @@ const editPassengerSchema = toTypedSchema(
   })
 );
 
-const passengersForm = useForm({
-  validationSchema: editPassengerSchema,
-  initialValues: isEditing.value
-    ? passenger.value
-    : {
-        restrictions: ["week"]
-      }
+onMounted(() => {
+  const passengersForm = useForm({
+    validationSchema: editPassengerSchema,
+    initialValues: userData.value
+  });
 });
+// const sanitezedCCAreas = computed(() => {
+//   if (passenger.type === 'corp') {
+//     return passenger.ccAreas.map((area: any) => ({
+//       label: `${area.areaCode} - ${area.areaName}`,
+//       value: area.areaCode
+//     }));
+//   } else return;
+// });
 </script>
 
 <template>
@@ -57,149 +77,243 @@ const passengersForm = useForm({
     <LoaderCircle class="w-10 h-10 animate-spin" />
   </div> -->
 
-  <form @submit="onSubmitPassengers">
-    <div class="mb-8 p-8 gap-4 bg-zinc-300 rounded-md">
-      <div class="grid grid-cols-4 gap-4 items-center">
-        <FormField v-slot="{ componentField }" name="name">
-          <FormItem class="relative">
-            <FormLabel>Nome</FormLabel>
-            <FormControl>
-              <Input
-                type="text"
-                placeholder="ex.: João Silva"
-                v-bind="componentField"
-              />
-            </FormControl>
-            <!-- <FormMessage class="absolute" /> -->
-          </FormItem>
-        </FormField>
-        <FormField v-slot="{ componentField }" name="email">
-          <FormItem class="relative">
-            <FormLabel>E-mail</FormLabel>
-            <FormControl>
-              <Input
-                type="text"
-                placeholder="ex.: joao_silva@email.com.br"
-                v-bind="componentField"
-              />
-            </FormControl>
-            <!-- <FormMessage class="absolute" /> -->
-          </FormItem>
-        </FormField>
-        <FormField v-slot="{ componentField }" name="phone">
-          <FormItem>
-            <FormLabel>Celular</FormLabel>
-            <FormControl>
-              <Input
-                type="text"
-                placeholder="ex.: 11-9987605432"
-                v-bind="componentField"
-              />
-            </FormControl>
-            <!-- <FormMessage class="absolute" /> -->
-          </FormItem>
-        </FormField>
+  <main class="p-6">
+    <header>
+      <div class="mb-8 flex items-center">
+        <NuxtLink to="/admin/users" class="flex hover:font-bold">
+          <ArrowLeft class="mr-2" />
+          Voltar
+        </NuxtLink>
+      </div>
+    </header>
+    <section
+      v-if="loading"
+      class="p-10 h-40 flex items-center justify-center bg-zinc-200 rounded-md"
+    >
+      <LoaderCircle class="w-10 h-10 animate-spin" />
+    </section>
+    <section v-else class="mb-6">
+      <Card class="bg-zinc-200 rounded-md">
+        <form @submit="">
+          <CardHeader>
+            <pre>{{ userData }}</pre>
+            <div class="flex items-center justify-between">
+              <CardTitle class="text-md"
+                >Editando usuário:
+                <br />
+                <span class="font-normal text-3xl">{{ userData.name }}</span>
+                <div class="my-4">
+                  <div class="mb-4 flex flex-col">
+                    <small class="text-zinc-500">Cadastrado em:</small>
+                    <p class="font-bold">
+                      {{ dateFormat(userData.createdAt) }}
+                    </p>
+                  </div>
+                  <div class="mb-2 flex flex-col">
+                    <small class="text-zinc-500">Modificado em:</small>
+                    <p class="font-bold">
+                      {{ dateFormat(userData.updatedAt) }}
+                    </p>
+                  </div>
+                </div>
+              </CardTitle>
+            </div>
+          </CardHeader>
+          <CardContent>
+            <div class="grid grid-cols-4 gap-4 items-center">
+              <FormField v-slot="{ componentField }" name="name">
+                <FormItem class="relative">
+                  <FormLabel>Nome</FormLabel>
+                  <FormControl>
+                    <Input
+                      type="text"
+                      placeholder="ex.: João Silva"
+                      v-bind="componentField"
+                    />
+                  </FormControl>
+                </FormItem>
+              </FormField>
+              <FormField v-slot="{ componentField }" name="email">
+                <FormItem class="relative">
+                  <FormLabel>E-mail</FormLabel>
+                  <FormControl>
+                    <Input
+                      type="text"
+                      placeholder="ex.: joao_silva@email.com.br"
+                      v-bind="componentField"
+                    />
+                  </FormControl>
+                </FormItem>
+              </FormField>
+              <FormField v-slot="{ componentField }" name="phone">
+                <FormItem>
+                  <FormLabel>Celular</FormLabel>
+                  <FormControl>
+                    <Input
+                      type="text"
+                      placeholder="ex.: 11-9987605432"
+                      v-bind="componentField"
+                    />
+                  </FormControl>
+                </FormItem>
+              </FormField>
 
-        <FormField v-slot="{ componentField }" name="document">
-          <FormItem>
-            <FormLabel>CPF</FormLabel>
-            <FormControl>
-              <Input
-                type="text"
-                placeholder="ex.: 123.345.567-89 "
-                v-bind="componentField"
-              />
-            </FormControl>
-            <!-- <FormMessage class="absolute" /> -->
-          </FormItem>
-        </FormField>
+              <FormField
+                v-if="regularUser"
+                v-slot="{ componentField }"
+                name="document"
+              >
+                <FormItem>
+                  <FormLabel>CPF</FormLabel>
+                  <FormControl>
+                    <Input
+                      type="text"
+                      placeholder="ex.: 123.345.567-89 "
+                      v-bind="componentField"
+                    />
+                  </FormControl>
+                </FormItem>
+              </FormField>
 
-        <div class="p-6 col-span-4 border-2 border-zinc-600 rounded-md">
-          <h4 class="mb-8 font-bold">Dados Corporativos</h4>
-          <div class="grid grid-cols-3 gap-4 items-center">
-            <FormField
-              v-if="isNewUser"
-              v-slot="{ componentField }"
-              name="customer"
+              <!-- <FormField v-slot="{ componentField }" name="status">
+                <FormItem>
+                  <FormLabel>Situação do Usuário</FormLabel>
+                  <FormControl>
+                    <FormSelect
+                      v-bind="componentField"
+                      :items="[
+                        { label: 'Ativo', value: 'active' },
+                        { label: 'Inativo', value: 'inactive' }
+                      ]"
+                      :label="'Selecione o Status'"
+                    />
+                  </FormControl>
+                </FormItem>
+              </FormField> -->
+
+              <!-- <FormField v-slot="{ componentField }" name="active">
+                <FormItem>
+                  <FormLabel>Acesso ao sistema</FormLabel>
+                  <FormControl>
+                    <FormSelect
+                      v-bind="componentField"
+                      :items="[
+                        { label: 'Permitido', value: true },
+                        { label: 'Negado', value: false }
+                      ]"
+                      :label="'Selecione o Status'"
+                    />
+                  </FormControl>
+                </FormItem>
+              </FormField> -->
+
+              <div
+                v-if="!regularUser"
+                class="p-6 col-span-4 border-2 border-zinc-600 rounded-md"
+              >
+                <h4 class="mb-8 font-bold">Dados Corporativos</h4>
+                <div class="grid grid-cols-3 gap-4 items-center">
+                  <FormField v-slot="{ componentField }" name="customer">
+                    <FormItem>
+                      <FormLabel>Empresa</FormLabel>
+                      <FormControl>
+                        <FormSelect
+                          v-bind="componentField"
+                          :items="[
+                            { label: 'Empresa A', value: 'empresa-a' },
+                            { label: 'Empresa B', value: 'empresa-b' }
+                          ]"
+                          :label="'Selecione a empresa'"
+                        />
+                      </FormControl>
+                    </FormItem>
+                  </FormField>
+                  <FormField v-slot="{ componentField }" name="department">
+                    <FormItem>
+                      <FormLabel>CC / Depto.</FormLabel>
+                      <FormControl>
+                        <FormSelect
+                          v-bind="componentField"
+                          :items="[]"
+                          :label="'Selecione'"
+                        />
+                      </FormControl>
+                      <!-- <FormMessage class="absolute" /> -->
+                    </FormItem>
+                  </FormField>
+                  <FormField v-slot="{ componentField }" name="position">
+                    <FormItem>
+                      <FormLabel>Cargo</FormLabel>
+                      <FormControl>
+                        <FormSelect
+                          v-bind="componentField"
+                          :items="[
+                            { label: 'Presidente', value: 'presidente' },
+                            { label: 'Diretor', value: 'diretor' },
+                            { label: 'Gerente', value: 'gerente' },
+                            { label: 'Coordenador', value: 'coordenador' },
+                            { label: 'Visitante', value: 'visitante' },
+                            { label: 'Outro', value: 'outros' }
+                          ]"
+                          :label="'Selecione um cargo'"
+                        />
+                      </FormControl>
+                    </FormItem>
+                  </FormField>
+                  <FormField v-slot="{ componentField }" name="status">
+                    <FormItem>
+                      <FormLabel>Situação</FormLabel>
+                      <FormControl>
+                        <FormSelect
+                          v-bind="componentField"
+                          :items="[
+                            { label: 'Ativo', value: 'active' },
+                            { label: 'Inativo', value: 'inactive' },
+                            { label: 'Férias', value: 'vacation' },
+                            { label: 'Desligado', value: 'disabled' }
+                          ]"
+                          :label="'Selecione a situação'"
+                        />
+                      </FormControl>
+                    </FormItem>
+                  </FormField>
+                  <FormField v-slot="{ componentField }" name="restrictions">
+                    <CheckBoxGroup v-bind="componentField" />
+                  </FormField>
+                </div>
+              </div>
+            </div>
+            <h2 class="my-6 font-bold text-xl">Histórico de Atendimentos</h2>
+            <div
+              class="mb-6 p-6 flex items-center justify-center rounded-md bg-white"
             >
-              <FormItem>
-                <FormLabel>Empresa</FormLabel>
-                <FormControl>
-                  <FormSelect
-                    v-bind="componentField"
-                    :items="[
-                      { label: 'Empresa A', value: 'empresa-a' },
-                      { label: 'Empresa B', value: 'empresa-b' }
-                    ]"
-                    :label="'Selecione a empresa'"
-                  />
-                </FormControl>
-              </FormItem>
-            </FormField>
-            <FormField v-slot="{ componentField }" name="department">
-              <FormItem>
-                <FormLabel>CC / Depto.</FormLabel>
-                <FormControl>
-                  <FormSelect
-                    v-bind="componentField"
-                    :items="sanitezedCCAreas"
-                    :label="'Selecione'"
-                  />
-                </FormControl>
-                <!-- <FormMessage class="absolute" /> -->
-              </FormItem>
-            </FormField>
-            <FormField v-slot="{ componentField }" name="position">
-              <FormItem>
-                <FormLabel>Cargo</FormLabel>
-                <FormControl>
-                  <FormSelect
-                    v-bind="componentField"
-                    :items="[
-                      { label: 'Presidente', value: 'presidente' },
-                      { label: 'Diretor', value: 'diretor' },
-                      { label: 'Gerente', value: 'gerente' },
-                      { label: 'Coordenador', value: 'coordenador' },
-                      { label: 'Visitante', value: 'visitante' },
-                      { label: 'Outro', value: 'outros' }
-                    ]"
-                    :label="'Selecione um cargo'"
-                  />
-                </FormControl>
-              </FormItem>
-            </FormField>
-            <FormField v-slot="{ componentField }" name="status">
-              <FormItem>
-                <FormLabel>Situação</FormLabel>
-                <FormControl>
-                  <FormSelect
-                    v-bind="componentField"
-                    :items="[
-                      { label: 'Ativo', value: 'active' },
-                      { label: 'Inativo', value: 'inactive' },
-                      { label: 'Férias', value: 'vacation' },
-                      { label: 'Desligado', value: 'disabled' }
-                    ]"
-                    :label="'Selecione a situação'"
-                  />
-                </FormControl>
-              </FormItem>
-            </FormField>
-            <FormField v-slot="{ componentField }" name="restrictions">
-              <CheckBoxGroup v-bind="componentField" />
-            </FormField>
-          </div>
-        </div>
-      </div>
-      <div class="mt-4 py-4 flex gap-4">
-        <Button type="submit">
-          <LoaderCircle v-if="false" class="w-10 h-10 animate-spin" />
-          Salvar</Button
-        >
-        <Button variant="ghost" @click="() => {}">Cancelar</Button>
-      </div>
-    </div>
-  </form>
+              <p class="text-zinc-400">Nenhuma histórico encontrado</p>
+            </div>
+          </CardContent>
+          <CardFooter>
+            <div class="mt-8 flex items-center">
+              <Button type="submit">
+                <LoaderCircle v-if="true" class="w-10 h-10 animate-spin" />
+                Salvar alterações
+              </Button>
+              <Button
+                variant="ghost"
+                class="ml-4"
+                @click.prevent="
+                  () => {
+                    navigateTo('/admin/users');
+                    toggleIsEditing();
+                  }
+                "
+              >
+                Cancelar
+              </Button>
+            </div>
+          </CardFooter>
+        </form>
+      </Card>
+    </section>
+  </main>
 </template>
 
 <style scoped></style>

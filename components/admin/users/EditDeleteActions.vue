@@ -30,7 +30,6 @@ const handleEditPassenger = async (passId: string) => {
     }
   } else {
     toggleIsEditing();
-    console.log("Editando passageiro externo!!!!");
     navigateTo({
       name: "admin-users-edit-id",
       params: { id: passId }
