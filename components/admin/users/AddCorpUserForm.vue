@@ -20,6 +20,7 @@ const { loading, passenger, isEditing } = storeToRefs(store);
 
 const props = defineProps<{
   customerId?: string;
+  customerName?: string;
   isNewUser?: boolean;
   ccAreas?: any;
 }>();
@@ -36,7 +37,6 @@ const corpPassengesFormSchema = toTypedSchema(
     email: z.string().min(2).max(50),
     phone: z.string().min(2).max(50),
     department: z.string().min(2).max(50),
-    // document: z.string().min(2).max(16),
     position: z.string().min(2).max(50),
     status: z.string().min(2).max(50),
     restrictions: z
@@ -63,11 +63,11 @@ const onSubmitPassengers = passengersForm.handleSubmit(async (values) => {
     email: values.email,
     phone: values.phone,
     department: values.department,
-    // document: values.document,
     position: values.position,
     status: values.status,
     restrictions: values.restrictions,
     customerId: props.customerId,
+    customerName: props.customerName,
     active: true,
     type: "corp",
     history: []

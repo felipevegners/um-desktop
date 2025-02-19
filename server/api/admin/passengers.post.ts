@@ -14,6 +14,7 @@ export default defineEventHandler(async (event) => {
     restrictions,
     history,
     customerId,
+    customerName,
     department
   } = payload;
 
@@ -28,9 +29,9 @@ export default defineEventHandler(async (event) => {
         status,
         active,
         type,
-        document,
         history,
         department,
+        customerName,
         company: {
           connect: {
             id: customerId

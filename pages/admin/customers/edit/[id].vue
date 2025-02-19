@@ -541,6 +541,7 @@ const onSubmit = form.handleSubmit(async (values) => {
               <AddCorpUserForm
                 :isNewUser="false"
                 :customerId="editCustomerData?.id"
+                :customerName="editCustomerData?.name"
                 :ccAreas="editCustomerData?.ccAreas"
                 @show-form="toggleAddPassengerForm"
                 @fetch-customer="fetchCustomerData"

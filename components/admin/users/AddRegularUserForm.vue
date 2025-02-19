@@ -26,12 +26,12 @@ const regularUserFormSchema = toTypedSchema(
     email: z.string().min(2).max(50),
     phone: z.string().min(2).max(50),
     document: z.string().min(2).max(16),
-    status: z.string().min(2).max(50),
+    status: z.string().min(2).max(50)
   })
 );
 
 const regularUserForm = useForm({
-  validationSchema: regularUserFormSchema,
+  validationSchema: regularUserFormSchema
 });
 
 const onSubmitUser = regularUserForm.handleSubmit(async (values) => {
@@ -43,10 +43,10 @@ const onSubmitUser = regularUserForm.handleSubmit(async (values) => {
     document: values.document,
     status: values.status,
     active: true,
-    type: "regular",
+    type: "regular"
   };
 
-  if (isEditing && passenger?.value.id) {
+  if (isEditing.value && passenger?.value.id) {
     try {
       await updatePassengerAction(newUserData);
     } catch (error) {
@@ -56,7 +56,7 @@ const onSubmitUser = regularUserForm.handleSubmit(async (values) => {
       toast({
         title: "Feito!",
         class: "bg-green-600 border-0 text-white text-2xl",
-        description: "Usuário atualizado com sucesso!",
+        description: "Usuário atualizado com sucesso!"
       });
       emit("show-form");
     }
@@ -70,7 +70,7 @@ const onSubmitUser = regularUserForm.handleSubmit(async (values) => {
       toast({
         title: "Feito!",
         class: "bg-green-600 border-0 text-white text-2xl",
-        description: "Usuário adicionado com sucesso!",
+        description: "Usuário adicionado com sucesso!"
       });
       await getPassengersAction();
       emit("show-form");
@@ -145,7 +145,7 @@ const onSubmitUser = regularUserForm.handleSubmit(async (values) => {
                 v-bind="componentField"
                 :items="[
                   { label: 'Ativo', value: 'active' },
-                  { label: 'Inativo', value: 'inactive' },
+                  { label: 'Inativo', value: 'inactive' }
                 ]"
                 :label="'Selecione a situação'"
               />

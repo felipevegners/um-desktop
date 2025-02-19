@@ -81,6 +81,16 @@ const passengerColumns = [
     cell: ({ row }) =>
       h("div", { class: "lowercase" }, row.getValue("cpf") || "-")
   }),
+  columnHelper.accessor("type", {
+    header: () => h("div", { class: "text-left" }, "Categoria"),
+    cell: ({ row }) =>
+      h("div", { class: "capitalize" }, row.getValue("type") || "-")
+  }),
+  columnHelper.accessor("customerName", {
+    header: () => h("div", { class: "text-left" }, "Empresa"),
+    cell: ({ row }) =>
+      h("div", { class: "capitalize" }, row.getValue("customerName") || "-")
+  }),
   columnHelper.accessor("position", {
     header: () => h("div", { class: "text-left" }, "Cargo"),
     cell: ({ row }) =>

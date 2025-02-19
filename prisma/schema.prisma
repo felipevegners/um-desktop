@@ -54,13 +54,14 @@ model Passengers {
   phone        String
   company      Customers? @relation(fields: [customerId], references: [id])
   customerId   String?    @db.ObjectId
+  customerName String?
   department   String?
   position     String?
   restrictions Json?
   status       String
   active       Boolean
   type         String //Corp or Regular
-  document     String     @unique
+  document     String?    @unique
   history      Json?
   createdAt    DateTime?  @default(now())
   updatedAt    DateTime?  @updatedAt()
