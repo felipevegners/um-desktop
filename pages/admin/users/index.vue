@@ -1,10 +1,10 @@
 <script setup lang="ts">
 definePageMeta({
-  layout: "admin",
+  layout: "admin"
 });
 
 useHead({
-  title: "Clientes ativos",
+  title: "Clientes ativos"
 });
 
 import { ref } from "vue";
@@ -21,14 +21,13 @@ import { usePassengerStore } from "~/stores/admin/passengers.store";
 import { storeToRefs } from "pinia";
 
 const passengerStore = usePassengerStore();
-const { deletePassengerAction, loading, getPassengersAction } = passengerStore;
+const { deletePassengerAction, getPassengersAction } = passengerStore;
 
 const { passengers, isEditing } = storeToRefs(passengerStore);
 
 const showAddForm = ref<boolean>(false);
 const isLoading = ref<boolean>(false);
 const isRegularUser = ref<boolean>(true);
-const showAddPassengerForm = ref<boolean>(false);
 
 const toggleRegularUser = () => {
   isRegularUser.value = !isRegularUser.value;
@@ -41,12 +40,9 @@ onMounted(async () => {
   });
 });
 
-// usersList.value = fetchUsersData();
-
 const toggleShowAddForm = () => {
   if (!isEditing) {
     passengerStore.$state.passenger = {};
-    console.log("Limpou!");
   }
   showAddForm.value = !showAddForm.value;
 };
@@ -65,38 +61,35 @@ const passengerColumns = [
         Button,
         {
           variant: "ghost",
-          onClick: () => column.toggleSorting(column.getIsSorted() === "asc"),
+          onClick: () => column.toggleSorting(column.getIsSorted() === "asc")
         },
         () => ["Nome", h(ArrowUpDown, { class: "ml-2 h-4 w-4" })]
       );
     },
-    cell: ({ row }) => h("div", { class: "capitalize" }, row.getValue("name")),
+    cell: ({ row }) => h("div", { class: "capitalize" }, row.getValue("name"))
   }),
   columnHelper.accessor("email", {
     header: () => h("div", { class: "text-left" }, "E-mail"),
-    cell: ({ row }) => h("div", { class: "lowercase" }, row.getValue("email")),
-  }),
-  columnHelper.accessor("id", {
-    header: () => h("div", { class: "text-left" }, "ID"),
-    cell: ({ row }) => h("div", { class: "lowercase" }, row.getValue("id")),
+    cell: ({ row }) => h("div", { class: "lowercase" }, row.getValue("email"))
   }),
   columnHelper.accessor("phone", {
     header: () => h("div", { class: "text-left" }, "Telefone"),
-    cell: ({ row }) => h("div", { class: "lowercase" }, row.getValue("phone")),
+    cell: ({ row }) => h("div", { class: "lowercase" }, row.getValue("phone"))
   }),
   columnHelper.accessor("cpf", {
     header: () => h("div", { class: "text-left" }, "CPF"),
-    cell: ({ row }) => h("div", { class: "lowercase" }, row.getValue("cpf")),
+    cell: ({ row }) =>
+      h("div", { class: "lowercase" }, row.getValue("cpf") || "-")
   }),
   columnHelper.accessor("position", {
     header: () => h("div", { class: "text-left" }, "Cargo"),
     cell: ({ row }) =>
-      h("div", { class: "capitalize" }, row.getValue("position")),
+      h("div", { class: "capitalize" }, row.getValue("position") || "-")
   }),
   columnHelper.accessor("department", {
     header: () => h("div", { class: "text-left" }, "CC/Depto."),
     cell: ({ row }) =>
-      h("div", { class: "capitalize" }, row.getValue("department")),
+      h("div", { class: "capitalize" }, row.getValue("department") || "-")
   }),
 
   columnHelper.accessor("status", {
@@ -112,7 +105,7 @@ const passengerColumns = [
               : status === "inactive"
               ? "bg-red-700"
               : "bg-yellow-500"
-          }`,
+          }`
         },
         status === "active"
           ? "Ativo"
@@ -120,7 +113,7 @@ const passengerColumns = [
           ? "Inativo"
           : "Pendente"
       );
-    },
+    }
   }),
   columnHelper.display({
     id: "actions",
@@ -134,11 +127,11 @@ const passengerColumns = [
         h(EditDeleteActions, {
           data: passengerData,
           remove: deletePassenger,
-          formControl: toggleShowAddForm,
+          formControl: toggleShowAddForm
         })
       );
-    },
-  }),
+    }
+  })
 ];
 </script>
 

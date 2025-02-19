@@ -8,7 +8,7 @@ import {
 } from "~/server/services/admin/passengers";
 
 interface IPassengerState {
-  passengers: any;
+  passengers: any | Array<any>;
   passenger: any;
   isEditing: boolean;
   loading: boolean;

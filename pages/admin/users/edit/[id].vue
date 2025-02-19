@@ -16,67 +16,116 @@ import CheckBoxGroup from "@/components/shared/CheckBoxGroup.vue";
 import { useToast } from "@/components/ui/toast/use-toast";
 import { storeToRefs } from "pinia";
 import { dateFormat } from "~/lib/utils";
+import { useCustomerStore } from "~/stores/admin/customers.store";
 
 const { toast } = useToast();
 
-const store = usePassengerStore();
+const userStore = usePassengerStore();
+const customerStore = useCustomerStore();
 const { getPassengerByIdAction, updatePassengerAction, toggleIsEditing } =
-  store;
-const { loading } = storeToRefs(store);
+  userStore;
+const { getCustomerByIdAction } = customerStore;
+const { loading } = storeToRefs(userStore);
 
 const route = useRoute();
 
 const fetchUserData = async () => {
   return await getPassengerByIdAction(route.params.id as string);
 };
+const fetchCustomerData = async (customerId: string) => {
+  return await getCustomerByIdAction(customerId);
+};
 
 const userData = ref<any>();
+const customerData = ref<any>();
+const isLoading = ref(false);
 
 userData.value = await fetchUserData();
+if (userData.value.customerId !== null) {
+  customerData.value = await fetchCustomerData(userData.value.customerId);
+}
 
 const regularUser = computed(() => {
   return userData?.value.type === "regular";
 });
 
-const editPassengerSchema = toTypedSchema(
-  z.object({
-    name: z.string().min(2).max(50),
-    email: z.string().min(2).max(50),
-    phone: z.string().min(2).max(50),
-    department: z.string().min(2).max(50),
-    document: z.string().min(2).max(16),
-    position: z.string().min(2).max(50),
-    status: z.string().min(2).max(50),
-    active: z.boolean(),
-    restrictions: z
-      .array(z.string())
-      .refine((value) => value.some((item) => item), {
-        message: "Selecione ao menos uma restrição!"
+const createFormSchema = () => {
+  if (userData.value.type === "regular") {
+    const regularUserSchema = toTypedSchema(
+      z.object({
+        name: z.string().min(2).max(50),
+        email: z.string().min(2).max(50),
+        phone: z.string().min(2).max(50),
+        document: z.string().min(2).max(16),
+        status: z.string().min(2).max(50),
+        active: z.boolean()
       })
-  })
-);
+    );
+    return regularUserSchema;
+  }
 
-onMounted(() => {
-  const passengersForm = useForm({
-    validationSchema: editPassengerSchema,
-    initialValues: userData.value
-  });
+  const corpUserSchema = toTypedSchema(
+    z.object({
+      name: z.string().min(2).max(50),
+      email: z.string().min(2).max(50),
+      phone: z.string().min(2).max(50),
+      department: z.string().min(2).max(50),
+      document: z.string().min(2).max(16),
+      position: z.string().min(2).max(50),
+      status: z.string().min(2).max(50),
+      active: z.boolean(),
+      restrictions: z
+        .array(z.string())
+        .refine((value) => value.some((item) => item), {
+          message: "Selecione ao menos uma restrição!"
+        })
+    })
+  );
+
+  return corpUserSchema;
+};
+const passengersForm = useForm({
+  validationSchema: createFormSchema(),
+  initialValues: userData.value
 });
-// const sanitezedCCAreas = computed(() => {
-//   if (passenger.type === 'corp') {
-//     return passenger.ccAreas.map((area: any) => ({
-//       label: `${area.areaCode} - ${area.areaName}`,
-//       value: area.areaCode
-//     }));
-//   } else return;
-// });
+
+const onSubmitUser = passengersForm.handleSubmit(async (values) => {
+  isLoading.value = true;
+  try {
+    await updatePassengerAction({
+      id: route.params.id,
+      ...values
+    });
+  } catch (error) {
+    toast({
+      title: "Algo deu errado!",
+      class: "bg-red-600 border-0 text-white text-2xl",
+      description: `Erro ${error} ao atualizar dados do usuário ${userData.value.name}`
+    });
+  } finally {
+    setTimeout(() => {
+      isLoading.value = false;
+      toast({
+        title: "Sucesso!",
+        class: "bg-green-600 border-0 text-white text-2xl",
+        description: `O usuário ${values.name} foi atualizado com sucesso!`
+      });
+      navigateTo("/admin/users");
+    }, 1500);
+  }
+});
+
+const sanitizedCCAreas = computed(() => {
+  if (userData.value.type === "corp") {
+    return customerData.value.ccAreas.map((area: any) => ({
+      label: `${area.areaCode} - ${area.areaName}`,
+      value: area.areaCode
+    }));
+  } else return;
+});
 </script>
 
 <template>
-  <!-- <div v-if="!Object.keys(passenger)">
-    <LoaderCircle class="w-10 h-10 animate-spin" />
-  </div> -->
-
   <main class="p-6">
     <header>
       <div class="mb-8 flex items-center">
@@ -94,12 +143,11 @@ onMounted(() => {
     </section>
     <section v-else class="mb-6">
       <Card class="bg-zinc-200 rounded-md">
-        <form @submit="">
+        <form @submit.prevent="onSubmitUser">
           <CardHeader>
-            <pre>{{ userData }}</pre>
             <div class="flex items-center justify-between">
               <CardTitle class="text-md"
-                >Editando usuário:
+                >Editando dados do usuário:
                 <br />
                 <span class="font-normal text-3xl">{{ userData.name }}</span>
                 <div class="my-4">
@@ -175,7 +223,7 @@ onMounted(() => {
                 </FormItem>
               </FormField>
 
-              <!-- <FormField v-slot="{ componentField }" name="status">
+              <FormField v-slot="{ componentField }" name="status">
                 <FormItem>
                   <FormLabel>Situação do Usuário</FormLabel>
                   <FormControl>
@@ -189,9 +237,9 @@ onMounted(() => {
                     />
                   </FormControl>
                 </FormItem>
-              </FormField> -->
+              </FormField>
 
-              <!-- <FormField v-slot="{ componentField }" name="active">
+              <FormField v-slot="{ componentField }" name="active">
                 <FormItem>
                   <FormLabel>Acesso ao sistema</FormLabel>
                   <FormControl>
@@ -205,15 +253,22 @@ onMounted(() => {
                     />
                   </FormControl>
                 </FormItem>
-              </FormField> -->
+              </FormField>
 
               <div
                 v-if="!regularUser"
                 class="p-6 col-span-4 border-2 border-zinc-600 rounded-md"
               >
                 <h4 class="mb-8 font-bold">Dados Corporativos</h4>
+                <h2 class="mb-6 text-xl">
+                  <strong>Cliente: </strong>{{ customerData.name }}
+                </h2>
                 <div class="grid grid-cols-3 gap-4 items-center">
-                  <FormField v-slot="{ componentField }" name="customer">
+                  <FormField
+                    v-if="regularUser"
+                    v-slot="{ componentField }"
+                    name="customer"
+                  >
                     <FormItem>
                       <FormLabel>Empresa</FormLabel>
                       <FormControl>
@@ -234,7 +289,7 @@ onMounted(() => {
                       <FormControl>
                         <FormSelect
                           v-bind="componentField"
-                          :items="[]"
+                          :items="sanitizedCCAreas"
                           :label="'Selecione'"
                         />
                       </FormControl>
@@ -293,7 +348,7 @@ onMounted(() => {
           <CardFooter>
             <div class="mt-8 flex items-center">
               <Button type="submit">
-                <LoaderCircle v-if="true" class="w-10 h-10 animate-spin" />
+                <LoaderCircle v-if="loading" class="w-10 h-10 animate-spin" />
                 Salvar alterações
               </Button>
               <Button
