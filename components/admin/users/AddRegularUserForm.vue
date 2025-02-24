@@ -7,13 +7,13 @@ import { toTypedSchema } from "@vee-validate/zod";
 import { useToast } from "@/components/ui/toast/use-toast";
 import { usePassengerStore } from "~/stores/admin/passengers.store";
 import { storeToRefs } from "pinia";
-const store = usePassengerStore();
+const userStore = usePassengerStore();
 
 const { toast } = useToast();
 
 const { createNewPassengerAction, updatePassengerAction, getPassengersAction } =
-  store;
-const { loading, passenger, isEditing } = storeToRefs(store);
+  userStore;
+const { loading, passenger, isEditing } = storeToRefs(userStore);
 
 const emit = defineEmits(["show-form", "fetch-customer"]);
 const showPassengerForm = () => {

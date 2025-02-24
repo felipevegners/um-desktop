@@ -70,7 +70,6 @@ const createFormSchema = () => {
       email: z.string().min(2).max(50),
       phone: z.string().min(2).max(50),
       department: z.string().min(2).max(50),
-      document: z.string().min(2).max(16),
       position: z.string().min(2).max(50),
       status: z.string().min(2).max(50),
       active: z.boolean(),
@@ -264,7 +263,7 @@ const sanitizedCCAreas = computed(() => {
                   <strong>Cliente: </strong>{{ customerData.name }}
                 </h2>
                 <div class="grid grid-cols-3 gap-4 items-center">
-                  <FormField
+                  <!-- <FormField
                     v-if="regularUser"
                     v-slot="{ componentField }"
                     name="customer"
@@ -282,7 +281,7 @@ const sanitizedCCAreas = computed(() => {
                         />
                       </FormControl>
                     </FormItem>
-                  </FormField>
+                  </FormField> -->
                   <FormField v-slot="{ componentField }" name="department">
                     <FormItem>
                       <FormLabel>CC / Depto.</FormLabel>

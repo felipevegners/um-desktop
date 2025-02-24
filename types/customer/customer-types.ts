@@ -17,4 +17,10 @@ export interface Customer {
   managerPhone: string;
   managerEmail: string;
   passengers?: Record<string, string>;
+  ccAreas: [
+    {
+      areaCode: string;
+      areaName: string;
+    }
+  ];
 }

@@ -169,6 +169,7 @@ const passengerColumns = [
             <Switch
               v-model="isRegularUser"
               @update:checked="isRegularUser = !isRegularUser"
+              :default-checked="false"
             />
             <Label for="customer-enabled" class="text-md font-normal">
               Corporativo

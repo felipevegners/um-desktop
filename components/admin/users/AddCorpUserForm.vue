@@ -1,22 +1,34 @@
 <script setup lang="ts">
-import { ref, h, computed } from "vue";
+import { ref, h, computed, onMounted } from "vue";
 import { useForm } from "vee-validate";
 import { toTypedSchema } from "@vee-validate/zod";
 import * as z from "zod";
 import { LoaderCircle } from "lucide-vue-next";
-import { usePassengerStore } from "~/stores/admin/passengers.store";
 import FormSelect from "@/components/shared/FormSelect.vue";
 import CheckBoxGroup from "@/components/shared/CheckBoxGroup.vue";
+import { usePassengerStore } from "~/stores/admin/passengers.store";
+import { useCustomerStore } from "~/stores/admin/customers.store";
 
 import { useToast } from "@/components/ui/toast/use-toast";
 import { storeToRefs } from "pinia";
+import type { Customer } from "~/types/customer/customer-types";
 
 const { toast } = useToast();
 
-const store = usePassengerStore();
+const userStore = usePassengerStore();
 const { createNewPassengerAction, updatePassengerAction, toggleIsEditing } =
-  store;
-const { loading, passenger, isEditing } = storeToRefs(store);
+  userStore;
+const { loading, passenger, isEditing } = storeToRefs(userStore);
+
+const customerStore = useCustomerStore();
+const { getCustomersAction } = customerStore;
+const { customers } = storeToRefs(customerStore);
+
+const customerAreasList = ref<any>();
+
+onMounted(async () => {
+  await getCustomersAction();
+});
 
 const props = defineProps<{
   customerId?: string;
@@ -39,6 +51,7 @@ const corpPassengesFormSchema = toTypedSchema(
     department: z.string().min(2).max(50),
     position: z.string().min(2).max(50),
     status: z.string().min(2).max(50),
+    customerId: z.string().min(2).max(50),
     restrictions: z
       .array(z.string())
       .refine((value) => value.some((item) => item), {
@@ -57,6 +70,7 @@ const passengersForm = useForm({
 });
 
 const onSubmitPassengers = passengersForm.handleSubmit(async (values) => {
+  console.log("Values -> ", values);
   const newPassengerData = {
     id: passenger?.value.id,
     name: values.name,
@@ -66,7 +80,7 @@ const onSubmitPassengers = passengersForm.handleSubmit(async (values) => {
     position: values.position,
     status: values.status,
     restrictions: values.restrictions,
-    customerId: props.customerId,
+    customerId: props.isNewUser ? values.customerId : props.customerId,
     customerName: props.customerName,
     active: true,
     type: "corp",
@@ -104,14 +118,35 @@ const onSubmitPassengers = passengersForm.handleSubmit(async (values) => {
   }
 });
 
+const onSelectCustomer = (value: any) => {
+  const areas = customers.value.filter((customer) => customer.id === value)[0]
+    .ccAreas;
+  customerAreasList.value = areas.map((area: any) => ({
+    label: `${area.areaCode} - ${area.areaName}`,
+    value: area.areaCode
+  }));
+  // console.log("Selecionou aqui no pai!!", areas);
+};
+
+const sanitizedCustomers = computed(() => {
+  if (props.isNewUser && customers.value.length) {
+    return customers.value.map((customer) => ({
+      label: customer.name,
+      value: customer.id
+    }));
+  }
+});
+
 const sanitezedCCAreas = computed(() => {
-  if (!props.isNewUser) {
+  if (!props.isNewUser && props.ccAreas.length) {
     return props.ccAreas.map((area: any) => ({
       label: `${area.areaCode} - ${area.areaName}`,
       value: area.areaCode
     }));
-  } else return;
+  } else return [];
 });
+
+customerAreasList.value = sanitezedCCAreas;
 </script>
 <template>
   <div v-if="!Object.keys(passenger)">
@@ -180,18 +215,16 @@ const sanitezedCCAreas = computed(() => {
               <FormField
                 v-if="isNewUser"
                 v-slot="{ componentField }"
-                name="customer"
+                name="customerId"
               >
                 <FormItem>
                   <FormLabel>Empresa</FormLabel>
                   <FormControl>
                     <FormSelect
                       v-bind="componentField"
-                      :items="[
-                        { label: 'Empresa A', value: 'empresa-a' },
-                        { label: 'Empresa B', value: 'empresa-b' }
-                      ]"
+                      :items="sanitizedCustomers"
                       :label="'Selecione a empresa'"
+                      @on-select="onSelectCustomer"
                     />
                   </FormControl>
                 </FormItem>
@@ -201,8 +234,16 @@ const sanitezedCCAreas = computed(() => {
                   <FormLabel>CC / Depto.</FormLabel>
                   <FormControl>
                     <FormSelect
+                      v-if="!isNewUser"
                       v-bind="componentField"
                       :items="sanitezedCCAreas"
+                      :label="'Selecione'"
+                    />
+                    <FormSelect
+                      v-else
+                      :disabled="!customerAreasList.length"
+                      v-bind="componentField"
+                      :items="customerAreasList"
                       :label="'Selecione'"
                     />
                   </FormControl>

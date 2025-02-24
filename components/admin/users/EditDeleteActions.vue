@@ -10,9 +10,10 @@ import { storeToRefs } from "pinia";
 
 const passengerStore = usePassengerStore();
 const { getPassengerByIdAction, toggleIsEditing } = passengerStore;
-const { loading } = storeToRefs(passengerStore);
+const { loading, viewDeleteModal } = storeToRefs(passengerStore);
 
-const showConfirmationModal = ref<boolean>(false);
+const showConfirmationModal = ref(false);
+
 const toggleConfirmationModal = () => {
   showConfirmationModal.value = !showConfirmationModal.value;
 };
@@ -60,8 +61,10 @@ const handleEditPassenger = async (passId: string) => {
       <AlertDialogHeader>
         <AlertDialogTitle>Deseja realmente excluir?</AlertDialogTitle>
         <AlertDialogDescription>
-          {{ data }}
           Essa ação é irreversível e excluirá permanentemente da base de dados.
+          <br />
+          <br />
+          <strong>ID a ser deletado:</strong> {{ data.id }}
         </AlertDialogDescription>
       </AlertDialogHeader>
       <AlertDialogFooter>
@@ -70,7 +73,12 @@ const handleEditPassenger = async (passId: string) => {
         >
         <AlertDialogAction
           class="bg-red-500 hover:bg-red-600"
-          @click="remove(data.id)"
+          @click="
+            () => {
+              remove(data.id);
+              toggleConfirmationModal;
+            }
+          "
         >
           <LoaderCircle v-if="loading" class="w-10 h-10 animate-spin" />
           Excluir
