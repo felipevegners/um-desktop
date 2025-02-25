@@ -10,7 +10,7 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-model Users {
+model Accounts {
   id             String     @id @default(auto()) @map("_id") @db.ObjectId
   username       String
   hashedPassword String
@@ -34,7 +34,7 @@ model Customers {
   website      String
   logo         String
   adminId      String       @unique @db.ObjectId
-  admin        Users?       @relation(fields: [adminId], references: [id])
+  admin        Accounts?    @relation(fields: [adminId], references: [id])
   managerName  String
   managerPhone String
   managerEmail String
@@ -65,4 +65,22 @@ model Passengers {
   history      Json?
   createdAt    DateTime?  @default(now())
   updatedAt    DateTime?  @updatedAt()
+}
+
+model Drivers {
+  id            String    @id @default(auto()) @map("_id") @db.ObjectId
+  name          String
+  email         String    @unique
+  phone         String
+  document      String
+  picture       String
+  driverLicense String
+  driverFiles   Json?
+  driverCars    Json?
+  rating        Json?
+  history       Json?
+  status        String
+  enabled       Boolean
+  createdAt     DateTime? @default(now())
+  updatedAt     DateTime? @updatedAt()
 }
