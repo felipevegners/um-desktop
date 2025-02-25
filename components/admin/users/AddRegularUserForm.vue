@@ -36,7 +36,6 @@ const regularUserForm = useForm({
 
 const onSubmitUser = regularUserForm.handleSubmit(async (values) => {
   const newUserData = {
-    // id: passenger?.value.id,
     name: values.name,
     email: values.email,
     phone: values.phone,
@@ -52,13 +51,13 @@ const onSubmitUser = regularUserForm.handleSubmit(async (values) => {
     } catch (error) {
       console.log("Erro na atualização do usuário -> ", error);
     } finally {
-      emit("fetch-customer");
       toast({
         title: "Feito!",
         class: "bg-green-600 border-0 text-white text-2xl",
         description: "Usuário atualizado com sucesso!"
       });
       emit("show-form");
+      emit("fetch-customer");
     }
   } else {
     try {
@@ -66,13 +65,13 @@ const onSubmitUser = regularUserForm.handleSubmit(async (values) => {
     } catch (error) {
       console.log("Erro no envio do usuário -> ", error);
     } finally {
-      emit("fetch-customer");
       toast({
         title: "Feito!",
         class: "bg-green-600 border-0 text-white text-2xl",
         description: "Usuário adicionado com sucesso!"
       });
       await getPassengersAction();
+      emit("fetch-customer");
       emit("show-form");
     }
   }

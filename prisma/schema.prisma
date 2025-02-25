@@ -50,7 +50,7 @@ model Customers {
 model Passengers {
   id           String     @id @default(auto()) @map("_id") @db.ObjectId
   name         String
-  email        String
+  email        String     @unique
   phone        String
   company      Customers? @relation(fields: [customerId], references: [id])
   customerId   String?    @db.ObjectId
@@ -61,7 +61,7 @@ model Passengers {
   status       String
   active       Boolean
   type         String //Corp or Regular
-  document     String?    @unique
+  document     String?
   history      Json?
   createdAt    DateTime?  @default(now())
   updatedAt    DateTime?  @updatedAt()

@@ -16,8 +16,12 @@ import type { Customer } from "~/types/customer/customer-types";
 const { toast } = useToast();
 
 const userStore = usePassengerStore();
-const { createNewPassengerAction, updatePassengerAction, toggleIsEditing } =
-  userStore;
+const {
+  createNewPassengerAction,
+  updatePassengerAction,
+  toggleIsEditing,
+  getPassengersAction
+} = userStore;
 const { loading, passenger, isEditing } = storeToRefs(userStore);
 
 const customerStore = useCustomerStore();
@@ -25,6 +29,7 @@ const { getCustomersAction } = customerStore;
 const { customers } = storeToRefs(customerStore);
 
 const customerAreasList = ref<any>();
+const customerName = ref<string>();
 
 onMounted(async () => {
   await getCustomersAction();
@@ -70,7 +75,6 @@ const passengersForm = useForm({
 });
 
 const onSubmitPassengers = passengersForm.handleSubmit(async (values) => {
-  console.log("Values -> ", values);
   const newPassengerData = {
     id: passenger?.value.id,
     name: values.name,
@@ -81,7 +85,7 @@ const onSubmitPassengers = passengersForm.handleSubmit(async (values) => {
     status: values.status,
     restrictions: values.restrictions,
     customerId: props.isNewUser ? values.customerId : props.customerId,
-    customerName: props.customerName,
+    customerName: props.isNewUser ? customerName.value : props.customerName,
     active: true,
     type: "corp",
     history: []
@@ -91,41 +95,54 @@ const onSubmitPassengers = passengersForm.handleSubmit(async (values) => {
     try {
       await updatePassengerAction(newPassengerData);
     } catch (error) {
-      console.log("Erro na atualização do usuário -> ", error);
+      toast({
+        title: "Oops!",
+        class: "bg-red-600 border-0 text-white text-2xl",
+        description: `Ocorreu um erro ao adicionar o usuário. Erro ${error}`
+      });
+      throw error;
     } finally {
-      emit("fetch-customer");
       toast({
         title: "Feito!",
         class: "bg-green-600 border-0 text-white text-2xl",
         description: "Usuário atualizado com sucesso!"
       });
       emit("show-form");
+      emit("fetch-customer");
     }
   } else {
     try {
       await createNewPassengerAction(newPassengerData);
     } catch (error) {
-      console.log("Erro no envio do usuário -> ", error);
+      toast({
+        title: "Oops!",
+        class: "bg-red-600 border-0 text-white text-2xl",
+        description: `Ocorreu um erro ao adicionar o usuário. Erro ${error}`
+      });
+      throw error;
     } finally {
-      emit("fetch-customer");
       toast({
         title: "Feito!",
         class: "bg-green-600 border-0 text-white text-2xl",
         description: "Usuário adicionado com sucesso!"
       });
       emit("show-form");
+      await getPassengersAction();
     }
   }
 });
 
 const onSelectCustomer = (value: any) => {
+  const name = customers.value.filter((customer) => customer.id === value)[0]
+    .fantasyName;
+  customerName.value = name;
+
   const areas = customers.value.filter((customer) => customer.id === value)[0]
     .ccAreas;
   customerAreasList.value = areas.map((area: any) => ({
     label: `${area.areaCode} - ${area.areaName}`,
     value: area.areaCode
   }));
-  // console.log("Selecionou aqui no pai!!", areas);
 };
 
 const sanitizedCustomers = computed(() => {

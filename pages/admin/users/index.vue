@@ -76,10 +76,10 @@ const passengerColumns = [
     header: () => h("div", { class: "text-left" }, "Telefone"),
     cell: ({ row }) => h("div", { class: "lowercase" }, row.getValue("phone"))
   }),
-  columnHelper.accessor("cpf", {
+  columnHelper.accessor("document", {
     header: () => h("div", { class: "text-left" }, "CPF"),
     cell: ({ row }) =>
-      h("div", { class: "lowercase" }, row.getValue("cpf") || "-")
+      h("div", { class: "lowercase" }, row.getValue("document") || "-")
   }),
   columnHelper.accessor("type", {
     header: () => h("div", { class: "text-left" }, "Categoria"),
