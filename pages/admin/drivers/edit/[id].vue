@@ -1,137 +1,89 @@
 <script setup lang="ts">
-import { ref, onMounted } from "vue";
-import { Plus, LoaderCircle, CircleCheck, ArrowUpDown } from "lucide-vue-next";
-import { createColumnHelper } from "@tanstack/vue-table";
-import AddCarsForm from "~/components/admin/drivers/AddCarsForm.vue";
-import { Button } from "@/components/ui/button";
-import DataTable from "@/components/shared/DataTable.vue";
-import { userDriverStore } from "~/stores/admin/drivers.store";
-import { storeToRefs } from "pinia";
+definePageMeta({
+  layout: "admin",
+  title: "Editar Motorista | Urban Mobi"
+});
+
 import { useForm } from "vee-validate";
 import { toTypedSchema } from "@vee-validate/zod";
 import * as z from "zod";
-import EditDeleteActions from "~/components/admin/drivers/EditDeleteActions.vue";
+import { ArrowLeft, LoaderCircle } from "lucide-vue-next";
+import { dateFormat } from "~/lib/utils";
+import { userDriverStore } from "~/stores/admin/drivers.store";
+import { storeToRefs } from "pinia";
 
 const driverStore = userDriverStore();
-const { loadingData, drivers } = storeToRefs(driverStore);
-const { getDriversAction } = driverStore;
+const { loadingData } = storeToRefs(driverStore);
+const { getDriverByIdAction } = driverStore;
 
-definePageMeta({
-  layout: "admin"
-});
+const route = useRoute();
 
-const showAddForm = ref<boolean>(false);
-const driverCars = reactive([
-  { carModel: "", carColor: "", carPlate: "", carYear: "" }
-]);
-
-onMounted(async () => {
-  await getDriversAction();
-});
-
-const toggleShowAddForm = () => {
-  showAddForm.value = !showAddForm.value;
+const fetchDriverData = async () => {
+  return await getDriverByIdAction(route.params.id as string);
 };
-const columnHelper = createColumnHelper<any>();
 
-const columns = [
-  columnHelper.accessor("name", {
-    enablePinning: true,
-    header: ({ column }) => {
-      return h(
-        Button,
-        {
-          variant: "ghost",
-          onClick: () => column.toggleSorting(column.getIsSorted() === "asc")
-        },
-        () => ["Nome", h(ArrowUpDown, { class: "ml-2 h-4 w-4" })]
-      );
-    },
-    cell: ({ row }) => h("div", { class: "capitalize" }, row.getValue("name"))
-  }),
-  columnHelper.accessor("email", {
-    header: () => h("div", { class: "text-left" }, "E-mail"),
-    cell: ({ row }) => h("div", { class: "lowercase" }, row.getValue("email"))
-  }),
-  columnHelper.accessor("phone", {
-    header: () => h("div", { class: "text-left" }, "Celular"),
-    cell: ({ row }) => h("div", { class: "capitalize" }, row.getValue("phone"))
-  }),
-  columnHelper.accessor("document", {
-    header: () => h("div", { class: "text-left" }, "CPF"),
-    cell: ({ row }) => {
-      return h(
-        "div",
-        { class: "text-left font-medium" },
-        row.getValue("document")
-      );
-    }
-  }),
-  columnHelper.accessor("status", {
-    header: () => h("div", { class: "text-left" }, "Cadastro"),
-    cell: ({ row }) => {
-      const status = row.getValue("status");
-      return h(
-        "div",
-        {
-          class: `px-2 flex items-center justify-center h-6 rounded-lg text-white text-xs max-w-[80px] ${
-            status === "active" ? "bg-green-600" : "bg-yellow-600"
-          }`
-        },
-        status === "active" ? "Aprovado" : "Pendente"
-      );
-    }
-  }),
-  columnHelper.accessor("enabled", {
-    header: () => h("div", { class: "text-left" }, "Acesso"),
-    cell: ({ row }) => {
-      const enabled = row.getValue("enabled");
-      return h(
-        "div",
-        {
-          class: `px-1 flex items-center justify-center h-6 rounded-lg text-white text-xs max-w-[80px] ${
-            enabled === true ? "bg-blue-600" : "bg-zinc-600"
-          }`
-        },
-        enabled === true ? "Liberado" : "Negado"
-      );
-    }
-  }),
+const driverData = ref();
+driverData.value = await fetchDriverData();
 
-  columnHelper.display({
-    id: "actions",
-    enableHiding: false,
-    header: () => h("div", { class: "text-left" }, "Ações"),
-    cell: ({ row }) => {
-      const driverData = row.original;
-      return h(
-        "div",
-        { class: "relative text-left" },
-        h(EditDeleteActions, {
-          data: driverData,
-          remove: "",
-          formControl: toggleShowAddForm
-        })
-      );
-    }
-  })
-];
+const createFormSchema = () => {
+  const driverSchema = toTypedSchema(
+    z.object({
+      name: z.string().min(2).max(50),
+      email: z.string().min(2).max(50),
+      phone: z.string().min(2).max(50),
+      document: z.string().min(2).max(16),
+      driverLicense: z.string().min(2).max(50)
+      //   active: z.boolean()
+    })
+  );
+  return driverSchema;
+};
+
+const driversForm = useForm({
+  validationSchema: createFormSchema(),
+  initialValues: driverData.value
+});
 </script>
 
 <template>
   <main class="p-6">
-    <section class="mb-6 flex items-center gap-6">
-      <h1 class="font-bold text-black text-3xl">Base de Motoristas</h1>
-      <div>
-        <Button @click="toggleShowAddForm">
-          <Plus class="w-4 h-4" /> Cadastrar Motorista
-        </Button>
+    <header>
+      <div class="mb-8 flex items-center">
+        <NuxtLink to="/admin/drivers" class="flex hover:font-bold">
+          <ArrowLeft class="mr-2" />
+          Voltar
+        </NuxtLink>
       </div>
+    </header>
+    <section
+      v-if="loadingData"
+      class="p-10 h-40 flex items-center justify-center bg-zinc-200 rounded-md"
+    >
+      <LoaderCircle class="w-10 h-10 animate-spin" />
     </section>
-    <section v-if="showAddForm" class="mb-4 py-4">
+    <section v-else class="mb-4 py-4">
+      <pre>{{ driverData }}</pre>
       <Card class="bg-zinc-200">
         <CardHeader>
-          <CardTitle>Cadastrar novo motorista</CardTitle>
+          <CardTitle class="text-md"
+            >Editando dados do motorista:
+            <br />
+            <span class="font-normal text-3xl">{{ driverData.name }}</span>
+            <div class="my-4">
+              <div class="mb-4 flex flex-col">
+                <small class="text-zinc-500">Cadastrado em:</small>
+                <p class="font-bold">
+                  {{ dateFormat(driverData.createdAt) }}
+                </p>
+              </div>
+              <div class="mb-2 flex flex-col">
+                <small class="text-zinc-500">Modificado em:</small>
+                <p class="font-bold">
+                  {{ dateFormat(driverData.updatedAt) }}
+                </p>
+              </div>
+            </div>
+          </CardTitle>
         </CardHeader>
         <CardContent>
           <form @submit.prevent="">
@@ -207,15 +159,18 @@ const columns = [
             </div>
             <div class="mb-4 w-full grid grid-cols-3 gap-8"></div>
             <section class="my-10">
-              <h2 class="mb-4 text-lg font-bold">Dados do(s) Veículo(s)</h2>
+              <h2 class="mb-4 text-lg font-bold">Editar Veículo(s)</h2>
               <Separator class="mb-4" />
-              <pre>{{ driverCars }}</pre>
+              <pre>{{ driverData.driverCars }}</pre>
               <div class="grid grid-cols-3 gap-8">
-                <AddCarsForm v-model="driverCars" class="col-span-3" />
+                <AddCarsForm
+                  v-model="driverData.driverCars"
+                  class="col-span-3"
+                />
               </div>
             </section>
             <section class="mt-6 mb-8">
-              <h2 class="mb-4 text-lg font-bold">Enviar arquivos</h2>
+              <h2 class="mb-4 text-lg font-bold">Editar arquivos</h2>
               <div class="grid grid-cols-3 gap-6">
                 <FormField v-slot="{ componentField }" name="picture">
                   <FormItem class="col-span-1">
@@ -274,7 +229,7 @@ const columns = [
               <Button
                 variant="ghost"
                 class="ml-4"
-                @click.prevent="toggleShowAddForm"
+                @click.prevent="navigateTo('/admin/drivers')"
               >
                 Cancelar
               </Button>
@@ -282,18 +237,6 @@ const columns = [
           </form>
         </CardContent>
       </Card>
-    </section>
-    <section v-if="loadingData" class="p-10 flex items-center justify-center">
-      <LoaderCircle class="w-10 h-10 animate-spin" />
-    </section>
-    <section v-else>
-      <h2>barretos</h2>
-      <DataTable
-        :columns="columns"
-        :data="drivers"
-        sortby="name"
-        :columnPin="['name']"
-      />
     </section>
   </main>
 </template>

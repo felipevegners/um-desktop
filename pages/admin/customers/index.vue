@@ -17,10 +17,9 @@ import {
   AlertDialogHeader,
   AlertDialogTitle
 } from "@/components/ui/alert-dialog";
-import { Plus, LoaderCircle, CircleCheck } from "lucide-vue-next";
+import { Plus, LoaderCircle, ArrowUpDown } from "lucide-vue-next";
 import { Button } from "@/components/ui/button";
 import { createColumnHelper } from "@tanstack/vue-table";
-import { ArrowUpDown } from "lucide-vue-next";
 import DataTableActions from "@/components/admin/customers/DataTableActions.vue";
 import AddCCAreaForm from "@/components/admin/customers/AddCCAreaForm.vue";
 import DataTable from "@/components/shared/DataTable.vue";
@@ -125,7 +124,7 @@ const onSubmit = form.handleSubmit(async (values) => {
     status: "pending",
     enabled: true
   };
-  await createNewCustomerAction(newCustomerData)
+  await createNewCustomerAction(newCustomerData as any)
     .then(() => {
       isLoadingSend.value = false;
     })
