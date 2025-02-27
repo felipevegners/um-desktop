@@ -1,4 +1,5 @@
 export interface Customer {
+  fantasyName: string;
   id?: string;
   name: string;
   document: string;

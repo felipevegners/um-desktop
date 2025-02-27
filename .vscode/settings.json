@@ -1,0 +1,8 @@
+{
+  "editor.defaultFormatter": "rvest.vs-code-prettier-eslint",
+  "notebook.defaultFormatter": "esbenp.prettier-vscode",
+  "editor.formatOnSave": true,
+  "[vue]": {
+    "editor.defaultFormatter": "Vue.volar"
+  }
+}

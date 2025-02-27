@@ -7,9 +7,16 @@ export interface Driver {
   picture: string;
   driverLicense: string;
   driverFiles: Array<any>;
-  driverCars: Array<any>;
+  driverCars: DriverCar[];
   rating: Array<any>;
   history: Array<any>;
   status: string;
   enabled: boolean;
+}
+
+type DriverCar = {
+      carModel: string;
+    carColor: string;
+    carPlate: string;
+    carYear: string;
 }

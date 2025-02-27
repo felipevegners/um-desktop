@@ -32,8 +32,8 @@ const createFormSchema = () => {
       email: z.string().min(2).max(50),
       phone: z.string().min(2).max(50),
       document: z.string().min(2).max(16),
-      driverLicense: z.string().min(2).max(50)
-      //   active: z.boolean()
+      driverLicense: z.string().min(2).max(50),
+      status: z.string().min(2).max(50),
     })
   );
   return driverSchema;
@@ -43,6 +43,8 @@ const driversForm = useForm({
   validationSchema: createFormSchema(),
   initialValues: driverData.value
 });
+
+const onSubmit = driversForm.handleSubmit(async (values) => { })
 </script>
 
 <template>
@@ -55,18 +57,14 @@ const driversForm = useForm({
         </NuxtLink>
       </div>
     </header>
-    <section
-      v-if="loadingData"
-      class="p-10 h-40 flex items-center justify-center bg-zinc-200 rounded-md"
-    >
+    <section v-if="loadingData" class="p-10 h-40 flex items-center justify-center bg-zinc-200 rounded-md">
       <LoaderCircle class="w-10 h-10 animate-spin" />
     </section>
     <section v-else class="mb-4 py-4">
       <pre>{{ driverData }}</pre>
       <Card class="bg-zinc-200">
         <CardHeader>
-          <CardTitle class="text-md"
-            >Editando dados do motorista:
+          <CardTitle class="text-md">Editando dados do motorista:
             <br />
             <span class="font-normal text-3xl">{{ driverData.name }}</span>
             <div class="my-4">
@@ -93,11 +91,7 @@ const driversForm = useForm({
                 <FormItem>
                   <FormLabel>Nome</FormLabel>
                   <FormControl>
-                    <Input
-                      type="text"
-                      placeholder="ex.: João Silva"
-                      v-bind="componentField"
-                    />
+                    <Input type="text" placeholder="ex.: João Silva" v-bind="componentField" />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -106,11 +100,7 @@ const driversForm = useForm({
                 <FormItem>
                   <FormLabel>E-mail</FormLabel>
                   <FormControl>
-                    <Input
-                      type="text"
-                      placeholder="joao_silva@email.com.br"
-                      v-bind="componentField"
-                    />
+                    <Input type="text" placeholder="joao_silva@email.com.br" v-bind="componentField" />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -119,11 +109,7 @@ const driversForm = useForm({
                 <FormItem>
                   <FormLabel>Celular</FormLabel>
                   <FormControl>
-                    <Input
-                      type="text"
-                      placeholder="ex.: (11) 99876-5432"
-                      v-bind="componentField"
-                    />
+                    <Input type="text" placeholder="ex.: (11) 99876-5432" v-bind="componentField" />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -134,11 +120,7 @@ const driversForm = useForm({
                 <FormItem class="col-span-1">
                   <FormLabel>CPF</FormLabel>
                   <FormControl>
-                    <Input
-                      type="text"
-                      placeholder="222.333.444-56"
-                      v-bind="componentField"
-                    />
+                    <Input type="text" placeholder="222.333.444-56" v-bind="componentField" />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -147,11 +129,7 @@ const driversForm = useForm({
                 <FormItem class="col-span-1">
                   <FormLabel>Número CNH</FormLabel>
                   <FormControl>
-                    <Input
-                      type="text"
-                      placeholder="ex. 23456789019"
-                      v-bind="componentField"
-                    />
+                    <Input type="text" placeholder="ex. 23456789019" v-bind="componentField" />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -163,10 +141,7 @@ const driversForm = useForm({
               <Separator class="mb-4" />
               <pre>{{ driverData.driverCars }}</pre>
               <div class="grid grid-cols-3 gap-8">
-                <AddCarsForm
-                  v-model="driverData.driverCars"
-                  class="col-span-3"
-                />
+                <AddCarsForm v-model="driverData.driverCars" class="col-span-3" />
               </div>
             </section>
             <section class="mt-6 mb-8">
@@ -175,17 +150,11 @@ const driversForm = useForm({
                 <FormField v-slot="{ componentField }" name="picture">
                   <FormItem class="col-span-1">
                     <FormLabel>Foto Pessoal</FormLabel>
-                    <FormDescription
-                      >*enviar foto de rosto com fundo claro e sem
-                      adereços</FormDescription
-                    >
+                    <FormDescription>*enviar foto de rosto com fundo claro e sem
+                      adereços</FormDescription>
 
                     <FormControl>
-                      <Input
-                        type="file"
-                        placeholder="Selecione uma foto"
-                        v-bind="componentField"
-                      />
+                      <Input type="file" placeholder="Selecione uma foto" v-bind="componentField" />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -195,11 +164,7 @@ const driversForm = useForm({
                     <FormLabel>Cópia CNH</FormLabel>
                     <FormDescription>*enviar frente e verso</FormDescription>
                     <FormControl>
-                      <Input
-                        type="file"
-                        placeholder="Selecione uma foto"
-                        v-bind="componentField"
-                      />
+                      <Input type="file" placeholder="Selecione uma foto" v-bind="componentField" />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -210,11 +175,7 @@ const driversForm = useForm({
                     <FormDescription>*enviar frente e verso</FormDescription>
 
                     <FormControl>
-                      <Input
-                        type="file"
-                        placeholder="Selecione uma foto"
-                        v-bind="componentField"
-                      />
+                      <Input type="file" placeholder="Selecione uma foto" v-bind="componentField" />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -226,11 +187,7 @@ const driversForm = useForm({
                 <LoaderCircle v-if="true" class="w-10 h-10 animate-spin" />
                 Cadastrar
               </Button>
-              <Button
-                variant="ghost"
-                class="ml-4"
-                @click.prevent="navigateTo('/admin/drivers')"
-              >
+              <Button variant="ghost" class="ml-4" @click.prevent="navigateTo('/admin/drivers')">
                 Cancelar
               </Button>
             </section>

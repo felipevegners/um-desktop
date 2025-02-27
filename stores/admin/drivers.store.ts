@@ -12,6 +12,7 @@ interface IDriversState {
   drivers: Driver[];
   driver: any;
   loadingData: boolean;
+  loadingSend: boolean;
 }
 
 export const userDriverStore = defineStore("driver", {
@@ -19,7 +20,8 @@ export const userDriverStore = defineStore("driver", {
     return {
       drivers: [],
       driver: {},
-      loadingData: false
+      loadingData: false,
+      loadingSend: false
     };
   },
   actions: {
@@ -27,7 +29,7 @@ export const userDriverStore = defineStore("driver", {
       this.loadingData = true;
       try {
         const data = await getDrivers();
-        this.drivers = data as Driver[];
+        this.drivers = data as any;
       } catch (error) {
         console.log("Driver Store Error -> ", error);
       } finally {
@@ -38,7 +40,7 @@ export const userDriverStore = defineStore("driver", {
       this.loadingData = true;
       try {
         const data = await getDriver(driverId);
-        this.driver = data as Driver;
+        this.driver = data as unknown;
         return data;
       } catch (error) {
         console.log("Driver Store Error -> ", error);
@@ -47,10 +49,13 @@ export const userDriverStore = defineStore("driver", {
       }
     },
     async createNewDriverAction(driverData: Driver) {
+      this.loadingSend = true;
       try {
         await createDriver(driverData);
       } catch (error) {
         console.log("Driver Store Error Create -> ", error);
+      } finally {
+        this.loadingSend = false;
       }
     }
   }
