@@ -1,217 +1,217 @@
 <script setup lang="ts">
-  definePageMeta({
-    layout: "admin",
-    title: "Editar Cliente | Urban Mobi"
-  });
+definePageMeta({
+  layout: "admin",
+  title: "Editar Cliente | Urban Mobi"
+});
 
-  import { ref, h } from "vue";
-  import { useCustomerStore } from "@/stores/admin/customers.store";
-  import { usePassengerStore } from "~/stores/admin/passengers.store";
-  import FormSelect from "@/components/shared/FormSelect.vue";
-  import { useForm } from "vee-validate";
-  import { toTypedSchema } from "@vee-validate/zod";
-  import * as z from "zod";
+import { ref, h } from "vue";
+import { useCustomerStore } from "@/stores/admin/customers.store";
+import { usePassengerStore } from "~/stores/admin/passengers.store";
+import FormSelect from "@/components/shared/FormSelect.vue";
+import { useForm } from "vee-validate";
+import { toTypedSchema } from "@vee-validate/zod";
+import * as z from "zod";
 
-  import { Button } from "@/components/ui/button";
-  import DataTable from "~/components/shared/DataTable.vue";
-  import { createColumnHelper } from "@tanstack/vue-table";
-  import {
-    ArrowLeft,
-    ArrowUpDown,
-    Plus,
-    LoaderCircle,
-    LockKeyhole,
-    LockKeyholeOpen
-  } from "lucide-vue-next";
-  import Separator from "~/components/ui/separator/Separator.vue";
-  import AddCorpUserForm from "@/components/admin/users/AddCorpUserForm.vue";
-  import EditDeleteActions from "@/components/admin/users/EditDeleteActions.vue";
-  import AddCCAreaForm from "~/components/admin/customers/AddCCAreaForm.vue";
-  import { storeToRefs } from "pinia";
+import { Button } from "@/components/ui/button";
+import DataTable from "~/components/shared/DataTable.vue";
+import { createColumnHelper } from "@tanstack/vue-table";
+import {
+  ArrowLeft,
+  ArrowUpDown,
+  Plus,
+  LoaderCircle,
+  LockKeyhole,
+  LockKeyholeOpen
+} from "lucide-vue-next";
+import Separator from "~/components/ui/separator/Separator.vue";
+import AddCorpUserForm from "@/components/admin/users/AddCorpUserForm.vue";
+import EditDeleteActions from "@/components/admin/users/EditDeleteActions.vue";
+import AddCCAreaForm from "~/components/admin/customers/AddCCAreaForm.vue";
+import { storeToRefs } from "pinia";
 
-  import { useToast } from "@/components/ui/toast/use-toast";
-  import { dateFormat } from "~/lib/utils";
-  const { toast } = useToast();
+import { useToast } from "@/components/ui/toast/use-toast";
+import { dateFormat } from "~/lib/utils";
+const { toast } = useToast();
 
-  const store = useCustomerStore();
-  const { getCustomerByIdAction, editCustomer } = store;
+const store = useCustomerStore();
+const { getCustomerByIdAction, editCustomer } = store;
 
-  const passengerStore = usePassengerStore();
-  const { deletePassengerAction, resetPassengerState, toggleIsEditing, loading } =
-    passengerStore;
-  const { isEditing } = storeToRefs(passengerStore);
+const passengerStore = usePassengerStore();
+const { deletePassengerAction, resetPassengerState, toggleIsEditing, loading } =
+  passengerStore;
+const { isEditing } = storeToRefs(passengerStore);
 
-  const route = useRoute();
+const route = useRoute();
 
-  const isLoading = ref<boolean>(false);
-  const editCustomerData = ref<any>();
-  const showAddPassengerForm = ref<boolean>(false);
+const isLoading = ref<boolean>(false);
+const editCustomerData = ref<any>();
+const showAddPassengerForm = ref<boolean>(false);
 
-  const fetchCustomerData = async () => {
-    const data = await getCustomerByIdAction(route?.params?.id as string);
-    editCustomerData.value = data;
-    return data;
-  };
+const fetchCustomerData = async () => {
+  const data = await getCustomerByIdAction(route?.params?.id as string);
+  editCustomerData.value = data;
+  return data;
+};
 
-  editCustomerData.value = await fetchCustomerData();
+editCustomerData.value = await fetchCustomerData();
 
-  const deletePassenger = async (id: string) => {
-    await deletePassengerAction(id).then(() => fetchCustomerData());
-  };
+const deletePassenger = async (id: string) => {
+  await deletePassengerAction(id).then(() => fetchCustomerData());
+};
 
-  const toggleAddPassengerForm = () => {
-    showAddPassengerForm.value = !showAddPassengerForm.value;
-  };
+const toggleAddPassengerForm = () => {
+  showAddPassengerForm.value = !showAddPassengerForm.value;
+};
 
-  const columnHelper = createColumnHelper<any>();
+const columnHelper = createColumnHelper<any>();
 
-  const passengerColumns = [
-    columnHelper.accessor("name", {
-      enablePinning: true,
-      header: ({ column }) => {
-        return h(
-          Button,
-          {
-            variant: "ghost",
-            onClick: () => column.toggleSorting(column.getIsSorted() === "asc")
-          },
-          () => ["Nome", h(ArrowUpDown, { class: "ml-2 h-4 w-4" })]
-        );
-      },
-      cell: ({ row }) => h("div", { class: "capitalize" }, row.getValue("name"))
-    }),
-    columnHelper.accessor("status", {
-      header: () => h("div", { class: "text-left" }, "Situação"),
-      cell: ({ row }) => {
-        const status = row.getValue("status");
-        return h(
-          "div",
-          {
-            class: `px-2 flex items-center justify-center h-6 rounded-lg text-white ${status === "active"
-                ? "bg-green-600"
-                : status === "inactive"
-                  ? "bg-red-700"
-                  : "bg-yellow-500"
-              }`
-          },
-          status === "active"
-            ? "Ativo"
+const passengerColumns = [
+  columnHelper.accessor("name", {
+    enablePinning: true,
+    header: ({ column }) => {
+      return h(
+        Button,
+        {
+          variant: "ghost",
+          onClick: () => column.toggleSorting(column.getIsSorted() === "asc")
+        },
+        () => ["Nome", h(ArrowUpDown, { class: "ml-2 h-4 w-4" })]
+      );
+    },
+    cell: ({ row }) => h("div", { class: "capitalize" }, row.getValue("name"))
+  }),
+  columnHelper.accessor("status", {
+    header: () => h("div", { class: "text-left" }, "Situação"),
+    cell: ({ row }) => {
+      const status = row.getValue("status");
+      return h(
+        "div",
+        {
+          class: `px-2 flex items-center justify-center h-6 rounded-lg text-white ${status === "active"
+            ? "bg-green-600"
             : status === "inactive"
-              ? "Inativo"
-              : "Pendente"
-        );
-      }
-    }),
-    columnHelper.accessor("position", {
-      header: () => h("div", { class: "text-left" }, "Cargo"),
-      cell: ({ row }) =>
-        h("div", { class: "capitalize" }, row.getValue("position"))
-    }),
-    columnHelper.accessor("department", {
-      header: () => h("div", { class: "text-left" }, "CC/Depto."),
-      cell: ({ row }) =>
-        h("div", { class: "capitalize" }, row.getValue("department"))
-    }),
-    columnHelper.accessor("email", {
-      header: () => h("div", { class: "text-left" }, "E-mail"),
-      cell: ({ row }) => h("div", { class: "lowercase" }, row.getValue("email"))
-    }),
-    columnHelper.accessor("phone", {
-      header: () => h("div", { class: "text-left" }, "Telefone"),
-      cell: ({ row }) => h("div", { class: "lowercase" }, row.getValue("phone"))
-    }),
-    columnHelper.display({
-      id: "actions",
-      enableHiding: false,
-      header: () => h("div", { class: "text-left" }, "Ações"),
-      cell: ({ row }) => {
-        const passengerData = row.original;
-        return h(
-          "div",
-          { class: "relative text-left" },
-          h(EditDeleteActions, {
-            data: passengerData,
-            remove: deletePassenger,
-            formControl: toggleAddPassengerForm
-          })
-        );
-      }
-    })
-  ];
-
-  const formSchema = toTypedSchema(
-    z.object({
-      status: z.string().min(2).max(50),
-      name: z.string().min(2).max(50),
-      document: z.string().min(2).max(50),
-      fantasyName: z.string().min(2).max(50),
-      zipcode: z.string().min(2).max(50),
-      streetName: z.string().min(2).max(50),
-      streetNumber: z.string().min(2).max(50),
-      city: z.string().min(2).max(50),
-      state: z.string().min(2).max(50),
-      phone: z.string().min(2).max(15),
-      website: z.string().min(2).max(50),
-      managerName: z.string().min(2).max(20),
-      managerPhone: z.string().min(2).max(12),
-      managerEmail: z.string().min(2),
-      paymentTerm: z.string().min(2).max(12),
-      paymentDueDate: z.number().min(0).max(30),
-      enabled: z.boolean()
-    })
-  );
-  const form = useForm({
-    validationSchema: formSchema,
-    initialValues: {
-      status: editCustomerData?.value.status,
-      name: editCustomerData?.value.name,
-      document: editCustomerData?.value.document,
-      fantasyName: editCustomerData?.value.fantasyName,
-      zipcode: editCustomerData?.value.address?.zipcode,
-      streetName: editCustomerData?.value.address?.streetName,
-      streetNumber: editCustomerData?.value.address?.streetNumber,
-      city: editCustomerData?.value.address?.city,
-      state: editCustomerData?.value.address?.state,
-      phone: editCustomerData?.value.phone,
-      website: editCustomerData?.value.website,
-      managerName: editCustomerData?.value.managerName,
-      managerEmail: editCustomerData?.value.managerEmail,
-      managerPhone: editCustomerData?.value.managerPhone,
-      paymentTerm: editCustomerData?.value.billingInfo.billing,
-      paymentDueDate: editCustomerData?.value.billingInfo.dueDate,
-      enabled: editCustomerData.value.enabled
+              ? "bg-red-700"
+              : "bg-yellow-500"
+            }`
+        },
+        status === "active"
+          ? "Ativo"
+          : status === "inactive"
+            ? "Inativo"
+            : "Pendente"
+      );
     }
-  });
+  }),
+  columnHelper.accessor("position", {
+    header: () => h("div", { class: "text-left" }, "Cargo"),
+    cell: ({ row }) =>
+      h("div", { class: "capitalize" }, row.getValue("position"))
+  }),
+  columnHelper.accessor("department", {
+    header: () => h("div", { class: "text-left" }, "CC/Depto."),
+    cell: ({ row }) =>
+      h("div", { class: "capitalize" }, row.getValue("department"))
+  }),
+  columnHelper.accessor("email", {
+    header: () => h("div", { class: "text-left" }, "E-mail"),
+    cell: ({ row }) => h("div", { class: "lowercase" }, row.getValue("email"))
+  }),
+  columnHelper.accessor("phone", {
+    header: () => h("div", { class: "text-left" }, "Telefone"),
+    cell: ({ row }) => h("div", { class: "lowercase" }, row.getValue("phone"))
+  }),
+  columnHelper.display({
+    id: "actions",
+    enableHiding: false,
+    header: () => h("div", { class: "text-left" }, "Ações"),
+    cell: ({ row }) => {
+      const passengerData = row.original;
+      return h(
+        "div",
+        { class: "relative text-left" },
+        h(EditDeleteActions, {
+          data: passengerData,
+          remove: deletePassenger,
+          formControl: toggleAddPassengerForm
+        })
+      );
+    }
+  })
+];
 
-  const onSubmit = form.handleSubmit(async (values) => {
-    const newCustomerData = {
-      id: route?.params?.id,
-      ccAreas: [...editCustomerData.value.ccAreas],
-      ...values
-    };
-    isLoading.value = true;
-    await editCustomer(newCustomerData)
-      .then(() => {
-        isLoading.value = false;
-      })
-      .catch((err) => {
-        console.log("Error -> ", err);
-        toast({
-          title: "Opss!",
-          class: "bg-red-500 border-0 text-white text-2xl",
-          description: `Ocorreu um erro (${err.message}) ao cadastrar o cliente. Tente novamente.`
-        });
-        alert("Erro ao cadastrar cliente");
-      })
-      .finally(() => {
-        toast({
-          title: "Sucesso!",
-          class: "bg-green-600 border-0 text-white text-2xl",
-          description: `A empresa ${newCustomerData.fantasyName} foi atualizada com sucesso!`
-        });
-        navigateTo("/admin/customers");
+const formSchema = toTypedSchema(
+  z.object({
+    status: z.string().min(2).max(50),
+    name: z.string().min(2).max(50),
+    document: z.string().min(2).max(50),
+    fantasyName: z.string().min(2).max(50),
+    zipcode: z.string().min(2).max(50),
+    streetName: z.string().min(2).max(50),
+    streetNumber: z.string().min(2).max(50),
+    city: z.string().min(2).max(50),
+    state: z.string().min(2).max(50),
+    phone: z.string().min(2).max(15),
+    website: z.string().min(2).max(50),
+    managerName: z.string().min(2).max(20),
+    managerPhone: z.string().min(2).max(12),
+    managerEmail: z.string().min(2),
+    paymentTerm: z.string().min(2).max(12),
+    paymentDueDate: z.number().min(0).max(30),
+    enabled: z.boolean()
+  })
+);
+const form = useForm({
+  validationSchema: formSchema,
+  initialValues: {
+    status: editCustomerData?.value.status,
+    name: editCustomerData?.value.name,
+    document: editCustomerData?.value.document,
+    fantasyName: editCustomerData?.value.fantasyName,
+    zipcode: editCustomerData?.value.address?.zipcode,
+    streetName: editCustomerData?.value.address?.streetName,
+    streetNumber: editCustomerData?.value.address?.streetNumber,
+    city: editCustomerData?.value.address?.city,
+    state: editCustomerData?.value.address?.state,
+    phone: editCustomerData?.value.phone,
+    website: editCustomerData?.value.website,
+    managerName: editCustomerData?.value.managerName,
+    managerEmail: editCustomerData?.value.managerEmail,
+    managerPhone: editCustomerData?.value.managerPhone,
+    paymentTerm: editCustomerData?.value.billingInfo.billing,
+    paymentDueDate: editCustomerData?.value.billingInfo.dueDate,
+    enabled: editCustomerData.value.enabled
+  }
+});
+
+const onSubmit = form.handleSubmit(async (values) => {
+  const newCustomerData = {
+    id: route?.params?.id,
+    ccAreas: [...editCustomerData.value.ccAreas],
+    ...values
+  };
+  isLoading.value = true;
+  await editCustomer(newCustomerData)
+    .then(() => {
+      isLoading.value = false;
+    })
+    .catch((err) => {
+      console.log("Error -> ", err);
+      toast({
+        title: "Opss!",
+        class: "bg-red-500 border-0 text-white text-2xl",
+        description: `Ocorreu um erro (${err.message}) ao cadastrar o cliente. Tente novamente.`
       });
-  });
+      alert("Erro ao cadastrar cliente");
+    })
+    .finally(() => {
+      toast({
+        title: "Sucesso!",
+        class: "bg-green-600 border-0 text-white text-2xl",
+        description: `A empresa ${newCustomerData.fantasyName} foi atualizada com sucesso!`
+      });
+      navigateTo("/admin/customers");
+    });
+});
 </script>
 <template>
   <main class="p-6">
@@ -261,6 +261,7 @@
                   <FormControl>
                     <FormSelect v-bind="componentField" :items="[
                       { label: 'Aprovado', value: 'active' },
+                      { label: 'Inativo', value: 'inactive' },
                       { label: 'Pendente', value: 'pending' }
                     ]" :label="'Selecione o Status'" />
                   </FormControl>
@@ -480,7 +481,7 @@
                   <div class="flex items-center space-x-3">
                     <Label for="enabled" class="text-md flex gap-2 items-center">
                       <LockKeyhole />
-                      <small>Bloqueado</small>
+                      <small>Negado</small>
                     </Label>
                     <FormControl>
                       <Switch :checked="value" aria-readonly @update:checked="handleChange" />

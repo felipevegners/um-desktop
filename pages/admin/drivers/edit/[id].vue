@@ -1,82 +1,82 @@
 <script setup lang="ts">
-  definePageMeta({
-    layout: "admin",
-    title: "Editar Motorista | Urban Mobi"
-  });
+definePageMeta({
+  layout: "admin",
+  title: "Editar Motorista | Urban Mobi"
+});
 
-  import { useForm } from "vee-validate";
-  import { toTypedSchema } from "@vee-validate/zod";
-  import * as z from "zod";
-  import { ArrowLeft, LoaderCircle, LockKeyholeOpen, LockKeyhole } from "lucide-vue-next";
-  import { dateFormat } from "~/lib/utils";
-  import { userDriverStore } from "~/stores/admin/drivers.store";
-  import { storeToRefs } from "pinia";
-  import AddCarsForm from "~/components/admin/drivers/AddCarsForm.vue";
-  import FormSelect from "~/components/shared/FormSelect.vue";
-  import { useToast } from "@/components/ui/toast/use-toast";
+import { useForm } from "vee-validate";
+import { toTypedSchema } from "@vee-validate/zod";
+import * as z from "zod";
+import { ArrowLeft, LoaderCircle, LockKeyholeOpen, LockKeyhole } from "lucide-vue-next";
+import { dateFormat } from "~/lib/utils";
+import { userDriverStore } from "~/stores/admin/drivers.store";
+import { storeToRefs } from "pinia";
+import AddCarsForm from "~/components/admin/drivers/AddCarsForm.vue";
+import FormSelect from "~/components/shared/FormSelect.vue";
+import { useToast } from "@/components/ui/toast/use-toast";
 
-  const { toast } = useToast();
+const { toast } = useToast();
 
-  const driverStore = userDriverStore();
-  const { loadingData, loadingSend } = storeToRefs(driverStore);
-  const { getDriverByIdAction, updateDriverAction } = driverStore;
+const driverStore = userDriverStore();
+const { loadingData, loadingSend } = storeToRefs(driverStore);
+const { getDriverByIdAction, updateDriverAction } = driverStore;
 
-  const route = useRoute();
+const route = useRoute();
 
-  const fetchDriverData = async () => {
-    return await getDriverByIdAction(route.params.id as string);
-  };
+const fetchDriverData = async () => {
+  return await getDriverByIdAction(route.params.id as string);
+};
 
-  const driverData = ref();
-  driverData.value = await fetchDriverData();
+const driverData = ref();
+driverData.value = await fetchDriverData();
 
-  const driverSchema = toTypedSchema(
-    z.object({
-      name: z.string().min(2).max(50),
-      email: z.string().min(2).max(50),
-      phone: z.string().min(2).max(50),
-      document: z.string().min(2).max(50),
-      driverLicense: z.string().min(2).max(50),
-      status: z.string().min(2).max(50),
-      enabled: z.boolean()
-    })
-  );
-
-  const driversForm = useForm({
-    validationSchema: driverSchema,
-    initialValues: driverData.value
-  });
-
-  const onSubmit = driversForm.handleSubmit(async (values) => {
-    const newDriverData = {
-      id: driverData.value.id,
-      ...values,
-      driverCars: driverData.value.driverCars,
-      picture: '',
-      driverFiles: [],
-      rating: ["1"],
-      history: [],
-      enabled: values.enabled
-    }
-    try {
-      await updateDriverAction(newDriverData)
-    } catch (error) {
-      toast({
-        title: "Oops!",
-        class: "bg-red-600 border-0 text-white text-2xl",
-        description: `Ocorreu um erro ${error} ao adicionar o motorista.`
-      });
-    } finally {
-      toast({
-        title: "Sucesso!",
-        class: "bg-green-600 border-0 text-white text-2xl",
-        description: `O motorista ${values.name} foi cadastrado com sucesso!`
-      });
-      driversForm.values = newDriverData
-      navigateTo("/admin/drivers");
-    }
-
+const driverSchema = toTypedSchema(
+  z.object({
+    name: z.string().min(2).max(50),
+    email: z.string().min(2).max(50),
+    phone: z.string().min(2).max(50),
+    document: z.string().min(2).max(50),
+    driverLicense: z.string().min(2).max(50),
+    status: z.string().min(2).max(50),
+    enabled: z.boolean()
   })
+);
+
+const driversForm = useForm({
+  validationSchema: driverSchema,
+  initialValues: driverData.value
+});
+
+const onSubmit = driversForm.handleSubmit(async (values) => {
+  const newDriverData = {
+    id: driverData.value.id,
+    ...values,
+    driverCars: driverData.value.driverCars,
+    picture: '',
+    driverFiles: [],
+    rating: ["1"],
+    history: [],
+    enabled: values.enabled
+  }
+  try {
+    await updateDriverAction(newDriverData)
+  } catch (error) {
+    toast({
+      title: "Oops!",
+      class: "bg-red-600 border-0 text-white text-2xl",
+      description: `Ocorreu um erro ${error} ao adicionar o motorista.`
+    });
+  } finally {
+    toast({
+      title: "Sucesso!",
+      class: "bg-green-600 border-0 text-white text-2xl",
+      description: `O motorista ${values.name} foi cadastrado com sucesso!`
+    });
+    driversForm.values = newDriverData
+    navigateTo("/admin/drivers");
+  }
+
+})
 </script>
 
 <template>
@@ -230,7 +230,7 @@
                   <div class="flex items-center space-x-3">
                     <Label for="enabled" class="text-md flex gap-2 items-center">
                       <LockKeyhole />
-                      <small>Bloqueado</small>
+                      <small>Negado</small>
                     </Label>
                     <FormControl>
                       <Switch :checked="value" aria-readonly @update:checked="handleChange" />

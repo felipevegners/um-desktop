@@ -58,7 +58,7 @@ const createFormSchema = () => {
         phone: z.string().min(2).max(50),
         document: z.string().min(2).max(16),
         status: z.string().min(2).max(50),
-        active: z.boolean()
+        active: z.boolean(),
       })
     );
     return regularUserSchema;
@@ -134,10 +134,7 @@ const sanitizedCCAreas = computed(() => {
         </NuxtLink>
       </div>
     </header>
-    <section
-      v-if="loading"
-      class="p-10 h-40 flex items-center justify-center bg-zinc-200 rounded-md"
-    >
+    <section v-if="loading" class="p-10 h-40 flex items-center justify-center bg-zinc-200 rounded-md">
       <LoaderCircle class="w-10 h-10 animate-spin" />
     </section>
     <section v-else class="mb-6">
@@ -145,8 +142,7 @@ const sanitizedCCAreas = computed(() => {
         <form @submit.prevent="onSubmitUser">
           <CardHeader>
             <div class="flex items-center justify-between">
-              <CardTitle class="text-md"
-                >Editando dados do usuário:
+              <CardTitle class="text-md">Editando dados do usuário:
                 <br />
                 <span class="font-normal text-3xl">{{ userData.name }}</span>
                 <div class="my-4">
@@ -172,11 +168,7 @@ const sanitizedCCAreas = computed(() => {
                 <FormItem class="relative">
                   <FormLabel>Nome</FormLabel>
                   <FormControl>
-                    <Input
-                      type="text"
-                      placeholder="ex.: João Silva"
-                      v-bind="componentField"
-                    />
+                    <Input type="text" placeholder="ex.: João Silva" v-bind="componentField" />
                   </FormControl>
                 </FormItem>
               </FormField>
@@ -184,11 +176,7 @@ const sanitizedCCAreas = computed(() => {
                 <FormItem class="relative">
                   <FormLabel>E-mail</FormLabel>
                   <FormControl>
-                    <Input
-                      type="text"
-                      placeholder="ex.: joao_silva@email.com.br"
-                      v-bind="componentField"
-                    />
+                    <Input type="text" placeholder="ex.: joao_silva@email.com.br" v-bind="componentField" />
                   </FormControl>
                 </FormItem>
               </FormField>
@@ -196,28 +184,16 @@ const sanitizedCCAreas = computed(() => {
                 <FormItem>
                   <FormLabel>Celular</FormLabel>
                   <FormControl>
-                    <Input
-                      type="text"
-                      placeholder="ex.: 11-9987605432"
-                      v-bind="componentField"
-                    />
+                    <Input type="text" placeholder="ex.: 11-9987605432" v-bind="componentField" />
                   </FormControl>
                 </FormItem>
               </FormField>
 
-              <FormField
-                v-if="regularUser"
-                v-slot="{ componentField }"
-                name="document"
-              >
+              <FormField v-if="regularUser" v-slot="{ componentField }" name="document">
                 <FormItem>
                   <FormLabel>CPF</FormLabel>
                   <FormControl>
-                    <Input
-                      type="text"
-                      placeholder="ex.: 123.345.567-89 "
-                      v-bind="componentField"
-                    />
+                    <Input type="text" placeholder="ex.: 123.345.567-89 " v-bind="componentField" />
                   </FormControl>
                 </FormItem>
               </FormField>
@@ -226,38 +202,27 @@ const sanitizedCCAreas = computed(() => {
                 <FormItem>
                   <FormLabel>Situação do Usuário</FormLabel>
                   <FormControl>
-                    <FormSelect
-                      v-bind="componentField"
-                      :items="[
-                        { label: 'Ativo', value: 'active' },
-                        { label: 'Inativo', value: 'inactive' }
-                      ]"
-                      :label="'Selecione o Status'"
-                    />
+                    <FormSelect v-bind="componentField" :items="[
+                      { label: 'Ativo', value: 'active' },
+                      { label: 'Inativo', value: 'inactive' }
+                    ]" :label="'Selecione o Status'" />
                   </FormControl>
                 </FormItem>
               </FormField>
 
-              <FormField v-slot="{ componentField }" name="active">
+              <!-- <FormField v-slot="{ componentField }" name="active">
                 <FormItem>
                   <FormLabel>Acesso ao sistema</FormLabel>
                   <FormControl>
-                    <FormSelect
-                      v-bind="componentField"
-                      :items="[
-                        { label: 'Permitido', value: true },
-                        { label: 'Negado', value: false }
-                      ]"
-                      :label="'Selecione o Status'"
-                    />
+                    <FormSelect v-bind="componentField" :items="[
+                      { label: 'Permitido', value: true },
+                      { label: 'Negado', value: false }
+                    ]" :label="'Selecione o Status'" />
                   </FormControl>
                 </FormItem>
-              </FormField>
+              </FormField> -->
 
-              <div
-                v-if="!regularUser"
-                class="p-6 col-span-4 border-2 border-zinc-600 rounded-md"
-              >
+              <div v-if="!regularUser" class="p-6 col-span-4 border-2 border-zinc-600 rounded-md">
                 <h4 class="mb-8 font-bold">Dados Corporativos</h4>
                 <h2 class="mb-6 text-xl">
                   <strong>Cliente: </strong>{{ customerData.name }}
@@ -286,11 +251,7 @@ const sanitizedCCAreas = computed(() => {
                     <FormItem>
                       <FormLabel>CC / Depto.</FormLabel>
                       <FormControl>
-                        <FormSelect
-                          v-bind="componentField"
-                          :items="sanitizedCCAreas"
-                          :label="'Selecione'"
-                        />
+                        <FormSelect v-bind="componentField" :items="sanitizedCCAreas" :label="'Selecione'" />
                       </FormControl>
                       <!-- <FormMessage class="absolute" /> -->
                     </FormItem>
@@ -299,18 +260,14 @@ const sanitizedCCAreas = computed(() => {
                     <FormItem>
                       <FormLabel>Cargo</FormLabel>
                       <FormControl>
-                        <FormSelect
-                          v-bind="componentField"
-                          :items="[
-                            { label: 'Presidente', value: 'presidente' },
-                            { label: 'Diretor', value: 'diretor' },
-                            { label: 'Gerente', value: 'gerente' },
-                            { label: 'Coordenador', value: 'coordenador' },
-                            { label: 'Visitante', value: 'visitante' },
-                            { label: 'Outro', value: 'outros' }
-                          ]"
-                          :label="'Selecione um cargo'"
-                        />
+                        <FormSelect v-bind="componentField" :items="[
+                          { label: 'Presidente', value: 'presidente' },
+                          { label: 'Diretor', value: 'diretor' },
+                          { label: 'Gerente', value: 'gerente' },
+                          { label: 'Coordenador', value: 'coordenador' },
+                          { label: 'Visitante', value: 'visitante' },
+                          { label: 'Outro', value: 'outros' }
+                        ]" :label="'Selecione um cargo'" />
                       </FormControl>
                     </FormItem>
                   </FormField>
@@ -318,16 +275,12 @@ const sanitizedCCAreas = computed(() => {
                     <FormItem>
                       <FormLabel>Situação</FormLabel>
                       <FormControl>
-                        <FormSelect
-                          v-bind="componentField"
-                          :items="[
-                            { label: 'Ativo', value: 'active' },
-                            { label: 'Inativo', value: 'inactive' },
-                            { label: 'Férias', value: 'vacation' },
-                            { label: 'Desligado', value: 'disabled' }
-                          ]"
-                          :label="'Selecione a situação'"
-                        />
+                        <FormSelect v-bind="componentField" :items="[
+                          { label: 'Ativo', value: 'active' },
+                          { label: 'Inativo', value: 'inactive' },
+                          { label: 'Férias', value: 'vacation' },
+                          { label: 'Desligado', value: 'disabled' }
+                        ]" :label="'Selecione a situação'" />
                       </FormControl>
                     </FormItem>
                   </FormField>
@@ -338,11 +291,29 @@ const sanitizedCCAreas = computed(() => {
               </div>
             </div>
             <h2 class="my-6 font-bold text-xl">Histórico de Atendimentos</h2>
-            <div
-              class="mb-6 p-6 flex items-center justify-center rounded-md bg-white"
-            >
+            <section class="mb-6 p-6 flex items-center justify-center rounded-md bg-white">
               <p class="text-zinc-400">Nenhuma histórico encontrado</p>
-            </div>
+            </section>
+            <section class="p-6 flex gap-8 rounded-md border-4 border-red-500 bg-white">
+              <h2 class="font-bold">Acesso ao sistema</h2>
+              <FormField v-slot="{ value, handleChange }" name="active">
+                <FormItem>
+                  <div class="flex items-center space-x-3">
+                    <Label for="enabled" class="text-md flex gap-2 items-center">
+                      <LockKeyhole />
+                      <small>Negado</small>
+                    </Label>
+                    <FormControl>
+                      <Switch :checked="value" aria-readonly @update:checked="handleChange" />
+                    </FormControl>
+                    <Label for="enabled" class="text-md flex gap-2 items-center">
+                      <LockKeyholeOpen />
+                      <small>Permitido</small>
+                    </Label>
+                  </div>
+                </FormItem>
+              </FormField>
+            </section>
           </CardContent>
           <CardFooter>
             <div class="mt-8 flex items-center">
@@ -350,16 +321,12 @@ const sanitizedCCAreas = computed(() => {
                 <LoaderCircle v-if="loading" class="w-10 h-10 animate-spin" />
                 Salvar alterações
               </Button>
-              <Button
-                variant="ghost"
-                class="ml-4"
-                @click.prevent="
-                  () => {
-                    navigateTo('/admin/users');
-                    toggleIsEditing();
-                  }
-                "
-              >
+              <Button variant="ghost" class="ml-4" @click.prevent="
+                () => {
+                  navigateTo('/admin/users');
+                  toggleIsEditing();
+                }
+              ">
                 Cancelar
               </Button>
             </div>

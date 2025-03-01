@@ -168,21 +168,6 @@ const handleDeleteCustomer = async (id: string) => {
 };
 
 const columns = [
-  columnHelper.accessor("status", {
-    header: () => h("div", { class: "text-left" }, "Cadastro"),
-    cell: ({ row }) => {
-      const status = row.getValue("status");
-      return h(
-        "div",
-        {
-          class: `px-2 flex items-center justify-center h-6 rounded-lg text-white text-xs max-w-[80px] ${
-            status === "active" ? "bg-green-600" : "bg-yellow-600"
-          }`
-        },
-        status === "active" ? "Aprovado" : "Pendente"
-      );
-    }
-  }),
   columnHelper.accessor("fantasyName", {
     enablePinning: true,
     header: ({ column }) => {
@@ -218,6 +203,20 @@ const columns = [
       );
     }
   }),
+  columnHelper.accessor("status", {
+    header: () => h("div", { class: "text-left" }, "Status"),
+    cell: ({ row }) => {
+      const status = row.getValue("status");
+      return h(
+        "div",
+        {
+          class: `px-2 flex items-center justify-center h-6 rounded-lg text-white text-xs max-w-[80px] ${status === "active" ? "bg-green-600" : status === "inactive" ? "bg-red-600" : "bg-yellow-500"
+            }`
+        },
+        status === "active" ? "Aprovado" : status === "inactive" ? "Inativo" : "Pendente"
+      );
+    }
+  }),
   columnHelper.accessor("enabled", {
     header: () => h("div", { class: "text-left" }, "Acesso"),
     cell: ({ row }) => {
@@ -225,9 +224,8 @@ const columns = [
       return h(
         "div",
         {
-          class: `px-1 flex items-center justify-center h-6 rounded-lg text-white text-xs max-w-[80px] ${
-            enabled === true ? "bg-blue-600" : "bg-zinc-600"
-          }`
+          class: `px-1 flex items-center justify-center h-6 rounded-lg text-white text-xs max-w-[80px] ${enabled === true ? "bg-blue-600" : "bg-zinc-600"
+            }`
         },
         enabled === true ? "Liberado" : "Negado"
       );
@@ -282,11 +280,7 @@ const toggleShowAddForm = () => {
                 <FormItem>
                   <FormLabel>CNPJ</FormLabel>
                   <FormControl>
-                    <Input
-                      type="text"
-                      placeholder="00.000.000/0001-00"
-                      v-bind="componentField"
-                    />
+                    <Input type="text" placeholder="00.000.000/0001-00" v-bind="componentField" />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -295,11 +289,7 @@ const toggleShowAddForm = () => {
                 <FormItem>
                   <FormLabel>Razão Social</FormLabel>
                   <FormControl>
-                    <Input
-                      type="text"
-                      placeholder="Insira a razão social"
-                      v-bind="componentField"
-                    />
+                    <Input type="text" placeholder="Insira a razão social" v-bind="componentField" />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -308,11 +298,7 @@ const toggleShowAddForm = () => {
                 <FormItem>
                   <FormLabel>Nome Fantasia</FormLabel>
                   <FormControl>
-                    <Input
-                      type="text"
-                      placeholder="Insira o nome fantasia"
-                      v-bind="componentField"
-                    />
+                    <Input type="text" placeholder="Insira o nome fantasia" v-bind="componentField" />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -323,11 +309,7 @@ const toggleShowAddForm = () => {
                 <FormItem class="col-span-1">
                   <FormLabel>CEP</FormLabel>
                   <FormControl>
-                    <Input
-                      type="text"
-                      placeholder="12345-000"
-                      v-bind="componentField"
-                    />
+                    <Input type="text" placeholder="12345-000" v-bind="componentField" />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -336,11 +318,7 @@ const toggleShowAddForm = () => {
                 <FormItem class="col-span-2">
                   <FormLabel>Endereço</FormLabel>
                   <FormControl>
-                    <Input
-                      type="text"
-                      placeholder="Insira o nome da rua"
-                      v-bind="componentField"
-                    />
+                    <Input type="text" placeholder="Insira o nome da rua" v-bind="componentField" />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -349,11 +327,7 @@ const toggleShowAddForm = () => {
                 <FormItem class="col-span-1">
                   <FormLabel>Número</FormLabel>
                   <FormControl>
-                    <Input
-                      type="text"
-                      placeholder="ex. 1376"
-                      v-bind="componentField"
-                    />
+                    <Input type="text" placeholder="ex. 1376" v-bind="componentField" />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -362,11 +336,7 @@ const toggleShowAddForm = () => {
                 <FormItem class="col-span-1">
                   <FormLabel>Cidade</FormLabel>
                   <FormControl>
-                    <Input
-                      type="text"
-                      placeholder="ex.: São Paulo"
-                      v-bind="componentField"
-                    />
+                    <Input type="text" placeholder="ex.: São Paulo" v-bind="componentField" />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -375,11 +345,7 @@ const toggleShowAddForm = () => {
                 <FormItem class="col-span-1">
                   <FormLabel>Estado</FormLabel>
                   <FormControl>
-                    <Input
-                      type="text"
-                      placeholder="ex.: São Paulo"
-                      v-bind="componentField"
-                    />
+                    <Input type="text" placeholder="ex.: São Paulo" v-bind="componentField" />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -390,11 +356,7 @@ const toggleShowAddForm = () => {
                 <FormItem>
                   <FormLabel>Telefone</FormLabel>
                   <FormControl>
-                    <Input
-                      type="text"
-                      placeholder="(11) 98765-4321"
-                      v-bind="componentField"
-                    />
+                    <Input type="text" placeholder="(11) 98765-4321" v-bind="componentField" />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -403,11 +365,7 @@ const toggleShowAddForm = () => {
                 <FormItem>
                   <FormLabel>Site</FormLabel>
                   <FormControl>
-                    <Input
-                      type="text"
-                      placeholder="www.empresa.com.br"
-                      v-bind="componentField"
-                    />
+                    <Input type="text" placeholder="www.empresa.com.br" v-bind="componentField" />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -430,28 +388,24 @@ const toggleShowAddForm = () => {
                   <FormItem>
                     <FormLabel>Nome</FormLabel>
                     <FormControl>
-                      <FormSelect
-                        v-bind="componentField"
-                        :items="[
-                          {
-                            label: 'Felipe Vegners',
-                            value: 'Felipe Vegners'
-                          },
-                          {
-                            label: 'Humberto Pansica',
-                            value: 'Humberto Pansica'
-                          },
-                          {
-                            label: 'Maria dos Santos',
-                            value: 'Maria dos Santos'
-                          },
-                          {
-                            label: 'João da Silva',
-                            value: 'João da Silva'
-                          }
-                        ]"
-                        :label="'Selecione o gerente'"
-                      />
+                      <FormSelect v-bind="componentField" :items="[
+                        {
+                          label: 'Felipe Vegners',
+                          value: 'Felipe Vegners'
+                        },
+                        {
+                          label: 'Humberto Pansica',
+                          value: 'Humberto Pansica'
+                        },
+                        {
+                          label: 'Maria dos Santos',
+                          value: 'Maria dos Santos'
+                        },
+                        {
+                          label: 'João da Silva',
+                          value: 'João da Silva'
+                        }
+                      ]" :label="'Selecione o gerente'" />
                     </FormControl>
                   </FormItem>
                 </FormField>
@@ -459,11 +413,7 @@ const toggleShowAddForm = () => {
                   <FormItem>
                     <FormLabel>Telefone</FormLabel>
                     <FormControl>
-                      <Input
-                        type="text"
-                        placeholder="(11) 98765-4321"
-                        v-bind="componentField"
-                      />
+                      <Input type="text" placeholder="(11) 98765-4321" v-bind="componentField" />
                     </FormControl>
                   </FormItem>
                 </FormField>
@@ -471,11 +421,7 @@ const toggleShowAddForm = () => {
                   <FormItem>
                     <FormLabel>E-mail</FormLabel>
                     <FormControl>
-                      <Input
-                        type="text"
-                        placeholder="nome@empresa.com.br"
-                        v-bind="componentField"
-                      />
+                      <Input type="text" placeholder="nome@empresa.com.br" v-bind="componentField" />
                     </FormControl>
                   </FormItem>
                 </FormField>
@@ -492,24 +438,20 @@ const toggleShowAddForm = () => {
                   <FormItem>
                     <FormLabel>Tipo de Faturamento</FormLabel>
                     <FormControl>
-                      <FormSelect
-                        v-bind="componentField"
-                        :items="[
-                          {
-                            label: '1 a 30 dias',
-                            value: '01-30'
-                          },
-                          {
-                            label: '1 a 15',
-                            value: '01-15'
-                          },
-                          {
-                            label: 'Aberto',
-                            value: '00-00'
-                          }
-                        ]"
-                        :label="'Selecione'"
-                      />
+                      <FormSelect v-bind="componentField" :items="[
+                        {
+                          label: '1 a 30 dias',
+                          value: '01-30'
+                        },
+                        {
+                          label: '1 a 15',
+                          value: '01-15'
+                        },
+                        {
+                          label: 'Aberto',
+                          value: '00-00'
+                        }
+                      ]" :label="'Selecione'" />
                     </FormControl>
                   </FormItem>
                 </FormField>
@@ -517,11 +459,7 @@ const toggleShowAddForm = () => {
                   <FormItem>
                     <FormLabel>Prazo de Pagamento</FormLabel>
                     <FormControl>
-                      <Input
-                        type="number"
-                        placeholder="ex.: 30"
-                        v-bind="componentField"
-                      />
+                      <Input type="number" placeholder="ex.: 30" v-bind="componentField" />
                     </FormControl>
                   </FormItem>
                 </FormField>
@@ -529,17 +467,10 @@ const toggleShowAddForm = () => {
             </section>
             <section class="mt-6">
               <Button type="submit">
-                <LoaderCircle
-                  v-if="isLoadingSend"
-                  class="w-10 h-10 animate-spin"
-                />
+                <LoaderCircle v-if="isLoadingSend" class="w-10 h-10 animate-spin" />
                 Cadastrar
               </Button>
-              <Button
-                variant="ghost"
-                class="ml-4"
-                @click.prevent="toggleShowAddForm"
-              >
+              <Button variant="ghost" class="ml-4" @click.prevent="toggleShowAddForm">
                 Cancelar
               </Button>
             </section>
@@ -551,21 +482,14 @@ const toggleShowAddForm = () => {
       <LoaderCircle class="w-10 h-10 animate-spin" />
     </section>
     <section v-else>
-      <DataTable
-        :columns="columns"
-        :data="customers"
-        sortby="fantasyName"
-        :columnPin="['fantasyName']"
-      />
+      <DataTable :columns="columns" :data="customers" sortby="fantasyName" :columnPin="['fantasyName']" />
     </section>
 
     <AlertDialog :open="viewDeleteModal">
       <AlertDialogContent>
         <AlertDialogHeader>
-          <AlertDialogTitle
-            >Deseja realmente excluir:
-            {{ customerToDelete.name }}?</AlertDialogTitle
-          >
+          <AlertDialogTitle>Deseja realmente excluir:
+            {{ customerToDelete.name }}?</AlertDialogTitle>
           {{ customerToDelete.id }}
           <AlertDialogDescription>
             Essa ação é irreversível e excluirá permanentemente da base de
@@ -573,13 +497,8 @@ const toggleShowAddForm = () => {
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
-          <AlertDialogCancel @click="toggleDeleteModal('')"
-            >Cancelar</AlertDialogCancel
-          >
-          <AlertDialogAction
-            class="bg-red-500 hover:bg-red-600"
-            @click="handleDeleteCustomer(customerToDelete.id)"
-          >
+          <AlertDialogCancel @click="toggleDeleteModal('')">Cancelar</AlertDialogCancel>
+          <AlertDialogAction class="bg-red-500 hover:bg-red-600" @click="handleDeleteCustomer(customerToDelete.id)">
             <LoaderCircle v-if="loading" class="w-10 h-10 animate-spin" />
             Excluir
           </AlertDialogAction>

@@ -30,20 +30,15 @@ const userNameInitials = computed(() => {
         <SidebarMenu>
           <SidebarMenuItem>
             <div class="px-2 py-4 flex items-center">
-              <img
-                class="my-6 h-9"
-                src="/images/logo_horizontal_white.svg"
-                alt=""
-              />
+              <img class="my-6 h-9 group-data-[collapsible=icon]:hidden" src="/images/logo_horizontal_white.svg"
+                alt="" />
             </div>
           </SidebarMenuItem>
         </SidebarMenu>
       </SidebarHeader>
       <SidebarContent class="scrollbar-hidden sidebar">
         <SidebarGroup>
-          <SidebarGroupLabel class="mb-2 text-lg"
-            >Platforma de Gestão</SidebarGroupLabel
-          >
+          <SidebarGroupLabel class="mb-2 text-lg">Platforma de Gestão</SidebarGroupLabel>
           <SidebarMenu>
             <SidebarMenuItem class="my-4">
               <SidebarMenuButton tooltip="Dashboard">
@@ -52,30 +47,20 @@ const userNameInitials = computed(() => {
               </SidebarMenuButton>
             </SidebarMenuItem>
             <SidebarSeparator class="mb-4 border-b border-zinc-800" />
-            <Collapsible
-              v-for="item in sideMenuData.navMain"
-              :key="item.title"
-              as-child
-              :default-open="item.isActive"
-              class="group/collapsible"
-            >
+            <Collapsible v-for="item in sideMenuData.navMain" :key="item.title" as-child :default-open="item.isActive"
+              class="group/collapsible">
               <SidebarMenuItem>
                 <CollapsibleTrigger as-child>
                   <SidebarMenuButton :tooltip="item.title">
                     <component :is="item.icon" />
                     <span>{{ item.title }}</span>
                     <ChevronRight
-                      class="ml-auto transition-transform duration-200 group-data-[state=open]/collapsible:rotate-90"
-                    />
+                      class="ml-auto transition-transform duration-200 group-data-[state=open]/collapsible:rotate-90" />
                   </SidebarMenuButton>
                 </CollapsibleTrigger>
                 <CollapsibleContent>
                   <SidebarMenuSub>
-                    <SidebarMenuSubItem
-                      v-for="subItem in item.items"
-                      :key="subItem.title"
-                      class="hover:bg-zinc-800"
-                    >
+                    <SidebarMenuSubItem v-for="subItem in item.items" :key="subItem.title" class="hover:bg-zinc-800">
                       <SidebarMenuSubButton as-child>
                         <NuxtLink :href="subItem.url">
                           <span>{{ subItem.title }}</span>
@@ -92,10 +77,7 @@ const userNameInitials = computed(() => {
         <SidebarGroup class="group-data-[collapsible=icon]:hidden">
           <SidebarGroupLabel>Configurações</SidebarGroupLabel>
           <SidebarMenu>
-            <SidebarMenuItem
-              v-for="item in sideMenuData.settings"
-              :key="item.name"
-            >
+            <SidebarMenuItem v-for="item in sideMenuData.settings" :key="item.name">
               <SidebarMenuButton as-child>
                 <a :href="item.url">
                   <component :is="item.icon" />
@@ -109,11 +91,7 @@ const userNameInitials = computed(() => {
                     <span class="sr-only">More</span>
                   </SidebarMenuAction>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent
-                  class="w-48 rounded-lg"
-                  side="bottom"
-                  align="end"
-                >
+                <DropdownMenuContent class="w-48 rounded-lg" side="bottom" align="end">
                   <DropdownMenuItem>
                     <Folder class="text-muted-foreground" />
                     <span>View Project</span>
@@ -144,15 +122,10 @@ const userNameInitials = computed(() => {
           <SidebarMenuItem>
             <DropdownMenu>
               <DropdownMenuTrigger as-child>
-                <SidebarMenuButton
-                  size="lg"
-                  class="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
-                >
+                <SidebarMenuButton size="lg"
+                  class="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground">
                   <Avatar class="h-8 w-8 rounded-lg bg-um-primary">
-                    <AvatarImage
-                      :src="sideMenuData.user.avatar"
-                      :alt="sideMenuData.user.name"
-                    />
+                    <AvatarImage :src="sideMenuData.user.avatar" :alt="sideMenuData.user.name" />
                     <AvatarFallback class="rounded-lg">
                       {{ userNameInitials }}
                     </AvatarFallback>
@@ -160,29 +133,20 @@ const userNameInitials = computed(() => {
                   <div class="grid flex-1 text-left text-sm leading-tight">
                     <span class="truncate font-semibold">{{
                       sideMenuData.user.name
-                    }}</span>
+                      }}</span>
                     <span class="truncate text-xs">{{
                       sideMenuData.user.company
-                    }}</span>
+                      }}</span>
                   </div>
                   <ChevronsUpDown class="ml-auto size-4" />
                 </SidebarMenuButton>
               </DropdownMenuTrigger>
-              <DropdownMenuContent
-                class="w-[--radix-dropdown-menu-trigger-width] min-w-56 rounded-lg"
-                side="bottom"
-                align="end"
-                :side-offset="4"
-              >
+              <DropdownMenuContent class="w-[--radix-dropdown-menu-trigger-width] min-w-56 rounded-lg" side="bottom"
+                align="end" :side-offset="4">
                 <DropdownMenuLabel class="p-0 font-normal">
-                  <div
-                    class="flex items-center gap-2 px-1 py-1.5 text-left text-sm"
-                  >
+                  <div class="flex items-center gap-2 px-1 py-1.5 text-left text-sm">
                     <Avatar class="h-8 w-8 rounded-lg">
-                      <AvatarImage
-                        :src="sideMenuData.user.avatar"
-                        :alt="sideMenuData.user.name"
-                      />
+                      <AvatarImage :src="sideMenuData.user.avatar" :alt="sideMenuData.user.name" />
                       <AvatarFallback class="rounded-lg">
                         {{ userNameInitials }}
                       </AvatarFallback>
@@ -190,10 +154,10 @@ const userNameInitials = computed(() => {
                     <div class="grid flex-1 text-left text-sm leading-tight">
                       <span class="truncate font-semibold">{{
                         sideMenuData.user.name
-                      }}</span>
+                        }}</span>
                       <span class="truncate text-xs">{{
                         sideMenuData.user.email
-                      }}</span>
+                        }}</span>
                     </div>
                   </div>
                 </DropdownMenuLabel>
@@ -242,6 +206,7 @@ const userNameInitials = computed(() => {
 .sidebar {
   @apply md:bg-transparent bg-zinc-900 text-white;
 }
+
 .sidebar-footer {
   @apply md:bg-transparent bg-zinc-800 text-white;
 }

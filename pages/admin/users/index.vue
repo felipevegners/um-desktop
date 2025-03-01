@@ -109,19 +109,32 @@ const passengerColumns = [
       return h(
         "div",
         {
-          class: `px-2 flex items-center justify-center h-6 rounded-lg text-white ${
-            status === "active"
-              ? "bg-green-600"
-              : status === "inactive"
+          class: `px-2 flex items-center justify-center h-6 rounded-lg text-white ${status === "active"
+            ? "bg-green-600"
+            : status === "inactive"
               ? "bg-red-700"
               : "bg-yellow-500"
-          }`
+            }`
         },
         status === "active"
           ? "Ativo"
           : status === "inactive"
-          ? "Inativo"
-          : "Pendente"
+            ? "Inativo"
+            : "Pendente"
+      );
+    }
+  }),
+  columnHelper.accessor("active", {
+    header: () => h("div", { class: "text-left" }, "Acesso"),
+    cell: ({ row }) => {
+      const enabled = row.getValue("active");
+      return h(
+        "div",
+        {
+          class: `px-1 flex items-center justify-center h-6 rounded-lg text-white text-xs max-w-[80px] ${enabled === true ? "bg-blue-600" : "bg-zinc-600"
+            }`
+        },
+        enabled === true ? "Liberado" : "Negado"
       );
     }
   }),
@@ -166,11 +179,7 @@ const passengerColumns = [
             <Label for="customer-enabled" class="text-md font-normal">
               Regular
             </Label>
-            <Switch
-              v-model="isRegularUser"
-              @update:checked="isRegularUser = !isRegularUser"
-              :default-checked="false"
-            />
+            <Switch v-model="isRegularUser" @update:checked="isRegularUser = !isRegularUser" :default-checked="false" />
             <Label for="customer-enabled" class="text-md font-normal">
               Corporativo
             </Label>
@@ -179,11 +188,7 @@ const passengerColumns = [
             <AddRegularUserForm @show-form="toggleShowAddForm" />
           </div>
           <div v-else>
-            <AddCorpUserForm
-              @show-form="toggleShowAddForm"
-              :isNewUser="true"
-              @regular-user="toggleRegularUser"
-            />
+            <AddCorpUserForm @show-form="toggleShowAddForm" :isNewUser="true" @regular-user="toggleRegularUser" />
           </div>
         </CardContent>
       </Card>
