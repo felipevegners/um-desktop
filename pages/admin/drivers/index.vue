@@ -16,7 +16,6 @@ import FormSelect from '~/components/shared/FormSelect.vue';
 
 const { toast } = useToast();
 
-
 const driverStore = userDriverStore();
 const { loadingData, drivers, loadingSend } = storeToRefs(driverStore);
 const { getDriversAction, createNewDriverAction, deleteDriverAction } = driverStore;
@@ -133,6 +132,9 @@ const columns = [
 	}),
 ];
 
+const MAX_FILE_SIZE = 5000000;
+const ACCEPTED_IMAGE_TYPES = ["image/jpeg", "image/jpg", "image/png", "image/webp", "application/pdf"];
+
 const driverSchema = toTypedSchema(
 	z.object({
 		name: z.string().min(2).max(50),
@@ -141,6 +143,20 @@ const driverSchema = toTypedSchema(
 		document: z.string().min(2).max(50),
 		driverLicense: z.string().min(2).max(50),
 		status: z.string().min(2).max(50),
+		picture: z
+			.any()
+			.refine((file) => file?.size <= MAX_FILE_SIZE, `Max image size is 5MB.`)
+			.refine(
+				(file) => ACCEPTED_IMAGE_TYPES.includes(file?.type),
+				"Apenas arquivos nos formatos .jpg, .jpeg, .png, .webp ou PDF são aceitos "
+			),
+		cnhCopy: z
+			.any()
+			.refine((file) => file?.size <= MAX_FILE_SIZE, `Max image size is 5MB.`)
+			.refine(
+				(file) => ACCEPTED_IMAGE_TYPES.includes(file?.type),
+				"Apenas arquivos nos formatos .jpg, .jpeg, .png, .webp ou PDF são aceitos "
+			)
 	})
 );
 
@@ -148,17 +164,28 @@ const driversForm = useForm({
 	validationSchema: driverSchema,
 });
 
+// Handling with Driver Files
+
+const { handleFileInput, files: driverPicture } = useFileStorage()
+const { handleFileInput: driverLicenseHandler, files: driverLicense } = useFileStorage()
+
+
 const onSubmit = driversForm.handleSubmit(async (values) => {
+	const driverFiles = [...driverPicture.value, ...driverLicense.value]
 	const newDriverData = {
-		...values,
 		driverCars,
-		picture: '',
-		driverFiles: [],
+		name: values.name,
+		email: values.email,
+		phone: values.phone,
+		document: values.document,
+		picture: driverPicture.value[0].name,
+		driverLicense: values.driverLicense,
+		driverFiles: { cnhCopy: driverLicense.value[0].name },
 		rating: ["1"],
 		history: [],
+		status: values.status,
 		enabled: true
 	}
-
 	try {
 		await createNewDriverAction(newDriverData)
 	} catch (error) {
@@ -174,6 +201,19 @@ const onSubmit = driversForm.handleSubmit(async (values) => {
 			class: "bg-green-600 border-0 text-white text-2xl",
 			description: `O motorista ${values.name} foi cadastrado com sucesso!`
 		});
+		const submitFiles = await $fetch('/api/files', {
+			method: 'POST',
+			body: {
+				files: driverFiles
+			}
+		})
+		if (!submitFiles) {
+			toast({
+				title: "Oops!",
+				class: "bg-red-600 border-0 text-white text-2xl",
+				description: `Ocorreu um erro ${error} ao enviar os arquivos do motorista.`
+			});
+		}
 		await getDriversAction()
 	}
 
@@ -275,7 +315,7 @@ const onSubmit = driversForm.handleSubmit(async (values) => {
 								Enviar arquivos
 							</h2>
 							<div class="grid grid-cols-3 gap-6">
-								<FormField v-slot="{ componentField }" name="picture">
+								<FormField v-slot="{ handleChange, handleBlur }" name="picture">
 									<FormItem class="col-span-1">
 										<FormLabel>Foto Pessoal</FormLabel>
 										<FormDescription>*enviar foto de rosto com fundo
@@ -283,30 +323,20 @@ const onSubmit = driversForm.handleSubmit(async (values) => {
 											adereços</FormDescription>
 
 										<FormControl>
-											<Input type="file" placeholder="Selecione uma foto" v-bind="componentField" />
+											<Input id="picture" type="file" @change="handleChange" @blur="handleBlur"
+												@input="handleFileInput" />
 										</FormControl>
 										<FormMessage />
 									</FormItem>
 								</FormField>
-								<FormField v-slot="{ componentField }" name="cnhCopy">
+								<FormField v-slot="{ handleChange, handleBlur }" name="cnhCopy">
 									<FormItem class="col-span-1">
 										<FormLabel>Cópia CNH</FormLabel>
 										<FormDescription>*enviar frente e
 											verso</FormDescription>
 										<FormControl>
-											<Input type="file" placeholder="Selecione uma foto" v-bind="componentField" />
-										</FormControl>
-										<FormMessage />
-									</FormItem>
-								</FormField>
-								<FormField v-slot="{ componentField }" name="carDocumentCopy">
-									<FormItem class="col-span-1">
-										<FormLabel>Cópia CRV-L</FormLabel>
-										<FormDescription>*enviar frente e
-											verso</FormDescription>
-
-										<FormControl>
-											<Input type="file" placeholder="Selecione uma foto" v-bind="componentField" />
+											<Input id="cnhCopy" type="file" @change="handleChange" @blur="handleBlur"
+												@input="driverLicenseHandler" />
 										</FormControl>
 										<FormMessage />
 									</FormItem>

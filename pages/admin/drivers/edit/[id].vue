@@ -3,7 +3,7 @@ definePageMeta({
   layout: "admin",
   title: "Editar Motorista | Urban Mobi"
 });
-
+import { computed } from 'vue'
 import { useForm } from "vee-validate";
 import { toTypedSchema } from "@vee-validate/zod";
 import * as z from "zod";
@@ -46,6 +46,17 @@ const driversForm = useForm({
   validationSchema: driverSchema,
   initialValues: driverData.value
 });
+
+const driverPicturePath = ref()
+
+const driverPicture = async () => {
+  const response = await $fetch('/api/files', {
+    method: 'GET',
+  })
+  return response
+}
+
+driverPicturePath.value = await driverPicture();
 
 const onSubmit = driversForm.handleSubmit(async (values) => {
   const newDriverData = {
@@ -98,6 +109,8 @@ const onSubmit = driversForm.handleSubmit(async (values) => {
           <CardTitle class="text-md">Editando dados do motorista:
             <br />
             <span class="font-normal text-3xl">{{ driverData.name }}</span>
+            <!-- <img src="/files/1Nit7oiyQRiv.jpg" alt=""> -->
+            {{ driverPicturePath }}
             <div class="my-4">
               <div class="mb-4 flex flex-col">
                 <small class="text-zinc-500">Cadastrado em:</small>
