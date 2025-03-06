@@ -172,22 +172,30 @@ const { handleFileInput: driverLicenseHandler, files: driverLicense } = useFileS
 
 const onSubmit = driversForm.handleSubmit(async (values) => {
 	const driverFiles = [...driverPicture.value, ...driverLicense.value]
-	const newDriverData = {
-		driverCars,
-		name: values.name,
-		email: values.email,
-		phone: values.phone,
-		document: values.document,
-		picture: driverPicture.value[0].name,
-		driverLicense: values.driverLicense,
-		driverFiles: { cnhCopy: driverLicense.value[0].name },
-		rating: ["1"],
-		history: [],
-		status: values.status,
-		enabled: true
-	}
+
 	try {
+		const submitedFiles = await $fetch('/api/files', {
+			method: 'POST',
+			body: {
+				files: driverFiles
+			}
+		})
+		const newDriverData = {
+			driverCars,
+			name: values.name,
+			email: values.email,
+			phone: values.phone,
+			document: values.document,
+			picture: submitedFiles[0],
+			driverLicense: values.driverLicense,
+			driverFiles: { cnhCopy: submitedFiles[1] },
+			rating: ["1"],
+			history: [],
+			status: values.status,
+			enabled: true
+		}
 		await createNewDriverAction(newDriverData)
+
 	} catch (error) {
 		toast({
 			title: "Oops!",
@@ -200,20 +208,8 @@ const onSubmit = driversForm.handleSubmit(async (values) => {
 			title: "Sucesso!",
 			class: "bg-green-600 border-0 text-white text-2xl",
 			description: `O motorista ${values.name} foi cadastrado com sucesso!`
-		});
-		const submitFiles = await $fetch('/api/files', {
-			method: 'POST',
-			body: {
-				files: driverFiles
-			}
 		})
-		if (!submitFiles) {
-			toast({
-				title: "Oops!",
-				class: "bg-red-600 border-0 text-white text-2xl",
-				description: `Ocorreu um erro ${error} ao enviar os arquivos do motorista.`
-			});
-		}
+
 		await getDriversAction()
 	}
 

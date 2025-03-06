@@ -61,12 +61,17 @@ driverPicturePath.value = await driverPicture();
 const onSubmit = driversForm.handleSubmit(async (values) => {
   const newDriverData = {
     id: driverData.value.id,
-    ...values,
-    driverCars: driverData.value.driverCars,
+    name: values.name,
+    email: values.email,
+    phone: values.phone,
+    document: values.document,
     picture: '',
-    driverFiles: [],
+    driverLicense: values.driverLicense,
+    driverCars: driverData.value.driverCars,
+    driverFiles: {},
     rating: ["1"],
     history: [],
+    status: values.status,
     enabled: values.enabled
   }
   try {
@@ -88,6 +93,11 @@ const onSubmit = driversForm.handleSubmit(async (values) => {
   }
 
 })
+
+const returnFilePath = (file: string) => {
+  const filePath = `/_nuxt/files/${file}`
+  return filePath
+}
 </script>
 
 <template>
@@ -104,13 +114,22 @@ const onSubmit = driversForm.handleSubmit(async (values) => {
       <LoaderCircle class="w-10 h-10 animate-spin" />
     </section>
     <section v-else class="mb-4 py-4">
+      <h1 class="mb-4 text-2xl font-bold">Editando Dados do Motorista:</h1>
       <Card class="bg-zinc-200">
         <CardHeader>
-          <CardTitle class="text-md">Editando dados do motorista:
-            <br />
-            <span class="font-normal text-3xl">{{ driverData.name }}</span>
-            <!-- <img src="/files/1Nit7oiyQRiv.jpg" alt=""> -->
-            {{ driverPicturePath }}
+          <h2 class="text-2xl">{{ driverData.name }}</h2>
+          <div class="my-4 flex justify-between">
+            <div>
+              <h2 class="mb-6 text-lg font-bold">Foto pessoal</h2>
+              <div class="flex flex-col gap-4 items-center">
+                <img class="h-[150px] rounded-md" :src="returnFilePath(driverData.picture)" alt="">
+                <div class="flex gap-2 text-sm text-zinc-600">
+                  <p>Alterar</p>
+                  <p>|</p>
+                  <p>Remover</p>
+                </div>
+              </div>
+            </div>
             <div class="my-4">
               <div class="mb-4 flex flex-col">
                 <small class="text-zinc-500">Cadastrado em:</small>
@@ -125,7 +144,7 @@ const onSubmit = driversForm.handleSubmit(async (values) => {
                 </p>
               </div>
             </div>
-          </CardTitle>
+          </div>
         </CardHeader>
         <CardContent>
           <form @submit="onSubmit">
@@ -201,7 +220,7 @@ const onSubmit = driversForm.handleSubmit(async (values) => {
             <section class="mt-6 mb-8">
               <h2 class="mb-4 text-lg font-bold">Editar arquivos</h2>
               <div class="grid grid-cols-3 gap-6">
-                <FormField v-slot="{ componentField }" name="picture">
+                <!-- <FormField v-slot="{ componentField }" name="picture">
                   <FormItem class="col-span-1">
                     <FormLabel>Foto Pessoal</FormLabel>
                     <FormDescription>*enviar foto de rosto com fundo claro e sem
@@ -212,8 +231,8 @@ const onSubmit = driversForm.handleSubmit(async (values) => {
                     </FormControl>
                     <FormMessage />
                   </FormItem>
-                </FormField>
-                <FormField v-slot="{ componentField }" name="cnhCopy">
+                </FormField> -->
+                <!-- <FormField v-slot="{ componentField }" name="cnhCopy">
                   <FormItem class="col-span-1">
                     <FormLabel>Cópia CNH</FormLabel>
                     <FormDescription>*enviar frente e verso</FormDescription>
@@ -222,18 +241,7 @@ const onSubmit = driversForm.handleSubmit(async (values) => {
                     </FormControl>
                     <FormMessage />
                   </FormItem>
-                </FormField>
-                <FormField v-slot="{ componentField }" name="carDocumentCopy">
-                  <FormItem class="col-span-1">
-                    <FormLabel>Cópia CRV-L</FormLabel>
-                    <FormDescription>*enviar frente e verso</FormDescription>
-
-                    <FormControl>
-                      <Input type="file" placeholder="Selecione uma foto" v-bind="componentField" />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                </FormField>
+                </FormField> -->
               </div>
             </section>
             <section class="p-6 flex gap-8 rounded-md border-4 border-red-500 bg-white">
