@@ -95,7 +95,7 @@
   })
 
   const returnFilePath = (file: string) => {
-    const filePath = `/_nuxt/files/${file}`
+    const filePath = `/files/${file}`
     return filePath
   }
 </script>
