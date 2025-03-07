@@ -1,103 +1,103 @@
 <script setup lang="ts">
-definePageMeta({
-  layout: "admin",
-  title: "Editar Motorista | Urban Mobi"
-});
-import { computed } from 'vue'
-import { useForm } from "vee-validate";
-import { toTypedSchema } from "@vee-validate/zod";
-import * as z from "zod";
-import { ArrowLeft, LoaderCircle, LockKeyholeOpen, LockKeyhole } from "lucide-vue-next";
-import { dateFormat } from "~/lib/utils";
-import { userDriverStore } from "~/stores/admin/drivers.store";
-import { storeToRefs } from "pinia";
-import AddCarsForm from "~/components/admin/drivers/AddCarsForm.vue";
-import FormSelect from "~/components/shared/FormSelect.vue";
-import { useToast } from "@/components/ui/toast/use-toast";
+  definePageMeta({
+    layout: "admin",
+    title: "Editar Motorista | Urban Mobi"
+  });
+  import { computed } from 'vue'
+  import { useForm } from "vee-validate";
+  import { toTypedSchema } from "@vee-validate/zod";
+  import * as z from "zod";
+  import { ArrowLeft, LoaderCircle, LockKeyholeOpen, LockKeyhole, Download, Eye, Edit, File } from "lucide-vue-next";
+  import { dateFormat } from "~/lib/utils";
+  import { userDriverStore } from "~/stores/admin/drivers.store";
+  import { storeToRefs } from "pinia";
+  import AddCarsForm from "~/components/admin/drivers/AddCarsForm.vue";
+  import FormSelect from "~/components/shared/FormSelect.vue";
+  import { useToast } from "@/components/ui/toast/use-toast";
 
-const { toast } = useToast();
+  const { toast } = useToast();
 
-const driverStore = userDriverStore();
-const { loadingData, loadingSend } = storeToRefs(driverStore);
-const { getDriverByIdAction, updateDriverAction } = driverStore;
+  const driverStore = userDriverStore();
+  const { loadingData, loadingSend } = storeToRefs(driverStore);
+  const { getDriverByIdAction, updateDriverAction } = driverStore;
 
-const route = useRoute();
+  const route = useRoute();
 
-const fetchDriverData = async () => {
-  return await getDriverByIdAction(route.params.id as string);
-};
+  const fetchDriverData = async () => {
+    return await getDriverByIdAction(route.params.id as string);
+  };
 
-const driverData = ref();
-driverData.value = await fetchDriverData();
+  const driverData = ref();
+  driverData.value = await fetchDriverData();
 
-const driverSchema = toTypedSchema(
-  z.object({
-    name: z.string().min(2).max(50),
-    email: z.string().min(2).max(50),
-    phone: z.string().min(2).max(50),
-    document: z.string().min(2).max(50),
-    driverLicense: z.string().min(2).max(50),
-    status: z.string().min(2).max(50),
-    enabled: z.boolean()
-  })
-);
+  const driverSchema = toTypedSchema(
+    z.object({
+      name: z.string().min(2).max(50),
+      email: z.string().min(2).max(50),
+      phone: z.string().min(2).max(50),
+      document: z.string().min(2).max(50),
+      driverLicense: z.string().min(2).max(50),
+      status: z.string().min(2).max(50),
+      enabled: z.boolean()
+    })
+  );
 
-const driversForm = useForm({
-  validationSchema: driverSchema,
-  initialValues: driverData.value
-});
+  const driversForm = useForm({
+    validationSchema: driverSchema,
+    initialValues: driverData.value
+  });
 
-const driverPicturePath = ref()
+  const driverPicturePath = ref()
 
-const driverPicture = async () => {
-  const response = await $fetch('/api/files', {
-    method: 'GET',
-  })
-  return response
-}
-
-driverPicturePath.value = await driverPicture();
-
-const onSubmit = driversForm.handleSubmit(async (values) => {
-  const newDriverData = {
-    id: driverData.value.id,
-    name: values.name,
-    email: values.email,
-    phone: values.phone,
-    document: values.document,
-    picture: '',
-    driverLicense: values.driverLicense,
-    driverCars: driverData.value.driverCars,
-    driverFiles: {},
-    rating: ["1"],
-    history: [],
-    status: values.status,
-    enabled: values.enabled
-  }
-  try {
-    await updateDriverAction(newDriverData)
-  } catch (error) {
-    toast({
-      title: "Oops!",
-      class: "bg-red-600 border-0 text-white text-2xl",
-      description: `Ocorreu um erro ${error} ao adicionar o motorista.`
-    });
-  } finally {
-    toast({
-      title: "Sucesso!",
-      class: "bg-green-600 border-0 text-white text-2xl",
-      description: `O motorista ${values.name} foi cadastrado com sucesso!`
-    });
-    driversForm.values = newDriverData
-    navigateTo("/admin/drivers");
+  const driverPicture = async () => {
+    const response = await $fetch('/api/files', {
+      method: 'GET',
+    })
+    return response
   }
 
-})
+  driverPicturePath.value = await driverPicture();
 
-const returnFilePath = (file: string) => {
-  const filePath = `/_nuxt/files/${file}`
-  return filePath
-}
+  const onSubmit = driversForm.handleSubmit(async (values) => {
+    const newDriverData = {
+      id: driverData.value.id,
+      name: values.name,
+      email: values.email,
+      phone: values.phone,
+      document: values.document,
+      picture: values.picture,
+      driverLicense: values.driverLicense,
+      driverCars: driverData.value.driverCars,
+      driverFiles: {},
+      rating: ["1"],
+      history: [],
+      status: values.status,
+      enabled: values.enabled
+    }
+    try {
+      await updateDriverAction(newDriverData)
+    } catch (error) {
+      toast({
+        title: "Oops!",
+        class: "bg-red-600 border-0 text-white text-2xl",
+        description: `Ocorreu um erro ${error} ao adicionar o motorista.`
+      });
+    } finally {
+      toast({
+        title: "Sucesso!",
+        class: "bg-green-600 border-0 text-white text-2xl",
+        description: `O motorista ${values.name} foi cadastrado com sucesso!`
+      });
+      driversForm.values = newDriverData
+      navigateTo("/admin/drivers");
+    }
+
+  })
+
+  const returnFilePath = (file: string) => {
+    const filePath = `/_nuxt/files/${file}`
+    return filePath
+  }
 </script>
 
 <template>
@@ -114,35 +114,30 @@ const returnFilePath = (file: string) => {
       <LoaderCircle class="w-10 h-10 animate-spin" />
     </section>
     <section v-else class="mb-4 py-4">
-      <h1 class="mb-4 text-2xl font-bold">Editando Dados do Motorista:</h1>
+      <h1 class="text-3xl font-bold mb-4">Editar Motorista</h1>
       <Card class="bg-zinc-200">
         <CardHeader>
-          <h2 class="text-2xl">{{ driverData.name }}</h2>
-          <div class="my-4 flex justify-between">
-            <div>
-              <h2 class="mb-6 text-lg font-bold">Foto pessoal</h2>
-              <div class="flex flex-col gap-4 items-center">
-                <img class="h-[150px] rounded-md" :src="returnFilePath(driverData.picture)" alt="">
-                <div class="flex gap-2 text-sm text-zinc-600">
-                  <p>Alterar</p>
-                  <p>|</p>
-                  <p>Remover</p>
+          <div class="flex gap-4 justify-between">
+            <div class="flex gap-6">
+              <img class="w-[150px] rounded-md" :src="returnFilePath(driverData.picture)" alt="">
+              <div class="flex flex-col">
+                <h1 class="mb-2 text-3xl font-bold">{{ driverData.name }}</h1>
+                <div class="flex flex-col">
+                  <small class="text-zinc-500">Cadastrado em:</small>
+                  <p class="mb-2 font-bold">
+                    {{ dateFormat(driverData.createdAt) }}
+                  </p>
+                  <small class="text-zinc-500">Modificado em:</small>
+                  <p class="font-bold">
+                    {{ dateFormat(driverData.updatedAt) }}
+                  </p>
                 </div>
+
               </div>
             </div>
-            <div class="my-4">
-              <div class="mb-4 flex flex-col">
-                <small class="text-zinc-500">Cadastrado em:</small>
-                <p class="font-bold">
-                  {{ dateFormat(driverData.createdAt) }}
-                </p>
-              </div>
-              <div class="mb-2 flex flex-col">
-                <small class="text-zinc-500">Modificado em:</small>
-                <p class="font-bold">
-                  {{ dateFormat(driverData.updatedAt) }}
-                </p>
-              </div>
+            <div>
+              <small class="text-zinc-500">Status:</small>
+              <h1 class="text-2xl font-bold">{{ driverData.status === "active" ? "Ativo" : "Inativo" }}</h1>
             </div>
           </div>
         </CardHeader>
@@ -218,8 +213,48 @@ const returnFilePath = (file: string) => {
               </div>
             </section>
             <section class="mt-6 mb-8">
-              <h2 class="mb-4 text-lg font-bold">Editar arquivos</h2>
-              <div class="grid grid-cols-3 gap-6">
+              <h2 class="mb-4 text-lg font-bold">Documentos</h2>
+              <div class="flex">
+                <ul class="w-full">
+                  <li class="mb-2 p-4 bg-white border border-zinc-300">
+                    <div class="flex gap-2 items-center justify-between">
+                      <div class="flex gap-2">
+                        <File class="w-5 h-5 text-zinc-700" />
+                        <p>Foto pessoal</p>
+                      </div>
+                      <div class="flex items-center gap-4 border-separate">
+                        <small class="text-small">Ações:</small>
+                        <a target="_blank" :href="returnFilePath(driverData.picture)" alt="Visualizar">
+                          <Eye class="w-5 h-5 text-zinc-700" />
+                        </a>
+                        <a :href="returnFilePath(driverData.picture)" alt="Baixar" download>
+                          <Download class="w-5 h-5 text-zinc-700" />
+                        </a>
+                        <Edit class="w-5 h-5 text-zinc-700 cursor-pointer" />
+                      </div>
+                    </div>
+                  </li>
+                  <li class="mb-2 p-4 bg-white border border-zinc-300">
+                    <div class="flex gap-2 items-center justify-between">
+                      <div class="flex gap-2">
+                        <File class="w-5 h-5 text-zinc-700" />
+                        <p>
+                          Cópia CNH
+                        </p>
+                      </div>
+                      <div class="flex items-center gap-4 border-separate">
+                        <small class="text-small">Ações:</small>
+                        <a target="_blank" :href="returnFilePath(driverData.driverFiles.cnhCopy)" alt="Visualizar">
+                          <Eye class="w-5 h-5 text-zinc-700" />
+                        </a>
+                        <a :href="returnFilePath(driverData.driverFiles.cnhCopy)" alt="Baixar" download>
+                          <Download class="w-5 h-5 text-zinc-700" />
+                        </a>
+                        <Edit class="w-5 h-5 text-zinc-700 cursor-pointer" />
+                      </div>
+                    </div>
+                  </li>
+                </ul>
                 <!-- <FormField v-slot="{ componentField }" name="picture">
                   <FormItem class="col-span-1">
                     <FormLabel>Foto Pessoal</FormLabel>

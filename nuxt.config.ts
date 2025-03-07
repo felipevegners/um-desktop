@@ -10,7 +10,7 @@ export default defineNuxtConfig({
         '@pinia/nuxt',
     ],
     fileStorage: {
-        mount: process.env.mount,
+        mount: './files',
     },
     shadcn: {
         /**
