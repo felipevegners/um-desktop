@@ -5,13 +5,9 @@ export default defineNuxtConfig({
     modules: [
         '@nuxtjs/tailwindcss',
         '@nuxtjs/color-mode',
-        'nuxt-file-storage',
         'shadcn-nuxt',
         '@pinia/nuxt',
     ],
-    fileStorage: {
-        mount: 'public/files',
-    },
     shadcn: {
         /**
          * Prefix for all the imported component

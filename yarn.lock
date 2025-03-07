@@ -726,32 +726,6 @@
     unimport "^4.0.0"
     untyped "^1.5.2"
 
-"@nuxt/kit@^3.15.4":
-  version "3.15.4"
-  resolved "https://registry.yarnpkg.com/@nuxt/kit/-/kit-3.15.4.tgz#122f511e518573320a035b5e24adf0118d51485d"
-  integrity sha512-dr7I7eZOoRLl4uxdxeL2dQsH0OrbEiVPIyBHnBpA4co24CBnoJoF+JINuP9l3PAM3IhUzc5JIVq3/YY3lEc3Hw==
-  dependencies:
-    c12 "^2.0.1"
-    consola "^3.4.0"
-    defu "^6.1.4"
-    destr "^2.0.3"
-    globby "^14.0.2"
-    ignore "^7.0.3"
-    jiti "^2.4.2"
-    klona "^2.0.6"
-    knitwork "^1.2.0"
-    mlly "^1.7.4"
-    ohash "^1.1.4"
-    pathe "^2.0.2"
-    pkg-types "^1.3.1"
-    scule "^1.3.0"
-    semver "^7.6.3"
-    std-env "^3.8.0"
-    ufo "^1.5.4"
-    unctx "^2.4.1"
-    unimport "^4.0.0"
-    untyped "^1.5.2"
-
 "@nuxt/schema@3.15.3", "@nuxt/schema@^3.15.0":
   version "3.15.3"
   resolved "https://registry.yarnpkg.com/@nuxt/schema/-/schema-3.15.3.tgz#228dae4ea4a1b406e471aa7cbd53474ec666618a"
@@ -3976,14 +3950,6 @@ nth-check@^2.0.1:
   integrity sha512-lqjrjmaOoAnWfMmBPL+XNnynZh2+swxiX3WUE0s4yEHI6m+AwrK2UZOimIRl3X/4QctVqS8AiZjFqyOGrMXb/w==
   dependencies:
     boolbase "^1.0.0"
-
-nuxt-file-storage@^0.3.0:
-  version "0.3.0"
-  resolved "https://registry.yarnpkg.com/nuxt-file-storage/-/nuxt-file-storage-0.3.0.tgz#390ffa6afb35b510ee5c2e2c6dd3aff2be896067"
-  integrity sha512-5Ey04J0vnNhdeopqIempv2dM9VKvNuCj68qokyJKEno9Dy1MS2lUWNew1djxr2s+5pMm6TLLXzfqku0yLcRtvg==
-  dependencies:
-    "@nuxt/kit" "^3.15.4"
-    defu "^6.1.4"
 
 nuxt@^3.15.1:
   version "3.15.3"

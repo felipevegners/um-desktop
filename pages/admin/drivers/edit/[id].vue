@@ -93,11 +93,6 @@
     }
 
   })
-
-  const returnFilePath = (file: string) => {
-    const filePath = `/files/${file}`
-    return filePath
-  }
 </script>
 
 <template>
@@ -119,7 +114,7 @@
         <CardHeader>
           <div class="flex gap-4 justify-between">
             <div class="flex gap-6">
-              <img class="w-[150px] rounded-md" :src="returnFilePath(driverData.picture)" alt="">
+              <img class="w-[150px] rounded-md" src="" alt="">
               <div class="flex flex-col">
                 <h1 class="mb-2 text-3xl font-bold">{{ driverData.name }}</h1>
                 <div class="flex flex-col">
@@ -224,10 +219,10 @@
                       </div>
                       <div class="flex items-center gap-4 border-separate">
                         <small class="text-small">Ações:</small>
-                        <a target="_blank" :href="returnFilePath(driverData.picture)" alt="Visualizar">
+                        <a target="_blank" href="" alt="Visualizar">
                           <Eye class="w-5 h-5 text-zinc-700" />
                         </a>
-                        <a :href="returnFilePath(driverData.picture)" alt="Baixar" download>
+                        <a href="" alt="Baixar" download>
                           <Download class="w-5 h-5 text-zinc-700" />
                         </a>
                         <Edit class="w-5 h-5 text-zinc-700 cursor-pointer" />
@@ -244,10 +239,10 @@
                       </div>
                       <div class="flex items-center gap-4 border-separate">
                         <small class="text-small">Ações:</small>
-                        <a target="_blank" :href="returnFilePath(driverData.driverFiles.cnhCopy)" alt="Visualizar">
+                        <a target="_blank" href="" alt="Visualizar">
                           <Eye class="w-5 h-5 text-zinc-700" />
                         </a>
-                        <a :href="returnFilePath(driverData.driverFiles.cnhCopy)" alt="Baixar" download>
+                        <a href="" alt="Baixar" download>
                           <Download class="w-5 h-5 text-zinc-700" />
                         </a>
                         <Edit class="w-5 h-5 text-zinc-700 cursor-pointer" />
