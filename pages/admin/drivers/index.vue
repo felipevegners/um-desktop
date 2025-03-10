@@ -137,12 +137,12 @@
 
   const driverSchema = toTypedSchema(
     z.object({
-      name: z.string().min(2).max(50),
-      email: z.string().min(2).max(50),
-      phone: z.string().min(2).max(50),
-      document: z.string().min(2).max(50),
-      driverLicense: z.string().min(2).max(50),
-      status: z.string().min(2).max(50),
+      // name: z.string().min(2).max(50),
+      // email: z.string().min(2).max(50),
+      // phone: z.string().min(2).max(50),
+      // document: z.string().min(2).max(50),
+      // driverLicense: z.string().min(2).max(50),
+      // status: z.string().min(2).max(50),
       picture: z
         .any()
         .refine((file) => file?.size <= MAX_FILE_SIZE, `Max image size is 5MB.`)
@@ -150,13 +150,13 @@
           (file) => ACCEPTED_IMAGE_TYPES.includes(file?.type),
           "Apenas arquivos nos formatos .jpg, .jpeg, .png, .webp ou PDF são aceitos "
         ),
-      cnhCopy: z
-        .any()
-        .refine((file) => file?.size <= MAX_FILE_SIZE, `Max image size is 5MB.`)
-        .refine(
-          (file) => ACCEPTED_IMAGE_TYPES.includes(file?.type),
-          "Apenas arquivos nos formatos .jpg, .jpeg, .png, .webp ou PDF são aceitos "
-        )
+      // cnhCopy: z
+      //   .any()
+      //   .refine((file) => file?.size <= MAX_FILE_SIZE, `Max image size is 5MB.`)
+      //   .refine(
+      //     (file) => ACCEPTED_IMAGE_TYPES.includes(file?.type),
+      //     "Apenas arquivos nos formatos .jpg, .jpeg, .png, .webp ou PDF são aceitos "
+      //   )
     })
   );
 
@@ -179,23 +179,32 @@
       status: values.status,
       enabled: true
     }
-    try {
-      await createNewDriverAction(newDriverData)
-    } catch (error) {
-      toast({
-        title: "Oops!",
-        class: "bg-red-600 border-0 text-white text-2xl",
-        description: `Ocorreu um erro ${error} ao adicionar o motorista.`
-      });
-    } finally {
-      showAddForm.value = !showAddForm.value;
-      toast({
-        title: "Sucesso!",
-        class: "bg-green-600 border-0 text-white text-2xl",
-        description: `O motorista ${values.name} foi cadastrado com sucesso!`
-      })
-      await getDriversAction()
-    }
+
+
+    const uploadedFiles = await $fetch('/api/admin/upload', {
+      method: 'POST',
+      body: values.picture
+    })
+    console.log("uploadedFiles -> ", uploadedFiles)
+
+
+    // try {
+    //   await createNewDriverAction(newDriverData)
+    // } catch (error) {
+    //   toast({
+    //     title: "Oops!",
+    //     class: "bg-red-600 border-0 text-white text-2xl",
+    //     description: `Ocorreu um erro ${error} ao adicionar o motorista.`
+    //   });
+    // } finally {
+    //   showAddForm.value = !showAddForm.value;
+    //   toast({
+    //     title: "Sucesso!",
+    //     class: "bg-green-600 border-0 text-white text-2xl",
+    //     description: `O motorista ${values.name} foi cadastrado com sucesso!`
+    //   })
+    //   await getDriversAction()
+    // }
   })
 </script>
 
