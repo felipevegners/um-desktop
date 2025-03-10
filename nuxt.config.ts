@@ -1,4 +1,13 @@
+import type { RouteHandlerConfig } from 'uploadthing/types';
+
 // https://nuxt.com/docs/api/configuration/nuxt-config
+export type ModuleOptions = RouteHandlerConfig & {
+    /**
+     * Path to your router definition file
+     * @default `~/server/uploadthing.ts`
+     */
+    routerPath?: string;
+};
 export default defineNuxtConfig({
     compatibilityDate: '2024-11-01',
     devtools: { enabled: true },
@@ -7,6 +16,7 @@ export default defineNuxtConfig({
         '@nuxtjs/color-mode',
         'shadcn-nuxt',
         '@pinia/nuxt',
+        '@uploadthing/nuxt',
     ],
     shadcn: {
         /**
@@ -23,15 +33,16 @@ export default defineNuxtConfig({
     //   skipPrompts: true
     // },
     runtimeConfig: {
-        // Make environment variables accessible here
         DATABASE_URL: process.env.DATABASE_URL,
         public: {
             DATABASE_URL: process.env.DATABASE_URL,
-            // Add more environment variables as needed
         },
     },
     imports: {
         dirs: ['stores'],
+    },
+    uploadthing: {
+        routerPath: '~/server/uploadthing.ts',
     },
     ssr: false,
 });

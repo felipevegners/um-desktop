@@ -13,6 +13,7 @@
   import * as z from 'zod';
   import { useToast } from "@/components/ui/toast/use-toast";
   import FormSelect from '~/components/shared/FormSelect.vue';
+  import UploadFile from "@/components/shared/UploadFile.vue"
 
   const { toast } = useToast();
 
@@ -164,28 +165,31 @@
     validationSchema: driverSchema,
   });
 
+  const { startUpload } = useUploadThing("driverFiles", {
+    onClientUploadComplete(res) {
+      console.log(`onClientUploadComplete  ->`, res);
+      alert("Upload Completed");
+    },
+  });
   const onSubmit = driversForm.handleSubmit(async (values) => {
-    const newDriverData = {
-      driverCars,
-      name: values.name,
-      email: values.email,
-      phone: values.phone,
-      document: values.document,
-      picture: '',
-      driverLicense: values.driverLicense,
-      driverFiles: {},
-      rating: ["1"],
-      history: [],
-      status: values.status,
-      enabled: true
-    }
-
-
-    const uploadedFiles = await $fetch('/api/admin/upload', {
-      method: 'POST',
-      body: values.picture
-    })
-    console.log("uploadedFiles -> ", uploadedFiles)
+    const file = values.picture;
+    console.log("File -> ", file)
+    // if (!file) return;
+    // await startUpload([file]);
+    // const newDriverData = {
+    //   driverCars,
+    //   name: values.name,
+    //   email: values.email,
+    //   phone: values.phone,
+    //   document: values.document,
+    //   picture: '',
+    //   driverLicense: values.driverLicense,
+    //   driverFiles: {},
+    //   rating: ["1"],
+    //   history: [],
+    //   status: values.status,
+    //   enabled: true
+    // }
 
 
     // try {
@@ -309,7 +313,6 @@
                     <FormDescription>*enviar foto de rosto com fundo
                       claro e sem
                       adereços</FormDescription>
-
                     <FormControl>
                       <Input id="picture" type="file" @change="handleChange" @blur="handleBlur" />
                     </FormControl>
