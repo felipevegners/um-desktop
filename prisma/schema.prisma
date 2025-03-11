@@ -73,7 +73,6 @@ model Drivers {
   email         String    @unique
   phone         String
   document      String
-  picture       String
   driverLicense String
   driverFiles   Json?
   driverCars    Json?

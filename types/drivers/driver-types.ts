@@ -4,9 +4,8 @@ export interface Driver {
     email: string;
     phone: string;
     document: string;
-    picture: string;
     driverLicense: string;
-    driverFiles: Record<string, string>;
+    driverFiles: DriverFiles;
     driverCars: DriverCar[];
     rating: Array<any>;
     history: Array<any>;
@@ -19,4 +18,15 @@ type DriverCar = {
     carColor: string;
     carPlate: string;
     carYear: string;
+};
+
+type DriverFiles = {
+    picture: {
+        name: string;
+        url: string;
+    };
+    cnhCopy: {
+        name: string;
+        url: string;
+    };
 };
