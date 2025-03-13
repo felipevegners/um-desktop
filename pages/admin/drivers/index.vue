@@ -1,39 +1,45 @@
 <script setup lang="ts">
-import { ref, onMounted } from 'vue';
-import { Plus, LoaderCircle, CircleCheck, ArrowUpDown } from 'lucide-vue-next';
-import { createColumnHelper } from '@tanstack/vue-table';
-import AddCarsForm from '~/components/admin/drivers/AddCarsForm.vue';
-import { Button } from '@/components/ui/button';
-import { userDriverStore } from '~/stores/admin/drivers.store';
-import { storeToRefs } from 'pinia';
 import DataTable from '@/components/shared/DataTable.vue';
-import EditDeleteActions from '~/components/admin/drivers/EditDeleteActions.vue';
-import { useForm } from 'vee-validate';
+import UploadFile from '@/components/shared/UploadFile.vue';
+import { Button } from '@/components/ui/button';
+import { useToast } from '@/components/ui/toast/use-toast';
+import { createColumnHelper } from '@tanstack/vue-table';
 import { toTypedSchema } from '@vee-validate/zod';
+import { ArrowUpDown, CircleCheck, LoaderCircle, Plus, Info } from 'lucide-vue-next';
+import { storeToRefs } from 'pinia';
+import { useForm } from 'vee-validate';
+import { onMounted, ref } from 'vue';
 import * as z from 'zod';
-import { useToast } from "@/components/ui/toast/use-toast";
+import AddCarsForm from '~/components/admin/drivers/AddCarsForm.vue';
+import EditDeleteActions from '~/components/admin/drivers/EditDeleteActions.vue';
 import FormSelect from '~/components/shared/FormSelect.vue';
-import UploadFile from "@/components/shared/UploadFile.vue"
+import { userDriverStore } from '~/stores/admin/drivers.store';
 
 const { toast } = useToast();
 
 const driverStore = userDriverStore();
 const { loadingData, drivers, loadingSend } = storeToRefs(driverStore);
-const { getDriversAction, createNewDriverAction, deleteDriverAction } = driverStore;
+const { getDriversAction, createNewDriverAction, deleteDriverAction } =
+  driverStore;
 
 definePageMeta({
-  layout: 'admin'
+  layout: 'admin',
 });
 
 useHead({
-  title: "Motoristas ativos | Cadastrar novo motorista"
+  title: 'Motoristas ativos | Cadastrar novo motorista',
 });
 
 const showAddForm = ref<boolean>(false);
 const driverCars = reactive([
-  { carModel: '', carColor: '', carPlate: '', carYear: '' },
+  {
+    carId: 0, carModel: '', carColor: '', carPlate: '', carYear: '', carDocumentFile: {
+      name: '',
+      url: ''
+    }
+  },
 ]);
-const isLoadingSend = ref(false)
+const isLoadingSend = ref(false);
 
 onMounted(async () => {
   await getDriversAction();
@@ -60,7 +66,7 @@ const columns = [
           onClick: () =>
             column.toggleSorting(column.getIsSorted() === 'asc'),
         },
-        () => ['Nome', h(ArrowUpDown, { class: 'ml-2 h-4 w-4' })],
+        () => ['Nome', h(ArrowUpDown, { class: 'ml-2 h-4 w-4' })]
       );
     },
     cell: ({ row }) =>
@@ -82,7 +88,7 @@ const columns = [
       return h(
         'div',
         { class: 'text-left font-medium' },
-        row.getValue('document'),
+        row.getValue('document')
       );
     },
   }),
@@ -96,7 +102,7 @@ const columns = [
           class: `px-2 flex items-center justify-center h-6 rounded-lg text-white text-xs max-w-[80px] ${status === 'active' ? 'bg-green-600' : 'bg-red-600'
             }`,
         },
-        status === 'active' ? 'Ativo' : 'Inativo',
+        status === 'active' ? 'Ativo' : 'Inativo'
       );
     },
   }),
@@ -110,7 +116,7 @@ const columns = [
           class: `px-1 flex items-center justify-center h-6 rounded-lg text-white text-xs max-w-[80px] ${enabled === true ? 'bg-blue-600' : 'bg-zinc-600'
             }`,
         },
-        enabled === true ? 'Permitido' : 'Negado',
+        enabled === true ? 'Permitido' : 'Negado'
       );
     },
   }),
@@ -128,37 +134,95 @@ const columns = [
           data: driverData,
           remove: handleDeleteDriver,
           formControl: toggleShowAddForm,
-        }),
+        })
       );
     },
   }),
 ];
 
 const MAX_FILE_SIZE = 5000000;
-const ACCEPTED_IMAGE_TYPES = ["image/jpeg", "image/jpg", "image/png", "image/webp", "application/pdf"];
+const ACCEPTED_IMAGE_TYPES = [
+  'image/jpeg',
+  'image/jpg',
+  'image/png',
+  'image/webp',
+  'application/pdf',
+];
 
 const driverSchema = toTypedSchema(
   z.object({
-    name: z.string().min(2).max(50),
-    email: z.string().min(2).max(50),
-    phone: z.string().min(2).max(50),
-    document: z.string().min(2).max(50),
-    driverLicense: z.string().min(2).max(50),
-    status: z.string().min(2).max(50),
-    picture: z
-      .any()
-      .refine((file) => file?.size <= MAX_FILE_SIZE, `Max image size is 5MB.`)
-      .refine(
-        (file) => ACCEPTED_IMAGE_TYPES.includes(file?.type),
-        "Apenas arquivos nos formatos .jpg, .jpeg, .png, .webp ou PDF são aceitos "
-      ),
-    cnhCopy: z
-      .any()
-      .refine((file) => file?.size <= MAX_FILE_SIZE, `Max image size is 5MB.`)
-      .refine(
-        (file) => ACCEPTED_IMAGE_TYPES.includes(file?.type),
-        "Apenas arquivos nos formatos .jpg, .jpeg, .png, .webp ou PDF são aceitos "
-      )
+    // name: z.string().min(2).max(50),
+    // email: z.string().min(2).max(50),
+    // phone: z.string().min(2).max(50),
+    // document: z.string().min(2).max(50),
+    // driverLicense: z.string().min(2).max(50),
+    // zipcode: z.string().min(2).max(50),
+    // streetName: z.string().min(2).max(50),
+    // streetNumber: z.string().min(2).max(50),
+    // city: z.string().min(2).max(50),
+    // state: z.string().min(2).max(50),
+    // rideArea: z.string().min(2).max(200),
+    // status: z.string().min(2).max(50),
+    // carDocumentCopy0: z
+    //   .any()
+    //   .refine(
+    //     (file) => file?.size <= MAX_FILE_SIZE,
+    //     `Tamanho máximo é de 5Mb.`
+    //   )
+    //   .refine(
+    //     (file) => ACCEPTED_IMAGE_TYPES.includes(file?.type),
+    //     'Apenas arquivos nos formatos .jpg, .jpeg, .png, .webp ou PDF são aceitos '
+    //   ),
+    // carDocumentCopy1: z
+    //   .any()
+    //   .refine(
+    //     (file) => file?.size <= MAX_FILE_SIZE,
+    //     `Tamanho máximo é de 5Mb.`
+    //   )
+    //   .refine(
+    //     (file) => ACCEPTED_IMAGE_TYPES.includes(file?.type),
+    //     'Apenas arquivos nos formatos .jpg, .jpeg, .png, .webp ou PDF são aceitos '
+    //   ),
+    // picture: z
+    //   .any()
+    //   .refine(
+    //     (file) => file?.size <= MAX_FILE_SIZE,
+    //     `Tamanho máximo é de 5Mb.`
+    //   )
+    //   .refine(
+    //     (file) => ACCEPTED_IMAGE_TYPES.includes(file?.type),
+    //     'Apenas arquivos nos formatos .jpg, .jpeg, .png, .webp ou PDF são aceitos '
+    //   ),
+    // cnhCopy: z
+    //   .any()
+    //   .refine(
+    //     (file) => file?.size <= MAX_FILE_SIZE,
+    //     `Tamanho máximo é de 5Mb.`
+    //   )
+    //   .refine(
+    //     (file) => ACCEPTED_IMAGE_TYPES.includes(file?.type),
+    //     'Apenas arquivos nos formatos .jpg, .jpeg, .png, .webp ou PDF são aceitos '
+    //   ),
+    // addressCopy: z
+    //   .any()
+    //   .refine(
+    //     (file) => file?.size <= MAX_FILE_SIZE,
+    //     `Tamanho máximo é de 5Mb.`
+    //   )
+    //   .refine(
+    //     (file) => ACCEPTED_IMAGE_TYPES.includes(file?.type),
+    //     'Apenas arquivos nos formatos .jpg, .jpeg, .png, .webp ou PDF são aceitos '
+    //   ),
+    // bankCopy: z
+    //   .any()
+    //   .refine(
+    //     (file) => file?.size <= MAX_FILE_SIZE,
+    //     `Tamanho máximo é de 5Mb.`
+    //   )
+    //   .refine(
+    //     (file) => ACCEPTED_IMAGE_TYPES.includes(file?.type),
+    //     'Apenas arquivos nos formatos .jpg, .jpeg, .png, .webp ou PDF são aceitos '
+    //   ),
   })
 );
 
@@ -166,18 +230,19 @@ const driversForm = useForm({
   validationSchema: driverSchema,
 });
 
-const { startUpload } = useUploadThing("driverFiles", {
+const { startUpload } = useUploadThing('driverFiles', {
   //@ts-ignore
   onClientUploadComplete(res) {
     return res;
   },
 });
 const onSubmit = driversForm.handleSubmit(async (values) => {
+  console.log("Values -> ", values);
   const files = [values.picture, values.cnhCopy];
-  isLoadingSend.value = true
+  isLoadingSend.value = true;
   try {
     if (!files) return;
-    const filesResponse = await startUpload(files);
+    // const filesResponse = await startUpload(files);
     const newDriverData = {
       driverCars,
       name: values.name,
@@ -185,47 +250,57 @@ const onSubmit = driversForm.handleSubmit(async (values) => {
       phone: values.phone,
       document: values.document,
       driverLicense: values.driverLicense,
-      driverFiles: {
-        picture: {
-          //@ts-ignore
-          name: filesResponse[0]?.name,
-          //@ts-ignore
-          url: filesResponse[0]?.ufsUrl
-        },
-        cnhCopy: {
-          //@ts-ignore
-          name: filesResponse[1]?.name,
-          //@ts-ignore
-          url: filesResponse[1]?.ufsUrl
-        }
-      },
-      rating: ["1"],
+      // driverFiles: {
+      //   picture: {
+      //     //@ts-ignore
+      //     name: filesResponse[0]?.name,
+      //     //@ts-ignore
+      //     url: filesResponse[0]?.ufsUrl,
+      //   },
+      //   cnhCopy: {
+      //     //@ts-ignore
+      //     name: filesResponse[1]?.name,
+      //     //@ts-ignore
+      //     url: filesResponse[1]?.ufsUrl,
+      //   },
+      //   addressCopy: {
+      //     //@ts-ignore
+      //     name: filesResponse[2]?.name,
+      //     //@ts-ignore
+      //     url: filesResponse[2]?.ufsUrl,
+      //   },
+      //   bankCopy: {
+      //     //@ts-ignore
+      //     name: filesResponse[3]?.name,
+      //     //@ts-ignore
+      //     url: filesResponse[3]?.ufsUrl,
+      //   },
+      // },
+      rating: ['1'],
       history: [],
       status: values.status,
-      enabled: true
-    }
-    await createNewDriverAction(newDriverData)
+      enabled: true,
+    };
+    // await createNewDriverAction(newDriverData);
 
-    console.log("New Driver Data -> ", newDriverData)
-
+    console.log('New Driver Data -> ', newDriverData);
   } catch (error) {
     toast({
-      title: "Oops!",
-      class: "bg-red-600 border-0 text-white text-2xl",
-      description: `Ocorreu um erro ${error} ao adicionar o motorista.`
+      title: 'Oops!',
+      class: 'bg-red-600 border-0 text-white text-2xl',
+      description: `Ocorreu um erro ${error} ao adicionar o motorista.`,
     });
   } finally {
-    showAddForm.value = !showAddForm.value;
-    toast({
-      title: "Sucesso!",
-      class: "bg-green-600 border-0 text-white text-2xl",
-      description: `O motorista ${values.name} foi cadastrado com sucesso!`
-    })
-    isLoadingSend.value = false
-    await getDriversAction()
+    // showAddForm.value = !showAddForm.value;
+    // toast({
+    //   title: 'Sucesso!',
+    //   class: 'bg-green-600 border-0 text-white text-2xl',
+    //   description: `O motorista ${values.name} foi cadastrado com sucesso!`,
+    // });
+    isLoadingSend.value = false;
+    // await getDriversAction();
   }
-
-})
+});
 </script>
 
 <template>
@@ -238,16 +313,14 @@ const onSubmit = driversForm.handleSubmit(async (values) => {
         </Button>
       </div>
     </section>
-    <section v-if="showAddForm" class="mb-4 py-4">
+    <section v-if="!showAddForm" class="mb-4 py-4">
       <Card class="bg-zinc-200">
         <CardHeader>
           <CardTitle>Cadastrar novo motorista</CardTitle>
         </CardHeader>
         <CardContent>
           <form @submit="onSubmit">
-            <h2 class="mt-4 mb-6 text-lg font-bold">
-              Dados Pessoais
-            </h2>
+            <h2 class="mt-4 mb-6 text-lg font-bold">Dados Pessoais</h2>
             <div class="mb-4 w-full grid grid-cols-3 gap-8">
               <FormField v-slot="{ componentField }" name="name">
                 <FormItem>
@@ -301,20 +374,86 @@ const onSubmit = driversForm.handleSubmit(async (values) => {
                   <FormLabel>Status</FormLabel>
                   <FormControl>
                     <FormSelect v-bind="componentField" :items="[
-                      { label: 'Ativo', value: 'active' },
-                      { label: 'Inativo', value: 'inactive' },
+                      {
+                        label: 'Ativo',
+                        value: 'active',
+                      },
+                      {
+                        label: 'Inativo',
+                        value: 'inactive',
+                      },
                     ]" :label="'Selecione'" />
                   </FormControl>
                 </FormItem>
               </FormField>
             </div>
-            <div class="mb-4 w-full grid grid-cols-3 gap-8"></div>
+            <section class="my-10">
+              <h2 class="mt-4 mb-6 text-lg font-bold">Endereço e Área de Atuação</h2>
+
+              <div class="mb-4 w-full grid grid-cols-4 gap-8">
+                <FormField v-slot="{ componentField }" name="zipcode">
+                  <FormItem class="col-span-1">
+                    <FormLabel>CEP</FormLabel>
+                    <FormControl>
+                      <Input type="text" placeholder="12345-000" v-bind="componentField" />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                </FormField>
+                <FormField v-slot="{ componentField }" name="streetName">
+                  <FormItem class="col-span-2">
+                    <FormLabel>Endereço</FormLabel>
+                    <FormControl>
+                      <Input type="text" placeholder="Insira o nome da rua" v-bind="componentField" />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                </FormField>
+                <FormField v-slot="{ componentField }" name="streetNumber">
+                  <FormItem class="col-span-1">
+                    <FormLabel>Número</FormLabel>
+                    <FormControl>
+                      <Input type="text" placeholder="ex. 1376" v-bind="componentField" />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                </FormField>
+                <FormField v-slot="{ componentField }" name="city">
+                  <FormItem class="col-span-1">
+                    <FormLabel>Cidade</FormLabel>
+                    <FormControl>
+                      <Input type="text" placeholder="ex.: São Paulo" v-bind="componentField" />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                </FormField>
+                <FormField v-slot="{ componentField }" name="state">
+                  <FormItem class="col-span-1">
+                    <FormLabel>Estado</FormLabel>
+                    <FormControl>
+                      <Input type="text" placeholder="ex.: São Paulo" v-bind="componentField" />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                </FormField>
+                <FormField v-slot="{ componentField }" name="rideArea">
+                  <FormItem class="col-span-1">
+                    <FormLabel>Área de atuação</FormLabel>
+                    <FormControl>
+                      <Input type="text" placeholder="ex.: São Paulo, Jundiaí, Campinas" v-bind="componentField" />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                </FormField>
+              </div>
+            </section>
             <section class="my-10">
               <h2 class="mb-4 text-lg font-bold">
                 Dados do(s) Veículo(s)
               </h2>
               <Separator class="mb-4" />
               <div class="grid grid-cols-3 gap-8">
+                <pre>{{ driverCars }}</pre>
                 <AddCarsForm v-model="driverCars" class="col-span-3" />
               </div>
             </section>
@@ -325,10 +464,20 @@ const onSubmit = driversForm.handleSubmit(async (values) => {
               <div class="grid grid-cols-3 gap-6">
                 <FormField v-slot="{ handleChange, handleBlur }" name="picture">
                   <FormItem class="col-span-1">
-                    <FormLabel>Foto Pessoal</FormLabel>
-                    <FormDescription>*enviar foto de rosto com fundo
-                      claro e sem
-                      adereços</FormDescription>
+                    <div class="flex gap-2 items-center">
+                      <FormLabel>Foto Pessoal</FormLabel>
+                      <TooltipProvider>
+                        <Tooltip>
+                          <TooltipTrigger as-child>
+                            <Info class="w-4 h-4 text-zinc-400" />
+                          </TooltipTrigger>
+                          <TooltipContent class="bg-zinc-700 text-white">
+                            <TooltipArrow />
+                            <p>Enviar foto de rosto com fundo claro e sem adereços</p>
+                          </TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
+                    </div>
                     <FormControl>
                       <Input id="picture" type="file" @change="handleChange" @blur="handleBlur" />
                     </FormControl>
@@ -337,11 +486,66 @@ const onSubmit = driversForm.handleSubmit(async (values) => {
                 </FormField>
                 <FormField v-slot="{ handleChange, handleBlur }" name="cnhCopy">
                   <FormItem class="col-span-1">
-                    <FormLabel>Cópia CNH</FormLabel>
-                    <FormDescription>*enviar frente e
-                      verso</FormDescription>
+                    <div class="flex gap-2 items-center">
+                      <FormLabel>Cópia CNH</FormLabel>
+                      <TooltipProvider>
+                        <Tooltip>
+                          <TooltipTrigger as-child>
+                            <Info class="w-4 h-4 text-zinc-400" />
+                          </TooltipTrigger>
+                          <TooltipContent class="bg-zinc-700 text-white">
+                            <TooltipArrow />
+                            <p>Enviar cópia frente e verso com assinatura</p>
+                          </TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
+                    </div>
                     <FormControl>
                       <Input id="cnhCopy" type="file" @change="handleChange" @blur="handleBlur" />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                </FormField>
+                <FormField v-slot="{ handleChange, handleBlur }" name="addressCopy">
+                  <FormItem class="col-span-1">
+                    <div class="flex gap-2 items-center">
+                      <FormLabel>Comprovante Endereço</FormLabel>
+                      <TooltipProvider>
+                        <Tooltip>
+                          <TooltipTrigger as-child>
+                            <Info class="w-4 h-4 text-zinc-400" />
+                          </TooltipTrigger>
+                          <TooltipContent class="bg-zinc-700 text-white">
+                            <TooltipArrow />
+                            <p>Enviar comprovante de no máximo 3 meses atrás</p>
+                          </TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
+                    </div>
+                    <FormControl>
+                      <Input id="addressCopy" type="file" @change="handleChange" @blur="handleBlur" />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                </FormField>
+                <FormField v-slot="{ handleChange, handleBlur }" name="bankCopy">
+                  <FormItem class="col-span-1">
+                    <div class="flex gap-2 items-center">
+                      <FormLabel>Comprovante Bancário</FormLabel>
+                      <TooltipProvider>
+                        <Tooltip>
+                          <TooltipTrigger as-child>
+                            <Info class="w-4 h-4 text-zinc-400" />
+                          </TooltipTrigger>
+                          <TooltipContent class="bg-zinc-700 text-white">
+                            <TooltipArrow />
+                            <p>Enviar comprovante dos dados bancário constando nome completo, agência e conta</p>
+                          </TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
+                    </div>
+                    <FormControl>
+                      <Input id="bankCopy" type="file" @change="handleChange" @blur="handleBlur" />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -350,7 +554,7 @@ const onSubmit = driversForm.handleSubmit(async (values) => {
             </section>
             <section class="pt-8">
               <Button type="submit">
-                <LoaderCircle v-if="loadingSend" class="w-10 h-10 animate-spin" />
+                <LoaderCircle v-if="isLoadingSend" class="w-10 h-10 animate-spin" />
                 Cadastrar
               </Button>
               <Button variant="ghost" class="ml-4" @click.prevent="toggleShowAddForm">

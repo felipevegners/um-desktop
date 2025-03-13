@@ -1,27 +1,39 @@
 <script setup lang="ts">
-  import { Plus, Trash } from "lucide-vue-next";
+import { Plus, Trash } from "lucide-vue-next";
 
-  defineEmits(["update:modelValue"]);
-  const props = defineProps(["modelValue"]);
+const emit = defineEmits(["update:modelValue"]);
+const props = defineProps(["modelValue"]);
 
-  const addRow = () => {
-    props.modelValue.push({
-      carModel: "",
-      carColor: "",
-      carPlate: "",
-      carYear: ""
-    });
-  };
+let carId = 0
 
-  const removeRow = (index: any) => {
-    props.modelValue.splice(index, 1);
-  };
+const addRow = () => {
+  props.modelValue.push({
+    id: carId,
+    carModel: "",
+    carColor: "",
+    carPlate: "",
+    carYear: "",
+    carDocumentFile: {
+      name: "",
+      url: ""
+    }
+  });
+  carId++
+};
+
+const removeRow = (index: any) => {
+  props.modelValue.splice(index, 1);
+};
+
+const alert = (msg: string) => {
+  window.alert(msg);
+};
 </script>
 
 <template>
   <div class="p-6 rounded-md bg-zinc-100">
     <h3 class="mb-4 font-bold">Adicionar veículo</h3>
-    <div class="mb-4 grid grid-cols-5 gap-4 items-end" v-for="(car, index) in props.modelValue">
+    <div class="mb-4 grid grid-cols-7 gap-4 items-end" v-for="(car, index) in props.modelValue" :key="car.id">
       <FormField name="carModel">
         <FormItem>
           <FormLabel>Modelo</FormLabel>
@@ -56,6 +68,27 @@
             <Input type="text" placeholder="ex.: 2024/2025" v-model="car.carYear" />
           </FormControl>
           <FormMessage />
+        </FormItem>
+      </FormField>
+      <FormField :name="`carDocumentCopy${index}`">
+        <FormItem class="col-span-2">
+          <FormLabel>Anexar Documento CRLV-e</FormLabel>
+          <FormControl>
+            <Input type="text" @change="emit('update:modelValue', { carDocumentFile: $event.target.value })" />
+            <!-- <Input :id="`carDocumentCopy${index}`" type="file" v-model="car.carDocumentCopyName" :key="car.id" /> -->
+            <!-- <UploadButton class="bg-zinc-700" :config="{
+              endpoint: 'driverCarFiles',
+              onClientUploadComplete: (file) => {
+                console.log('uploaded', file);
+
+              },
+              onUploadError: (error) => {
+                console.error(error, error.cause);
+                alert('Upload failed');
+              },
+            }" /> -->
+          </FormControl>
+          <FormMessage class="absolute" />
         </FormItem>
       </FormField>
       <div class="py-3 flex items-center">
