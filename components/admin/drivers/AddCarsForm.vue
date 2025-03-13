@@ -68,38 +68,38 @@
       </FormField>
       <FormField :name="`carDocumentCopy${index}`">
         <FormItem class="col-span-1">
-          <FormLabel>Anexar Documento CRLV-e</FormLabel>
+          <FormLabel>Anexar CRLV-e</FormLabel>
           <FormControl>
-            <!-- <Input type="text" v-model="car.carDocumentFile.name" /> -->
-            <!-- <Input :id="`carDocumentCopy${index}`" type="file" v-model="car.carDocumentCopyName" :key="car.id" /> -->
-            <UploadButton :config="{
-              appearance: {
-                container: '!items-start',
-                allowedContent: '!hidden',
-                button: '!bg-zinc-700',
-              },
-              content: {
-                button({ ready, isUploading }) {
-                  if (isUploading) return 'Enviando...'
-                  return 'Anexar'
-                }
-              },
-              endpoint: 'driverCarFiles',
-              onClientUploadComplete: (file) => {
-                console.log('uploaded', file);
-                modelValue[index].carDocumentFile.name = file[0].name
-                modelValue[index].carDocumentFile.url = file[0].ufsUrl
+            <UploadButton
+              class="relative ut-button:bg-zinc-900 ut-button:hover:bg-zinc-700 ut-button:ut-uploading:after:bg-green-500 ut-button:ut-uploading:cursor-not-allowed ut-button:ut-readying:bg-red-500"
+              :config="{
+                appearance: {
+                  container: '!items-start',
+                  allowedContent: '!absolute !top-10',
+                },
+                content: {
+                  allowedContent({ ready, fileTypes, isUploading }) {
+                    if (ready) return '';
+                    if (isUploading) return 'Enviando seu arquivo, aguarde...';
+                  },
+                },
+                endpoint: 'driverCarFiles',
+                onClientUploadComplete: (file) => {
+                  console.log('uploaded', file);
+                  modelValue[index].carDocumentFile.name = file[0].name
+                  modelValue[index].carDocumentFile.url = file[0].ufsUrl
 
-              },
-              onUploadError: (error) => {
-                console.error(error, error.cause);
-                alert('Upload failed');
-              },
-            }" :appearance="{ container: { border: '1px solid red' } }" />
+                },
+                onUploadError: (error) => {
+                  console.error(error, error.cause);
+                  alert('Upload failed');
+                },
+              }" :appearance="{ container: { border: '1px solid red' } }" />
           </FormControl>
           <FormMessage class="absolute" />
         </FormItem>
       </FormField>
+      {{ modelValue[index].carDocumentFile.name }}
       <div class="py-3 flex items-center">
         <div class="mt-2 flex gap-2 items-center">
           <Trash v-if="index > 0" @click.prevent="removeRow(index)"
@@ -112,4 +112,8 @@
   </div>
 </template>
 
-<style scoped></style>
+<style scoped>
+  .sr-only:focus {
+    box-shadow: none !important;
+  }
+</style>

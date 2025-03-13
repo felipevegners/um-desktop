@@ -1,6 +1,5 @@
 <script setup lang="ts">
   import DataTable from '@/components/shared/DataTable.vue';
-  import UploadFile from '@/components/shared/UploadFile.vue';
   import { Button } from '@/components/ui/button';
   import { useToast } from '@/components/ui/toast/use-toast';
   import { createColumnHelper } from '@tanstack/vue-table';
@@ -33,7 +32,11 @@
   const showAddForm = ref<boolean>(false);
   const driverCars = reactive([
     {
-      carId: 0, carModel: '', carColor: '', carPlate: '', carYear: '', carDocumentFile: {
+      carModel: '',
+      carColor: '',
+      carPlate: '',
+      carYear: '',
+      carDocumentFile: {
         name: '',
         url: ''
       }
@@ -151,78 +154,58 @@
 
   const driverSchema = toTypedSchema(
     z.object({
-      // name: z.string().min(2).max(50),
-      // email: z.string().min(2).max(50),
-      // phone: z.string().min(2).max(50),
-      // document: z.string().min(2).max(50),
-      // driverLicense: z.string().min(2).max(50),
-      // zipcode: z.string().min(2).max(50),
-      // streetName: z.string().min(2).max(50),
-      // streetNumber: z.string().min(2).max(50),
-      // city: z.string().min(2).max(50),
-      // state: z.string().min(2).max(50),
-      // rideArea: z.string().min(2).max(200),
-      // status: z.string().min(2).max(50),
-      // carDocumentCopy0: z
-      //   .any()
-      //   .refine(
-      //     (file) => file?.size <= MAX_FILE_SIZE,
-      //     `Tamanho máximo é de 5Mb.`
-      //   )
-      //   .refine(
-      //     (file) => ACCEPTED_IMAGE_TYPES.includes(file?.type),
-      //     'Apenas arquivos nos formatos .jpg, .jpeg, .png, .webp ou PDF são aceitos '
-      //   ),
-      // carDocumentCopy1: z
-      //   .any()
-      //   .refine(
-      //     (file) => file?.size <= MAX_FILE_SIZE,
-      //     `Tamanho máximo é de 5Mb.`
-      //   )
-      //   .refine(
-      //     (file) => ACCEPTED_IMAGE_TYPES.includes(file?.type),
-      //     'Apenas arquivos nos formatos .jpg, .jpeg, .png, .webp ou PDF são aceitos '
-      //   ),
-      // picture: z
-      //   .any()
-      //   .refine(
-      //     (file) => file?.size <= MAX_FILE_SIZE,
-      //     `Tamanho máximo é de 5Mb.`
-      //   )
-      //   .refine(
-      //     (file) => ACCEPTED_IMAGE_TYPES.includes(file?.type),
-      //     'Apenas arquivos nos formatos .jpg, .jpeg, .png, .webp ou PDF são aceitos '
-      //   ),
-      // cnhCopy: z
-      //   .any()
-      //   .refine(
-      //     (file) => file?.size <= MAX_FILE_SIZE,
-      //     `Tamanho máximo é de 5Mb.`
-      //   )
-      //   .refine(
-      //     (file) => ACCEPTED_IMAGE_TYPES.includes(file?.type),
-      //     'Apenas arquivos nos formatos .jpg, .jpeg, .png, .webp ou PDF são aceitos '
-      //   ),
-      // addressCopy: z
-      //   .any()
-      //   .refine(
-      //     (file) => file?.size <= MAX_FILE_SIZE,
-      //     `Tamanho máximo é de 5Mb.`
-      //   )
-      //   .refine(
-      //     (file) => ACCEPTED_IMAGE_TYPES.includes(file?.type),
-      //     'Apenas arquivos nos formatos .jpg, .jpeg, .png, .webp ou PDF são aceitos '
-      //   ),
-      // bankCopy: z
-      //   .any()
-      //   .refine(
-      //     (file) => file?.size <= MAX_FILE_SIZE,
-      //     `Tamanho máximo é de 5Mb.`
-      //   )
-      //   .refine(
-      //     (file) => ACCEPTED_IMAGE_TYPES.includes(file?.type),
-      //     'Apenas arquivos nos formatos .jpg, .jpeg, .png, .webp ou PDF são aceitos '
-      //   ),
+      name: z.string().min(2).max(50),
+      email: z.string().min(2).max(50),
+      phone: z.string().min(2).max(50),
+      document: z.string().min(2).max(50),
+      driverLicense: z.string().min(2).max(50),
+      zipcode: z.string().min(2).max(50),
+      streetName: z.string().min(2).max(50),
+      streetNumber: z.string().min(2).max(50),
+      city: z.string().min(2).max(50),
+      state: z.string().min(2).max(50),
+      rideArea: z.string().min(2).max(200),
+      status: z.string().min(2).max(50),
+      picture: z
+        .any()
+        .refine(
+          (file) => file?.size <= MAX_FILE_SIZE,
+          `Tamanho máximo é de 5Mb.`
+        )
+        .refine(
+          (file) => ACCEPTED_IMAGE_TYPES.includes(file?.type),
+          'Apenas arquivos nos formatos .jpg, .jpeg, .png, .webp ou PDF são aceitos '
+        ),
+      cnhCopy: z
+        .any()
+        .refine(
+          (file) => file?.size <= MAX_FILE_SIZE,
+          `Tamanho máximo é de 5Mb.`
+        )
+        .refine(
+          (file) => ACCEPTED_IMAGE_TYPES.includes(file?.type),
+          'Apenas arquivos nos formatos .jpg, .jpeg, .png, .webp ou PDF são aceitos '
+        ),
+      addressCopy: z
+        .any()
+        .refine(
+          (file) => file?.size <= MAX_FILE_SIZE,
+          `Tamanho máximo é de 5Mb.`
+        )
+        .refine(
+          (file) => ACCEPTED_IMAGE_TYPES.includes(file?.type),
+          'Apenas arquivos nos formatos .jpg, .jpeg, .png, .webp ou PDF são aceitos '
+        ),
+      bankCopy: z
+        .any()
+        .refine(
+          (file) => file?.size <= MAX_FILE_SIZE,
+          `Tamanho máximo é de 5Mb.`
+        )
+        .refine(
+          (file) => ACCEPTED_IMAGE_TYPES.includes(file?.type),
+          'Apenas arquivos nos formatos .jpg, .jpeg, .png, .webp ou PDF são aceitos '
+        ),
     })
   );
 
@@ -237,11 +220,10 @@
     },
   });
   const onSubmit = driversForm.handleSubmit(async (values) => {
-    console.log("Values -> ", values);
-    const files = [values.picture, values.cnhCopy];
+    const files = [values.picture, values.cnhCopy, values.addressCopy, values.bankCopy];
     isLoadingSend.value = true;
     try {
-      if (!files) return;
+      // if (!files) return;
       // const filesResponse = await startUpload(files);
       const newDriverData = {
         driverCars,
@@ -250,32 +232,40 @@
         phone: values.phone,
         document: values.document,
         driverLicense: values.driverLicense,
-        // driverFiles: {
-        //   picture: {
-        //     //@ts-ignore
-        //     name: filesResponse[0]?.name,
-        //     //@ts-ignore
-        //     url: filesResponse[0]?.ufsUrl,
-        //   },
-        //   cnhCopy: {
-        //     //@ts-ignore
-        //     name: filesResponse[1]?.name,
-        //     //@ts-ignore
-        //     url: filesResponse[1]?.ufsUrl,
-        //   },
-        //   addressCopy: {
-        //     //@ts-ignore
-        //     name: filesResponse[2]?.name,
-        //     //@ts-ignore
-        //     url: filesResponse[2]?.ufsUrl,
-        //   },
-        //   bankCopy: {
-        //     //@ts-ignore
-        //     name: filesResponse[3]?.name,
-        //     //@ts-ignore
-        //     url: filesResponse[3]?.ufsUrl,
-        //   },
-        // },
+        address: {
+          zipcode: values.zipcode,
+          streetName: values.streetName,
+          streetNumber: values.streetNumber,
+          city: values.city,
+          state: values.state
+        },
+        rideArea: values.rideArea,
+        driverFiles: {
+          picture: {
+            //@ts-ignore
+            name: filesResponse[0]?.name,
+            //@ts-ignore
+            url: filesResponse[0]?.ufsUrl,
+          },
+          cnhCopy: {
+            //@ts-ignore
+            name: filesResponse[1]?.name,
+            //@ts-ignore
+            url: filesResponse[1]?.ufsUrl,
+          },
+          addressCopy: {
+            //@ts-ignore
+            name: filesResponse[2]?.name,
+            //@ts-ignore
+            url: filesResponse[2]?.ufsUrl,
+          },
+          bankCopy: {
+            //@ts-ignore
+            name: filesResponse[3]?.name,
+            //@ts-ignore
+            url: filesResponse[3]?.ufsUrl,
+          },
+        },
         rating: ['1'],
         history: [],
         status: values.status,

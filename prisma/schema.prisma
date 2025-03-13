@@ -75,6 +75,8 @@ model Drivers {
   document      String
   driverLicense String
   driverFiles   Json?
+  address       Json?
+  rideArea      String?
   driverCars    Json?
   rating        Json?
   history       Json?

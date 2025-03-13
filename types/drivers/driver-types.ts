@@ -7,6 +7,8 @@ export interface Driver {
     driverLicense: string;
     driverFiles: DriverFiles;
     driverCars: DriverCar[];
+    address: Record<string, string>;
+    rideArea: string;
     rating: Array<any>;
     history: Array<any>;
     status: string;
@@ -26,6 +28,14 @@ type DriverFiles = {
         url: string;
     };
     cnhCopy: {
+        name: string;
+        url: string;
+    };
+    addressCopy: {
+        name: string;
+        url: string;
+    };
+    bankCopy: {
         name: string;
         url: string;
     };
