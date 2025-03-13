@@ -1,33 +1,29 @@
 <script setup lang="ts">
-import { Plus, Trash } from "lucide-vue-next";
+  import { Plus, Trash } from "lucide-vue-next";
 
-const emit = defineEmits(["update:modelValue"]);
-const props = defineProps(["modelValue"]);
+  const emit = defineEmits(["update:modelValue"]);
+  const props = defineProps(["modelValue"]);
 
-let carId = 0
+  const addRow = () => {
+    props.modelValue.push({
+      carModel: "",
+      carColor: "",
+      carPlate: "",
+      carYear: "",
+      carDocumentFile: {
+        name: "",
+        url: ""
+      }
+    });
+  };
 
-const addRow = () => {
-  props.modelValue.push({
-    id: carId,
-    carModel: "",
-    carColor: "",
-    carPlate: "",
-    carYear: "",
-    carDocumentFile: {
-      name: "",
-      url: ""
-    }
-  });
-  carId++
-};
+  const removeRow = (index: any) => {
+    props.modelValue.splice(index, 1);
+  };
 
-const removeRow = (index: any) => {
-  props.modelValue.splice(index, 1);
-};
-
-const alert = (msg: string) => {
-  window.alert(msg);
-};
+  const alert = (msg: string) => {
+    window.alert(msg);
+  };
 </script>
 
 <template>
@@ -71,22 +67,35 @@ const alert = (msg: string) => {
         </FormItem>
       </FormField>
       <FormField :name="`carDocumentCopy${index}`">
-        <FormItem class="col-span-2">
+        <FormItem class="col-span-1">
           <FormLabel>Anexar Documento CRLV-e</FormLabel>
           <FormControl>
-            <Input type="text" @change="emit('update:modelValue', { carDocumentFile: $event.target.value })" />
+            <!-- <Input type="text" v-model="car.carDocumentFile.name" /> -->
             <!-- <Input :id="`carDocumentCopy${index}`" type="file" v-model="car.carDocumentCopyName" :key="car.id" /> -->
-            <!-- <UploadButton class="bg-zinc-700" :config="{
+            <UploadButton :config="{
+              appearance: {
+                container: '!items-start',
+                allowedContent: '!hidden',
+                button: '!bg-zinc-700',
+              },
+              content: {
+                button({ ready, isUploading }) {
+                  if (isUploading) return 'Enviando...'
+                  return 'Anexar'
+                }
+              },
               endpoint: 'driverCarFiles',
               onClientUploadComplete: (file) => {
                 console.log('uploaded', file);
+                modelValue[index].carDocumentFile.name = file[0].name
+                modelValue[index].carDocumentFile.url = file[0].ufsUrl
 
               },
               onUploadError: (error) => {
                 console.error(error, error.cause);
                 alert('Upload failed');
               },
-            }" /> -->
+            }" :appearance="{ container: { border: '1px solid red' } }" />
           </FormControl>
           <FormMessage class="absolute" />
         </FormItem>
