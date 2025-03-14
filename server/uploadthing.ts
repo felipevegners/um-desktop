@@ -9,7 +9,10 @@ const auth = (ev: H3Event) => ({ id: 'fakeId' }); // Fake auth function
 // FileRouter for your app, can contain multiple FileRoutes
 export const uploadRouter = {
     // Define as many FileRoutes as you like, each with a unique routeSlug
-    driverFiles: f(['image', 'pdf'])
+    driverFiles: f({
+        image: { maxFileSize: '4MB', maxFileCount: 5 },
+        pdf: { maxFileSize: '4MB', maxFileCount: 5 },
+    })
         // Set permissions and file types for this FileRoute
         .middleware(async ({ event }) => {
             // This code runs on your server before upload
@@ -23,7 +26,10 @@ export const uploadRouter = {
         })
         .onUploadComplete((data) => console.log('file uploaded -> ', data)),
     // Define as many FileRoutes as you like, each with a unique routeSlug
-    driverCarFiles: f(['image', 'pdf'])
+    driverCarFiles: f({
+        image: { maxFileSize: '4MB', maxFileCount: 10 },
+        pdf: { maxFileSize: '4MB', maxFileCount: 10 },
+    })
         // Set permissions and file types for this FileRoute
         .middleware(async ({ event }) => {
             // This code runs on your server before upload

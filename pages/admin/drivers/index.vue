@@ -162,6 +162,7 @@
       zipcode: z.string().min(2).max(50),
       streetName: z.string().min(2).max(50),
       streetNumber: z.string().min(2).max(50),
+      addComplement: z.string().min(2).max(50),
       city: z.string().min(2).max(50),
       state: z.string().min(2).max(50),
       rideArea: z.string().min(2).max(200),
@@ -223,8 +224,8 @@
     const files = [values.picture, values.cnhCopy, values.addressCopy, values.bankCopy];
     isLoadingSend.value = true;
     try {
-      // if (!files) return;
-      // const filesResponse = await startUpload(files);
+      if (!files) return;
+      const filesResponse = await startUpload(files);
       const newDriverData = {
         driverCars,
         name: values.name,
@@ -236,6 +237,7 @@
           zipcode: values.zipcode,
           streetName: values.streetName,
           streetNumber: values.streetNumber,
+          addComplement: values.addComplement,
           city: values.city,
           state: values.state
         },
@@ -271,9 +273,8 @@
         status: values.status,
         enabled: true,
       };
-      // await createNewDriverAction(newDriverData);
+      await createNewDriverAction(newDriverData);
 
-      console.log('New Driver Data -> ', newDriverData);
     } catch (error) {
       toast({
         title: 'Oops!',
@@ -281,14 +282,14 @@
         description: `Ocorreu um erro ${error} ao adicionar o motorista.`,
       });
     } finally {
-      // showAddForm.value = !showAddForm.value;
-      // toast({
-      //   title: 'Sucesso!',
-      //   class: 'bg-green-600 border-0 text-white text-2xl',
-      //   description: `O motorista ${values.name} foi cadastrado com sucesso!`,
-      // });
+      showAddForm.value = !showAddForm.value;
+      toast({
+        title: 'Sucesso!',
+        class: 'bg-green-600 border-0 text-white text-2xl',
+        description: `O motorista ${values.name} foi cadastrado com sucesso!`,
+      });
       isLoadingSend.value = false;
-      // await getDriversAction();
+      await getDriversAction();
     }
   });
 </script>
@@ -303,7 +304,7 @@
         </Button>
       </div>
     </section>
-    <section v-if="!showAddForm" class="mb-4 py-4">
+    <section v-if="showAddForm" class="mb-4 py-4">
       <Card class="bg-zinc-200">
         <CardHeader>
           <CardTitle>Cadastrar novo motorista</CardTitle>
@@ -408,6 +409,15 @@
                     <FormMessage />
                   </FormItem>
                 </FormField>
+                <FormField v-slot="{ componentField }" name="addComplement">
+                  <FormItem class="col-span-1">
+                    <FormLabel>Complemento</FormLabel>
+                    <FormControl>
+                      <Input type="text" placeholder="ex. BL A - AP 11" v-bind="componentField" />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                </FormField>
                 <FormField v-slot="{ componentField }" name="city">
                   <FormItem class="col-span-1">
                     <FormLabel>Cidade</FormLabel>
@@ -443,7 +453,6 @@
               </h2>
               <Separator class="mb-4" />
               <div class="grid grid-cols-3 gap-8">
-                <pre>{{ driverCars }}</pre>
                 <AddCarsForm v-model="driverCars" class="col-span-3" />
               </div>
             </section>

@@ -1,86 +1,86 @@
 <script setup lang="ts">
-definePageMeta({
-  layout: "admin",
-  title: "Editar Motorista | Urban Mobi"
-});
-import { computed } from 'vue'
-import { useForm } from "vee-validate";
-import { toTypedSchema } from "@vee-validate/zod";
-import * as z from "zod";
-import { ArrowLeft, LoaderCircle, LockKeyholeOpen, LockKeyhole, Download, Eye, Edit, File } from "lucide-vue-next";
-import { dateFormat } from "~/lib/utils";
-import { userDriverStore } from "~/stores/admin/drivers.store";
-import { storeToRefs } from "pinia";
-import AddCarsForm from "~/components/admin/drivers/AddCarsForm.vue";
-import FormSelect from "~/components/shared/FormSelect.vue";
-import { useToast } from "@/components/ui/toast/use-toast";
+  definePageMeta({
+    layout: "admin",
+    title: "Editar Motorista | Urban Mobi"
+  });
+  import { computed } from 'vue'
+  import { useForm } from "vee-validate";
+  import { toTypedSchema } from "@vee-validate/zod";
+  import * as z from "zod";
+  import { ArrowLeft, LoaderCircle, LockKeyholeOpen, LockKeyhole, Download, Eye, Edit, File } from "lucide-vue-next";
+  import { dateFormat } from "~/lib/utils";
+  import { userDriverStore } from "~/stores/admin/drivers.store";
+  import { storeToRefs } from "pinia";
+  import AddCarsForm from "~/components/admin/drivers/AddCarsForm.vue";
+  import FormSelect from "~/components/shared/FormSelect.vue";
+  import { useToast } from "@/components/ui/toast/use-toast";
 
-const { toast } = useToast();
+  const { toast } = useToast();
 
-const driverStore = userDriverStore();
-const { loadingData, loadingSend } = storeToRefs(driverStore);
-const { getDriverByIdAction, updateDriverAction } = driverStore;
+  const driverStore = userDriverStore();
+  const { loadingData, loadingSend } = storeToRefs(driverStore);
+  const { getDriverByIdAction, updateDriverAction } = driverStore;
 
-const route = useRoute();
+  const route = useRoute();
 
-const fetchDriverData = async () => {
-  return await getDriverByIdAction(route.params.id as string);
-};
+  const fetchDriverData = async () => {
+    return await getDriverByIdAction(route.params.id as string);
+  };
 
-const driverData = ref();
-driverData.value = await fetchDriverData();
+  const driverData = ref();
+  driverData.value = await fetchDriverData();
 
-const driverSchema = toTypedSchema(
-  z.object({
-    name: z.string().min(2).max(50),
-    email: z.string().min(2).max(50),
-    phone: z.string().min(2).max(50),
-    document: z.string().min(2).max(50),
-    driverLicense: z.string().min(2).max(50),
-    status: z.string().min(2).max(50),
-    enabled: z.boolean()
+  const driverSchema = toTypedSchema(
+    z.object({
+      name: z.string().min(2).max(50),
+      email: z.string().min(2).max(50),
+      phone: z.string().min(2).max(50),
+      document: z.string().min(2).max(50),
+      driverLicense: z.string().min(2).max(50),
+      status: z.string().min(2).max(50),
+      enabled: z.boolean()
+    })
+  );
+
+  const driversForm = useForm({
+    validationSchema: driverSchema,
+    initialValues: driverData.value
+  });
+
+  const onSubmit = driversForm.handleSubmit(async (values) => {
+    const newDriverData = {
+      id: driverData.value.id,
+      name: values.name,
+      email: values.email,
+      phone: values.phone,
+      document: values.document,
+      driverLicense: values.driverLicense,
+      driverCars: driverData.value.driverCars,
+      driverFiles: driverData.value.driverFiles,
+      rating: ["1"],
+      history: [],
+      status: values.status,
+      enabled: values.enabled
+    }
+    try {
+      await updateDriverAction(newDriverData)
+    } catch (error) {
+      toast({
+        title: "Oops!",
+        class: "bg-red-600 border-0 text-white text-2xl",
+        description: `Ocorreu um erro ${error} ao adicionar o motorista.`
+      });
+    } finally {
+      toast({
+        title: "Sucesso!",
+        class: "bg-green-600 border-0 text-white text-2xl",
+        description: `O motorista ${values.name} foi cadastrado com sucesso!`
+      });
+      driversForm.values = newDriverData
+      navigateTo("/admin/drivers");
+    }
+
   })
-);
-
-const driversForm = useForm({
-  validationSchema: driverSchema,
-  initialValues: driverData.value
-});
-
-const onSubmit = driversForm.handleSubmit(async (values) => {
-  const newDriverData = {
-    id: driverData.value.id,
-    name: values.name,
-    email: values.email,
-    phone: values.phone,
-    document: values.document,
-    driverLicense: values.driverLicense,
-    driverCars: driverData.value.driverCars,
-    driverFiles: driverData.value.driverFiles,
-    rating: ["1"],
-    history: [],
-    status: values.status,
-    enabled: values.enabled
-  }
-  try {
-    await updateDriverAction(newDriverData)
-  } catch (error) {
-    toast({
-      title: "Oops!",
-      class: "bg-red-600 border-0 text-white text-2xl",
-      description: `Ocorreu um erro ${error} ao adicionar o motorista.`
-    });
-  } finally {
-    toast({
-      title: "Sucesso!",
-      class: "bg-green-600 border-0 text-white text-2xl",
-      description: `O motorista ${values.name} foi cadastrado com sucesso!`
-    });
-    driversForm.values = newDriverData
-    navigateTo("/admin/drivers");
-  }
-
-})
 </script>
 
 <template>
@@ -212,9 +212,9 @@ const onSubmit = driversForm.handleSubmit(async (values) => {
                         <a target="_blank" :href="driverData?.driverFiles?.picture?.url" alt="Visualizar">
                           <Eye class="w-5 h-5 text-zinc-700" />
                         </a>
-                        <a :href="driverData?.driverFiles?.picture?.url" alt="Baixar" download>
+                        <!-- <a href="" alt="Baixar" :download="driverData?.driverFiles?.picture?.url">
                           <Download class="w-5 h-5 text-zinc-700" />
-                        </a>
+                        </a> -->
                         <Edit class="w-5 h-5 text-zinc-700 cursor-not-allowed" />
                       </div>
                     </div>
@@ -234,9 +234,9 @@ const onSubmit = driversForm.handleSubmit(async (values) => {
                         <a target="_blank" :href="driverData.driverFiles.cnhCopy.url" alt="Visualizar">
                           <Eye class="w-5 h-5 text-zinc-700" />
                         </a>
-                        <a :href="driverData.driverFiles.cnhCopy.url" alt="Baixar" download>
+                        <!-- <a :href="driverData.driverFiles.cnhCopy.url" alt="Baixar" download>
                           <Download class="w-5 h-5 text-zinc-700" />
-                        </a>
+                        </a> -->
                         <Edit class="w-5 h-5 text-zinc-700 cursor-not-allowed" />
                       </div>
                     </div>
