@@ -16,10 +16,12 @@ export const useFilesStore = defineStore('files', {
     },
     actions: {
         async deleteFileAction(fileUrl: string) {
-            console.log('Deleting file -> ', fileUrl);
             this.loadingFileData = true;
             try {
-                // await deleteFilesService(fileUrl);
+                await $fetch('/api/admin/files', {
+                    method: 'DELETE',
+                    body: { fileUrl },
+                });
             } catch (error) {
                 console.log('Error during file delete -> ', error);
             } finally {

@@ -7,7 +7,7 @@
   import { useForm } from "vee-validate";
   import { toTypedSchema } from "@vee-validate/zod";
   import * as z from "zod";
-  import { ArrowLeft, LoaderCircle, LockKeyholeOpen, LockKeyhole, Download, Eye, Edit, File } from "lucide-vue-next";
+  import { ArrowLeft, LoaderCircle, LockKeyholeOpen, LockKeyhole, Download, Eye, Edit, File, Check, X } from "lucide-vue-next";
   import { dateFormat } from "~/lib/utils";
   import { userDriverStore } from "~/stores/admin/drivers.store";
   import { storeToRefs } from "pinia";
@@ -29,6 +29,11 @@
 
   const driverData = ref();
   driverData.value = await fetchDriverData();
+
+  const editDriverPicture = ref(false)
+  const editDriverCnhCopy = ref(false)
+  const editDriverAddressCopy = ref(false)
+  const editDriverBankCopy = ref(false)
 
   const driverSchema = toTypedSchema(
     z.object({
@@ -204,18 +209,48 @@
                       <div class="flex gap-2">
                         <File class="w-5 h-5 text-zinc-700" />
                         <p>Foto pessoal: <span class="text-zinc-500 underline">{{ driverData.driverFiles?.picture?.name
-                        }}</span>
+                            }}</span>
                         </p>
+                        <Check v-if="driverData.driverFiles?.picture?.name" class="w-5 h-5 text-green-500" />
                       </div>
-                      <div class="flex items-center gap-4 border-separate">
-                        <small class="text-small">Ações:</small>
-                        <a target="_blank" :href="driverData?.driverFiles?.picture?.url" alt="Visualizar">
-                          <Eye class="w-5 h-5 text-zinc-700" />
-                        </a>
-                        <!-- <a href="" alt="Baixar" :download="driverData?.driverFiles?.picture?.url">
-                          <Download class="w-5 h-5 text-zinc-700" />
-                        </a> -->
-                        <Edit class="w-5 h-5 text-zinc-700 cursor-not-allowed" />
+                      <div class="flex gap-4">
+                        <div class="flex items-center gap-4 border-separate">
+                          <small class="text-small">Ações:</small>
+                          <a target="_blank" :href="driverData?.driverFiles?.picture?.url" alt="Visualizar">
+                            <Eye class="w-5 h-5 text-zinc-700" />
+                          </a>
+                          <div v-if="editDriverPicture" class="flex gap-4 items-center">
+                            <UploadButton
+                              class="relative ut-button:bg-zinc-900 ut-button:hover:bg-zinc-700 ut-button:ut-uploading:after:bg-green-500 ut-button:ut-uploading:cursor-not-allowed ut-button:ut-readying:bg-red-500"
+                              :config="{
+                                appearance: {
+                                  container: '!items-start',
+                                  allowedContent: '!absolute !top-10',
+                                },
+                                content: {
+                                  allowedContent({ ready, fileTypes, isUploading }) {
+                                    if (ready) return '';
+                                    if (isUploading) return 'Enviando seu arquivo, aguarde...';
+                                  },
+                                },
+                                endpoint: 'driverFiles',
+                                onClientUploadComplete: (file) => {
+                                  console.log('uploaded', file);
+                                  driverData.driverFiles.picture.name = file[0].name
+                                  driverData.driverFiles.picture.url = file[0].ufsUrl
+                                },
+                                onUploadError: (error) => {
+                                  console.error('---> ', error, error.cause);
+                                  alert('Upload failed');
+                                },
+                              }" />
+                            <X class="w-5 h-5 text-zinc-500 hover:text-red-500 cursor-pointer"
+                              @click.preven="() => editDriverPicture = !editDriverPicture" />
+
+                          </div>
+                          <Edit v-else class="w-5 h-5 text-zinc-700 cursor-pointer"
+                            @click.preven="() => editDriverPicture = !editDriverPicture" />
+                        </div>
                       </div>
                     </div>
                   </li>
@@ -224,20 +259,148 @@
                       <div class="flex gap-2">
                         <File class="w-5 h-5 text-zinc-700" />
                         <p>
-                          Cópia CNH
+                          Cópia CNH:
                           <span class="text-zinc-500 underline">{{ driverData.driverFiles?.cnhCopy?.name
-                            }}</span>
+                          }}</span>
                         </p>
+                        <Check v-if="driverData.driverFiles?.cnhCopy?.name" class="w-5 h-5 text-green-500" />
                       </div>
                       <div class="flex items-center gap-4 border-separate">
                         <small class="text-small">Ações:</small>
                         <a target="_blank" :href="driverData.driverFiles.cnhCopy.url" alt="Visualizar">
                           <Eye class="w-5 h-5 text-zinc-700" />
                         </a>
-                        <!-- <a :href="driverData.driverFiles.cnhCopy.url" alt="Baixar" download>
-                          <Download class="w-5 h-5 text-zinc-700" />
-                        </a> -->
-                        <Edit class="w-5 h-5 text-zinc-700 cursor-not-allowed" />
+                        <div v-if="editDriverCnhCopy" class="flex gap-4 items-center">
+                          <UploadButton
+                            class="relative ut-button:bg-zinc-900 ut-button:hover:bg-zinc-700 ut-button:ut-uploading:after:bg-green-500 ut-button:ut-uploading:cursor-not-allowed ut-button:ut-readying:bg-red-500"
+                            :config="{
+                              appearance: {
+                                container: '!items-start',
+                                allowedContent: '!absolute !top-10',
+                              },
+                              content: {
+                                allowedContent({ ready, fileTypes, isUploading }) {
+                                  if (ready) return '';
+                                  if (isUploading) return 'Enviando seu arquivo, aguarde...';
+                                },
+                              },
+                              endpoint: 'driverFiles',
+                              onClientUploadComplete: (file) => {
+                                console.log('uploaded', file);
+                                driverData.driverFiles.cnhCopy.name = file[0].name
+                                driverData.driverFiles.cnhCopy.url = file[0].ufsUrl
+                              },
+                              onUploadError: (error) => {
+                                console.error('---> ', error, error.cause);
+                                alert('Upload failed');
+                              },
+                            }" />
+                          <X class="w-5 h-5 text-zinc-500 hover:text-red-500 cursor-pointer"
+                            @click.preven="() => editDriverCnhCopy = !editDriverCnhCopy" />
+
+                        </div>
+                        <Edit v-else class="w-5 h-5 text-zinc-700 cursor-pointer"
+                          @click.preven="() => editDriverCnhCopy = !editDriverCnhCopy" />
+                      </div>
+                    </div>
+                  </li>
+                  <li class="mb-2 p-4 bg-white border border-zinc-300">
+                    <div class="flex gap-2 items-center justify-between">
+                      <div class="flex gap-2">
+                        <File class="w-5 h-5 text-zinc-700" />
+                        <p>
+                          Comprovante de Endereço:
+                          <span class="text-zinc-500 underline">{{ driverData.driverFiles?.addressCopy?.name
+                          }}</span>
+                        </p>
+                        <Check v-if="driverData.driverFiles?.addressCopy?.name" class="w-5 h-5 text-green-500" />
+                      </div>
+                      <div class="flex items-center gap-4 border-separate">
+                        <small class="text-small">Ações:</small>
+                        <a target="_blank" :href="driverData.driverFiles.addressCopy?.url" alt="Visualizar">
+                          <Eye class="w-5 h-5 text-zinc-700" />
+                        </a>
+                        <div v-if="editDriverAddressCopy" class="flex gap-4 items-center">
+                          <UploadButton
+                            class="relative ut-button:bg-zinc-900 ut-button:hover:bg-zinc-700 ut-button:ut-uploading:after:bg-green-500 ut-button:ut-uploading:cursor-not-allowed ut-button:ut-readying:bg-red-500"
+                            :config="{
+                              appearance: {
+                                container: '!items-start',
+                                allowedContent: '!absolute !top-10',
+                              },
+                              content: {
+                                allowedContent({ ready, fileTypes, isUploading }) {
+                                  if (ready) return '';
+                                  if (isUploading) return 'Enviando seu arquivo, aguarde...';
+                                },
+                              },
+                              endpoint: 'driverFiles',
+                              onClientUploadComplete: (file) => {
+                                console.log('uploaded', file);
+                                driverData.driverFiles.addressCopy.name = file[0].name
+                                driverData.driverFiles.addressCopy.url = file[0].ufsUrl
+                              },
+                              onUploadError: (error) => {
+                                console.error('---> ', error, error.cause);
+                                alert('Upload failed');
+                              },
+                            }" />
+                          <X class="w-5 h-5 text-zinc-500 hover:text-red-500 cursor-pointer"
+                            @click.preven="() => editDriverAddressCopy = !editDriverAddressCopy" />
+
+                        </div>
+                        <Edit v-else class="w-5 h-5 text-zinc-700 cursor-pointer"
+                          @click.preven="() => editDriverAddressCopy = !editDriverAddressCopy" />
+                      </div>
+                    </div>
+                  </li>
+                  <li class="mb-2 p-4 bg-white border border-zinc-300">
+                    <div class="flex gap-2 items-center justify-between">
+                      <div class="flex gap-2">
+                        <File class="w-5 h-5 text-zinc-700" />
+                        <p>
+                          Comprovante Bancário:
+                          <span class="text-zinc-500 underline">{{ driverData.driverFiles?.bankCopy?.name
+                          }}</span>
+                        </p>
+                        <Check v-if="driverData.driverFiles?.bankCopy?.name" class="w-5 h-5 text-green-500" />
+                      </div>
+                      <div class="flex items-center gap-4 border-separate">
+                        <small class="text-small">Ações:</small>
+                        <a target="_blank" :href="driverData.driverFiles.bankCopy?.url" alt="Visualizar">
+                          <Eye class="w-5 h-5 text-zinc-700" />
+                        </a>
+                        <div v-if="editDriverBankCopy" class="flex gap-4 items-center">
+                          <UploadButton
+                            class="relative ut-button:bg-zinc-900 ut-button:hover:bg-zinc-700 ut-button:ut-uploading:after:bg-green-500 ut-button:ut-uploading:cursor-not-allowed ut-button:ut-readying:bg-red-500"
+                            :config="{
+                              appearance: {
+                                container: '!items-start',
+                                allowedContent: '!absolute !top-10',
+                              },
+                              content: {
+                                allowedContent({ ready, fileTypes, isUploading }) {
+                                  if (ready) return '';
+                                  if (isUploading) return 'Enviando seu arquivo, aguarde...';
+                                },
+                              },
+                              endpoint: 'driverFiles',
+                              onClientUploadComplete: (file) => {
+                                console.log('uploaded', file);
+                                driverData.driverFiles.bankCopy.name = file[0].name
+                                driverData.driverFiles.bankCopy.url = file[0].ufsUrl
+                              },
+                              onUploadError: (error) => {
+                                console.error('---> ', error, error.cause);
+                                alert('Upload failed');
+                              },
+                            }" />
+                          <X class="w-5 h-5 text-zinc-500 hover:text-red-500 cursor-pointer"
+                            @click.preven="() => editDriverBankCopy = !editDriverBankCopy" />
+
+                        </div>
+                        <Edit v-else class="w-5 h-5 text-zinc-700 cursor-pointer"
+                          @click.preven="() => editDriverBankCopy = !editDriverBankCopy" />
                       </div>
                     </div>
                   </li>
