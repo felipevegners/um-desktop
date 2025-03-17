@@ -2,6 +2,8 @@ import type { H3Event } from 'h3';
 import { createUploadthing } from 'uploadthing/h3';
 import type { FileRouter } from 'uploadthing/h3';
 
+// Fake auth function
+
 const f = createUploadthing();
 
 const auth = (ev: H3Event) => ({ id: 'fakeId' }); // Fake auth function

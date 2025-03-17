@@ -1,30 +1,45 @@
 <script setup lang="ts">
-  import { ref } from "vue"
-  import { Plus, Trash, Paperclip, CircleX } from "lucide-vue-next";
+import { Plus, Trash, Paperclip, CircleX, LoaderCircle } from "lucide-vue-next";
+import { useFilesStore } from "~/stores/admin/files.store";
+import { storeToRefs } from 'pinia'
 
-  const emit = defineEmits(["update:modelValue"]);
-  const props = defineProps(["modelValue"]);
+const emit = defineEmits(["update:modelValue"]);
+const props = defineProps(["modelValue"]);
 
-  const addRow = () => {
-    props.modelValue.push({
-      carModel: "",
-      carColor: "",
-      carPlate: "",
-      carYear: "",
-      carDocumentFile: {
-        name: "",
-        url: ""
-      }
-    });
-  };
+const store = useFilesStore();
+const { deleteFileAction } = store;
+const { loadingFileData } = storeToRefs(store)
 
-  const removeRow = (index: any) => {
-    props.modelValue.splice(index, 1);
-  };
+const addRow = () => {
+  props.modelValue.push({
+    carModel: "",
+    carColor: "",
+    carPlate: "",
+    carYear: "",
+    carDocumentFile: {
+      name: "",
+      url: ""
+    }
+  });
+};
 
-  const alert = (msg: string) => {
-    window.alert(msg);
-  };
+const deleteFile = async (url: string) => {
+  try {
+    await deleteFileAction(url);
+  } catch (error) {
+    console.log("Error during delete file -> ", error)
+  } finally {
+    alert('Arquivo deletado com sucesso!')
+  }
+}
+
+const removeRow = (index: any) => {
+  props.modelValue.splice(index, 1);
+};
+
+const alert = (msg: string) => {
+  window.alert(msg);
+};
 </script>
 <template>
   <div class="p-6 rounded-md bg-zinc-100">
@@ -75,8 +90,6 @@
                 <UploadButton
                   class="relative ut-button:bg-zinc-900 ut-button:hover:bg-zinc-700 ut-button:ut-uploading:after:bg-green-500 ut-button:ut-uploading:cursor-not-allowed ut-button:ut-readying:bg-red-500"
                   :config="{
-                    disabled: disableButton,
-                    mode: 'manual',
                     appearance: {
                       container: '!items-start',
                       allowedContent: '!absolute !top-10',
@@ -103,7 +116,9 @@
                   <div class="px-2 border border-dashed border-green-500">
                     {{ modelValue[index]?.carDocumentFile?.name || '' }}
                   </div>
-                  <CircleX class="w-4 h-4 text-zinc-500 hover:text-red-500 cursor-pointer" />
+                  <CircleX class="w-4 h-4 text-zinc-500 hover:text-red-500 cursor-pointer"
+                    @click.prevent="deleteFile(modelValue[index]?.carDocumentFile.url)" />
+                  <LoaderCircle v-if="loadingFileData" class="w-4 h-4" />
                 </div>
               </div>
             </FormControl>
@@ -126,7 +141,7 @@
 </template>
 
 <style scoped>
-  .sr-only:focus {
-    box-shadow: none !important;
-  }
+.sr-only:focus {
+  box-shadow: none !important;
+}
 </style>
