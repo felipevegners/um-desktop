@@ -27,20 +27,24 @@ export const uploadRouter = {
             return { userId: user.id };
         })
         .onUploadComplete((data) => console.log('file uploaded -> ', data)),
-    // Define as many FileRoutes as you like, each with a unique routeSlug
+
     driverCarFiles: f({
         image: { maxFileSize: '4MB', maxFileCount: 10 },
         pdf: { maxFileSize: '4MB', maxFileCount: 10 },
     })
-        // Set permissions and file types for this FileRoute
         .middleware(async ({ event }) => {
-            // This code runs on your server before upload
             const user = await auth(event);
-
-            // If you throw, the user will not be able to upload
             if (!user) throw new Error('Unauthorized');
+            return { userId: user.id };
+        })
+        .onUploadComplete((data) => console.log('file uploaded -> ', data)),
 
-            // Whatever is returned here is accessible in onUploadComplete as `metadata`
+    customerLogo: f({
+        image: { maxFileSize: '4MB', maxFileCount: 1 },
+    })
+        .middleware(async ({ event }) => {
+            const user = await auth(event);
+            if (!user) throw new Error('Unauthorized');
             return { userId: user.id };
         })
         .onUploadComplete((data) => console.log('file uploaded -> ', data)),

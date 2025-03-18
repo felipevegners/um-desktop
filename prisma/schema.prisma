@@ -32,7 +32,7 @@ model Customers {
   address      Json
   phone        String?
   website      String
-  logo         String
+  logo         Json?
   adminId      String       @unique @db.ObjectId
   admin        Accounts?    @relation(fields: [adminId], references: [id])
   managerName  String
