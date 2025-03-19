@@ -317,7 +317,7 @@ const findAddress = async () => {
       <Card class="bg-zinc-200">
         <form @submit.prevent="onSubmit" @keydown.enter.prevent="true">
           <CardHeader>
-            <div class="flex items-center justify-between">
+            <div class="flex items-start justify-between">
               <CardTitle class="text-md">Dados do Cliente
                 <br />
                 <span class="font-normal text-3xl">{{
@@ -339,7 +339,8 @@ const findAddress = async () => {
                 </div>
               </CardTitle>
               <div class="px-4 bg-white rounded-md">
-                <img v-if="editCustomerData.logo?.url" class="w-[150px]" :src="editCustomerData.logo?.url" alt="">
+                <img v-if="editCustomerData.logo?.url" class="p-4 bg-white w-[150px]" :src="editCustomerData.logo?.url"
+                  alt="">
                 <div v-else
                   class="flex items-center justify-center w-[150px] h-[150px] bg-white rounded-md text-zinc-400">SEM
                   LOGO
@@ -516,7 +517,7 @@ const findAddress = async () => {
                       </div>
                       <div v-if="editCustomerData.logo?.name !== ''" class="flex gap-2 items-center">
                         <Paperclip class="w-4 h-4 text-zinc-500" />
-                        <div class="px-4 border border-dashed border-green-500 rounded-md">
+                        <div class="px-4 py-2 border border-dashed border-zinc-500 rounded-md bg-white">
                           <a class="underline" :href="editCustomerData.logo?.url" target="_blank"
                             rel="noopener noreferrer">
                             {{ editCustomerData.logo?.name || 'Nenhum arquivo anexo' }}
@@ -643,6 +644,18 @@ const findAddress = async () => {
             <section v-if="editCustomerData.pendingItems === null"
               class="mb-6 p-6 flex items-center justify-center rounded-md bg-white">
               <p class="text-zinc-400">Nenhuma pendência encontrada</p>
+            </section>
+            <section class="my-10">
+              <h2 class="my-6 font-bold text-xl">Histórico de Atendimentos</h2>
+              <div class="mb-6 p-6 flex items-center justify-center rounded-md bg-white">
+                <p class="text-zinc-400">Nenhum histórico encontrado</p>
+              </div>
+            </section>
+            <section class="my-10">
+              <h2 class="my-6 font-bold text-xl">Faturas</h2>
+              <div class="mb-6 p-6 flex items-center justify-center rounded-md bg-white">
+                <p class="text-zinc-400">Nenhuma fatura encontrada</p>
+              </div>
             </section>
             <section class="p-6 flex gap-8 rounded-md border-4 border-red-500 bg-white">
               <h2 class="font-bold">Acesso ao sistema</h2>

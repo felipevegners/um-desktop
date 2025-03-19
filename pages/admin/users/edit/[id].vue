@@ -228,7 +228,7 @@ const sanitizedCCAreas = computed(() => {
               <div v-if="!regularUser" class="p-6 col-span-4 border-2 border-zinc-600 rounded-md">
                 <h4 class="mb-8 font-bold">Dados Corporativos</h4>
                 <h2 class="mb-6 text-xl">
-                  <strong>Cliente: </strong>{{ customerData.name }}
+                  <strong>Empresa: </strong>{{ customerData.name }}
                 </h2>
                 <div class="grid grid-cols-3 gap-4 items-center">
                   <!-- <FormField
@@ -295,7 +295,7 @@ const sanitizedCCAreas = computed(() => {
             </div>
             <h2 class="my-6 font-bold text-xl">Histórico de Atendimentos</h2>
             <section class="mb-6 p-6 flex items-center justify-center rounded-md bg-white">
-              <p class="text-zinc-400">Nenhuma histórico encontrado</p>
+              <p class="text-zinc-400">Nenhum histórico encontrado</p>
             </section>
             <section class="p-6 flex gap-8 rounded-md border-4 border-red-500 bg-white">
               <h2 class="font-bold">Acesso ao sistema</h2>

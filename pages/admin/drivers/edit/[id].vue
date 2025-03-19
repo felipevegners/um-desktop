@@ -1,18 +1,32 @@
 <script setup lang="ts">
+import { useToast } from '@/components/ui/toast/use-toast';
+import { toTypedSchema } from '@vee-validate/zod';
+import {
+  ArrowLeft,
+  Calendar,
+  Check,
+  Edit,
+  Eye,
+  File,
+  Info,
+  LoaderCircle,
+  LockKeyhole,
+  LockKeyholeOpen,
+  Search,
+  X,
+} from 'lucide-vue-next';
+import { storeToRefs } from 'pinia';
+import { useForm } from 'vee-validate';
+import * as z from 'zod';
+import AddCarsForm from '~/components/admin/drivers/AddCarsForm.vue';
+import FormSelect from '~/components/shared/FormSelect.vue';
+import { dateFormat } from '~/lib/utils';
+import { findAddressByZipcode } from '~/server/services/FindAddress';
+import { userDriverStore } from '~/stores/admin/drivers.store';
+
 definePageMeta({
-  layout: "admin",
+  layout: 'admin',
 });
-import { useForm } from "vee-validate";
-import { toTypedSchema } from "@vee-validate/zod";
-import * as z from "zod";
-import { ArrowLeft, LoaderCircle, LockKeyholeOpen, LockKeyhole, Download, Eye, Edit, File, Check, X, Search } from "lucide-vue-next";
-import { dateFormat } from "~/lib/utils";
-import { userDriverStore } from "~/stores/admin/drivers.store";
-import { storeToRefs } from "pinia";
-import AddCarsForm from "~/components/admin/drivers/AddCarsForm.vue";
-import FormSelect from "~/components/shared/FormSelect.vue";
-import { useToast } from "@/components/ui/toast/use-toast";
-import { findAddressByZipcode } from "~/server/services/FindAddress";
 
 const { toast } = useToast();
 
@@ -28,15 +42,15 @@ const fetchDriverData = async () => {
 
 const driverData = ref();
 driverData.value = await fetchDriverData();
-const editDriverPicture = ref(false)
-const editDriverCnhCopy = ref(false)
-const editDriverAddressCopy = ref(false)
-const editDriverBankCopy = ref(false)
+const editDriverPicture = ref(false);
+const editDriverCnhCopy = ref(false);
+const editDriverAddressCopy = ref(false);
+const editDriverBankCopy = ref(false);
 const zipcode = ref(driverData.value.address.zipcode);
 const isLoadingAddress = ref<boolean>(false);
 
 useHead({
-  title: `Editando motorista ${driverData.value.name} | Urban Mobi`
+  title: `Editando motorista ${driverData.value.name} | Urban Mobi`,
 });
 
 const driverSchema = toTypedSchema(
@@ -56,6 +70,8 @@ const driverSchema = toTypedSchema(
     rideArea: z.string().min(2).max(200),
     status: z.string().min(2).max(50),
     enabled: z.boolean(),
+    rideScheduleOn: z.boolean(),
+    outsideRideArea: z.boolean(),
   })
 );
 
@@ -70,7 +86,9 @@ const driversForm = useForm({
     neighborhood: driverData.value.address.neighborhood,
     city: driverData.value.address.city,
     state: driverData.value.address.state,
-  }
+    rideScheduleOn: true,
+    outsideRideArea: false,
+  },
 });
 
 const onSubmit = driversForm.handleSubmit(async (values) => {
@@ -90,80 +108,95 @@ const onSubmit = driversForm.handleSubmit(async (values) => {
       complement: values.complement,
       neighborhood: values.neighborhood,
       city: values.city,
-      state: values.state
+      state: values.state,
     },
-    rating: ["1"],
+    rating: ['1'],
     history: [],
     status: values.status,
-    enabled: values.enabled
-  }
+    enabled: values.enabled,
+  };
 
   try {
     //@ts-ignore
-    await updateDriverAction(newDriverData)
+    await updateDriverAction(newDriverData);
   } catch (error) {
     toast({
-      title: "Oops!",
-      class: "bg-red-600 border-0 text-white text-2xl",
-      description: `Ocorreu um erro ${error} ao adicionar o motorista.`
+      title: 'Oops!',
+      class: 'bg-red-600 border-0 text-white text-2xl',
+      description: `Ocorreu um erro ${error} ao adicionar o motorista.`,
     });
   } finally {
     toast({
-      title: "Sucesso!",
-      class: "bg-green-600 border-0 text-white text-2xl",
-      description: `O motorista ${values.name} foi cadastrado com sucesso!`
+      title: 'Sucesso!',
+      class: 'bg-green-600 border-0 text-white text-2xl',
+      description: `O motorista ${values.name} foi cadastrado com sucesso!`,
     });
-    driversForm.values = newDriverData
-    navigateTo("/admin/drivers");
+    driversForm.values = newDriverData;
+    navigateTo('/admin/drivers');
   }
-
-})
+});
 
 const findAddress = async () => {
-  const { zipcode } = driversForm.values
+  const { zipcode } = driversForm.values;
 
   if (zipcode?.length !== 8) {
     toast({
-      title: "Opss!",
-      class: "bg-red-500 border-0 text-white text-2xl",
-      description: `CEP inválido. Digite novamente.`
+      title: 'Opss!',
+      class: 'bg-red-500 border-0 text-white text-2xl',
+      description: `CEP inválido. Digite novamente.`,
     });
   } else {
     try {
       isLoadingAddress.value = true;
-      const address: any = await findAddressByZipcode(zipcode as string)
+      const address: any = await findAddressByZipcode(zipcode as string);
       if (address.erro) {
         toast({
-          title: "CEP Inválido",
-          class: "bg-red-500 border-0 text-white text-2xl",
-          description: `Confira o CEP e tente novamente.`
+          title: 'CEP Inválido',
+          class: 'bg-red-500 border-0 text-white text-2xl',
+          description: `Confira o CEP e tente novamente.`,
         });
         //@ts-ignore
         document.querySelector("input[name='zipcode']").focus();
-        document.querySelector("input[name='zipcode']")?.classList.add("bg-red-300", "focus:ring-0", "focus-visible:ring-0", "focus-visible:outline-3", "focus-visible:outline-offset-2", "focus-visible:outline-red-500");
+        document
+          .querySelector("input[name='zipcode']")
+          ?.classList.add(
+            'bg-red-300',
+            'focus:ring-0',
+            'focus-visible:ring-0',
+            'focus-visible:outline-3',
+            'focus-visible:outline-offset-2',
+            'focus-visible:outline-red-500'
+          );
       } else {
-        document.querySelector("input[name='zipcode']")?.classList.remove("bg-red-300", "focus-visible:ring-0", "focus-visible:outline-3", "focus-visible:outline-offset-2", "focus-visible:outline-red-500");
+        document
+          .querySelector("input[name='zipcode']")
+          ?.classList.remove(
+            'bg-red-300',
+            'focus-visible:ring-0',
+            'focus-visible:outline-3',
+            'focus-visible:outline-offset-2',
+            'focus-visible:outline-red-500'
+          );
         driversForm.setValues({
           zipcode: address?.cep.replace('-', ''),
           streetName: address?.logradouro,
           city: address?.localidade,
           neighborhood: address?.bairro,
           state: address?.estado,
-        })
+        });
       }
     } catch (error) {
       toast({
-        title: "Opss!",
-        class: "bg-red-500 border-0 text-white text-2xl",
-        description: `Ocorreu um erro ao buscar o endereço. Tente novamente.`
+        title: 'Opss!',
+        class: 'bg-red-500 border-0 text-white text-2xl',
+        description: `Ocorreu um erro ao buscar o endereço. Tente novamente.`,
       });
-      console.log("Erro ao buscar endereço -> ", error)
+      console.log('Erro ao buscar endereço -> ', error);
     } finally {
-      isLoadingAddress.value = false
+      isLoadingAddress.value = false;
     }
   }
-
-}
+};
 </script>
 
 <template>
@@ -186,10 +219,14 @@ const findAddress = async () => {
           <div class="flex gap-4 justify-between">
             <div class="flex gap-6">
               <img v-if="driverData.driverFiles.picture.url" class="w-[150px] rounded-md"
-                :src="driverData.driverFiles.picture.url" alt="">
-              <div v-else class="w-[150px] h-[100px] bg-zinc-500 rounded-md">SEM IMAGEM</div>
+                :src="driverData.driverFiles.picture.url" alt="" />
+              <div v-else class="w-[150px] h-[100px] bg-zinc-500 rounded-md">
+                SEM IMAGEM
+              </div>
               <div class="flex flex-col">
-                <h1 class="mb-2 text-3xl font-bold">{{ driverData.name }}</h1>
+                <h1 class="mb-2 text-3xl font-bold">
+                  {{ driverData.name }}
+                </h1>
                 <div class="flex flex-col">
                   <small class="text-zinc-500">Cadastrado em:</small>
                   <p class="mb-2 font-bold">
@@ -200,18 +237,34 @@ const findAddress = async () => {
                     {{ dateFormat(driverData.updatedAt) }}
                   </p>
                 </div>
-
               </div>
             </div>
             <div>
-              <small class="text-zinc-500">Status:</small>
-              <h1 class="text-2xl font-bold">{{ driverData.status === "active" ? "Ativo" : "Inativo" }}</h1>
+              <small class="font-bold">Status:</small>
+              <h1 class="mt-2 text-xl font-bold px-3 py-1 text-white rounded-md" :class="driverData.status === 'active'
+                ? ' bg-green-600 '
+                : 'bg-red-500'
+                ">
+                {{
+                  driverData.status === 'active'
+                    ? 'Ativo'
+                    : 'Inativo'
+                }}
+              </h1>
+            </div>
+            <div class="flex items-start">
+              <Button class="cursor-not-allowed">
+                <Calendar class="w-4 h-4 text-white" />
+                Acessar Agenda
+              </Button>
             </div>
           </div>
         </CardHeader>
         <CardContent>
           <form @submit.prevent="onSubmit" @keydown.enter.prevent="true">
-            <h2 class="mt-4 mb-6 text-lg font-bold">Dados Pessoais</h2>
+            <h2 class="mt-4 mb-6 text-lg font-bold">
+              Dados Pessoais
+            </h2>
             <div class="mb-4 w-full grid grid-cols-3 gap-8">
               <FormField v-slot="{ componentField }" name="name">
                 <FormItem>
@@ -265,15 +318,23 @@ const findAddress = async () => {
                   <FormLabel>Status</FormLabel>
                   <FormControl>
                     <FormSelect v-bind="componentField" :items="[
-                      { label: 'Ativo', value: 'active' },
-                      { label: 'Inativo', value: 'inactive' },
+                      {
+                        label: 'Ativo',
+                        value: 'active',
+                      },
+                      {
+                        label: 'Inativo',
+                        value: 'inactive',
+                      },
                     ]" :label="'Selecione'" />
                   </FormControl>
                 </FormItem>
               </FormField>
             </div>
             <section class="my-10">
-              <h2 class="mt-4 mb-6 text-lg font-bold">Endereço e Área de Atuação</h2>
+              <h2 class="mt-4 mb-6 text-lg font-bold">
+                Endereço e Área de Atuação
+              </h2>
               <div class="mb-4 w-full grid grid-cols-4 gap-8">
                 <FormField v-slot="{ componentField }" name="zipcode">
                   <FormItem class="col-span-1">
@@ -282,7 +343,8 @@ const findAddress = async () => {
                       <div class="flex gap-2">
                         <Input type="text" placeholder="12345-000" v-bind="componentField" v-model="zipcode"
                           maxlength="8" />
-                        <Button @click.prevent="findAddress" :disabled="zipcode?.length !== 8" type="button">
+                        <Button @click.prevent="findAddress" :disabled="zipcode?.length !== 8
+                          " type="button">
                           <Search v-if="!isLoadingAddress" class="w-10 h-10" />
                           <LoaderCircle v-if="isLoadingAddress" class="w-10 h-10 animate-spin" />
                         </Button>
@@ -357,13 +419,33 @@ const findAddress = async () => {
               </div>
             </section>
             <section class="my-10">
-              <h2 class="mb-4 text-lg font-bold">Editar Veículo(s)</h2>
+              <h2 class="mb-4 text-lg font-bold">
+                Editar Veículo(s)
+              </h2>
               <Separator class="mb-4" />
               <div class="grid grid-cols-3 gap-8">
                 <AddCarsForm v-model="driverData.driverCars" class="col-span-3" />
               </div>
             </section>
-            <section class="mt-6 mb-8">
+            <section class="my-10">
+              <h2 class="my-6 font-bold text-xl">
+                Histórico de Atendimentos
+              </h2>
+              <div class="mb-6 p-6 flex items-center justify-center rounded-md bg-white">
+                <p class="text-zinc-400">
+                  Nenhum histórico encontrado
+                </p>
+              </div>
+            </section>
+            <section class="my-10">
+              <h2 class="my-6 font-bold text-xl">Faturas</h2>
+              <div class="mb-6 p-6 flex items-center justify-center rounded-md bg-white">
+                <p class="text-zinc-400">
+                  Nenhuma fatura encontrada
+                </p>
+              </div>
+            </section>
+            <section class="my-10">
               <h2 class="mb-4 text-lg font-bold">Documentos</h2>
               <div class="flex">
                 <ul class="w-full">
@@ -371,57 +453,119 @@ const findAddress = async () => {
                     <div class="flex gap-2 items-center justify-between">
                       <div class="flex gap-2">
                         <File class="w-5 h-5 text-zinc-700" />
-                        <p>Foto pessoal: <span class="text-zinc-500 underline">{{ driverData.driverFiles?.picture?.name
-                            }}</span>
+                        <p>
+                          Foto pessoal:
+                          <span class="text-zinc-500 underline">{{
+                            driverData
+                              .driverFiles
+                              ?.picture?.name
+                          }}</span>
                         </p>
-                        <Check v-if="driverData.driverFiles?.picture?.name" class="w-5 h-5 text-green-500" />
+                        <Check v-if="
+                          driverData.driverFiles
+                            ?.picture?.name
+                        " class="w-5 h-5 text-green-500" />
                       </div>
                       <div class="flex gap-4">
                         <div class="flex items-center gap-4 border-separate">
                           <small class="text-small">Ações:</small>
-                          <a v-if="driverData.driverFiles?.picture?.name" target="_blank"
-                            :href="driverData?.driverFiles?.picture?.url" alt="Visualizar">
-                            <Eye class="w-5 h-5 text-zinc-700" />
+                          <a v-if="
+                            driverData
+                              .driverFiles
+                              ?.picture?.name
+                          " target="_blank" :href="driverData
+                            ?.driverFiles
+                            ?.picture?.url
+                            " alt="Visualizar">
+                            <TooltipProvider>
+                              <Tooltip>
+                                <TooltipTrigger as-child>
+                                  <Eye class="w-5 h-5 text-zinc-400 hover:text-zinc-700" />
+                                </TooltipTrigger>
+                                <TooltipContent class="bg-zinc-700 text-white">
+                                  <p>
+                                    Ver
+                                    documento
+                                  </p>
+                                </TooltipContent>
+                              </Tooltip>
+                            </TooltipProvider>
                           </a>
                           <div v-if="editDriverPicture" class="flex gap-4 items-center">
                             <UploadButton
                               class="relative ut-button:bg-zinc-900 ut-button:hover:bg-zinc-700 ut-button:ut-uploading:after:bg-green-500 ut-button:ut-uploading:cursor-not-allowed ut-button:ut-readying:bg-red-500"
                               :config="{
                                 appearance: {
-                                  container: '!items-start',
-                                  allowedContent: '!absolute !top-10',
+                                  container:
+                                    '!items-start',
+                                  allowedContent:
+                                    '!absolute !top-10',
                                 },
                                 content: {
-                                  allowedContent({ ready, fileTypes, isUploading }) {
-                                    if (ready) return '';
-                                    if (isUploading) return 'Enviando seu arquivo, aguarde...';
+                                  allowedContent({
+                                    ready,
+                                    fileTypes,
+                                    isUploading,
+                                  }) {
+                                    if (
+                                      ready
+                                    )
+                                      return '';
+                                    if (
+                                      isUploading
+                                    )
+                                      return 'Enviando seu arquivo, aguarde...';
                                   },
                                 },
-                                endpoint: 'driverFiles',
-                                onClientUploadComplete: (file) => {
-                                  driverData.driverFiles.picture.name = file[0].name
-                                  driverData.driverFiles.picture.url = file[0].ufsUrl
-                                  editDriverPicture = !editDriverPicture
-                                  toast({
-                                    title: 'Feito!',
-                                    class: 'bg-green-500 border-0 text-white text-2xl',
-                                    description: `Arquivo enviado com sucesso!`
-                                  });
-                                },
-                                onUploadError: (error) => {
+                                endpoint:
+                                  'driverFiles',
+                                onClientUploadComplete:
+                                  (file) => {
+                                    driverData.driverFiles.picture.name =
+                                      file[0].name;
+                                    driverData.driverFiles.picture.url =
+                                      file[0].ufsUrl;
+                                    editDriverPicture =
+                                      !editDriverPicture;
+                                    toast({
+                                      title: 'Feito!',
+                                      class: 'bg-green-500 border-0 text-white text-2xl',
+                                      description: `Arquivo enviado com sucesso!`,
+                                    });
+                                  },
+                                onUploadError: (
+                                  error
+                                ) => {
                                   toast({
                                     title: 'Oops!',
                                     class: 'bg-red-500 border-0 text-white text-2xl',
-                                    description: `Ocorreu um erro no upload do arquivo. Tente novamente - ${error.cause}`
+                                    description: `Ocorreu um erro no upload do arquivo. Tente novamente - ${error.cause}`,
                                   });
                                 },
                               }" />
-                            <X class="w-5 h-5 text-zinc-500 hover:text-red-500 cursor-pointer"
-                              @click.prevent="() => editDriverPicture = !editDriverPicture" />
-
+                            <X class="w-5 h-5 text-zinc-500 hover:text-red-500 cursor-pointer" @click.prevent="
+                              () =>
+                              (editDriverPicture =
+                                !editDriverPicture)
+                            " />
                           </div>
-                          <Edit v-else class="w-5 h-5 text-zinc-700 cursor-pointer"
-                            @click.preven="() => editDriverPicture = !editDriverPicture" />
+                          <TooltipProvider v-else>
+                            <Tooltip>
+                              <TooltipTrigger as-child>
+                                <Edit class="w-5 h-5 text-zinc-400 hover:text-zinc-700 cursor-pointer" @click.preven="
+                                  () =>
+                                  (editDriverBankCopy =
+                                    !editDriverBankCopy)
+                                " />
+                              </TooltipTrigger>
+                              <TooltipContent class="bg-zinc-700 text-white">
+                                <p>
+                                  Alterar
+                                  documento
+                                </p>
+                              </TooltipContent>
+                            </Tooltip>
+                          </TooltipProvider>
                         </div>
                       </div>
                     </div>
@@ -432,56 +576,112 @@ const findAddress = async () => {
                         <File class="w-5 h-5 text-zinc-700" />
                         <p>
                           Cópia CNH:
-                          <span class="text-zinc-500 underline">{{ driverData.driverFiles?.cnhCopy?.name
-                            }}</span>
+                          <span class="text-zinc-500 underline">{{
+                            driverData
+                              .driverFiles
+                              ?.cnhCopy?.name
+                          }}</span>
                         </p>
-                        <Check v-if="driverData.driverFiles?.cnhCopy?.name" class="w-5 h-5 text-green-500" />
+                        <Check v-if="
+                          driverData.driverFiles
+                            ?.cnhCopy?.name
+                        " class="w-5 h-5 text-green-500" />
                       </div>
                       <div class="flex items-center gap-4 border-separate">
                         <small class="text-small">Ações:</small>
-                        <a v-if="driverData.driverFiles?.cnhCopy?.name" target="_blank"
-                          :href="driverData.driverFiles.cnhCopy.url" alt="Visualizar">
-                          <Eye class="w-5 h-5 text-zinc-700" />
+                        <a v-if="
+                          driverData.driverFiles
+                            ?.cnhCopy?.name
+                        " target="_blank" :href="driverData.driverFiles
+                          .cnhCopy.url
+                          " alt="Visualizar">
+                          <TooltipProvider>
+                            <Tooltip>
+                              <TooltipTrigger as-child>
+                                <Eye class="w-5 h-5 text-zinc-400 hover:text-zinc-700" />
+                              </TooltipTrigger>
+                              <TooltipContent class="bg-zinc-700 text-white">
+                                <p>
+                                  Ver
+                                  documento
+                                </p>
+                              </TooltipContent>
+                            </Tooltip>
+                          </TooltipProvider>
                         </a>
                         <div v-if="editDriverCnhCopy" class="flex gap-4 items-center">
                           <UploadButton
                             class="relative ut-button:bg-zinc-900 ut-button:hover:bg-zinc-700 ut-button:ut-uploading:after:bg-green-500 ut-button:ut-uploading:cursor-not-allowed ut-button:ut-readying:bg-red-500"
                             :config="{
                               appearance: {
-                                container: '!items-start',
-                                allowedContent: '!absolute !top-10',
+                                container:
+                                  '!items-start',
+                                allowedContent:
+                                  '!absolute !top-10',
                               },
                               content: {
-                                allowedContent({ ready, fileTypes, isUploading }) {
-                                  if (ready) return '';
-                                  if (isUploading) return 'Enviando seu arquivo, aguarde...';
+                                allowedContent({
+                                  ready,
+                                  fileTypes,
+                                  isUploading,
+                                }) {
+                                  if (ready)
+                                    return '';
+                                  if (
+                                    isUploading
+                                  )
+                                    return 'Enviando seu arquivo, aguarde...';
                                 },
                               },
-                              endpoint: 'driverFiles',
-                              onClientUploadComplete: (file) => {
-                                driverData.driverFiles.cnhCopy.name = file[0].name
-                                driverData.driverFiles.cnhCopy.url = file[0].ufsUrl
-                                editDriverCnhCopy = !editDriverCnhCopy;
-                                toast({
-                                  title: 'Feito!',
-                                  class: 'bg-green-500 border-0 text-white text-2xl',
-                                  description: `Arquivo enviado com sucesso!`
-                                });
-                              },
-                              onUploadError: (error) => {
+                              endpoint:
+                                'driverFiles',
+                              onClientUploadComplete:
+                                (file) => {
+                                  driverData.driverFiles.cnhCopy.name =
+                                    file[0].name;
+                                  driverData.driverFiles.cnhCopy.url =
+                                    file[0].ufsUrl;
+                                  editDriverCnhCopy =
+                                    !editDriverCnhCopy;
+                                  toast({
+                                    title: 'Feito!',
+                                    class: 'bg-green-500 border-0 text-white text-2xl',
+                                    description: `Arquivo enviado com sucesso!`,
+                                  });
+                                },
+                              onUploadError: (
+                                error
+                              ) => {
                                 toast({
                                   title: 'Oops!',
                                   class: 'bg-red-500 border-0 text-white text-2xl',
-                                  description: `Ocorreu um erro no upload do arquivo. Tente novamente - ${error.cause}`
+                                  description: `Ocorreu um erro no upload do arquivo. Tente novamente - ${error.cause}`,
                                 });
                               },
                             }" />
-                          <X class="w-5 h-5 text-zinc-500 hover:text-red-500 cursor-pointer"
-                            @click.preven="() => editDriverCnhCopy = !editDriverCnhCopy" />
-
+                          <X class="w-5 h-5 text-zinc-500 hover:text-red-500 cursor-pointer" @click.preven="
+                            () =>
+                            (editDriverCnhCopy =
+                              !editDriverCnhCopy)
+                          " />
                         </div>
-                        <Edit v-else class="w-5 h-5 text-zinc-700 cursor-pointer"
-                          @click.preven="() => editDriverCnhCopy = !editDriverCnhCopy" />
+                        <TooltipProvider v-else>
+                          <Tooltip>
+                            <TooltipTrigger as-child>
+                              <Edit class="w-5 h-5 text-zinc-400 hover:text-zinc-700 cursor-pointer" @click.preven="
+                                () =>
+                                (editDriverBankCopy =
+                                  !editDriverBankCopy)
+                              " />
+                            </TooltipTrigger>
+                            <TooltipContent class="bg-zinc-700 text-white">
+                              <p>
+                                Alterar
+                                documento
+                              </p>
+                            </TooltipContent>
+                          </Tooltip>
+                        </TooltipProvider>
                       </div>
                     </div>
                   </li>
@@ -491,56 +691,113 @@ const findAddress = async () => {
                         <File class="w-5 h-5 text-zinc-700" />
                         <p>
                           Comprovante de Endereço:
-                          <span class="text-zinc-500 underline">{{ driverData.driverFiles?.addressCopy?.name
-                            }}</span>
+                          <span class="text-zinc-500 underline">{{
+                            driverData
+                              .driverFiles
+                              ?.addressCopy
+                              ?.name
+                          }}</span>
                         </p>
-                        <Check v-if="driverData.driverFiles?.addressCopy?.name" class="w-5 h-5 text-green-500" />
+                        <Check v-if="
+                          driverData.driverFiles
+                            ?.addressCopy?.name
+                        " class="w-5 h-5 text-green-500" />
                       </div>
                       <div class="flex items-center gap-4 border-separate">
                         <small class="text-small">Ações:</small>
-                        <a v-if="driverData.driverFiles?.addressCopy?.name" target="_blank"
-                          :href="driverData.driverFiles.addressCopy?.url" alt="Visualizar">
-                          <Eye class="w-5 h-5 text-zinc-700" />
+                        <a v-if="
+                          driverData.driverFiles
+                            ?.addressCopy?.name
+                        " target="_blank" :href="driverData.driverFiles
+                          .addressCopy?.url
+                          " alt="Visualizar">
+                          <TooltipProvider>
+                            <Tooltip>
+                              <TooltipTrigger as-child>
+                                <Eye class="w-5 h-5 text-zinc-400 hover:text-zinc-700" />
+                              </TooltipTrigger>
+                              <TooltipContent class="bg-zinc-700 text-white">
+                                <p>
+                                  Ver
+                                  documento
+                                </p>
+                              </TooltipContent>
+                            </Tooltip>
+                          </TooltipProvider>
                         </a>
                         <div v-if="editDriverAddressCopy" class="flex gap-4 items-center">
                           <UploadButton
                             class="relative ut-button:bg-zinc-900 ut-button:hover:bg-zinc-700 ut-button:ut-uploading:after:bg-green-500 ut-button:ut-uploading:cursor-not-allowed ut-button:ut-readying:bg-red-500"
                             :config="{
                               appearance: {
-                                container: '!items-start',
-                                allowedContent: '!absolute !top-10',
+                                container:
+                                  '!items-start',
+                                allowedContent:
+                                  '!absolute !top-10',
                               },
                               content: {
-                                allowedContent({ ready, fileTypes, isUploading }) {
-                                  if (ready) return '';
-                                  if (isUploading) return 'Enviando seu arquivo, aguarde...';
+                                allowedContent({
+                                  ready,
+                                  fileTypes,
+                                  isUploading,
+                                }) {
+                                  if (ready)
+                                    return '';
+                                  if (
+                                    isUploading
+                                  )
+                                    return 'Enviando seu arquivo, aguarde...';
                                 },
                               },
-                              endpoint: 'driverFiles',
-                              onClientUploadComplete: (file) => {
-                                driverData.driverFiles.addressCopy.name = file[0].name
-                                driverData.driverFiles.addressCopy.url = file[0].ufsUrl
-                                editDriverAddressCopy = !editDriverAddressCopy;
-                                toast({
-                                  title: 'Feito!',
-                                  class: 'bg-green-500 border-0 text-white text-2xl',
-                                  description: `Arquivo enviado com sucesso!`
-                                });
-                              },
-                              onUploadError: (error) => {
+                              endpoint:
+                                'driverFiles',
+                              onClientUploadComplete:
+                                (file) => {
+                                  driverData.driverFiles.addressCopy.name =
+                                    file[0].name;
+                                  driverData.driverFiles.addressCopy.url =
+                                    file[0].ufsUrl;
+                                  editDriverAddressCopy =
+                                    !editDriverAddressCopy;
+                                  toast({
+                                    title: 'Feito!',
+                                    class: 'bg-green-500 border-0 text-white text-2xl',
+                                    description: `Arquivo enviado com sucesso!`,
+                                  });
+                                },
+                              onUploadError: (
+                                error
+                              ) => {
                                 toast({
                                   title: 'Oops!',
                                   class: 'bg-red-500 border-0 text-white text-2xl',
-                                  description: `Ocorreu um erro no upload do arquivo. Tente novamente - ${error.cause}`
+                                  description: `Ocorreu um erro no upload do arquivo. Tente novamente - ${error.cause}`,
                                 });
                               },
                             }" />
-                          <X class="w-5 h-5 text-zinc-500 hover:text-red-500 cursor-pointer"
-                            @click.preven="() => editDriverAddressCopy = !editDriverAddressCopy" />
-
+                          <X class="w-5 h-5 text-zinc-500 hover:text-red-500 cursor-pointer" @click.preven="
+                            () =>
+                            (editDriverAddressCopy =
+                              !editDriverAddressCopy)
+                          " />
                         </div>
-                        <Edit v-else class="w-5 h-5 text-zinc-700 cursor-pointer"
-                          @click.preven="() => editDriverAddressCopy = !editDriverAddressCopy" />
+                        <TooltipProvider v-else>
+                          <Tooltip>
+                            <TooltipTrigger as-child>
+                              <Edit class="w-5 h-5 text-zinc-400 hover:text-zinc-700 cursor-pointer" @click.preven="
+                                () =>
+                                (editDriverBankCopy =
+                                  !editDriverBankCopy)
+                              " />
+                            </TooltipTrigger>
+                            <TooltipContent class="bg-zinc-700 text-white">
+                              <p>
+                                Alterar
+                                documento
+                              </p>
+                            </TooltipContent>
+                          </Tooltip>
+                        </TooltipProvider>
                       </div>
                     </div>
                   </li>
@@ -550,60 +807,197 @@ const findAddress = async () => {
                         <File class="w-5 h-5 text-zinc-700" />
                         <p>
                           Comprovante Bancário:
-                          <span class="text-zinc-500 underline">{{ driverData.driverFiles?.bankCopy?.name
-                            }}</span>
+                          <span class="text-zinc-500 underline">{{
+                            driverData
+                              .driverFiles
+                              ?.bankCopy?.name
+                          }}</span>
                         </p>
-                        <Check v-if="driverData.driverFiles?.bankCopy?.name" class="w-5 h-5 text-green-500" />
+                        <Check v-if="
+                          driverData.driverFiles
+                            ?.bankCopy?.name
+                        " class="w-5 h-5 text-green-500" />
                       </div>
                       <div class="flex items-center gap-4 border-separate">
                         <small class="text-small">Ações:</small>
-                        <a v-if="driverData.driverFiles?.bankCopy?.name" target="_blank"
-                          :href="driverData.driverFiles.bankCopy?.url" alt="Visualizar">
-                          <Eye class="w-5 h-5 text-zinc-700" />
+                        <a v-if="
+                          driverData.driverFiles
+                            ?.bankCopy?.name
+                        " target="_blank" :href="driverData.driverFiles
+                          .bankCopy?.url
+                          " alt="Visualizar">
+                          <TooltipProvider>
+                            <Tooltip>
+                              <TooltipTrigger as-child>
+                                <Eye class="w-5 h-5 text-zinc-400 hover:text-zinc-700" />
+                              </TooltipTrigger>
+                              <TooltipContent class="bg-zinc-700 text-white">
+                                <p>
+                                  Ver
+                                  documento
+                                </p>
+                              </TooltipContent>
+                            </Tooltip>
+                          </TooltipProvider>
                         </a>
                         <div v-if="editDriverBankCopy" class="flex gap-4 items-center">
                           <UploadButton
                             class="relative ut-button:bg-zinc-900 ut-button:hover:bg-zinc-700 ut-button:ut-uploading:after:bg-green-500 ut-button:ut-uploading:cursor-not-allowed ut-button:ut-readying:bg-red-500"
                             :config="{
                               appearance: {
-                                container: '!items-start',
-                                allowedContent: '!absolute !top-10',
+                                container:
+                                  '!items-start',
+                                allowedContent:
+                                  '!absolute !top-10',
                               },
                               content: {
-                                allowedContent({ ready, fileTypes, isUploading }) {
-                                  if (ready) return '';
-                                  if (isUploading) return 'Enviando seu arquivo, aguarde...';
+                                allowedContent({
+                                  ready,
+                                  fileTypes,
+                                  isUploading,
+                                }) {
+                                  if (ready)
+                                    return '';
+                                  if (
+                                    isUploading
+                                  )
+                                    return 'Enviando seu arquivo, aguarde...';
                                 },
                               },
-                              endpoint: 'driverFiles',
-                              onClientUploadComplete: (file) => {
-                                driverData.driverFiles.bankCopy.name = file[0].name
-                                driverData.driverFiles.bankCopy.url = file[0].ufsUrl
-                                editDriverBankCopy = !editDriverBankCopy;
-                                toast({
-                                  title: 'Feito!',
-                                  class: 'bg-green-500 border-0 text-white text-2xl',
-                                  description: `Arquivo enviado com sucesso!`
-                                });
-                              },
-                              onUploadError: (error) => {
+                              endpoint:
+                                'driverFiles',
+                              onClientUploadComplete:
+                                (file) => {
+                                  driverData.driverFiles.bankCopy.name =
+                                    file[0].name;
+                                  driverData.driverFiles.bankCopy.url =
+                                    file[0].ufsUrl;
+                                  editDriverBankCopy =
+                                    !editDriverBankCopy;
+                                  toast({
+                                    title: 'Feito!',
+                                    class: 'bg-green-500 border-0 text-white text-2xl',
+                                    description: `Arquivo enviado com sucesso!`,
+                                  });
+                                },
+                              onUploadError: (
+                                error
+                              ) => {
                                 toast({
                                   title: 'Oops!',
                                   class: 'bg-red-500 border-0 text-white text-2xl',
-                                  description: `Ocorreu um erro no upload do arquivo. Tente novamente - ${error.cause}`
+                                  description: `Ocorreu um erro no upload do arquivo. Tente novamente - ${error.cause}`,
                                 });
                               },
                             }" />
-                          <X class="w-5 h-5 text-zinc-500 hover:text-red-500 cursor-pointer"
-                            @click.preven="() => editDriverBankCopy = !editDriverBankCopy" />
-
+                          <X class="w-5 h-5 text-zinc-500 hover:text-red-500 cursor-pointer" @click.preven="
+                            () =>
+                            (editDriverBankCopy =
+                              !editDriverBankCopy)
+                          " />
                         </div>
-                        <Edit v-else class="w-5 h-5 text-zinc-700 cursor-pointer"
-                          @click.preven="() => editDriverBankCopy = !editDriverBankCopy" />
+                        <TooltipProvider v-else>
+                          <Tooltip>
+                            <TooltipTrigger as-child>
+                              <Edit class="w-5 h-5 text-zinc-400 hover:text-zinc-700 cursor-pointer" @click.preven="
+                                () =>
+                                (editDriverBankCopy =
+                                  !editDriverBankCopy)
+                              " />
+                            </TooltipTrigger>
+                            <TooltipContent class="bg-zinc-700 text-white">
+                              <p>
+                                Alterar
+                                documento
+                              </p>
+                            </TooltipContent>
+                          </Tooltip>
+                        </TooltipProvider>
                       </div>
                     </div>
                   </li>
                 </ul>
+              </div>
+            </section>
+            <section class="my-10">
+              <h2 class="mb-4 text-lg font-bold">
+                Painel de Controle
+              </h2>
+              <div class="flex gap-8">
+                <div class="px-4 h-[150px] flex flex-col items-center justify-center gap-6 bg-white rounded-md">
+                  <div class="flex gap-1 items-center justify-center">
+                    <h3 class="text-sm font-bold">
+                      Receber Agendamentos
+                    </h3>
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger as-child>
+                          <Info class="w-4 h-4 text-zinc-400" />
+                        </TooltipTrigger>
+                        <TooltipContent class="bg-zinc-700 text-white">
+                          <p>
+                            Dejesa receber novos
+                            agendamentos?
+                          </p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+                  </div>
+                  <FormField v-slot="{ value, handleChange }" name="rideScheduleOn">
+                    <FormItem>
+                      <div class="flex items-center space-x-3">
+                        <Label for="rideScheduleOn" class="text-md flex gap-2 items-center">
+                          <small>Não</small>
+                        </Label>
+                        <FormControl>
+                          <Switch :checked="value" aria-readonly @update:checked="
+                            handleChange
+                          " />
+                        </FormControl>
+                        <Label for="rideScheduleOn" class="text-md flex gap-2 items-center">
+                          <small>Sim</small>
+                        </Label>
+                      </div>
+                    </FormItem>
+                  </FormField>
+                </div>
+                <div class="px-4 h-[150px] flex flex-col items-center justify-center gap-6 bg-white rounded-md">
+                  <div class="flex gap-1 items-center justify-center">
+                    <h3 class="text-sm font-bold">
+                      Atendimento Fora da Área
+                    </h3>
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger as-child>
+                          <Info class="w-4 h-4 text-zinc-400" />
+                        </TooltipTrigger>
+                        <TooltipContent class="bg-zinc-700 text-white">
+                          <p>
+                            Dejesa atuar fora de sua
+                            área de atendimento?
+                          </p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+                  </div>
+                  <FormField v-slot="{ value, handleChange }" name="outsideRideArea">
+                    <FormItem>
+                      <div class="flex items-center space-x-3">
+                        <Label for="outsideRideArea" class="text-md flex gap-2 items-center">
+                          <small>Não</small>
+                        </Label>
+                        <FormControl>
+                          <Switch :checked="value" aria-readonly @update:checked="
+                            handleChange
+                          " />
+                        </FormControl>
+                        <Label for="outsideRideArea" class="text-md flex gap-2 items-center">
+                          <small>Sim</small>
+                        </Label>
+                      </div>
+                    </FormItem>
+                  </FormField>
+                </div>
               </div>
             </section>
             <section class="p-6 flex gap-8 rounded-md border-4 border-red-500 bg-white">
@@ -626,6 +1020,7 @@ const findAddress = async () => {
                 </FormItem>
               </FormField>
             </section>
+
             <section class="pt-8">
               <Button type="submit">
                 <LoaderCircle v-if="loadingSend" class="w-10 h-10 animate-spin" />

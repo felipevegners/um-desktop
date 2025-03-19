@@ -130,15 +130,24 @@ const removeRow = (index: any) => {
                 </div>
                 <div v-if="modelValue[index]?.carDocumentFile?.name !== ''" class="flex gap-2 items-center">
                   <Paperclip class="w-4 h-4 text-zinc-500" />
-                  <div class="px-4 border border-dashed border-green-500 rounded-md">
+                  <div class="px-4 py-2 border border-dashed border-zinc-500 rounded-md bg-white">
                     <a class="underline" :href="props.modelValue[index]?.carDocumentFile?.url" target="_blank"
                       rel="noopener noreferrer">
                       {{ props.modelValue[index]?.carDocumentFile?.name || '' }}
                     </a>
                   </div>
                   <LoaderCircle v-if="loadingFileData" class="w-4 h-4 animate-spin" />
-                  <CircleX v-else class="w-4 h-4 text-zinc-500 hover:text-red-500 cursor-pointer"
-                    @click.prevent="deleteFile(modelValue[index]?.carDocumentFile.url, index)" />
+                  <TooltipProvider v-else>
+                    <Tooltip>
+                      <TooltipTrigger as-child>
+                        <CircleX class="w-5 h-5 text-zinc-500 hover:text-red-500 cursor-pointer"
+                          @click.prevent="deleteFile(modelValue[index]?.carDocumentFile.url, index)" />
+                      </TooltipTrigger>
+                      <TooltipContent class="bg-zinc-700 text-white">
+                        <p>Remover Arquivo</p>
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
                 </div>
               </div>
             </FormControl>
@@ -146,15 +155,29 @@ const removeRow = (index: any) => {
           </FormItem>
         </FormField>
       </div>
-      <div class="py-3 flex items-center">
-        <div class="mt-2 flex gap-2 items-center">
-          <Plus class="text-white bg-zinc-800 h-5 w-5 rounded-full cursor-pointer hover:bg-zinc-600"
-            @click.prevent="addRow" />
-          <Trash v-if="index > 0" @click.prevent="removeRow(index)"
-            class="w-5 h-5 text-zinc-800 cursor-pointer hover:text-red-600" />
-          <div>
-          </div>
-        </div>
+      <div class="ml-2 mt-2 flex items-center">
+        <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger as-child>
+              <Trash v-if="index > 0" @click.prevent="removeRow(index)"
+                class="mb-2 mr-2 w-5 h-5 text-zinc-800 cursor-pointer hover:text-red-600" />
+            </TooltipTrigger>
+            <TooltipContent class="bg-zinc-700 text-white">
+              <p>Remover Veículo</p>
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
+        <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger as-child>
+              <Plus class="mb-2 text-white bg-zinc-700 hover:bg-zinc-400 h-5 w-5 rounded-full cursor-pointer"
+                @click.prevent="addRow" />
+            </TooltipTrigger>
+            <TooltipContent class="bg-zinc-700 text-white">
+              <p>Adicionar Veículo</p>
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
       </div>
     </div>
   </div>
