@@ -4,7 +4,7 @@ definePageMeta({
 });
 
 useHead({
-  title: "Clientes ativos"
+  title: "Usuários Ativos | Urban Mobi"
 });
 
 import { ref } from "vue";

@@ -29,8 +29,8 @@ export const uploadRouter = {
         .onUploadComplete((data) => console.log('file uploaded -> ', data)),
 
     driverCarFiles: f({
-        image: { maxFileSize: '4MB', maxFileCount: 10 },
-        pdf: { maxFileSize: '4MB', maxFileCount: 10 },
+        image: { maxFileSize: '2MB', maxFileCount: 1 },
+        pdf: { maxFileSize: '2MB', maxFileCount: 1 },
     })
         .middleware(async ({ event }) => {
             const user = await auth(event);

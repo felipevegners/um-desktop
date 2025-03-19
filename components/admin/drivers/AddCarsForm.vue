@@ -1,54 +1,62 @@
 <script setup lang="ts">
-  import { Plus, Trash, Paperclip, CircleX, LoaderCircle } from "lucide-vue-next";
-  import { useFilesStore } from "~/stores/admin/files.store";
-  import { storeToRefs } from 'pinia'
+import { Plus, Trash, Paperclip, CircleX, LoaderCircle, Eye } from "lucide-vue-next";
+import { useFilesStore } from "~/stores/admin/files.store";
+import { storeToRefs } from 'pinia'
+import { useToast } from '@/components/ui/toast/use-toast';
+const { toast } = useToast();
 
-  const emit = defineEmits(["update:modelValue"]);
-  const props = defineProps(["modelValue"]);
 
-  const store = useFilesStore();
-  const { deleteFileAction } = store;
-  const { loadingFileData } = storeToRefs(store)
+const emit = defineEmits(["update:modelValue"]);
+const props = defineProps(["modelValue"]);
 
-  const addRow = () => {
-    props.modelValue.push({
-      carModel: "",
-      carColor: "",
-      carPlate: "",
-      carYear: "",
-      carDocumentFile: {
-        name: "",
-        url: ""
-      }
-    });
-  };
+const store = useFilesStore();
+const { deleteFileAction } = store;
+const { loadingFileData } = storeToRefs(store)
 
-  const deleteFile = async (url: string, idx) => {
-    try {
-      await deleteFileAction(url);
-    } catch (error) {
-      console.log("Error during delete file -> ", error);
-    } finally {
-      props.modelValue[idx].carDocumentFile.name = ''
-      props.modelValue[idx].carDocumentFile.url = ''
-      alert('Arquivo deletado com sucesso!');
-
+const addRow = () => {
+  props.modelValue.push({
+    carModel: "",
+    carColor: "",
+    carPlate: "",
+    carYear: "",
+    carDocumentFile: {
+      name: "",
+      url: ""
     }
+  });
+};
+
+const deleteFile = async (url: string, idx: number) => {
+
+  try {
+    await deleteFileAction(url);
+  } catch (error) {
+    toast({
+      title: 'Oops!',
+      class: 'bg-red-500 border-0 text-white text-2xl',
+      description: `Documento do veículo ${props.modelValue[idx].carModel} não pode ser removido. Tente novamente.`,
+    });
+  } finally {
+    props.modelValue[idx].carDocumentFile.name = ''
+    props.modelValue[idx].carDocumentFile.url = ''
+    toast({
+      title: 'Feito!',
+      class: 'bg-green-500 border-0 text-white text-2xl',
+      description: `Documento do veículo ${props.modelValue[idx].carModel} foi removido com sucesso!`,
+    });
+
   }
+}
 
-  const removeRow = (index: any) => {
-    props.modelValue.splice(index, 1);
-  };
-
-  const alert = (msg: string) => {
-    window.alert(msg);
-  };
+const removeRow = (index: any) => {
+  props.modelValue.splice(index, 1);
+};
 </script>
 <template>
   <div class="p-6 rounded-md bg-zinc-100">
     <h3 class="mb-4 font-bold">Adicionar veículo</h3>
     <div class="grid grid-cols-12 gap-4" v-for="(car, index) in props.modelValue" :key="car.id">
-      <div class="col-span-11 mb-8 grid grid-cols-6 gap-4 items-end">
+      <div class="col-span-11 mb-8 grid grid-cols-5 gap-4 items-end">
         <FormField name="carModel">
           <FormItem>
             <FormLabel>Modelo</FormLabel>
@@ -86,42 +94,51 @@
           </FormItem>
         </FormField>
         <FormField :name="`carDocumentCopy${index}`">
-          <FormItem class="col-span-2">
-            <FormLabel>Anexar CRLV-e</FormLabel>
+          <FormItem class="col-span-1">
+            <FormLabel>Documento CRVL</FormLabel>
             <FormControl>
               <div class="flex gap-4">
-                <UploadButton
-                  class="relative ut-button:bg-zinc-900 ut-button:hover:bg-zinc-700 ut-button:ut-uploading:after:bg-green-500 ut-button:ut-uploading:cursor-not-allowed ut-button:ut-readying:bg-red-500"
-                  :config="{
-                    appearance: {
-                      container: '!items-start',
-                      allowedContent: '!absolute !top-10',
-                    },
-                    content: {
-                      allowedContent({ ready, fileTypes, isUploading }) {
-                        if (ready) return '';
-                        if (isUploading) return 'Enviando seu arquivo, aguarde...';
+                <div v-if="props.modelValue[index].carDocumentFile.name === ''">
+                  <UploadButton
+                    class="relative ut-button:bg-zinc-900 ut-button:hover:bg-zinc-700 ut-button:ut-uploading:after:bg-green-500 ut-button:ut-uploading:cursor-not-allowed ut-button:ut-readying:bg-red-500"
+                    :config="{
+                      appearance: {
+                        container: '!items-start',
+                        allowedContent: '!absolute !top-10',
+
                       },
-                    },
-                    endpoint: 'driverCarFiles',
-                    onClientUploadComplete: (file) => {
-                      console.log('uploaded', file);
-                      modelValue[index].carDocumentFile.name = file[0].name
-                      modelValue[index].carDocumentFile.url = file[0].ufsUrl
-                    },
-                    onUploadError: (error) => {
-                      console.error('---> ', error, error.cause);
-                      alert('Upload failed');
-                    },
-                  }" />
+                      content: {
+                        allowedContent({ ready, fileTypes, isUploading }) {
+                          if (ready) return '';
+                          if (isUploading) return 'Enviando seu arquivo, aguarde...';
+                        },
+                      },
+                      endpoint: 'driverCarFiles',
+                      onClientUploadComplete: (file) => {
+                        console.log('uploaded', file);
+                        modelValue[index].carDocumentFile.name = file[0].name
+                        modelValue[index].carDocumentFile.url = file[0].ufsUrl
+                      },
+                      onUploadError: (error) => {
+                        toast({
+                          title: 'Ooops!',
+                          class: 'bg-red-500 border-0 text-white text-2xl',
+                          description: `Erro ao enviar o arquivo. Tente novamente. ${error.cause}`,
+                        });
+                      },
+                    }" />
+                </div>
                 <div v-if="modelValue[index]?.carDocumentFile?.name !== ''" class="flex gap-2 items-center">
                   <Paperclip class="w-4 h-4 text-zinc-500" />
-                  <div class="px-2 border border-dashed border-green-500">
-                    {{ modelValue[index]?.carDocumentFile?.name || '' }}
+                  <div class="px-4 border border-dashed border-green-500 rounded-md">
+                    <a class="underline" :href="props.modelValue[index]?.carDocumentFile?.url" target="_blank"
+                      rel="noopener noreferrer">
+                      {{ props.modelValue[index]?.carDocumentFile?.name || '' }}
+                    </a>
                   </div>
-                  <CircleX class="w-4 h-4 text-zinc-500 hover:text-red-500 cursor-pointer"
+                  <LoaderCircle v-if="loadingFileData" class="w-4 h-4 animate-spin" />
+                  <CircleX v-else class="w-4 h-4 text-zinc-500 hover:text-red-500 cursor-pointer"
                     @click.prevent="deleteFile(modelValue[index]?.carDocumentFile.url, index)" />
-                  <LoaderCircle v-if="loadingFileData" class="w-4 h-4" />
                 </div>
               </div>
             </FormControl>
@@ -144,7 +161,7 @@
 </template>
 
 <style scoped>
-  .sr-only:focus {
-    box-shadow: none !important;
-  }
+.sr-only:focus {
+  box-shadow: none !important;
+}
 </style>

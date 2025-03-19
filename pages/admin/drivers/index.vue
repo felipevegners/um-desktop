@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { useToast } from '@/components/ui/toast/use-toast';
 import { createColumnHelper } from '@tanstack/vue-table';
 import { toTypedSchema } from '@vee-validate/zod';
-import { ArrowUpDown, LoaderCircle, Plus, Info } from 'lucide-vue-next';
+import { ArrowUpDown, LoaderCircle, Plus, Info, Search } from 'lucide-vue-next';
 import { storeToRefs } from 'pinia';
 import { useForm } from 'vee-validate';
 import { onMounted, ref } from 'vue';
@@ -12,6 +12,7 @@ import * as z from 'zod';
 import AddCarsForm from '~/components/admin/drivers/AddCarsForm.vue';
 import EditDeleteActions from '~/components/admin/drivers/EditDeleteActions.vue';
 import FormSelect from '~/components/shared/FormSelect.vue';
+import { findAddressByZipcode } from '~/server/services/FindAddress';
 import { userDriverStore } from '~/stores/admin/drivers.store';
 
 const { toast } = useToast();
@@ -26,10 +27,13 @@ definePageMeta({
 });
 
 useHead({
-  title: 'Motoristas ativos | Cadastrar novo motorista',
+  title: 'Motoristas ativos | Urban Mobi',
 });
 
 const showAddForm = ref<boolean>(false);
+const isLoadingAddress = ref<boolean>(false);
+const isLoadingSend = ref(false);
+const zipcode = ref('');
 const driverCars = reactive([
   {
     carModel: '',
@@ -42,7 +46,8 @@ const driverCars = reactive([
     }
   },
 ]);
-const isLoadingSend = ref(false);
+
+
 
 onMounted(async () => {
   await getDriversAction();
@@ -162,7 +167,8 @@ const driverSchema = toTypedSchema(
     zipcode: z.string().min(2).max(50),
     streetName: z.string().min(2).max(50),
     streetNumber: z.string().min(2).max(50),
-    addComplement: z.string().min(2).max(50),
+    addComplement: z.string().min(0).max(50),
+    neighborhood: z.string().min(2).max(50),
     city: z.string().min(2).max(50),
     state: z.string().min(2).max(50),
     rideArea: z.string().min(2).max(200),
@@ -292,6 +298,52 @@ const onSubmit = driversForm.handleSubmit(async (values) => {
     await getDriversAction();
   }
 });
+
+const findAddress = async () => {
+  const { zipcode } = driversForm.values
+
+  if (zipcode?.length !== 8) {
+    toast({
+      title: "Opss!",
+      class: "bg-red-500 border-0 text-white text-2xl",
+      description: `CEP inválido. Digite novamente.`
+    });
+  } else {
+    try {
+      isLoadingAddress.value = true;
+      const address: any = await findAddressByZipcode(zipcode as string)
+      if (address.erro) {
+        toast({
+          title: "CEP Inválido",
+          class: "bg-red-500 border-0 text-white text-2xl",
+          description: `Confira o CEP e tente novamente.`
+        });
+        //@ts-ignore
+        document.querySelector("input[name='zipcode']").focus();
+        document.querySelector("input[name='zipcode']")?.classList.add("bg-red-300", "focus:ring-0", "focus-visible:ring-0", "focus-visible:outline-3", "focus-visible:outline-offset-2", "focus-visible:outline-red-500");
+      } else {
+        document.querySelector("input[name='zipcode']")?.classList.remove("bg-red-300", "focus-visible:ring-0", "focus-visible:outline-3", "focus-visible:outline-offset-2", "focus-visible:outline-red-500");
+        driversForm.setValues({
+          zipcode: address?.cep.replace('-', ''),
+          streetName: address?.logradouro,
+          city: address?.localidade,
+          neighborhood: address?.bairro,
+          state: address?.estado,
+        })
+      }
+    } catch (error) {
+      toast({
+        title: "Opss!",
+        class: "bg-red-500 border-0 text-white text-2xl",
+        description: `Ocorreu um erro ao buscar o endereço. Tente novamente.`
+      });
+      console.log("Erro ao buscar endereço -> ", error)
+    } finally {
+      isLoadingAddress.value = false
+    }
+  }
+
+}
 </script>
 
 <template>
@@ -310,7 +362,7 @@ const onSubmit = driversForm.handleSubmit(async (values) => {
           <CardTitle>Cadastrar novo motorista</CardTitle>
         </CardHeader>
         <CardContent>
-          <form @submit="onSubmit">
+          <form @submit.prevent="onSubmit" @keydown.enter.prevent="true">
             <h2 class="mt-4 mb-6 text-lg font-bold">Dados Pessoais</h2>
             <div class="mb-4 w-full grid grid-cols-3 gap-8">
               <FormField v-slot="{ componentField }" name="name">
@@ -386,13 +438,20 @@ const onSubmit = driversForm.handleSubmit(async (values) => {
                   <FormItem class="col-span-1">
                     <FormLabel>CEP</FormLabel>
                     <FormControl>
-                      <Input type="text" placeholder="12345-000" v-bind="componentField" />
+                      <div class="flex gap-2">
+                        <Input type="text" placeholder="12345-000" v-bind="componentField" v-model="zipcode"
+                          maxlength="8" />
+                        <Button @click.prevent="findAddress" :disabled="zipcode.length !== 8" type="button">
+                          <Search v-if="!isLoadingAddress" class="w-10 h-10" />
+                          <LoaderCircle v-if="isLoadingAddress" class="w-10 h-10 animate-spin" />
+                        </Button>
+                      </div>
                     </FormControl>
                     <FormMessage />
                   </FormItem>
                 </FormField>
                 <FormField v-slot="{ componentField }" name="streetName">
-                  <FormItem class="col-span-2">
+                  <FormItem class="col-span-1">
                     <FormLabel>Endereço</FormLabel>
                     <FormControl>
                       <Input type="text" placeholder="Insira o nome da rua" v-bind="componentField" />
@@ -414,6 +473,15 @@ const onSubmit = driversForm.handleSubmit(async (values) => {
                     <FormLabel>Complemento</FormLabel>
                     <FormControl>
                       <Input type="text" placeholder="ex. BL A - AP 11" v-bind="componentField" />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                </FormField>
+                <FormField v-slot="{ componentField }" name="neighborhood">
+                  <FormItem class="col-span-1">
+                    <FormLabel>Bairro</FormLabel>
+                    <FormControl>
+                      <Input type="text" placeholder="ex.: Vila Santana" v-bind="componentField" />
                     </FormControl>
                     <FormMessage />
                   </FormItem>

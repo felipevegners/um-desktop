@@ -5,11 +5,13 @@ const utapi = new UTApi({
 });
 
 export default defineEventHandler(async (event) => {
-    const fileUrl = await readBody(event);
-    console.log('File URL -> ', fileUrl);
+    const data = await readBody(event);
+    const newUrl = data.fileUrl.substring(data.fileUrl.lastIndexOf('/') + 1);
     try {
-        return await utapi.deleteFiles(fileUrl);
+        const response = await utapi.deleteFiles(newUrl);
+        return response;
     } catch (error) {
-        console.log('Error during file delete -> ', error);
+        console.error('Error during file delete -> ', error);
+        throw new Error('Error during delete file - server');
     }
 });

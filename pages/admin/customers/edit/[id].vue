@@ -1,7 +1,6 @@
 <script setup lang="ts">
 definePageMeta({
   layout: "admin",
-  title: "Editar Cliente | Urban Mobi"
 });
 
 import { ref, h } from "vue";
@@ -21,7 +20,10 @@ import {
   Plus,
   LoaderCircle,
   LockKeyhole,
-  LockKeyholeOpen
+  LockKeyholeOpen,
+  Paperclip,
+  Search,
+  CircleX,
 } from "lucide-vue-next";
 import Separator from "~/components/ui/separator/Separator.vue";
 import AddCorpUserForm from "@/components/admin/users/AddCorpUserForm.vue";
@@ -29,8 +31,13 @@ import EditDeleteActions from "@/components/admin/users/EditDeleteActions.vue";
 import AddCCAreaForm from "~/components/admin/customers/AddCCAreaForm.vue";
 import { storeToRefs } from "pinia";
 
+import { useFilesStore } from "~/stores/admin/files.store";
+const filesStore = useFilesStore();
+const { deleteFileAction } = filesStore;
+
 import { useToast } from "@/components/ui/toast/use-toast";
 import { dateFormat } from "~/lib/utils";
+import { findAddressByZipcode } from "~/server/services/FindAddress";
 const { toast } = useToast();
 
 const store = useCustomerStore();
@@ -42,18 +49,24 @@ const { deletePassengerAction, resetPassengerState, toggleIsEditing, loading } =
 const { isEditing } = storeToRefs(passengerStore);
 
 const route = useRoute();
-
 const isLoading = ref<boolean>(false);
 const editCustomerData = ref<any>();
-const showAddPassengerForm = ref<boolean>(false);
 
 const fetchCustomerData = async () => {
   const data = await getCustomerByIdAction(route?.params?.id as string);
   editCustomerData.value = data;
   return data;
 };
-
 editCustomerData.value = await fetchCustomerData();
+
+useHead({
+  title: `Editar cliente ${editCustomerData.value.fantasyName} | Urban Mobi`,
+})
+
+const showAddPassengerForm = ref<boolean>(false);
+const isLoadingAddress = ref<boolean>(false);
+const loadingFileData = ref<boolean>(false);
+const zipcode = ref(editCustomerData?.value.address?.zipcode);
 
 const deletePassenger = async (id: string) => {
   await deletePassengerAction(id).then(() => fetchCustomerData());
@@ -142,12 +155,14 @@ const passengerColumns = [
 const formSchema = toTypedSchema(
   z.object({
     status: z.string().min(2).max(50),
-    name: z.string().min(2).max(50),
+    name: z.string().min(2).max(100),
     document: z.string().min(2).max(50),
     fantasyName: z.string().min(2).max(50),
     zipcode: z.string().min(2).max(50),
     streetName: z.string().min(2).max(50),
     streetNumber: z.string().min(2).max(50),
+    complement: z.string().min(0).max(50),
+    neighborhood: z.string().min(2).max(50),
     city: z.string().min(2).max(50),
     state: z.string().min(2).max(50),
     phone: z.string().min(2).max(15),
@@ -170,6 +185,8 @@ const form = useForm({
     zipcode: editCustomerData?.value.address?.zipcode,
     streetName: editCustomerData?.value.address?.streetName,
     streetNumber: editCustomerData?.value.address?.streetNumber,
+    complement: editCustomerData?.value.address?.complement,
+    neighborhood: editCustomerData?.value.address?.neighborhood,
     city: editCustomerData?.value.address?.city,
     state: editCustomerData?.value.address?.state,
     phone: editCustomerData?.value.phone,
@@ -187,6 +204,10 @@ const onSubmit = form.handleSubmit(async (values) => {
   const newCustomerData = {
     id: route?.params?.id,
     ccAreas: [...editCustomerData.value.ccAreas],
+    logo: {
+      name: editCustomerData.value.logo.name,
+      url: editCustomerData.value.logo.url,
+    },
     ...values
   };
   isLoading.value = true;
@@ -212,6 +233,72 @@ const onSubmit = form.handleSubmit(async (values) => {
       navigateTo("/admin/customers");
     });
 });
+
+const deleteFile = async (url: string) => {
+  try {
+    await deleteFileAction(url);
+  } catch (error) {
+    toast({
+      title: 'Oops!',
+      class: 'bg-red-500 border-0 text-white text-2xl',
+      description: `Arquivo do logotipo não pode ser removido. Tente novamente.`,
+    });
+  } finally {
+    toast({
+      title: 'Feito!',
+      class: 'bg-green-500 border-0 text-white text-2xl',
+      description: `Arquivo do logotipo foi removido com sucesso!`,
+    });
+    editCustomerData.value.logo.name = "";
+    editCustomerData.value.logo.url = "";
+  }
+}
+
+const findAddress = async () => {
+  const { zipcode } = form.values
+
+  if (zipcode?.length !== 8) {
+    toast({
+      title: "Opss!",
+      class: "bg-red-500 border-0 text-white text-2xl",
+      description: `CEP inválido. Digite novamente.`
+    });
+  } else {
+    try {
+      isLoadingAddress.value = true;
+      const address: any = await findAddressByZipcode(zipcode as string)
+      if (address.erro) {
+        toast({
+          title: "CEP Inválido",
+          class: "bg-red-500 border-0 text-white text-2xl",
+          description: `Confira o CEP e tente novamente.`
+        });
+        //@ts-ignore
+        document.querySelector("input[name='zipcode']").focus();
+        document.querySelector("input[name='zipcode']")?.classList.add("bg-red-300", "focus:ring-0", "focus-visible:ring-0", "focus-visible:outline-3", "focus-visible:outline-offset-2", "focus-visible:outline-red-500");
+      } else {
+        document.querySelector("input[name='zipcode']")?.classList.remove("bg-red-300", "focus-visible:ring-0", "focus-visible:outline-3", "focus-visible:outline-offset-2", "focus-visible:outline-red-500");
+        form.setValues({
+          zipcode: address?.cep.replace('-', ''),
+          streetName: address?.logradouro,
+          city: address?.localidade,
+          neighborhood: address?.bairro,
+          state: address?.estado,
+        })
+      }
+    } catch (error) {
+      toast({
+        title: "Opss!",
+        class: "bg-red-500 border-0 text-white text-2xl",
+        description: `Ocorreu um erro ao buscar o endereço. Tente novamente.`
+      });
+      console.log("Erro ao buscar endereço -> ", error)
+    } finally {
+      isLoadingAddress.value = false
+    }
+  }
+
+}
 </script>
 <template>
   <main class="p-6">
@@ -228,14 +315,14 @@ const onSubmit = form.handleSubmit(async (values) => {
     </section>
     <section v-else class="mb-6">
       <Card class="bg-zinc-200">
-        <form @submit.prevent="onSubmit">
+        <form @submit.prevent="onSubmit" @keydown.enter.prevent="true">
           <CardHeader>
             <div class="flex items-center justify-between">
               <CardTitle class="text-md">Dados do Cliente
                 <br />
                 <span class="font-normal text-3xl">{{
                   editCustomerData.name
-                  }}</span>
+                }}</span>
                 <div class="my-4">
                   <div class="mb-4 flex flex-col">
                     <small class="text-zinc-500">Cadastrado em:</small>
@@ -251,6 +338,13 @@ const onSubmit = form.handleSubmit(async (values) => {
                   </div>
                 </div>
               </CardTitle>
+              <div class="px-4 bg-white rounded-md">
+                <img v-if="editCustomerData.logo?.url" class="w-[150px]" :src="editCustomerData.logo?.url" alt="">
+                <div v-else
+                  class="flex items-center justify-center w-[150px] h-[150px] bg-white rounded-md text-zinc-400">SEM
+                  LOGO
+                </div>
+              </div>
             </div>
           </CardHeader>
           <CardContent>
@@ -302,7 +396,14 @@ const onSubmit = form.handleSubmit(async (values) => {
                 <FormItem class="col-span-1">
                   <FormLabel>CEP</FormLabel>
                   <FormControl>
-                    <Input type="text" placeholder="12345-678" v-bind="componentField" />
+                    <div class="flex gap-2">
+                      <Input type="text" placeholder="12345-000" v-bind="componentField" v-model="zipcode"
+                        maxlength="8" />
+                      <Button @click.prevent="findAddress" :disabled="zipcode?.length !== 8" type="button">
+                        <Search v-if="!isLoadingAddress" class="w-10 h-10" />
+                        <LoaderCircle v-if="isLoadingAddress" class="w-10 h-10 animate-spin" />
+                      </Button>
+                    </div>
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -321,6 +422,24 @@ const onSubmit = form.handleSubmit(async (values) => {
                   <FormLabel>Número</FormLabel>
                   <FormControl>
                     <Input type="text" placeholder="ex. 1876" v-bind="componentField" />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              </FormField>
+              <FormField v-slot="{ componentField }" name="complement">
+                <FormItem class="col-span-1">
+                  <FormLabel>Complemento</FormLabel>
+                  <FormControl>
+                    <Input type="text" placeholder="ex.: Quadra 3, Bloco A, Setor 3B" v-bind="componentField" />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              </FormField>
+              <FormField v-slot="{ componentField }" name="neighborhood">
+                <FormItem class="col-span-1">
+                  <FormLabel>Bairro</FormLabel>
+                  <FormControl>
+                    <Input type="text" placeholder="ex.: Vila Santana" v-bind="componentField" />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -357,6 +476,57 @@ const onSubmit = form.handleSubmit(async (values) => {
                   <FormLabel>Site</FormLabel>
                   <FormControl>
                     <Input type="text" placeholder="www.empresa.com.br" v-bind="componentField" />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              </FormField>
+              <FormField v-slot="{ componentField }" name="logo">
+                <FormItem>
+                  <FormLabel>Logo da Empresa</FormLabel>
+                  <FormControl>
+                    <div class="flex gap-4">
+                      <div v-if="!editCustomerData?.logo?.name">
+                        <UploadButton
+                          class="relative ut-button:bg-zinc-900 ut-button:hover:bg-zinc-700 ut-button:ut-uploading:after:bg-green-500 ut-button:ut-uploading:cursor-not-allowed ut-button:ut-readying:bg-red-500"
+                          :config="{
+                            appearance: {
+                              container: '!items-start',
+                              allowedContent: '!absolute !top-10',
+
+                            },
+                            content: {
+                              allowedContent({ ready, fileTypes, isUploading }) {
+                                if (ready) return '';
+                                if (isUploading) return 'Enviando seu arquivo, aguarde...';
+                              },
+                            },
+                            endpoint: 'customerLogo',
+                            onClientUploadComplete: (file) => {
+                              editCustomerData.logo.name = file[0].name
+                              editCustomerData.logo.url = file[0].ufsUrl
+                            },
+                            onUploadError: (error) => {
+                              toast({
+                                title: 'Ooops!',
+                                class: 'bg-red-500 border-0 text-white text-2xl',
+                                description: `Erro ao enviar o arquivo. Tente novamente. ${error.cause}`,
+                              });
+                            },
+                          }" />
+                      </div>
+                      <div v-if="editCustomerData.logo?.name !== ''" class="flex gap-2 items-center">
+                        <Paperclip class="w-4 h-4 text-zinc-500" />
+                        <div class="px-4 border border-dashed border-green-500 rounded-md">
+                          <a class="underline" :href="editCustomerData.logo?.url" target="_blank"
+                            rel="noopener noreferrer">
+                            {{ editCustomerData.logo?.name || 'Nenhum arquivo anexo' }}
+                          </a>
+                        </div>
+                        <LoaderCircle v-if="loadingFileData" class="w-4 h-4 animate-spin" />
+                        <CircleX v-else class="w-4 h-4 text-zinc-500 hover:text-red-500 cursor-pointer"
+                          @click.prevent="deleteFile(editCustomerData.logo?.url)" />
+                      </div>
+                    </div>
                   </FormControl>
                   <FormMessage />
                 </FormItem>

@@ -79,18 +79,14 @@ const onSubmitUser = regularUserForm.handleSubmit(async (values) => {
 </script>
 
 <template>
-  <form @submit="onSubmitUser">
+  <form @submit.prevent="onSubmitUser" @keydown.enter.prevent="true">
     <div class="mb-8 p-8 gap-4 bg-zinc-300 rounded-md">
       <div class="grid grid-cols-5 gap-4 items-center">
         <FormField v-slot="{ componentField }" name="name">
           <FormItem class="relative">
             <FormLabel>Nome</FormLabel>
             <FormControl>
-              <Input
-                type="text"
-                placeholder="ex.: João Silva"
-                v-bind="componentField"
-              />
+              <Input type="text" placeholder="ex.: João Silva" v-bind="componentField" />
             </FormControl>
             <!-- <FormMessage class="absolute" /> -->
           </FormItem>
@@ -99,11 +95,7 @@ const onSubmitUser = regularUserForm.handleSubmit(async (values) => {
           <FormItem class="relative">
             <FormLabel>E-mail</FormLabel>
             <FormControl>
-              <Input
-                type="text"
-                placeholder="ex.: joao_silva@email.com.br"
-                v-bind="componentField"
-              />
+              <Input type="text" placeholder="ex.: joao_silva@email.com.br" v-bind="componentField" />
             </FormControl>
             <!-- <FormMessage class="absolute" /> -->
           </FormItem>
@@ -112,11 +104,7 @@ const onSubmitUser = regularUserForm.handleSubmit(async (values) => {
           <FormItem>
             <FormLabel>Celular</FormLabel>
             <FormControl>
-              <Input
-                type="text"
-                placeholder="ex.: 11-9987605432"
-                v-bind="componentField"
-              />
+              <Input type="text" placeholder="ex.: 11-9987605432" v-bind="componentField" />
             </FormControl>
             <!-- <FormMessage class="absolute" /> -->
           </FormItem>
@@ -126,11 +114,7 @@ const onSubmitUser = regularUserForm.handleSubmit(async (values) => {
           <FormItem>
             <FormLabel>CPF</FormLabel>
             <FormControl>
-              <Input
-                type="text"
-                placeholder="ex.: 123.345.567-89"
-                v-bind="componentField"
-              />
+              <Input type="text" placeholder="ex.: 123.345.567-89" v-bind="componentField" />
             </FormControl>
             <!-- <FormMessage class="absolute" /> -->
           </FormItem>
@@ -138,16 +122,12 @@ const onSubmitUser = regularUserForm.handleSubmit(async (values) => {
 
         <FormField v-slot="{ componentField }" name="status">
           <FormItem>
-            <FormLabel>Situação</FormLabel>
+            <FormLabel>Situação do Cadastro</FormLabel>
             <FormControl>
-              <FormSelect
-                v-bind="componentField"
-                :items="[
-                  { label: 'Ativo', value: 'active' },
-                  { label: 'Inativo', value: 'inactive' }
-                ]"
-                :label="'Selecione a situação'"
-              />
+              <FormSelect v-bind="componentField" :items="[
+                { label: 'Ativo', value: 'active' },
+                { label: 'Inativo', value: 'inactive' }
+              ]" :label="'Selecione a situação'" />
             </FormControl>
           </FormItem>
         </FormField>
@@ -155,11 +135,9 @@ const onSubmitUser = regularUserForm.handleSubmit(async (values) => {
       <div class="mt-4 py-4 flex gap-4">
         <Button type="submit">
           <LoaderCircle v-if="loading" class="w-10 h-10 animate-spin" />
-          Salvar</Button
-        >
-        <Button variant="ghost" @click.prevent="showPassengerForm"
-          >Cancelar</Button
-        >
+          Salvar
+        </Button>
+        <Button variant="ghost" @click.prevent="showPassengerForm">Cancelar</Button>
       </div>
     </div>
   </form>

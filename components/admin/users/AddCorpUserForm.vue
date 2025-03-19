@@ -70,8 +70,8 @@ const passengersForm = useForm({
   initialValues: isEditing.value
     ? passenger.value
     : {
-        restrictions: ["week"]
-      }
+      restrictions: ["week"]
+    }
 });
 
 const onSubmitPassengers = passengersForm.handleSubmit(async (values) => {
@@ -170,18 +170,14 @@ customerAreasList.value = sanitezedCCAreas;
     <LoaderCircle class="w-10 h-10 animate-spin" />
   </div>
   <div v-else>
-    <form @submit="onSubmitPassengers">
+    <form @submit.prevent="onSubmitPassengers" @keydown.enter.prevent="true">
       <div class="mb-8 p-8 gap-4 bg-zinc-300 rounded-md">
         <div class="grid grid-cols-4 gap-4 items-center">
           <FormField v-slot="{ componentField }" name="name">
             <FormItem class="relative">
               <FormLabel>Nome</FormLabel>
               <FormControl>
-                <Input
-                  type="text"
-                  placeholder="ex.: João Silva"
-                  v-bind="componentField"
-                />
+                <Input type="text" placeholder="ex.: João Silva" v-bind="componentField" />
               </FormControl>
               <!-- <FormMessage class="absolute" /> -->
             </FormItem>
@@ -190,11 +186,7 @@ customerAreasList.value = sanitezedCCAreas;
             <FormItem class="relative">
               <FormLabel>E-mail</FormLabel>
               <FormControl>
-                <Input
-                  type="text"
-                  placeholder="ex.: joao_silva@email.com.br"
-                  v-bind="componentField"
-                />
+                <Input type="text" placeholder="ex.: joao_silva@email.com.br" v-bind="componentField" />
               </FormControl>
               <!-- <FormMessage class="absolute" /> -->
             </FormItem>
@@ -203,11 +195,7 @@ customerAreasList.value = sanitezedCCAreas;
             <FormItem>
               <FormLabel>Celular</FormLabel>
               <FormControl>
-                <Input
-                  type="text"
-                  placeholder="ex.: 11-9987605432"
-                  v-bind="componentField"
-                />
+                <Input type="text" placeholder="ex.: 11-9987605432" v-bind="componentField" />
               </FormControl>
               <!-- <FormMessage class="absolute" /> -->
             </FormItem>
@@ -229,20 +217,12 @@ customerAreasList.value = sanitezedCCAreas;
           <div class="p-6 col-span-4 border-2 border-zinc-600 rounded-md">
             <h4 class="mb-8 font-bold">Dados Corporativos</h4>
             <div class="grid grid-cols-3 gap-4 items-center">
-              <FormField
-                v-if="isNewUser"
-                v-slot="{ componentField }"
-                name="customerId"
-              >
+              <FormField v-if="isNewUser" v-slot="{ componentField }" name="customerId">
                 <FormItem>
                   <FormLabel>Empresa</FormLabel>
                   <FormControl>
-                    <FormSelect
-                      v-bind="componentField"
-                      :items="sanitizedCustomers"
-                      :label="'Selecione a empresa'"
-                      @on-select="onSelectCustomer"
-                    />
+                    <FormSelect v-bind="componentField" :items="sanitizedCustomers" :label="'Selecione a empresa'"
+                      @on-select="onSelectCustomer" />
                   </FormControl>
                 </FormItem>
               </FormField>
@@ -250,19 +230,10 @@ customerAreasList.value = sanitezedCCAreas;
                 <FormItem>
                   <FormLabel>CC / Depto.</FormLabel>
                   <FormControl>
-                    <FormSelect
-                      v-if="!isNewUser"
-                      v-bind="componentField"
-                      :items="sanitezedCCAreas"
-                      :label="'Selecione'"
-                    />
-                    <FormSelect
-                      v-else
-                      :disabled="!customerAreasList.length"
-                      v-bind="componentField"
-                      :items="customerAreasList"
-                      :label="'Selecione'"
-                    />
+                    <FormSelect v-if="!isNewUser" v-bind="componentField" :items="sanitezedCCAreas"
+                      :label="'Selecione'" />
+                    <FormSelect v-else :disabled="!customerAreasList.length" v-bind="componentField"
+                      :items="customerAreasList" :label="'Selecione'" />
                   </FormControl>
                   <!-- <FormMessage class="absolute" /> -->
                 </FormItem>
@@ -271,35 +242,27 @@ customerAreasList.value = sanitezedCCAreas;
                 <FormItem>
                   <FormLabel>Cargo</FormLabel>
                   <FormControl>
-                    <FormSelect
-                      v-bind="componentField"
-                      :items="[
-                        { label: 'Presidente', value: 'presidente' },
-                        { label: 'Diretor', value: 'diretor' },
-                        { label: 'Gerente', value: 'gerente' },
-                        { label: 'Coordenador', value: 'coordenador' },
-                        { label: 'Visitante', value: 'visitante' },
-                        { label: 'Outro', value: 'outros' }
-                      ]"
-                      :label="'Selecione um cargo'"
-                    />
+                    <FormSelect v-bind="componentField" :items="[
+                      { label: 'Presidente', value: 'presidente' },
+                      { label: 'Diretor', value: 'diretor' },
+                      { label: 'Gerente', value: 'gerente' },
+                      { label: 'Coordenador', value: 'coordenador' },
+                      { label: 'Visitante', value: 'visitante' },
+                      { label: 'Outro', value: 'outros' }
+                    ]" :label="'Selecione um cargo'" />
                   </FormControl>
                 </FormItem>
               </FormField>
               <FormField v-slot="{ componentField }" name="status">
                 <FormItem>
-                  <FormLabel>Situação</FormLabel>
+                  <FormLabel>Situação do Cadastro</FormLabel>
                   <FormControl>
-                    <FormSelect
-                      v-bind="componentField"
-                      :items="[
-                        { label: 'Ativo', value: 'active' },
-                        { label: 'Inativo', value: 'inactive' },
-                        { label: 'Férias', value: 'vacation' },
-                        { label: 'Desligado', value: 'disabled' }
-                      ]"
-                      :label="'Selecione a situação'"
-                    />
+                    <FormSelect v-bind="componentField" :items="[
+                      { label: 'Ativo', value: 'active' },
+                      { label: 'Inativo', value: 'inactive' },
+                      { label: 'Férias', value: 'vacation' },
+                      { label: 'Desligado', value: 'disabled' }
+                    ]" :label="'Selecione a situação'" />
                   </FormControl>
                 </FormItem>
               </FormField>
@@ -312,19 +275,15 @@ customerAreasList.value = sanitezedCCAreas;
         <div class="mt-4 py-4 flex gap-4">
           <Button type="submit">
             <LoaderCircle v-if="loading" class="w-10 h-10 animate-spin" />
-            Salvar</Button
-          >
-          <Button
-            variant="ghost"
-            @click="
-              () => {
-                showPassengerForm();
-                toggleIsEditing();
-                emit('regular-user');
-              }
-            "
-            >Cancelar</Button
-          >
+            Salvar
+          </Button>
+          <Button variant="ghost" @click="
+            () => {
+              showPassengerForm();
+              toggleIsEditing();
+              emit('regular-user');
+            }
+          ">Cancelar</Button>
         </div>
       </div>
     </form>

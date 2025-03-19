@@ -1,6 +1,9 @@
 <script setup lang="ts">
 definePageMeta({
   layout: "admin",
+});
+
+useHead({
   title: "Editar Usuário | Urban Mobi"
 });
 
@@ -200,7 +203,7 @@ const sanitizedCCAreas = computed(() => {
 
               <FormField v-slot="{ componentField }" name="status">
                 <FormItem>
-                  <FormLabel>Situação do Usuário</FormLabel>
+                  <FormLabel>Situação do Cadastro</FormLabel>
                   <FormControl>
                     <FormSelect v-bind="componentField" :items="[
                       { label: 'Ativo', value: 'active' },
