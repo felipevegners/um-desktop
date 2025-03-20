@@ -656,7 +656,7 @@ const findAddress = async () => {
                     <FormControl>
                       <Input
                         type="text"
-                        placeholder="Insira o nome do Gerente desta conta"
+                        placeholder="Insira o nome do Gerente Master"
                         v-bind="componentField"
                       />
                     </FormControl>
@@ -759,7 +759,7 @@ const findAddress = async () => {
               <AddCorpUserForm
                 :isNewUser="false"
                 :customerId="editCustomerData?.id"
-                :customerName="editCustomerData?.name"
+                :customerName="editCustomerData?.fantasyName"
                 :ccAreas="editCustomerData?.ccAreas"
                 @show-form="toggleAddPassengerForm"
                 @fetch-customer="fetchCustomerData"

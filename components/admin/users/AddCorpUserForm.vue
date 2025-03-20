@@ -131,6 +131,7 @@ const onSubmitPassengers = passengersForm.handleSubmit(async (values) => {
       });
       await getPassengersAction();
       emit('show-form');
+      emit('fetch-customer');
     }
   }
 });
@@ -151,7 +152,7 @@ const onSelectCustomer = (value: any) => {
 const sanitizedCustomers = computed(() => {
   if (props.isNewUser && customers.value.length) {
     return customers.value.map((customer) => ({
-      label: customer.name,
+      label: customer.fantasyName,
       value: customer.id,
     }));
   }

@@ -84,7 +84,8 @@ const formSchema = toTypedSchema(
       .refine(
         (file) => ACCEPTED_IMAGE_TYPES.includes(file?.type),
         'Apenas arquivos nos formatos .jpg, .jpeg ou .png são aceitos ',
-      ),
+      )
+      .optional(),
   }),
 );
 
@@ -100,7 +101,7 @@ const { startUpload } = useUploadThing('customerLogo', {
 });
 
 const onSubmit = form.handleSubmit(async (values) => {
-  const files = [values.logo];
+  const files = [values?.logo];
   isLoadingSend.value = true;
 
   try {
@@ -147,9 +148,9 @@ const onSubmit = form.handleSubmit(async (values) => {
       website,
       logo: {
         //@ts-ignore
-        name: filesResponse[0]?.name,
+        name: filesResponse[0]?.name || '',
         //@ts-ignore
-        url: filesResponse[0]?.ufsUrl,
+        url: filesResponse[0]?.ufsUrl || '',
       },
       adminId: '67bda5bd3e3ed4a5d2bdb799',
       managerName,
@@ -571,27 +572,10 @@ const findAddress = async () => {
                   <FormItem>
                     <FormLabel>Nome</FormLabel>
                     <FormControl>
-                      <FormSelect
+                      <Input
+                        type="text"
+                        placeholder="Insira o nome do Gerente Master"
                         v-bind="componentField"
-                        :items="[
-                          {
-                            label: 'Felipe Vegners',
-                            value: 'Felipe Vegners',
-                          },
-                          {
-                            label: 'Humberto Pansica',
-                            value: 'Humberto Pansica',
-                          },
-                          {
-                            label: 'Maria dos Santos',
-                            value: 'Maria dos Santos',
-                          },
-                          {
-                            label: 'João da Silva',
-                            value: 'João da Silva',
-                          },
-                        ]"
-                        :label="'Selecione o gerente'"
                       />
                     </FormControl>
                   </FormItem>
