@@ -1,24 +1,22 @@
 <script setup lang="ts">
+import AddCorpUserForm from '@/components/admin/users/AddCorpUserForm.vue';
+import AddRegularUserForm from '@/components/admin/users/AddRegularUserForm.vue';
+import { Button } from '@/components/ui/button';
+import { createColumnHelper } from '@tanstack/vue-table';
+import { ArrowUpDown, LoaderCircle, Plus } from 'lucide-vue-next';
+import { storeToRefs } from 'pinia';
+import { ref } from 'vue';
+import EditDeleteActions from '~/components/admin/users/EditDeleteActions.vue';
+import DataTable from '~/components/shared/DataTable.vue';
+import { usePassengerStore } from '~/stores/admin/passengers.store';
+
 definePageMeta({
-  layout: "admin"
+  layout: 'admin',
 });
 
 useHead({
-  title: "Usuários Ativos | Urban Mobi"
+  title: 'Usuários Ativos | Urban Mobi',
 });
-
-import { ref } from "vue";
-import { Plus, LoaderCircle } from "lucide-vue-next";
-import AddRegularUserForm from "@/components/admin/users/AddRegularUserForm.vue";
-import AddCorpUserForm from "@/components/admin/users/AddCorpUserForm.vue";
-
-import DataTable from "~/components/shared/DataTable.vue";
-import { createColumnHelper } from "@tanstack/vue-table";
-import EditDeleteActions from "~/components/admin/users/EditDeleteActions.vue";
-import { Button } from "@/components/ui/button";
-import { ArrowUpDown } from "lucide-vue-next";
-import { usePassengerStore } from "~/stores/admin/passengers.store";
-import { storeToRefs } from "pinia";
 
 const passengerStore = usePassengerStore();
 const { deletePassengerAction, getPassengersAction } = passengerStore;
@@ -54,107 +52,109 @@ const deletePassenger = async (id: string) => {
 };
 
 const passengerColumns = [
-  columnHelper.accessor("name", {
+  columnHelper.accessor('name', {
     enablePinning: true,
     header: ({ column }) => {
       return h(
         Button,
         {
-          variant: "ghost",
-          onClick: () => column.toggleSorting(column.getIsSorted() === "asc")
+          variant: 'ghost',
+          onClick: () => column.toggleSorting(column.getIsSorted() === 'asc'),
         },
-        () => ["Nome", h(ArrowUpDown, { class: "ml-2 h-4 w-4" })]
+        () => ['Nome', h(ArrowUpDown, { class: 'ml-2 h-4 w-4' })],
       );
     },
-    cell: ({ row }) => h("div", { class: "capitalize" }, row.getValue("name"))
+    cell: ({ row }) => h('div', { class: 'capitalize' }, row.getValue('name')),
   }),
-  columnHelper.accessor("email", {
-    header: () => h("div", { class: "text-left" }, "E-mail"),
-    cell: ({ row }) => h("div", { class: "lowercase" }, row.getValue("email"))
+  columnHelper.accessor('email', {
+    header: () => h('div', { class: 'text-left' }, 'E-mail'),
+    cell: ({ row }) => h('div', { class: 'lowercase' }, row.getValue('email')),
   }),
-  columnHelper.accessor("phone", {
-    header: () => h("div", { class: "text-left" }, "Telefone"),
-    cell: ({ row }) => h("div", { class: "lowercase" }, row.getValue("phone"))
+  columnHelper.accessor('phone', {
+    header: () => h('div', { class: 'text-left' }, 'Telefone'),
+    cell: ({ row }) => h('div', { class: 'lowercase' }, row.getValue('phone')),
   }),
-  columnHelper.accessor("document", {
-    header: () => h("div", { class: "text-left" }, "CPF"),
+  columnHelper.accessor('document', {
+    header: () => h('div', { class: 'text-left' }, 'CPF'),
     cell: ({ row }) =>
-      h("div", { class: "lowercase" }, row.getValue("document") || "-")
+      h('div', { class: 'lowercase' }, row.getValue('document') || '-'),
   }),
-  columnHelper.accessor("type", {
-    header: () => h("div", { class: "text-left" }, "Categoria"),
+  columnHelper.accessor('type', {
+    header: () => h('div', { class: 'text-left' }, 'Categoria'),
     cell: ({ row }) =>
-      h("div", { class: "capitalize" }, row.getValue("type") || "-")
+      h('div', { class: 'capitalize' }, row.getValue('type') || '-'),
   }),
-  columnHelper.accessor("customerName", {
-    header: () => h("div", { class: "text-left" }, "Empresa"),
+  columnHelper.accessor('customerName', {
+    header: () => h('div', { class: 'text-left' }, 'Empresa'),
     cell: ({ row }) =>
-      h("div", { class: "capitalize" }, row.getValue("customerName") || "-")
+      h('div', { class: 'capitalize' }, row.getValue('customerName') || '-'),
   }),
-  columnHelper.accessor("position", {
-    header: () => h("div", { class: "text-left" }, "Cargo"),
+  columnHelper.accessor('position', {
+    header: () => h('div', { class: 'text-left' }, 'Cargo'),
     cell: ({ row }) =>
-      h("div", { class: "capitalize" }, row.getValue("position") || "-")
+      h('div', { class: 'capitalize' }, row.getValue('position') || '-'),
   }),
-  columnHelper.accessor("department", {
-    header: () => h("div", { class: "text-left" }, "CC/Depto."),
+  columnHelper.accessor('department', {
+    header: () => h('div', { class: 'text-left' }, 'CC/Depto.'),
     cell: ({ row }) =>
-      h("div", { class: "capitalize" }, row.getValue("department") || "-")
+      h('div', { class: 'capitalize' }, row.getValue('department') || '-'),
   }),
 
-  columnHelper.accessor("status", {
-    header: () => h("div", { class: "text-left" }, "Situação"),
+  columnHelper.accessor('status', {
+    header: () => h('div', { class: 'text-left' }, 'Situação'),
     cell: ({ row }) => {
-      const status = row.getValue("status");
+      const status = row.getValue('status');
       return h(
-        "div",
+        'div',
         {
-          class: `px-2 flex items-center justify-center h-6 rounded-lg text-white ${status === "active"
-            ? "bg-green-600"
-            : status === "inactive"
-              ? "bg-red-700"
-              : "bg-yellow-500"
-            }`
+          class: `px-2 flex items-center justify-center h-6 rounded-lg text-white ${
+            status === 'active'
+              ? 'bg-green-600'
+              : status === 'inactive'
+                ? 'bg-red-700'
+                : 'bg-yellow-500'
+          }`,
         },
-        status === "active"
-          ? "Ativo"
-          : status === "inactive"
-            ? "Inativo"
-            : "Pendente"
+        status === 'active'
+          ? 'Ativo'
+          : status === 'inactive'
+            ? 'Inativo'
+            : 'Pendente',
       );
-    }
+    },
   }),
-  columnHelper.accessor("active", {
-    header: () => h("div", { class: "text-left" }, "Acesso"),
+  columnHelper.accessor('active', {
+    header: () => h('div', { class: 'text-left' }, 'Acesso'),
     cell: ({ row }) => {
-      const enabled = row.getValue("active");
+      const enabled = row.getValue('active');
       return h(
-        "div",
+        'div',
         {
-          class: `px-1 flex items-center justify-center h-6 rounded-lg text-white text-xs max-w-[80px] ${enabled === true ? "bg-blue-600" : "bg-zinc-600"
-            }`
+          class: `px-1 flex items-center justify-center h-6 rounded-lg text-white text-xs max-w-[80px] ${
+            enabled === true ? 'bg-blue-600' : 'bg-zinc-600'
+          }`,
         },
-        enabled === true ? "Liberado" : "Negado"
+        enabled === true ? 'Liberado' : 'Negado',
       );
-    }
+    },
   }),
   columnHelper.display({
-    id: "actions",
+    id: 'actions',
     enableHiding: false,
-    header: () => h("div", { class: "text-left" }, "Ações"),
+    header: () => h('div', { class: 'text-left' }, 'Ações'),
     cell: ({ row }) => {
       const passengerData = row.original;
       return h(
-        "div",
-        { class: "relative text-left" },
+        'div',
+        { class: 'relative text-left' },
         h(EditDeleteActions, {
           data: passengerData,
           remove: deletePassenger,
-          formControl: toggleShowAddForm
-        })
+          formControl: toggleShowAddForm,
+        }),
       );
-    }
-  })
+    },
+  }),
 ];
 </script>
 
@@ -179,7 +179,11 @@ const passengerColumns = [
             <Label for="customer-enabled" class="text-md font-normal">
               Regular
             </Label>
-            <Switch v-model="isRegularUser" @update:checked="isRegularUser = !isRegularUser" :default-checked="false" />
+            <Switch
+              v-model="isRegularUser"
+              @update:checked="isRegularUser = !isRegularUser"
+              :default-checked="false"
+            />
             <Label for="customer-enabled" class="text-md font-normal">
               Corporativo
             </Label>
@@ -188,7 +192,11 @@ const passengerColumns = [
             <AddRegularUserForm @show-form="toggleShowAddForm" />
           </div>
           <div v-else>
-            <AddCorpUserForm @show-form="toggleShowAddForm" :isNewUser="true" @regular-user="toggleRegularUser" />
+            <AddCorpUserForm
+              @show-form="toggleShowAddForm"
+              :isNewUser="true"
+              @regular-user="toggleRegularUser"
+            />
           </div>
         </CardContent>
       </Card>

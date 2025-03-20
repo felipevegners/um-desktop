@@ -1,43 +1,42 @@
 <script setup lang="ts">
-definePageMeta({
-  layout: "admin",
-});
-
-import { ref, h } from "vue";
-import { useCustomerStore } from "@/stores/admin/customers.store";
-import { usePassengerStore } from "~/stores/admin/passengers.store";
-import FormSelect from "@/components/shared/FormSelect.vue";
-import { useForm } from "vee-validate";
-import { toTypedSchema } from "@vee-validate/zod";
-import * as z from "zod";
-
-import { Button } from "@/components/ui/button";
-import DataTable from "~/components/shared/DataTable.vue";
-import { createColumnHelper } from "@tanstack/vue-table";
+import AddCorpUserForm from '@/components/admin/users/AddCorpUserForm.vue';
+import EditDeleteActions from '@/components/admin/users/EditDeleteActions.vue';
+import FormSelect from '@/components/shared/FormSelect.vue';
+import { Button } from '@/components/ui/button';
+import { useToast } from '@/components/ui/toast/use-toast';
+import { useCustomerStore } from '@/stores/admin/customers.store';
+import { createColumnHelper } from '@tanstack/vue-table';
+import { toTypedSchema } from '@vee-validate/zod';
 import {
   ArrowLeft,
   ArrowUpDown,
-  Plus,
+  CircleX,
   LoaderCircle,
   LockKeyhole,
   LockKeyholeOpen,
   Paperclip,
+  Plus,
   Search,
-  CircleX,
-} from "lucide-vue-next";
-import Separator from "~/components/ui/separator/Separator.vue";
-import AddCorpUserForm from "@/components/admin/users/AddCorpUserForm.vue";
-import EditDeleteActions from "@/components/admin/users/EditDeleteActions.vue";
-import AddCCAreaForm from "~/components/admin/customers/AddCCAreaForm.vue";
-import { storeToRefs } from "pinia";
+} from 'lucide-vue-next';
+import { storeToRefs } from 'pinia';
+import { useForm } from 'vee-validate';
+import { h, ref } from 'vue';
+import * as z from 'zod';
+import AddCCAreaForm from '~/components/admin/customers/AddCCAreaForm.vue';
+import DataTable from '~/components/shared/DataTable.vue';
+import Separator from '~/components/ui/separator/Separator.vue';
+import { dateFormat } from '~/lib/utils';
+import { findAddressByZipcode } from '~/server/services/FindAddress';
+import { useFilesStore } from '~/stores/admin/files.store';
+import { usePassengerStore } from '~/stores/admin/passengers.store';
 
-import { useFilesStore } from "~/stores/admin/files.store";
+definePageMeta({
+  layout: 'admin',
+});
+
 const filesStore = useFilesStore();
 const { deleteFileAction } = filesStore;
 
-import { useToast } from "@/components/ui/toast/use-toast";
-import { dateFormat } from "~/lib/utils";
-import { findAddressByZipcode } from "~/server/services/FindAddress";
 const { toast } = useToast();
 
 const store = useCustomerStore();
@@ -61,7 +60,7 @@ editCustomerData.value = await fetchCustomerData();
 
 useHead({
   title: `Editar cliente ${editCustomerData.value.fantasyName} | Urban Mobi`,
-})
+});
 
 const showAddPassengerForm = ref<boolean>(false);
 const isLoadingAddress = ref<boolean>(false);
@@ -79,77 +78,78 @@ const toggleAddPassengerForm = () => {
 const columnHelper = createColumnHelper<any>();
 
 const passengerColumns = [
-  columnHelper.accessor("name", {
+  columnHelper.accessor('name', {
     enablePinning: true,
     header: ({ column }) => {
       return h(
         Button,
         {
-          variant: "ghost",
-          onClick: () => column.toggleSorting(column.getIsSorted() === "asc")
+          variant: 'ghost',
+          onClick: () => column.toggleSorting(column.getIsSorted() === 'asc'),
         },
-        () => ["Nome", h(ArrowUpDown, { class: "ml-2 h-4 w-4" })]
+        () => ['Nome', h(ArrowUpDown, { class: 'ml-2 h-4 w-4' })],
       );
     },
-    cell: ({ row }) => h("div", { class: "capitalize" }, row.getValue("name"))
+    cell: ({ row }) => h('div', { class: 'capitalize' }, row.getValue('name')),
   }),
-  columnHelper.accessor("status", {
-    header: () => h("div", { class: "text-left" }, "Situação"),
+  columnHelper.accessor('status', {
+    header: () => h('div', { class: 'text-left' }, 'Situação'),
     cell: ({ row }) => {
-      const status = row.getValue("status");
+      const status = row.getValue('status');
       return h(
-        "div",
+        'div',
         {
-          class: `px-2 flex items-center justify-center h-6 rounded-lg text-white ${status === "active"
-            ? "bg-green-600"
-            : status === "inactive"
-              ? "bg-red-700"
-              : "bg-yellow-500"
-            }`
+          class: `px-2 flex items-center justify-center h-6 rounded-lg text-white ${
+            status === 'active'
+              ? 'bg-green-600'
+              : status === 'inactive'
+                ? 'bg-red-700'
+                : 'bg-yellow-500'
+          }`,
         },
-        status === "active"
-          ? "Ativo"
-          : status === "inactive"
-            ? "Inativo"
-            : "Pendente"
+        status === 'active'
+          ? 'Ativo'
+          : status === 'inactive'
+            ? 'Inativo'
+            : 'Pendente',
       );
-    }
+    },
   }),
-  columnHelper.accessor("position", {
-    header: () => h("div", { class: "text-left" }, "Cargo"),
+  columnHelper.accessor('position', {
+    header: () => h('div', { class: 'text-left' }, 'Cargo'),
     cell: ({ row }) =>
-      h("div", { class: "capitalize" }, row.getValue("position"))
+      h('div', { class: 'capitalize' }, row.getValue('position')),
   }),
-  columnHelper.accessor("department", {
-    header: () => h("div", { class: "text-left" }, "CC/Depto."),
+  columnHelper.accessor('department', {
+    header: () => h('div', { class: 'text-left' }, 'CC/Depto.'),
     cell: ({ row }) =>
-      h("div", { class: "capitalize" }, row.getValue("department"))
+      h('div', { class: 'capitalize' }, row.getValue('department')),
   }),
-  columnHelper.accessor("email", {
-    header: () => h("div", { class: "text-left" }, "E-mail"),
-    cell: ({ row }) => h("div", { class: "lowercase" }, row.getValue("email"))
+  columnHelper.accessor('email', {
+    header: () => h('div', { class: 'text-left' }, 'E-mail'),
+    cell: ({ row }) => h('div', { class: 'lowercase' }, row.getValue('email')),
   }),
-  columnHelper.accessor("phone", {
-    header: () => h("div", { class: "text-left" }, "Telefone"),
-    cell: ({ row }) => h("div", { class: "lowercase" }, row.getValue("phone"))
+  columnHelper.accessor('phone', {
+    header: () => h('div', { class: 'text-left' }, 'Telefone'),
+    cell: ({ row }) => h('div', { class: 'lowercase' }, row.getValue('phone')),
   }),
   columnHelper.display({
-    id: "actions",
+    id: 'actions',
     enableHiding: false,
-    header: () => h("div", { class: "text-left" }, "Ações"),
+    header: () => h('div', { class: 'text-left' }, 'Ações'),
     cell: ({ row }) => {
       const passengerData = row.original;
       return h(
-        "div",
-        { class: "relative text-left" },
+        'div',
+        { class: 'relative text-left' },
         h(EditDeleteActions, {
           data: passengerData,
           remove: deletePassenger,
-          formControl: toggleAddPassengerForm
-        })
+          formControl: toggleAddPassengerForm,
+        }),
       );
-    }
-  })
+    },
+  }),
 ];
 
 const formSchema = toTypedSchema(
@@ -172,8 +172,8 @@ const formSchema = toTypedSchema(
     managerEmail: z.string().min(2),
     paymentTerm: z.string().min(2).max(12),
     paymentDueDate: z.number().min(0).max(30),
-    enabled: z.boolean()
-  })
+    enabled: z.boolean(),
+  }),
 );
 const form = useForm({
   validationSchema: formSchema,
@@ -196,8 +196,8 @@ const form = useForm({
     managerPhone: editCustomerData?.value.managerPhone,
     paymentTerm: editCustomerData?.value.billingInfo.billing,
     paymentDueDate: editCustomerData?.value.billingInfo.dueDate,
-    enabled: editCustomerData.value.enabled
-  }
+    enabled: editCustomerData.value.enabled,
+  },
 });
 
 const onSubmit = form.handleSubmit(async (values) => {
@@ -208,7 +208,7 @@ const onSubmit = form.handleSubmit(async (values) => {
       name: editCustomerData.value.logo.name,
       url: editCustomerData.value.logo.url,
     },
-    ...values
+    ...values,
   };
   isLoading.value = true;
   await editCustomer(newCustomerData)
@@ -216,21 +216,21 @@ const onSubmit = form.handleSubmit(async (values) => {
       isLoading.value = false;
     })
     .catch((err) => {
-      console.log("Error -> ", err);
+      console.log('Error -> ', err);
       toast({
-        title: "Opss!",
-        class: "bg-red-500 border-0 text-white text-2xl",
-        description: `Ocorreu um erro (${err.message}) ao cadastrar o cliente. Tente novamente.`
+        title: 'Opss!',
+        class: 'bg-red-500 border-0 text-white text-2xl',
+        description: `Ocorreu um erro (${err.message}) ao cadastrar o cliente. Tente novamente.`,
       });
-      alert("Erro ao cadastrar cliente");
+      alert('Erro ao cadastrar cliente');
     })
     .finally(() => {
       toast({
-        title: "Sucesso!",
-        class: "bg-green-600 border-0 text-white text-2xl",
-        description: `A empresa ${newCustomerData.fantasyName} foi atualizada com sucesso!`
+        title: 'Sucesso!',
+        class: 'bg-green-600 border-0 text-white text-2xl',
+        description: `A empresa ${newCustomerData.fantasyName} foi atualizada com sucesso!`,
       });
-      navigateTo("/admin/customers");
+      navigateTo('/admin/customers');
     });
 });
 
@@ -249,56 +249,72 @@ const deleteFile = async (url: string) => {
       class: 'bg-green-500 border-0 text-white text-2xl',
       description: `Arquivo do logotipo foi removido com sucesso!`,
     });
-    editCustomerData.value.logo.name = "";
-    editCustomerData.value.logo.url = "";
+    editCustomerData.value.logo.name = '';
+    editCustomerData.value.logo.url = '';
   }
-}
+};
 
 const findAddress = async () => {
-  const { zipcode } = form.values
+  const { zipcode } = form.values;
 
   if (zipcode?.length !== 8) {
     toast({
-      title: "Opss!",
-      class: "bg-red-500 border-0 text-white text-2xl",
-      description: `CEP inválido. Digite novamente.`
+      title: 'Opss!',
+      class: 'bg-red-500 border-0 text-white text-2xl',
+      description: `CEP inválido. Digite novamente.`,
     });
   } else {
     try {
       isLoadingAddress.value = true;
-      const address: any = await findAddressByZipcode(zipcode as string)
+      const address: any = await findAddressByZipcode(zipcode as string);
       if (address.erro) {
         toast({
-          title: "CEP Inválido",
-          class: "bg-red-500 border-0 text-white text-2xl",
-          description: `Confira o CEP e tente novamente.`
+          title: 'CEP Inválido',
+          class: 'bg-red-500 border-0 text-white text-2xl',
+          description: `Confira o CEP e tente novamente.`,
         });
         //@ts-ignore
         document.querySelector("input[name='zipcode']").focus();
-        document.querySelector("input[name='zipcode']")?.classList.add("bg-red-300", "focus:ring-0", "focus-visible:ring-0", "focus-visible:outline-3", "focus-visible:outline-offset-2", "focus-visible:outline-red-500");
+        document
+          .querySelector("input[name='zipcode']")
+          ?.classList.add(
+            'bg-red-300',
+            'focus:ring-0',
+            'focus-visible:ring-0',
+            'focus-visible:outline-3',
+            'focus-visible:outline-offset-2',
+            'focus-visible:outline-red-500',
+          );
       } else {
-        document.querySelector("input[name='zipcode']")?.classList.remove("bg-red-300", "focus-visible:ring-0", "focus-visible:outline-3", "focus-visible:outline-offset-2", "focus-visible:outline-red-500");
+        document
+          .querySelector("input[name='zipcode']")
+          ?.classList.remove(
+            'bg-red-300',
+            'focus-visible:ring-0',
+            'focus-visible:outline-3',
+            'focus-visible:outline-offset-2',
+            'focus-visible:outline-red-500',
+          );
         form.setValues({
           zipcode: address?.cep.replace('-', ''),
           streetName: address?.logradouro,
           city: address?.localidade,
           neighborhood: address?.bairro,
           state: address?.estado,
-        })
+        });
       }
     } catch (error) {
       toast({
-        title: "Opss!",
-        class: "bg-red-500 border-0 text-white text-2xl",
-        description: `Ocorreu um erro ao buscar o endereço. Tente novamente.`
+        title: 'Opss!',
+        class: 'bg-red-500 border-0 text-white text-2xl',
+        description: `Ocorreu um erro ao buscar o endereço. Tente novamente.`,
       });
-      console.log("Erro ao buscar endereço -> ", error)
+      console.log('Erro ao buscar endereço -> ', error);
     } finally {
-      isLoadingAddress.value = false
+      isLoadingAddress.value = false;
     }
   }
-
-}
+};
 </script>
 <template>
   <main class="p-6">
@@ -310,7 +326,10 @@ const findAddress = async () => {
         </NuxtLink>
       </div>
     </header>
-    <section v-if="loading" class="p-10 h-40 bg-zinc-200 flex items-center justify-center">
+    <section
+      v-if="loading"
+      class="p-10 h-40 bg-zinc-200 flex items-center justify-center"
+    >
       <LoaderCircle class="w-10 h-10 animate-spin" />
     </section>
     <section v-else class="mb-6">
@@ -318,7 +337,8 @@ const findAddress = async () => {
         <form @submit.prevent="onSubmit" @keydown.enter.prevent="true">
           <CardHeader>
             <div class="flex items-start justify-between">
-              <CardTitle class="text-md">Dados do Cliente
+              <CardTitle class="text-md"
+                >Dados do Cliente
                 <br />
                 <span class="font-normal text-3xl">{{
                   editCustomerData.name
@@ -339,11 +359,17 @@ const findAddress = async () => {
                 </div>
               </CardTitle>
               <div class="px-4 bg-white rounded-md">
-                <img v-if="editCustomerData.logo?.url" class="p-4 bg-white w-[150px]" :src="editCustomerData.logo?.url"
-                  alt="">
-                <div v-else
-                  class="flex items-center justify-center w-[150px] h-[150px] bg-white rounded-md text-zinc-400">SEM
-                  LOGO
+                <img
+                  v-if="editCustomerData.logo?.url"
+                  class="p-4 bg-white w-[150px]"
+                  :src="editCustomerData.logo?.url"
+                  alt=""
+                />
+                <div
+                  v-else
+                  class="flex items-center justify-center w-[150px] h-[150px] bg-white rounded-md text-zinc-400"
+                >
+                  SEM LOGO
                 </div>
               </div>
             </div>
@@ -354,11 +380,15 @@ const findAddress = async () => {
                 <FormItem>
                   <FormLabel>Situação do Cadastro</FormLabel>
                   <FormControl>
-                    <FormSelect v-bind="componentField" :items="[
-                      { label: 'Aprovado', value: 'active' },
-                      { label: 'Inativo', value: 'inactive' },
-                      { label: 'Pendente', value: 'pending' }
-                    ]" :label="'Selecione o Status'" />
+                    <FormSelect
+                      v-bind="componentField"
+                      :items="[
+                        { label: 'Aprovado', value: 'active' },
+                        { label: 'Inativo', value: 'inactive' },
+                        { label: 'Pendente', value: 'pending' },
+                      ]"
+                      :label="'Selecione o Status'"
+                    />
                   </FormControl>
                 </FormItem>
               </FormField>
@@ -368,7 +398,11 @@ const findAddress = async () => {
                 <FormItem>
                   <FormLabel>CNPJ</FormLabel>
                   <FormControl>
-                    <Input type="text" placeholder="00.000.000/0001-00" v-bind="componentField" />
+                    <Input
+                      type="text"
+                      placeholder="00.000.000/0001-00"
+                      v-bind="componentField"
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -377,7 +411,11 @@ const findAddress = async () => {
                 <FormItem>
                   <FormLabel>Razão Social</FormLabel>
                   <FormControl>
-                    <Input type="text" placeholder="Insira o nome" v-bind="componentField" />
+                    <Input
+                      type="text"
+                      placeholder="Insira o nome"
+                      v-bind="componentField"
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -386,7 +424,11 @@ const findAddress = async () => {
                 <FormItem>
                   <FormLabel>Nome Fantasia</FormLabel>
                   <FormControl>
-                    <Input type="text" placeholder="Insira o nome" v-bind="componentField" />
+                    <Input
+                      type="text"
+                      placeholder="Insira o nome"
+                      v-bind="componentField"
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -398,11 +440,23 @@ const findAddress = async () => {
                   <FormLabel>CEP</FormLabel>
                   <FormControl>
                     <div class="flex gap-2">
-                      <Input type="text" placeholder="12345-000" v-bind="componentField" v-model="zipcode"
-                        maxlength="8" />
-                      <Button @click.prevent="findAddress" :disabled="zipcode?.length !== 8" type="button">
+                      <Input
+                        type="text"
+                        placeholder="12345-000"
+                        v-bind="componentField"
+                        v-model="zipcode"
+                        maxlength="8"
+                      />
+                      <Button
+                        @click.prevent="findAddress"
+                        :disabled="zipcode?.length !== 8"
+                        type="button"
+                      >
                         <Search v-if="!isLoadingAddress" class="w-10 h-10" />
-                        <LoaderCircle v-if="isLoadingAddress" class="w-10 h-10 animate-spin" />
+                        <LoaderCircle
+                          v-if="isLoadingAddress"
+                          class="w-10 h-10 animate-spin"
+                        />
                       </Button>
                     </div>
                   </FormControl>
@@ -413,7 +467,11 @@ const findAddress = async () => {
                 <FormItem class="col-span-2">
                   <FormLabel>Endereço</FormLabel>
                   <FormControl>
-                    <Input type="text" placeholder="Insira o endereço" v-bind="componentField" />
+                    <Input
+                      type="text"
+                      placeholder="Insira o endereço"
+                      v-bind="componentField"
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -422,7 +480,11 @@ const findAddress = async () => {
                 <FormItem class="col-span-1">
                   <FormLabel>Número</FormLabel>
                   <FormControl>
-                    <Input type="text" placeholder="ex. 1876" v-bind="componentField" />
+                    <Input
+                      type="text"
+                      placeholder="ex. 1876"
+                      v-bind="componentField"
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -431,7 +493,11 @@ const findAddress = async () => {
                 <FormItem class="col-span-1">
                   <FormLabel>Complemento</FormLabel>
                   <FormControl>
-                    <Input type="text" placeholder="ex.: Quadra 3, Bloco A, Setor 3B" v-bind="componentField" />
+                    <Input
+                      type="text"
+                      placeholder="ex.: Quadra 3, Bloco A, Setor 3B"
+                      v-bind="componentField"
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -440,7 +506,11 @@ const findAddress = async () => {
                 <FormItem class="col-span-1">
                   <FormLabel>Bairro</FormLabel>
                   <FormControl>
-                    <Input type="text" placeholder="ex.: Vila Santana" v-bind="componentField" />
+                    <Input
+                      type="text"
+                      placeholder="ex.: Vila Santana"
+                      v-bind="componentField"
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -449,7 +519,11 @@ const findAddress = async () => {
                 <FormItem class="col-span-1">
                   <FormLabel>Cidade</FormLabel>
                   <FormControl>
-                    <Input type="text" placeholder="ex.: São Paulo" v-bind="componentField" />
+                    <Input
+                      type="text"
+                      placeholder="ex.: São Paulo"
+                      v-bind="componentField"
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -458,7 +532,11 @@ const findAddress = async () => {
                 <FormItem class="col-span-1">
                   <FormLabel>Estado</FormLabel>
                   <FormControl>
-                    <Input type="text" placeholder="ex.: São Paulo" v-bind="componentField" />
+                    <Input
+                      type="text"
+                      placeholder="ex.: São Paulo"
+                      v-bind="componentField"
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -467,7 +545,11 @@ const findAddress = async () => {
                 <FormItem>
                   <FormLabel>Telefone</FormLabel>
                   <FormControl>
-                    <Input type="text" placeholder="(11) 98765-4321" v-bind="componentField" />
+                    <Input
+                      type="text"
+                      placeholder="(11) 98765-4321"
+                      v-bind="componentField"
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -476,7 +558,11 @@ const findAddress = async () => {
                 <FormItem>
                   <FormLabel>Site</FormLabel>
                   <FormControl>
-                    <Input type="text" placeholder="www.empresa.com.br" v-bind="componentField" />
+                    <Input
+                      type="text"
+                      placeholder="www.empresa.com.br"
+                      v-bind="componentField"
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -493,39 +579,65 @@ const findAddress = async () => {
                             appearance: {
                               container: '!items-start',
                               allowedContent: '!absolute !top-10',
-
                             },
                             content: {
-                              allowedContent({ ready, fileTypes, isUploading }) {
+                              allowedContent({
+                                ready,
+                                fileTypes,
+                                isUploading,
+                              }) {
                                 if (ready) return '';
-                                if (isUploading) return 'Enviando seu arquivo, aguarde...';
+                                if (isUploading)
+                                  return 'Enviando seu arquivo, aguarde...';
                               },
                             },
                             endpoint: 'customerLogo',
                             onClientUploadComplete: (file) => {
-                              editCustomerData.logo.name = file[0].name
-                              editCustomerData.logo.url = file[0].ufsUrl
+                              editCustomerData.logo.name = file[0].name;
+                              editCustomerData.logo.url = file[0].ufsUrl;
                             },
                             onUploadError: (error) => {
                               toast({
                                 title: 'Ooops!',
-                                class: 'bg-red-500 border-0 text-white text-2xl',
+                                class:
+                                  'bg-red-500 border-0 text-white text-2xl',
                                 description: `Erro ao enviar o arquivo. Tente novamente. ${error.cause}`,
                               });
                             },
-                          }" />
+                          }"
+                        />
                       </div>
-                      <div v-if="editCustomerData.logo?.name !== ''" class="flex gap-2 items-center">
+                      <div
+                        v-if="editCustomerData.logo?.name !== ''"
+                        class="flex gap-2 items-center"
+                      >
                         <Paperclip class="w-4 h-4 text-zinc-500" />
-                        <div class="px-4 py-2 border border-dashed border-zinc-500 rounded-md bg-white">
-                          <a class="underline" :href="editCustomerData.logo?.url" target="_blank"
-                            rel="noopener noreferrer">
-                            {{ editCustomerData.logo?.name || 'Nenhum arquivo anexo' }}
+                        <div
+                          class="px-4 py-2 border border-dashed border-zinc-500 rounded-md bg-white"
+                        >
+                          <a
+                            class="underline"
+                            :href="editCustomerData.logo?.url"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                          >
+                            {{
+                              editCustomerData.logo?.name ||
+                              'Nenhum arquivo anexo'
+                            }}
                           </a>
                         </div>
-                        <LoaderCircle v-if="loadingFileData" class="w-4 h-4 animate-spin" />
-                        <CircleX v-else class="w-4 h-4 text-zinc-500 hover:text-red-500 cursor-pointer"
-                          @click.prevent="deleteFile(editCustomerData.logo?.url)" />
+                        <LoaderCircle
+                          v-if="loadingFileData"
+                          class="w-4 h-4 animate-spin"
+                        />
+                        <CircleX
+                          v-else
+                          class="w-4 h-4 text-zinc-500 hover:text-red-500 cursor-pointer"
+                          @click.prevent="
+                            deleteFile(editCustomerData.logo?.url)
+                          "
+                        />
                       </div>
                     </div>
                   </FormControl>
@@ -542,24 +654,11 @@ const findAddress = async () => {
                   <FormItem>
                     <FormLabel>Nome</FormLabel>
                     <FormControl>
-                      <FormSelect v-bind="componentField" :items="[
-                        {
-                          label: 'Felipe Vegners',
-                          value: 'Felipe Vegners'
-                        },
-                        {
-                          label: 'Humberto Pansica',
-                          value: 'Humberto Pansica'
-                        },
-                        {
-                          label: 'Maria dos Santos',
-                          value: 'Maria dos Santos'
-                        },
-                        {
-                          label: 'João da Silva',
-                          value: 'João da Silva'
-                        }
-                      ]" :label="'Selecione o gerente'" />
+                      <Input
+                        type="text"
+                        placeholder="Insira o nome do Gerente desta conta"
+                        v-bind="componentField"
+                      />
                     </FormControl>
                   </FormItem>
                 </FormField>
@@ -567,7 +666,11 @@ const findAddress = async () => {
                   <FormItem>
                     <FormLabel>Telefone</FormLabel>
                     <FormControl>
-                      <Input type="text" placeholder="(11) 98765-4321" v-bind="componentField" />
+                      <Input
+                        type="text"
+                        placeholder="(11) 98765-4321"
+                        v-bind="componentField"
+                      />
                     </FormControl>
                   </FormItem>
                 </FormField>
@@ -575,7 +678,11 @@ const findAddress = async () => {
                   <FormItem>
                     <FormLabel>E-mail</FormLabel>
                     <FormControl>
-                      <Input type="text" placeholder="nome@empresa.com.br" v-bind="componentField" />
+                      <Input
+                        type="text"
+                        placeholder="nome@empresa.com.br"
+                        v-bind="componentField"
+                      />
                     </FormControl>
                   </FormItem>
                 </FormField>
@@ -583,7 +690,10 @@ const findAddress = async () => {
             </div>
             <div class="my-10">
               <h2 class="mb-4 text-lg font-bold">Centro de Custo</h2>
-              <AddCCAreaForm v-model="editCustomerData.ccAreas" class="col-span-3" />
+              <AddCCAreaForm
+                v-model="editCustomerData.ccAreas"
+                class="col-span-3"
+              />
             </div>
             <div class="my-6">
               <h2 class="mb-6 text-lg font-bold">Faturamento</h2>
@@ -592,20 +702,24 @@ const findAddress = async () => {
                   <FormItem>
                     <FormLabel>Tipo de Faturamento</FormLabel>
                     <FormControl>
-                      <FormSelect v-bind="componentField" :items="[
-                        {
-                          label: '1 a 30 dias',
-                          value: '01-30'
-                        },
-                        {
-                          label: '1 a 15',
-                          value: '01-15'
-                        },
-                        {
-                          label: 'Aberto',
-                          value: '00-00'
-                        }
-                      ]" :label="'Selecione'" />
+                      <FormSelect
+                        v-bind="componentField"
+                        :items="[
+                          {
+                            label: '1 a 30 dias',
+                            value: '01-30',
+                          },
+                          {
+                            label: '1 a 15',
+                            value: '01-15',
+                          },
+                          {
+                            label: 'Aberto',
+                            value: '00-00',
+                          },
+                        ]"
+                        :label="'Selecione'"
+                      />
                     </FormControl>
                   </FormItem>
                 </FormField>
@@ -613,7 +727,11 @@ const findAddress = async () => {
                   <FormItem>
                     <FormLabel>Prazo de Pagamento</FormLabel>
                     <FormControl>
-                      <Input type="number" placeholder="ex.: 30" v-bind="componentField" />
+                      <Input
+                        type="number"
+                        placeholder="ex.: 30"
+                        v-bind="componentField"
+                      />
                     </FormControl>
                   </FormItem>
                 </FormField>
@@ -622,54 +740,86 @@ const findAddress = async () => {
             <Separator class="my-6 border-b border-zinc-300" />
             <div class="my-6 flex">
               <h2 class="mb-6 mr-6 font-bold text-xl">Usuários Cadastrados</h2>
-              <Button type="button" class="flex items-center justify-center" @click="
-                (event) => {
-                  toggleAddPassengerForm();
-                  resetPassengerState();
-                  toggleIsEditing();
-                }
-              " :disabled="isEditing">
+              <Button
+                type="button"
+                class="flex items-center justify-center"
+                @click="
+                  (event) => {
+                    toggleAddPassengerForm();
+                    resetPassengerState();
+                    toggleIsEditing();
+                  }
+                "
+                :disabled="isEditing"
+              >
                 <Plus class="w-4 h-4" /> Adicionar usuário
               </Button>
             </div>
             <section v-if="showAddPassengerForm">
-              <AddCorpUserForm :isNewUser="false" :customerId="editCustomerData?.id"
-                :customerName="editCustomerData?.name" :ccAreas="editCustomerData?.ccAreas"
-                @show-form="toggleAddPassengerForm" @fetch-customer="fetchCustomerData" />
+              <AddCorpUserForm
+                :isNewUser="false"
+                :customerId="editCustomerData?.id"
+                :customerName="editCustomerData?.name"
+                :ccAreas="editCustomerData?.ccAreas"
+                @show-form="toggleAddPassengerForm"
+                @fetch-customer="fetchCustomerData"
+              />
             </section>
             <section class="mb-6 px-4 rounded-md bg-white">
-              <DataTable :columns="passengerColumns" :data="editCustomerData?.passengers || []" sortby="name" />
+              <DataTable
+                :columns="passengerColumns"
+                :data="editCustomerData?.passengers || []"
+                sortby="name"
+              />
             </section>
             <h2 class="mb-6 font-bold text-xl">Pendências do Cliente</h2>
-            <section v-if="editCustomerData.pendingItems === null"
-              class="mb-6 p-6 flex items-center justify-center rounded-md bg-white">
+            <section
+              v-if="editCustomerData.pendingItems === null"
+              class="mb-6 p-6 flex items-center justify-center rounded-md bg-white"
+            >
               <p class="text-zinc-400">Nenhuma pendência encontrada</p>
             </section>
             <section class="my-10">
               <h2 class="my-6 font-bold text-xl">Histórico de Atendimentos</h2>
-              <div class="mb-6 p-6 flex items-center justify-center rounded-md bg-white">
+              <div
+                class="mb-6 p-6 flex items-center justify-center rounded-md bg-white"
+              >
                 <p class="text-zinc-400">Nenhum histórico encontrado</p>
               </div>
             </section>
             <section class="my-10">
               <h2 class="my-6 font-bold text-xl">Faturas</h2>
-              <div class="mb-6 p-6 flex items-center justify-center rounded-md bg-white">
+              <div
+                class="mb-6 p-6 flex items-center justify-center rounded-md bg-white"
+              >
                 <p class="text-zinc-400">Nenhuma fatura encontrada</p>
               </div>
             </section>
-            <section class="p-6 flex gap-8 rounded-md border-4 border-red-500 bg-white">
+            <section
+              class="p-6 flex gap-8 rounded-md border-4 border-red-500 bg-white"
+            >
               <h2 class="font-bold">Acesso ao sistema</h2>
               <FormField v-slot="{ value, handleChange }" name="enabled">
                 <FormItem>
                   <div class="flex items-center space-x-3">
-                    <Label for="enabled" class="text-md flex gap-2 items-center">
+                    <Label
+                      for="enabled"
+                      class="text-md flex gap-2 items-center"
+                    >
                       <LockKeyhole />
                       <small>Negado</small>
                     </Label>
                     <FormControl>
-                      <Switch :checked="value" aria-readonly @update:checked="handleChange" />
+                      <Switch
+                        :checked="value"
+                        aria-readonly
+                        @update:checked="handleChange"
+                      />
                     </FormControl>
-                    <Label for="enabled" class="text-md flex gap-2 items-center">
+                    <Label
+                      for="enabled"
+                      class="text-md flex gap-2 items-center"
+                    >
                       <LockKeyholeOpen />
                       <small>Permitido</small>
                     </Label>
@@ -684,7 +834,11 @@ const findAddress = async () => {
                 <LoaderCircle v-if="isLoading" class="w-10 h-10 animate-spin" />
                 Salvar alterações
               </Button>
-              <Button variant="ghost" class="ml-4" @click="navigateTo('/admin/customers')">
+              <Button
+                variant="ghost"
+                class="ml-4"
+                @click="navigateTo('/admin/customers')"
+              >
                 Cancelar
               </Button>
             </div>
