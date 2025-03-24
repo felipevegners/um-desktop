@@ -121,7 +121,7 @@ export const sideMenuData = {
     },
     {
       name: 'Usuários',
-      url: '#',
+      url: '/admin/accounts',
       icon: UserPen,
     },
     {

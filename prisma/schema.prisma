@@ -11,16 +11,14 @@ datasource db {
 }
 
 model Accounts {
-  id             String     @id @default(auto()) @map("_id") @db.ObjectId
-  username       String
-  hashedPassword String
-  email          String     @unique
-  name           String
-  company        Customers?
-  position       String?
-  role           String
-  createdAt      DateTime?  @default(now())
-  updatedAt      DateTime?  @updatedAt()
+  id        String    @id @default(auto()) @map("_id") @db.ObjectId
+  username  String
+  password  String
+  email     String    @unique
+  name      String
+  role      String
+  createdAt DateTime? @default(now())
+  updatedAt DateTime? @updatedAt()
 }
 
 model Customers {
@@ -33,8 +31,8 @@ model Customers {
   phone        String?
   website      String
   logo         Json?
-  adminId      String       @unique @db.ObjectId
-  admin        Accounts?    @relation(fields: [adminId], references: [id])
+  // adminId      String       @unique @db.ObjectId
+  // admin        Accounts?    @relation(fields: [adminId], references: [id])
   managerName  String
   managerPhone String
   managerEmail String
