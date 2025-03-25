@@ -10,11 +10,16 @@ import {
   UserPen,
 } from 'lucide-vue-next';
 
-export const sideMenuData = {
+const { data } = useAuth();
+//@ts-ignore
+const { user } = data.value;
+
+export const backofficeMenuData = {
+  title: 'Painel Backoffice',
   user: {
-    name: 'Felipe Vegners',
-    company: 'Urban Mobi',
-    email: 'vegners@urbanmobi.com.br',
+    name: user.username,
+    company: user.role,
+    email: user.email,
     avatar: '',
   },
   navMain: [
@@ -22,7 +27,7 @@ export const sideMenuData = {
       title: 'Clientes',
       url: '#',
       icon: Building2,
-      isActive: false,
+      isActive: true,
       items: [
         {
           title: 'Base de Clientes',
@@ -46,6 +51,7 @@ export const sideMenuData = {
       title: 'Motoristas',
       url: '#',
       icon: Car,
+      isActive: false,
       items: [
         {
           title: 'Base de Motoristas',
@@ -65,6 +71,7 @@ export const sideMenuData = {
       title: 'Atendimentos',
       url: '',
       icon: CalendarDays,
+      isActive: false,
       items: [
         {
           title: 'Abertos',
@@ -88,6 +95,7 @@ export const sideMenuData = {
       title: 'Financeiro',
       url: '#',
       icon: HandCoins,
+      isActive: false,
       items: [
         {
           title: 'Faturas em aberto',

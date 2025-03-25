@@ -1,6 +1,7 @@
 // Transformar em Componente
 <script setup lang="ts">
 import { toTypedSchema } from '@vee-validate/zod';
+import { LoaderCircle } from 'lucide-vue-next';
 import { useForm } from 'vee-validate';
 import * as z from 'zod';
 
@@ -23,7 +24,7 @@ const form = useForm({
   validationSchema: formSchema,
 });
 
-const { signIn } = useAuth();
+const { signIn, status } = useAuth();
 
 const onSubmit = form.handleSubmit(async (values) => {
   try {
@@ -66,7 +67,13 @@ const onSubmit = form.handleSubmit(async (values) => {
             </FormControl>
           </FormItem>
         </FormField>
-        <Button class="mt-4 h-12 w-full" type="submit">Acessar</Button>
+        <Button class="mt-4 h-12 w-full" type="submit">
+          <LoaderCircle
+            v-if="status === 'loading'"
+            class="h-full text-um-primary animate-spin"
+          />
+          Acessar
+        </Button>
       </form>
     </Card>
     <div class="my-4 flex gap-8 text-zinc-600">

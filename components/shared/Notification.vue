@@ -1,5 +1,6 @@
 <script setup lang="ts">
-import { Bell } from "lucide-vue-next";
+import { Bell } from 'lucide-vue-next';
+
 const hasNotifications = ref(true);
 const notificationCount = 10;
 </script>
@@ -12,7 +13,7 @@ const notificationCount = 10;
     >
       <Bell />
     </div>
-    <!-- <h4 class="text-sm">Notificações</h4> -->
+    <p class="text-sm">Notificações</p>
   </div>
 </template>
 

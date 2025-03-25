@@ -11,6 +11,18 @@ export type ModuleOptions = RouteHandlerConfig & {
 export default defineNuxtConfig({
   compatibilityDate: '2024-11-01',
   devtools: { enabled: true },
+  app: {
+    head: {
+      title:
+        'Urban Mobi - Plataforma de Gestão de Mobilidade Urbana e Corporativa',
+      htmlAttrs: {
+        lang: 'pt-BR',
+      },
+      link: [{ rel: 'icon', type: 'image/x-icon', href: '/favicon.ico' }],
+      charset: 'utf-16',
+      viewport: 'width=device-width, initial-scale=1, maximum-scale=1',
+    },
+  },
   modules: [
     '@nuxtjs/tailwindcss',
     '@nuxtjs/color-mode',

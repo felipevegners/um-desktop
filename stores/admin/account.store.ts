@@ -14,6 +14,7 @@ export const useAccountStore = defineStore('accounts', {
         email: '',
         role: '',
       },
+      isLoadingSend: false,
       isLoggedIn: false,
     };
   },
@@ -36,10 +37,13 @@ export const useAccountStore = defineStore('accounts', {
       }
     },
     async registerUserAccountAction(accountData: any) {
+      this.isLoadingSend = true;
       try {
         await createUserAccountService(accountData);
       } catch (error) {
         console.log('Error durging user register -> ', error);
+      } finally {
+        this.isLoadingSend = false;
       }
     },
   },

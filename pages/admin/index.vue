@@ -2,17 +2,11 @@
 definePageMeta({
   layout: 'admin',
 });
-
-const { data, signOut } = useAuth();
 </script>
 
 <template>
   <div class="p-6">
-    <div class="flex gap-6 items-center">
-      <!-- @vue-skip -->
-      <h3>Seja bem vindo, {{ data.user.username }}!</h3>
-      <Button @click="signOut">Sair</Button>
-    </div>
+    <div class="flex gap-6 items-center"></div>
     <h1 class="text-2xl font-bold">Dashboard</h1>
   </div>
   <div class="flex flex-1 flex-col gap-4 p-6 pt-0">

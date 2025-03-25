@@ -5,21 +5,22 @@ import {
   ChevronRight,
   ChevronsUpDown,
   CreditCard,
-  Folder,
-  Forward,
   LayoutDashboard,
   LogOut,
-  MoreHorizontal,
   Sparkles,
-  Trash2,
 } from 'lucide-vue-next';
-import { computed, ref } from 'vue';
+import { computed } from 'vue';
 import Header from '~/components/shared/Header.vue';
-import { sideMenuData } from '~/config/admin/dashboard-menu';
+import { generateMenu } from '~/config/menu/generateMenu';
+
+const { data, signOut } = useAuth();
+//@ts-ignore
+const { user } = data.value;
+const menuData = generateMenu(user.role);
 
 const userNameInitials = computed(() => {
-  const splited = sideMenuData.user.name.split(' ');
-  return splited.map((word) => word[0]).join('');
+  const splited = menuData.user.name.split(' ');
+  return splited.map((word: string) => word[0]).join('');
 });
 </script>
 
@@ -41,19 +42,19 @@ const userNameInitials = computed(() => {
       </SidebarHeader>
       <SidebarContent class="scrollbar-hidden sidebar">
         <SidebarGroup>
-          <SidebarGroupLabel class="mb-2 text-lg"
-            >Plataforma de Gestão</SidebarGroupLabel
-          >
+          <SidebarGroupLabel class="mb-4 text-lg">
+            {{ menuData.title }}
+          </SidebarGroupLabel>
           <SidebarMenu>
             <SidebarMenuItem class="my-4">
               <SidebarMenuButton tooltip="Dashboard">
-                <component :is="LayoutDashboard" />
-                <a href="/admin">Dashboard</a>
+                <component :is="LayoutDashboard" class="text-[#33ffcc]" />
+                <a class="text-[#33ffcc] text-md" href="/admin">Dashboard</a>
               </SidebarMenuButton>
             </SidebarMenuItem>
             <SidebarSeparator class="mb-4 border-b border-zinc-800" />
             <Collapsible
-              v-for="item in sideMenuData.navMain"
+              v-for="item in menuData.navMain"
               :key="item.title"
               as-child
               :default-open="item.isActive"
@@ -90,56 +91,22 @@ const userNameInitials = computed(() => {
         </SidebarGroup>
         <SidebarSeparator class="border-b border-zinc-800" />
         <SidebarGroup class="group-data-[collapsible=icon]:hidden">
-          <SidebarGroupLabel>Configurações</SidebarGroupLabel>
+          <SidebarGroupLabel class="text-[#33ffcc] text-md"
+            >Configurações</SidebarGroupLabel
+          >
           <SidebarMenu>
-            <SidebarMenuItem
-              v-for="item in sideMenuData.settings"
-              :key="item.name"
-            >
+            <SidebarMenuItem v-for="item in menuData.settings" :key="item.name">
               <SidebarMenuButton as-child>
                 <a :href="item.url">
                   <component :is="item.icon" />
                   <span>{{ item.name }}</span>
                 </a>
               </SidebarMenuButton>
-              <DropdownMenu>
-                <DropdownMenuTrigger as-child>
-                  <SidebarMenuAction show-on-hover>
-                    <MoreHorizontal />
-                    <span class="sr-only">More</span>
-                  </SidebarMenuAction>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent
-                  class="w-48 rounded-lg"
-                  side="bottom"
-                  align="end"
-                >
-                  <DropdownMenuItem>
-                    <Folder class="text-muted-foreground" />
-                    <span>View Project</span>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem>
-                    <Forward class="text-muted-foreground" />
-                    <span>Share Project</span>
-                  </DropdownMenuItem>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem>
-                    <Trash2 class="text-muted-foreground" />
-                    <span>Delete Project</span>
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            </SidebarMenuItem>
-            <SidebarMenuItem>
-              <SidebarMenuButton class="text-sidebar-foreground/70">
-                <MoreHorizontal class="text-sidebar-foreground/70" />
-                <span>More</span>
-              </SidebarMenuButton>
             </SidebarMenuItem>
           </SidebarMenu>
         </SidebarGroup>
       </SidebarContent>
-      <SidebarFooter class="bg-zinc-800 sidebar-footer">
+      <SidebarFooter class="bg-red-500 sidebar-footer">
         <SidebarMenu>
           <SidebarMenuItem>
             <DropdownMenu>
@@ -150,8 +117,8 @@ const userNameInitials = computed(() => {
                 >
                   <Avatar class="h-8 w-8 rounded-lg bg-um-primary">
                     <AvatarImage
-                      :src="sideMenuData.user.avatar"
-                      :alt="sideMenuData.user.name"
+                      :src="menuData.user.avatar"
+                      :alt="menuData.user.name"
                     />
                     <AvatarFallback class="rounded-lg">
                       {{ userNameInitials }}
@@ -159,10 +126,10 @@ const userNameInitials = computed(() => {
                   </Avatar>
                   <div class="grid flex-1 text-left text-sm leading-tight">
                     <span class="truncate font-semibold">{{
-                      sideMenuData.user.name
+                      menuData.user.name
                     }}</span>
                     <span class="truncate text-xs">{{
-                      sideMenuData.user.company
+                      menuData.user.company
                     }}</span>
                   </div>
                   <ChevronsUpDown class="ml-auto size-4" />
@@ -178,10 +145,10 @@ const userNameInitials = computed(() => {
                   <div
                     class="flex items-center gap-2 px-1 py-1.5 text-left text-sm"
                   >
-                    <Avatar class="h-8 w-8 rounded-lg">
+                    <Avatar class="h-8 w-8 bg-um-primary rounded-lg">
                       <AvatarImage
-                        :src="sideMenuData.user.avatar"
-                        :alt="sideMenuData.user.name"
+                        :src="menuData.user.avatar"
+                        :alt="menuData.user.name"
                       />
                       <AvatarFallback class="rounded-lg">
                         {{ userNameInitials }}
@@ -189,10 +156,10 @@ const userNameInitials = computed(() => {
                     </Avatar>
                     <div class="grid flex-1 text-left text-sm leading-tight">
                       <span class="truncate font-semibold">{{
-                        sideMenuData.user.name
+                        menuData.user.name
                       }}</span>
                       <span class="truncate text-xs">{{
-                        sideMenuData.user.email
+                        menuData.user.email
                       }}</span>
                     </div>
                   </div>
@@ -220,7 +187,10 @@ const userNameInitials = computed(() => {
                   </DropdownMenuItem>
                 </DropdownMenuGroup>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem>
+                <DropdownMenuItem
+                  class="hover:bg-zinc-500"
+                  @click.prevent="signOut"
+                >
                   <LogOut />
                   Log out
                 </DropdownMenuItem>
@@ -240,10 +210,10 @@ const userNameInitials = computed(() => {
 
 <style scoped>
 .sidebar {
-  @apply md:bg-transparent bg-zinc-900 text-white;
+  @apply md:bg-transparent bg-zinc-600 text-white;
 }
 
 .sidebar-footer {
-  @apply md:bg-transparent bg-zinc-800 text-white;
+  @apply md:bg-transparent bg-zinc-600 text-white;
 }
 </style>
