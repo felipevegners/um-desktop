@@ -3,7 +3,7 @@ import bcrypt from 'bcrypt';
 
 export default defineEventHandler(async (event) => {
   const body = await readBody(event);
-  if (!body.userName || !body.userEmail || !body.userPassword || !body.role) {
+  if (!body.username || !body.email || !body.password || !body.role) {
     throw createError({
       statusCode: 400,
       statusMessage: 'Bad Request',
@@ -11,7 +11,7 @@ export default defineEventHandler(async (event) => {
     });
   }
   const salt = await bcrypt.genSalt(10);
-  const hashedPassword = await bcrypt.hash(body.userPassword, salt);
+  const hashedPassword = await bcrypt.hash(body.password, salt);
 
   const newAccount = await prisma.accounts.create({
     data: { ...body, password: hashedPassword },

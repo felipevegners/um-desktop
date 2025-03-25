@@ -27,10 +27,8 @@ const form = useForm({
 });
 
 const onSubmit = form.handleSubmit(async (values) => {
-  console.log('values -> ', values);
   const accountData = {
-    username: values.userEmail,
-    name: values.userName,
+    username: values.userName,
     password: values.userPassword,
     email: values.userEmail,
     role: values.role,

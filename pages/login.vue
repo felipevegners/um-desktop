@@ -1,11 +1,37 @@
 // Transformar em Componente
 <script setup lang="ts">
+import { toTypedSchema } from '@vee-validate/zod';
+import { useForm } from 'vee-validate';
+import * as z from 'zod';
+
 definePageMeta({
   layout: 'login',
+  auth: {
+    unauthenticatedOnly: true,
+    navigateAuthenticatedTo: '/admin',
+  },
 });
-async function handleSubmitForm() {
-  await navigateTo('/admin');
-}
+
+const formSchema = toTypedSchema(
+  z.object({
+    email: z.string().email(),
+    password: z.string().min(2).max(8),
+  }),
+);
+
+const form = useForm({
+  validationSchema: formSchema,
+});
+
+const { signIn } = useAuth();
+
+const onSubmit = form.handleSubmit(async (values) => {
+  try {
+    await signIn('credentials', values);
+  } catch (error) {
+    console.log('Erro no login -> ', error);
+  }
+});
 </script>
 
 <template>
@@ -14,22 +40,32 @@ async function handleSubmitForm() {
   >
     <img class="mb-12 h-10" src="/images/logo_horizontal_white.svg" alt="" />
     <Card class="p-8 w-[380px]">
-      <form action="" @submit.prevent="handleSubmitForm">
+      <form @submit="onSubmit">
         <h1 class="mb-8 font-bold text-2xl text-center">Acessar plataforma</h1>
-        <Label for="username">Usuário:</Label>
-        <Input
-          class="mb-4"
-          type="email"
-          name="username"
-          placeholder="Insira seu e-mail"
-        />
-        <Label for="password">Senha:</Label>
-        <Input
-          class="mb-4"
-          type="password"
-          name="password"
-          placeholder="Insira sua senha"
-        />
+        <FormField v-slot="{ componentField }" name="email">
+          <FormItem>
+            <FormLabel>E-mail</FormLabel>
+            <FormControl>
+              <Input
+                type="text"
+                placeholder="Insira seu e-mail"
+                v-bind="componentField"
+              />
+            </FormControl>
+          </FormItem>
+        </FormField>
+        <FormField v-slot="{ componentField }" name="password">
+          <FormItem>
+            <FormLabel>Senha</FormLabel>
+            <FormControl>
+              <Input
+                type="password"
+                placeholder="Insira sua senha"
+                v-bind="componentField"
+              />
+            </FormControl>
+          </FormItem>
+        </FormField>
         <Button class="mt-4 h-12 w-full" type="submit">Acessar</Button>
       </form>
     </Card>

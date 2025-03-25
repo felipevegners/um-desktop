@@ -20,17 +20,7 @@ export default defineNuxtConfig({
     '@sidebase/nuxt-auth',
   ],
   auth: {
-    isEnabled: true,
-    disableServerSideAuth: false,
-    originEnvKey: 'NUXT_AUTH_ORIGIN',
-    baseURL: 'http://localhost:3000/api/auth',
-    provider: {
-      type: 'authjs',
-    },
-    sessionRefresh: {
-      enablePeriodically: true,
-      enableOnWindowFocus: true,
-    },
+    globalAppMiddleware: true,
   },
   shadcn: {
     /**
@@ -47,7 +37,7 @@ export default defineNuxtConfig({
   //   skipPrompts: true
   // },
   runtimeConfig: {
-    authSecret: process.env.NUXT_AUTH_SECRET,
+    authSecret: process.env.AUTH_SECRET,
     DATABASE_URL: process.env.DATABASE_URL,
     public: {
       DATABASE_URL: process.env.DATABASE_URL,

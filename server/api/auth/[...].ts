@@ -1,5 +1,11 @@
 import { NuxtAuthHandler } from '#auth';
+import { useToast } from '@/components/ui/toast/use-toast';
+import bcrypt from 'bcrypt';
 import CredentialsProvider from 'next-auth/providers/credentials';
+import Alert from '~/components/ui/alert/Alert.vue';
+import { prisma } from '~/utils/prisma';
+
+const { toast } = useToast();
 
 export default NuxtAuthHandler({
   secret: useRuntimeConfig().authSecret,
@@ -9,20 +15,35 @@ export default NuxtAuthHandler({
   providers: [
     //@ts-expect-error
     CredentialsProvider.default({
-      name: 'Credentials',
+      name: 'credentials',
       credentials: {},
       //@ts-ignore
-      async authorize(credentials, req) {
-        const res = await fetch('/api/auth/accounts', {
-          method: 'POST',
-          body: JSON.stringify(credentials),
-          headers: { 'Content-type': 'application/json' },
+      async authorize(credentials: { email: string; password: string }) {
+        const account = await prisma.accounts.findUnique({
+          where: {
+            email: credentials.email,
+          },
         });
-        const user = await res.json();
-        if (res.ok && user) {
-          return user;
+
+        if (!account) {
+          throw new Error('Conta não existente!');
         }
-        return null;
+
+        const isValid = await bcrypt.compare(
+          credentials.password,
+          account.password,
+        );
+
+        if (!isValid) {
+          throw createError({
+            statusCode: 401,
+            statusMessage: 'Senha inválida!',
+          });
+        }
+        return {
+          ...account,
+          password: undefined,
+        };
       },
     }),
   ],
@@ -36,6 +57,7 @@ export default NuxtAuthHandler({
         token = {
           ...token,
           ...user,
+          ...account,
         };
       }
       return token;
@@ -43,7 +65,6 @@ export default NuxtAuthHandler({
     async session({ session, token }) {
       session.user = {
         ...token,
-        ...session.user,
       };
       return session;
     },
