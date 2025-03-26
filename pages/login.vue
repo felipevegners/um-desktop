@@ -9,7 +9,6 @@ definePageMeta({
   layout: 'login',
   auth: {
     unauthenticatedOnly: true,
-    navigateAuthenticatedTo: '/admin',
   },
 });
 

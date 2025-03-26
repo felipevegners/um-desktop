@@ -49,7 +49,7 @@ const userNameInitials = computed(() => {
             <SidebarMenuItem class="my-4">
               <SidebarMenuButton tooltip="Dashboard">
                 <component :is="LayoutDashboard" class="text-[#33ffcc]" />
-                <a class="text-[#33ffcc] text-md" href="/admin">Dashboard</a>
+                <a class="text-[#33ffcc] text-md" href="/">Dashboard</a>
               </SidebarMenuButton>
             </SidebarMenuItem>
             <SidebarSeparator class="mb-4 border-b border-zinc-800" />

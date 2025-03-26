@@ -4,9 +4,7 @@ import { LogOut } from 'lucide-vue-next';
 import Notification from './Notification.vue';
 import ThemeSelector from './ThemeSelector.vue';
 
-const { data, signOut } = useAuth();
-//@ts-ignore
-const { user } = data.value;
+const { data, signOut, status } = useAuth();
 </script>
 <template>
   <header
@@ -16,9 +14,14 @@ const { user } = data.value;
       <SidebarTrigger class="-ml-1" />
       <Separator orientation="vertical" class="mr-2 h-4" />
       <!-- @vue-skip -->
-      <h3 class="text-md">
-        Olá, <span class="font-bold">{{ user.username }}</span>
+      <h3 class="text-md" v-if="data">
+        Olá, <span class="font-bold">{{ data.user.name }} </span>
+        <span> - {{ status }}</span>
       </h3>
+      <h3 class="text-md" v-else>
+        Sua sessão expirou, faça novamente o login.
+      </h3>
+
       <!-- <Breadcrumb>
         <BreadcrumbList>
           <BreadcrumbItem class="hidden md:block">

@@ -6,6 +6,7 @@ import { columns } from './columns';
 
 definePageMeta({
   layout: 'admin',
+  middleware: 'sidebase-auth',
 });
 
 useHead({

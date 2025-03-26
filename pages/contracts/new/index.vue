@@ -23,7 +23,7 @@ let defaultValue = 'form-1';
 <template>
   <main class="p-6">
     <section class="mb-10 flex items-center justify-between">
-      <h1 class="text-3xl font-bold">Novo Contrato</h1>
+      <h1 class="text-2xl font-bold">Novo Contrato</h1>
       <!-- <Button @click="">Trocar</Button> -->
     </section>
     <Accordion

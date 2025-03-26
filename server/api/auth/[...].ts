@@ -49,15 +49,18 @@ export default NuxtAuthHandler({
   ],
   session: {
     strategy: 'jwt',
+    maxAge: 300,
   },
 
   callbacks: {
-    async jwt({ token, user, account }) {
+    async jwt({ token, user }) {
+      console.log('User from JWT callback -> ', user);
       if (user) {
         token = {
           ...token,
           ...user,
-          ...account,
+          //@ts-ignore
+          name: user?.username,
         };
       }
       return token;
