@@ -1,29 +1,27 @@
 <script setup lang="ts" generic="TData, TValue">
-import type {
-  ColumnDef,
-  ColumnFiltersState,
-  ExpandedState,
-  SortingState,
-  VisibilityState
-} from "@tanstack/vue-table";
-import { Button } from "@/components/ui/button";
-
+import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
   DropdownMenuCheckboxItem,
   DropdownMenuContent,
-  DropdownMenuTrigger
-} from "@/components/ui/dropdown-menu";
-import { Input } from "@/components/ui/input";
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import { Input } from '@/components/ui/input';
 import {
   Table,
   TableBody,
   TableCell,
   TableHead,
   TableHeader,
-  TableRow
-} from "@/components/ui/table";
-import { cn, valueUpdater } from "~/lib/utils";
+  TableRow,
+} from '@/components/ui/table';
+import type {
+  ColumnDef,
+  ColumnFiltersState,
+  ExpandedState,
+  SortingState,
+  VisibilityState,
+} from '@tanstack/vue-table';
 import {
   FlexRender,
   getCoreRowModel,
@@ -31,10 +29,11 @@ import {
   getFilteredRowModel,
   getPaginationRowModel,
   getSortedRowModel,
-  useVueTable
-} from "@tanstack/vue-table";
-import { ChevronDown, Settings2 } from "lucide-vue-next";
-import { ref } from "vue";
+  useVueTable,
+} from '@tanstack/vue-table';
+import { ChevronDown, Settings2 } from 'lucide-vue-next';
+import { ref } from 'vue';
+import { cn, valueUpdater } from '~/lib/utils';
 
 const sorting = ref<SortingState>([]);
 const columnFilters = ref<ColumnFiltersState>([]);
@@ -47,6 +46,7 @@ const props = defineProps<{
   data: TData[];
   sortby: string;
   columnPin?: string[];
+  filterBy?: string;
 }>();
 
 const table = useVueTable({
@@ -86,9 +86,9 @@ const table = useVueTable({
       return expanded.value;
     },
     columnPinning: {
-      left: props.columnPin
-    }
-  }
+      left: props.columnPin,
+    },
+  },
 });
 </script>
 
@@ -97,7 +97,7 @@ const table = useVueTable({
     <div class="flex gap-2 items-center py-4">
       <Input
         class="max-w-sm"
-        placeholder="Filtrar por nome"
+        :placeholder="`Filtrar por ${filterBy}`"
         :model-value="table.getColumn(sortby)?.getFilterValue() as string"
         @update:model-value="table.getColumn(sortby)?.setFilterValue($event)"
       />
@@ -141,9 +141,9 @@ const table = useVueTable({
               :class="
                 cn(
                   {
-                    'sticky bg-background/95': header.column.getIsPinned()
+                    'sticky bg-background/95': header.column.getIsPinned(),
                   },
-                  header.column.getIsPinned() === 'left' ? 'left-0' : 'right-0'
+                  header.column.getIsPinned() === 'left' ? 'left-0' : 'right-0',
                 )
               "
             >
@@ -166,11 +166,11 @@ const table = useVueTable({
                   :class="
                     cn(
                       {
-                        'sticky bg-background/95': cell.column.getIsPinned()
+                        'sticky bg-background/95': cell.column.getIsPinned(),
                       },
                       cell.column.getIsPinned() === 'left'
                         ? 'left-0'
-                        : 'right-0'
+                        : 'right-0',
                     )
                   "
                 >

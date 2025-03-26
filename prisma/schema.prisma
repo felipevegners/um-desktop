@@ -20,6 +20,17 @@ model Accounts {
   updatedAt DateTime? @updatedAt()
 }
 
+model Contracts {
+  id                  String @id @default(auto()) @map("_id") @db.ObjectId
+  number              Int
+  customer            Json
+  customerBranches    Json?
+  customerUsers       Json?
+  masterManager       Json
+  comercialConditions Json?
+  pricing             Json?
+}
+
 model Customers {
   id           String       @id @default(auto()) @map("_id") @db.ObjectId
   status       String?

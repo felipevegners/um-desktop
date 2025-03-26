@@ -4,6 +4,7 @@ import {
   Car,
   Coins,
   HandCoins,
+  Handshake,
   LayoutDashboard,
   SquarePercent,
   User,
@@ -24,10 +25,29 @@ export const backofficeMenuData = {
   },
   navMain: [
     {
-      title: 'Clientes',
+      title: 'Contratos',
+      url: '#',
+      icon: Handshake,
+      isActive: true,
+      items: [
+        {
+          title: 'Contratos Ativos',
+          url: '/contracts/active',
+        },
+        {
+          title: 'Contratos Inativos',
+          url: '/contracts/inactive',
+        },
+        {
+          title: 'Novo Contrato',
+          url: '/contracts/new',
+        },
+      ],
+    },
+    {
+      title: 'OLD Clientes',
       url: '#',
       icon: Building2,
-      isActive: true,
       items: [
         {
           title: 'Base de Clientes',
