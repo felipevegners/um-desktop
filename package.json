@@ -26,14 +26,15 @@
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "jsonwebtoken": "^9.0.2",
-    "lucide-vue-next": "^0.471.0",
+    "lucide-vue-next": "^0.484.0",
     "next-auth": "4.21.1",
     "nuxt": "^3.15.1",
     "pinia": "^2.3.1",
     "prisma": "^6.2.1",
     "radix-vue": "^1.9.12",
+    "reka-ui": "^2.1.1",
     "shadcn-nuxt": "0.11.3",
-    "tailwind-merge": "^2.6.0",
+    "tailwind-merge": "^3.0.2",
     "tailwindcss-animate": "^1.0.7",
     "uploadthing": "^7.5.2",
     "vaul-vue": "^0.2.0",
@@ -52,5 +53,6 @@
   },
   "overrides": {
     "vue": "latest"
-  }
+  },
+  "packageManager": "yarn@1.22.22+sha512.a6b2f7906b721bba3d67d4aff083df04dad64c399707841b7acf00f6b133b7ac24255f2652fa22ae3534329dc6180534e98d17432037ff6fd140556e2bb3137e"
 }

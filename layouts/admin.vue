@@ -79,6 +79,8 @@ const userNameInitials = computed(() => {
                     >
                       <SidebarMenuSubButton as-child>
                         <NuxtLink :href="subItem.url">
+                          <!-- @vue-skip -->
+                          <component :v-if="subItem.icon" :is="subItem.icon" />
                           <span>{{ subItem.title }}</span>
                         </NuxtLink>
                       </SidebarMenuSubButton>

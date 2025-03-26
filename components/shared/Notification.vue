@@ -2,7 +2,7 @@
 import { Bell } from 'lucide-vue-next';
 
 const hasNotifications = ref(true);
-const notificationCount = 10;
+const notificationCount = 6;
 </script>
 
 <template>
@@ -13,7 +13,6 @@ const notificationCount = 10;
     >
       <Bell />
     </div>
-    <p class="text-sm">Notificações</p>
   </div>
 </template>
 
@@ -24,14 +23,15 @@ const notificationCount = 10;
   &:before {
     content: attr(data-notifications);
     position: absolute;
-    top: -12px;
-    right: -12px;
-    padding: 2px;
-    width: 24px;
-    height: 20px;
-    border-radius: 6px;
+    top: -10px;
+    right: -10px;
+    padding: 4px;
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
     background-color: #dc2626;
-    font-size: 12px;
+    font-size: 11px;
+    line-height: 15px;
     font-weight: bold;
     text-align: center;
     color: #ffffff;

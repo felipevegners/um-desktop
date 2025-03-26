@@ -6,6 +6,7 @@ import {
   HandCoins,
   Handshake,
   LayoutDashboard,
+  Plus,
   SquarePercent,
   User,
   UserPen,
@@ -39,6 +40,7 @@ export const backofficeMenuData = {
           url: '/contracts/inactive',
         },
         {
+          icon: Plus,
           title: 'Novo Contrato',
           url: '/contracts/new',
         },
