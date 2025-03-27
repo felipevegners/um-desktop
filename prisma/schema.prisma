@@ -21,47 +21,40 @@ model Accounts {
 }
 
 model Contracts {
-  id                  String @id @default(auto()) @map("_id") @db.ObjectId
-  number              Int
-  customer            Json
+  id                  String     @id @default(auto()) @map("_id") @db.ObjectId
+  company             Customers? @relation(fields: [companyId], references: [id])
+  companyId           String?    @db.ObjectId
   customerBranches    Json?
   customerUsers       Json?
-  masterManager       Json
+  masterManager       Json?
   comercialConditions Json?
   pricing             Json?
+  services            Json?
+  createdAt           DateTime?  @default(now())
+  updatedAt           DateTime?  @updatedAt()
 }
 
 model Customers {
-  id           String       @id @default(auto()) @map("_id") @db.ObjectId
-  status       String?
-  name         String?
-  fantasyName  String?
-  document     String?      @unique
-  address      Json
-  phone        String?
-  website      String
-  logo         Json?
-  // adminId      String       @unique @db.ObjectId
-  // admin        Accounts?    @relation(fields: [adminId], references: [id])
-  managerName  String
-  managerPhone String
-  managerEmail String
-  pendingItems Json?
-  passengers   Passengers[]
-  ccAreas      Json?
-  billingInfo  Json?
-  enabled      Boolean
-  createdAt    DateTime?    @default(now())
-  updatedAt    DateTime?    @updatedAt()
+  id          String      @id @default(auto()) @map("_id") @db.ObjectId
+  status      String?
+  name        String?
+  fantasyName String?
+  document    String?     @unique
+  address     Json?
+  phone       String?
+  website     String?
+  logo        Json?
+  enabled     Boolean?
+  createdAt   DateTime?   @default(now())
+  updatedAt   DateTime?   @updatedAt()
+  Contracts   Contracts[]
 }
 
 model Passengers {
-  id           String     @id @default(auto()) @map("_id") @db.ObjectId
+  id           String    @id @default(auto()) @map("_id") @db.ObjectId
   name         String
-  email        String     @unique
+  email        String    @unique
   phone        String
-  company      Customers? @relation(fields: [customerId], references: [id])
-  customerId   String?    @db.ObjectId
   customerName String?
   department   String?
   position     String?
@@ -71,8 +64,8 @@ model Passengers {
   type         String //Corp or Regular
   document     String?
   history      Json?
-  createdAt    DateTime?  @default(now())
-  updatedAt    DateTime?  @updatedAt()
+  createdAt    DateTime? @default(now())
+  updatedAt    DateTime? @updatedAt()
 }
 
 model Drivers {

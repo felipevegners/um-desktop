@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import ComercialConditionsForm from '@/components/forms/ComercialConditionsForm.vue';
-import CustomerForm from '@/components/forms/CustomerForm.vue';
+import CompanyForm from '@/components/forms/CompanyForm.vue';
 import MasterManagerForm from '@/components/forms/MasterManagerForm.vue';
 import RatingPriceForm from '@/components/forms/RatingPriceForm.vue';
 import {
@@ -37,7 +37,7 @@ let defaultValue = 'form-1';
           1. Dados da Empresa Matriz
         </AccordionTrigger>
         <AccordionContent class="mt-4">
-          <CustomerForm />
+          <CompanyForm />
         </AccordionContent>
       </AccordionItem>
       <AccordionItem value="form-2" class="bg-zinc-200 rounded-md">

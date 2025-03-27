@@ -27,6 +27,7 @@
     "clsx": "^2.1.1",
     "jsonwebtoken": "^9.0.2",
     "lucide-vue-next": "^0.484.0",
+    "maska": "^3.1.1",
     "next-auth": "4.21.1",
     "nuxt": "^3.15.1",
     "pinia": "^2.3.1",

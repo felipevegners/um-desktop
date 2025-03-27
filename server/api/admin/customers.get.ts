@@ -1,4 +1,4 @@
-import { prisma } from "~/utils/prisma";
+import { prisma } from '~/utils/prisma';
 
 type UserId = {
   id: string;
@@ -10,11 +10,11 @@ export default defineEventHandler(async (event) => {
   if (userId) {
     const customer = await prisma.customers.findUnique({
       where: {
-        id: userId
+        id: userId,
       },
-      include: {
-        passengers: true
-      }
+      // include: {
+      //   passengers: true
+      // }
     });
 
     return customer;

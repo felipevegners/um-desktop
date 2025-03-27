@@ -1,14 +1,18 @@
 <script setup lang="ts">
 import { useToast } from '@/components/ui/toast/use-toast';
 import { findAddressByZipcode } from '@/server/services/FindAddress';
+import { useContractsStore } from '@/stores/contracts.store';
 import { toTypedSchema } from '@vee-validate/zod';
 import { LoaderCircle, Search } from 'lucide-vue-next';
+import { vMaska } from 'maska/vue';
 import { useForm } from 'vee-validate';
 import { ref } from 'vue';
 import * as z from 'zod';
 
+const { createContractAction } = useContractsStore();
+
 definePageMeta({
-  name: 'CustomerForm',
+  name: 'CompanyForm',
 });
 const { toast } = useToast();
 
@@ -24,14 +28,14 @@ const formSchema = toTypedSchema(
     name: z.string().min(2).max(100),
     document: z.string().min(2).max(50),
     fantasyName: z.string().min(2).max(50),
-    zipcode: z.string().min(2).max(8),
+    zipcode: z.string().min(1).max(9),
     streetName: z.string().min(2).max(50),
     streetNumber: z.string().min(2).max(50),
     complement: z.string().min(0).max(50),
     neighborhood: z.string().min(2).max(50),
     city: z.string().min(2).max(50),
     state: z.string().min(2).max(50),
-    phone: z.string().min(2).max(15),
+    phone: z.string().min(2).max(16),
     website: z.string().min(2).max(50),
     logo: z
       .any()
@@ -51,7 +55,7 @@ const form = useForm({
 const findAddress = async () => {
   const { zipcode } = form.values;
 
-  if (zipcode?.length !== 8) {
+  if (zipcode?.length !== 9) {
     toast({
       title: 'Opss!',
       class: 'bg-red-500 border-0 text-white text-2xl',
@@ -118,85 +122,70 @@ const { startUpload } = useUploadThing('customerLogo', {
 });
 
 const onSubmit = form.handleSubmit(async (values) => {
-  console.log('Values -> ', values);
-  // const files = [values?.logo];
-  // isLoadingSend.value = true;
+  const files = [values?.logo];
+  isLoadingSend.value = true;
 
-  // try {
-  //   if (!files) return;
-  //   const filesResponse = await startUpload(files);
-  //   const {
-  //     name,
-  //     document,
-  //     fantasyName,
-  //     streetName,
-  //     streetNumber,
-  //     complement,
-  //     neighborhood,
-  //     city,
-  //     state,
-  //     zipcode,
-  //     phone,
-  //     website,
-  //     managerName,
-  //     managerPhone,
-  //     managerEmail,
-  //     paymentTerm,
-  //     paymentDueDate,
-  //   } = values;
+  try {
+    if (!files) {
+      console.log('Sem logo');
+    }
+    // const filesResponse = await startUpload(files);
+    const {
+      name,
+      document,
+      fantasyName,
+      streetName,
+      streetNumber,
+      complement,
+      neighborhood,
+      city,
+      state,
+      zipcode,
+      phone,
+      website,
+    } = values;
 
-  //   const newCustomerData = {
-  //     name,
-  //     document,
-  //     fantasyName,
-  //     address: {
-  //       zipcode,
-  //       streetName,
-  //       streetNumber,
-  //       complement,
-  //       neighborhood,
-  //       city,
-  //       state,
-  //     },
-  //     billingInfo: {
-  //       billing: paymentTerm,
-  //       dueDate: paymentDueDate,
-  //     },
-  //     phone,
-  //     website,
-  //     logo: {
-  //       //@ts-ignore
-  //       name: filesResponse[0]?.name || '',
-  //       //@ts-ignore
-  //       url: filesResponse[0]?.ufsUrl || '',
-  //     },
-  //     adminId: '67bda5bd3e3ed4a5d2bdb799',
-  //     managerName,
-  //     managerPhone,
-  //     managerEmail,
-  //     ccAreas: [...ccAreas],
-  //     status: 'pending',
-  //     enabled: false,
-  //   };
+    const companyData = {
+      name,
+      document,
+      fantasyName,
+      address: {
+        zipcode,
+        streetName,
+        streetNumber,
+        complement,
+        neighborhood,
+        city,
+        state,
+      },
+      phone,
+      website,
+      // logo: {
+      //   //@ts-ignore
+      //   name: filesResponse[0]?.name || '',
+      //   //@ts-ignore
+      //   url: filesResponse[0]?.ufsUrl || '',
+      // },
+      status: 'active',
+      enabled: false,
+    };
 
-  //   await createNewCustomerAction(newCustomerData as any);
-  // } catch (error) {
-  //   console.log('Error -> ', error);
-  //   toast({
-  //     title: 'Opss!',
-  //     class: 'bg-red-500 border-0 text-white text-2xl',
-  //     description: `Ocorreu um erro ao cadastrar o cliente. Tente novamente.`,
-  //   });
-  // } finally {
-  //   setTimeout(() => {}, 2000);
-  //   toast({
-  //     title: 'Tudo pronto!',
-  //     class: 'bg-green-600 border-0 text-white text-2xl',
-  //     description: `Empresa cadastrada com sucesso!`,
-  //   });
-  //   showAddForm.value = !showAddForm.value;
-  //   await getCustomersAction();
-  // }
+    await createContractAction(companyData as any);
+  } catch (error) {
+    console.log('Error -> ', error);
+    toast({
+      title: 'Opss!',
+      class: 'bg-red-500 border-0 text-white text-2xl',
+      description: `Ocorreu um erro ao cadastrar o cliente. Tente novamente.`,
+    });
+  } finally {
+    isLoadingSend.value = false;
+    toast({
+      title: 'Tudo pronto!',
+      class: 'bg-green-600 border-0 text-white text-2xl',
+      description: `Empresa cadastrada com sucesso!`,
+    });
+  }
 });
 </script>
 <template>
@@ -207,7 +196,11 @@ const onSubmit = form.handleSubmit(async (values) => {
           <FormItem>
             <FormLabel>CNPJ</FormLabel>
             <FormControl>
-              <Input type="text" v-bind="componentField" />
+              <Input
+                type="text"
+                v-bind="componentField"
+                v-maska="'##.###.###/####-##'"
+              />
             </FormControl>
           </FormItem>
         </FormField>
@@ -238,11 +231,12 @@ const onSubmit = form.handleSubmit(async (values) => {
                   type="text"
                   v-bind="componentField"
                   v-model="zipcode"
-                  maxlength="8"
+                  maxlength="9"
+                  v-maska="'#####-###'"
                 />
                 <Button
                   @click.prevent="findAddress"
-                  :disabled="zipcode.length !== 8"
+                  :disabled="zipcode.length !== 9"
                   type="button"
                 >
                   <Search v-if="!isLoadingAddress" class="w-10 h-10" />
@@ -309,8 +303,13 @@ const onSubmit = form.handleSubmit(async (values) => {
           <FormItem>
             <FormLabel>Telefone</FormLabel>
             <FormControl>
-              <Input type="text" v-bind="componentField" />
+              <Input
+                type="text"
+                v-bind="componentField"
+                v-maska="'(##) # ####-####'"
+              />
             </FormControl>
+            <FormMessage />
           </FormItem>
         </FormField>
         <FormField v-slot="{ componentField }" name="website">
