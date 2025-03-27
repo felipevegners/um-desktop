@@ -18,7 +18,13 @@ export default defineNuxtConfig({
       htmlAttrs: {
         lang: 'pt-BR',
       },
-      link: [{ rel: 'icon', type: 'image/x-icon', href: '/favicon.ico' }],
+      link: [
+        {
+          rel: 'icon',
+          type: 'image/svg',
+          href: 'images/um_symbol_negative.svg',
+        },
+      ],
       charset: 'utf-16',
       viewport: 'width=device-width, initial-scale=1, maximum-scale=1',
     },
