@@ -19,3 +19,14 @@ export const createContractService = async (contractData: any) => {
     console.log('Error during service POST -> ', error);
   }
 };
+
+export const updateContractService = async (contractData: any) => {
+  try {
+    await $fetch('/api/contracts/contracts', {
+      method: 'PUT',
+      body: contractData,
+    });
+  } catch (error) {
+    console.log('Error Service -> error ');
+  }
+};
