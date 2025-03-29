@@ -160,15 +160,6 @@ const onSubmit = form.handleSubmit(async (values) => {
         </FormField>
       </div>
     </section>
-    <section class="px-6">
-      <Button type="submit">
-        <LoaderCircle v-if="isLoadingSend" class="w-10 h-10 animate-spin" />
-        Salvar
-      </Button>
-      <Button variant="ghost" class="ml-4" @click.prevent="form.resetForm()">
-        Cancelar
-      </Button>
-    </section>
   </form>
 </template>
 

@@ -1,8 +1,10 @@
 <script setup lang="ts">
+import AdditionalInfoForm from '@/components/forms/AdditionalInfoForm.vue';
 import ComercialConditionsForm from '@/components/forms/ComercialConditionsForm.vue';
-import CompanyStepForm from '@/components/forms/CompanyStepForm.vue';
+import CompanyForm from '@/components/forms/CompanyForm.vue';
 import MasterManagerForm from '@/components/forms/MasterManagerForm.vue';
 import RatingPriceForm from '@/components/forms/RatingPriceForm.vue';
+import ServicesForm from '@/components/forms/ServicesForm.vue';
 import {
   Accordion,
   AccordionContent,
@@ -13,7 +15,13 @@ import { Button } from '@/components/ui/button';
 import { useToast } from '@/components/ui/toast/use-toast';
 import { findAddressByZipcode } from '@/server/services/FindAddress';
 import { toTypedSchema } from '@vee-validate/zod';
-import { LoaderCircle, Search } from 'lucide-vue-next';
+import {
+  ArrowLeft,
+  ArrowRight,
+  Check,
+  LoaderCircle,
+  Search,
+} from 'lucide-vue-next';
 import { vMaska } from 'maska/vue';
 import { ErrorMessage, Field, Form, useForm } from 'vee-validate';
 import { computed, ref } from 'vue';
@@ -80,10 +88,11 @@ const currentSchema = computed(() => {
 });
 
 function nextStep(values: any) {
-  if (currentStep.value === 3) {
-    console.log('Done: ', JSON.stringify(values, null, 2));
-    return;
-  }
+  // if (currentStep.value === 3) {
+  //   console.log('Done: ', JSON.stringify(values, null, 2));
+  //   return;
+  // }
+  console.log('CHAMOU!!!', values);
   currentStep.value++;
 }
 
@@ -98,7 +107,6 @@ const onSubmit = form.handleSubmit(async (values) => {
     console.log('Done: ', JSON.stringify(values, null, 2));
     return;
   }
-  currentStep.value++;
 });
 
 function prevStep() {
@@ -171,33 +179,37 @@ const findAddress = async (code: string) => {
 <template>
   <main class="p-6">
     <section class="mb-10 flex items-center justify-between">
-      <h1 class="text-2xl font-bold">Novo Contrato</h1>
+      <h1 class="text-2xl font-bold">Adicionar Novo Contrato</h1>
     </section>
     <form @submit="onSubmit" keep-values>
       <Accordion
         type="single"
         class="w-full flex flex-col gap-6"
-        :default-value="currentStep.toString()"
+        collapsible
+        :default-value="currentStep"
+        v-model="currentStep"
       >
         <AccordionItem
-          v-if="currentStep === 0"
-          :value="currentStep.toString()"
           class="bg-zinc-200 rounded-md"
+          :class="currentStep > 0 ? 'bg-um-primary' : ''"
+          :value="0"
+          disabled
         >
           <AccordionTrigger class="px-6 text-xl font-bold hover:no-underline">
             1. Dados da Empresa Matriz
           </AccordionTrigger>
           <AccordionContent class="mt-4">
-            <CompanyStepForm
+            <CompanyForm
               :find-address="findAddress"
               :loading="isLoadingAddress"
             />
           </AccordionContent>
         </AccordionItem>
         <AccordionItem
-          v-if="currentStep === 1"
-          value="form-2"
           class="bg-zinc-200 rounded-md"
+          :class="currentStep > 1 ? 'bg-um-primary' : ''"
+          :value="1"
+          disabled
         >
           <AccordionTrigger class="px-6 text-xl font-bold hover:no-underline">
             2. Gestor Master
@@ -207,9 +219,10 @@ const findAddress = async (code: string) => {
           </AccordionContent>
         </AccordionItem>
         <AccordionItem
-          v-if="currentStep === 2"
-          value="form-3"
           class="bg-zinc-200 rounded-md"
+          :class="currentStep > 2 ? 'bg-um-primary' : ''"
+          :value="2"
+          disabled
         >
           <AccordionTrigger class="px-6 text-xl font-bold hover:no-underline">
             3. Condições Comerciais
@@ -219,28 +232,73 @@ const findAddress = async (code: string) => {
           </AccordionContent>
         </AccordionItem>
         <AccordionItem
-          v-if="currentStep === 3"
-          value="form-4"
           class="bg-zinc-200 rounded-md"
+          :class="currentStep > 3 ? 'bg-um-primary' : ''"
+          :value="3"
+          disabled
         >
           <AccordionTrigger class="px-6 text-xl font-bold hover:no-underline">
-            4. Tarifas
+            4. Serviços do Contrato
+          </AccordionTrigger>
+          <AccordionContent>
+            <ServicesForm />
+          </AccordionContent>
+        </AccordionItem>
+        <AccordionItem
+          class="bg-zinc-200 rounded-md"
+          :class="currentStep > 4 ? 'bg-um-primary' : ''"
+          :value="4"
+          disabled
+        >
+          <AccordionTrigger class="px-6 text-xl font-bold hover:no-underline">
+            5. Tarifas Negociadas
           </AccordionTrigger>
           <AccordionContent>
             <RatingPriceForm />
           </AccordionContent>
         </AccordionItem>
+        <AccordionItem
+          class="bg-zinc-200 rounded-md"
+          :class="currentStep > 5 ? 'bg-um-primary' : ''"
+          :value="5"
+          disabled
+        >
+          <AccordionTrigger class="px-6 text-xl font-bold hover:no-underline">
+            6. Informações Adicionais
+          </AccordionTrigger>
+          <AccordionContent>
+            <AdditionalInfoForm />
+          </AccordionContent>
+        </AccordionItem>
       </Accordion>
-      <div class="mt-6">
-        <Button v-if="currentStep !== 0" type="button" @click="prevStep">
-          Previous
+      <div
+        class="mt-6 mb-10 flex"
+        :class="currentStep === 0 ? 'justify-end' : 'justify-between'"
+      >
+        <Button
+          v-if="currentStep !== 0"
+          type="button"
+          variant="ghost"
+          @click="prevStep"
+          class="flex-end"
+        >
+          <ArrowLeft class="w-5 h-5" />
+          Voltar
         </Button>
-
-        <Button v-if="currentStep !== 3" type="submit">Next</Button>
-
-        <Button v-if="currentStep === 3" type="submit">Finish</Button>
-
-        <!-- <pre>{{ values }}</pre> -->
+        <!-- <Button v-if="currentStep !== 3" type="submit">Next</Button> -->
+        <Button
+          v-if="currentStep !== 5"
+          type="button"
+          @click.prevent="nextStep"
+        >
+          Avançar
+          <ArrowRight class="w-5 h-5" />
+        </Button>
+        <Button v-if="currentStep === 5" type="submit">
+          <LoaderCircle v-if="false" class="w-5 h-5 animate-spin" />
+          <Check class="w-5 h-5" />
+          Finalizar Cadastro
+        </Button>
       </div>
     </form>
   </main>
