@@ -44,6 +44,7 @@ const ACCEPTED_IMAGE_TYPES = ['image/jpeg', 'image/jpg', 'image/png'];
 
 const schemas = [
   toTypedSchema(
+    // Company Schema
     z.object({
       name: z.string().min(2, 'Insira o nome').max(100),
       document: z.string().min(2).max(50),
@@ -71,6 +72,7 @@ const schemas = [
         .optional(),
     }),
   ),
+  // Master Manager Schema
   toTypedSchema(
     z.object({
       managerName: z.string().min(1).max(100),
@@ -79,6 +81,13 @@ const schemas = [
       department: z.string().min(1).max(50),
       managerEmail: z.string().email().min(1).max(100),
       password: z.string().min(8).max(8),
+    }),
+  ),
+  // Comercial Conditions Schema
+  toTypedSchema(
+    z.object({
+      paymentTerm: z.string().min(1).max(100),
+      paymentDueDate: z.string().min(2).max(16),
     }),
   ),
 ];
