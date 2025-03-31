@@ -48,7 +48,6 @@ defineProps<{
       <FormField v-slot="{ componentField, value }" name="zipcode">
         <FormItem class="col-span-1">
           <FormLabel>CEP</FormLabel>
-          {{ value }}
           <FormControl>
             <div class="flex gap-2">
               <Input

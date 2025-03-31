@@ -5,6 +5,7 @@ import CompanyForm from '@/components/forms/CompanyForm.vue';
 import MasterManagerForm from '@/components/forms/MasterManagerForm.vue';
 import RatingPriceForm from '@/components/forms/RatingPriceForm.vue';
 import ServicesForm from '@/components/forms/ServicesForm.vue';
+import CheckBoxGroup from '@/components/shared/CheckBoxGroup.vue';
 import {
   Accordion,
   AccordionContent,
@@ -34,7 +35,7 @@ useHead({
   title: 'Backoffice - Adicionar Novo Contrato | Urban Mobi',
 });
 
-const currentStep = ref(0);
+const currentStep = ref<any>(3);
 
 const { toast } = useToast();
 const isLoadingAddress = ref<boolean>(false);
@@ -57,7 +58,7 @@ const schemas = [
       city: z.string().min(2).max(50),
       state: z.string().min(2).max(50),
       phone: z.string().min(2).max(16),
-      phoneExtension: z.string().min(2).max(6),
+      phoneExtension: z.string().min(2).max(6).optional(),
       website: z.string().min(2).max(50),
       logo: z
         .any()
@@ -70,6 +71,13 @@ const schemas = [
           'Apenas arquivos nos formatos .jpg, .jpeg ou .png são aceitos ',
         )
         .optional(),
+      services: z.object({
+        services: z
+          .array(z.string())
+          .refine((value) => value.some((item) => item), {
+            message: 'Selecione ao menos uma restrição!',
+          }),
+      }),
     }),
   ),
   // Master Manager Schema
@@ -80,34 +88,39 @@ const schemas = [
       position: z.string().min(1).max(50),
       department: z.string().min(1).max(50),
       managerEmail: z.string().email().min(1).max(100),
-      password: z.string().min(8).max(8),
+      password: z.string().min(8, 'Mínimo de 8 caracteres').max(8),
     }),
   ),
   // Comercial Conditions Schema
   toTypedSchema(
     z.object({
-      paymentTerm: z.string().min(1).max(100),
-      paymentDueDate: z.string().min(2).max(16),
+      paymentTerm: z.string().min(1).max(10),
+      paymentDueDate: z.number().min(0),
     }),
   ),
+  // Services Schema
+  // toTypedSchema(
+  //   z.object({
+  //     services: z
+  //       .array(z.string())
+  //       .refine((value) => value.some((item) => item), {
+  //         message: 'Selecione ao menos uma restrição!',
+  //       }),
+  //   }),
+  // ),
 ];
 
 const currentSchema = computed(() => {
   return schemas[currentStep.value];
 });
 
-function nextStep(values: any) {
-  // if (currentStep.value === 3) {
-  //   console.log('Done: ', JSON.stringify(values, null, 2));
-  //   return;
-  // }
-  console.log('CHAMOU!!!', values);
-  currentStep.value++;
-}
-
 const form = useForm({
   validationSchema: currentSchema,
   keepValuesOnUnmount: true,
+  initialValues: {
+    //@ts-ignore
+    services: [],
+  },
 });
 
 const onSubmit = form.handleSubmit(async (values) => {
@@ -116,6 +129,7 @@ const onSubmit = form.handleSubmit(async (values) => {
     console.log('Done: ', JSON.stringify(values, null, 2));
     return;
   }
+  currentStep.value++;
 });
 
 function prevStep() {
@@ -198,6 +212,7 @@ const findAddress = async (code: string) => {
         :default-value="currentStep"
         v-model="currentStep"
       >
+        <!-- @vue-skip -->
         <AccordionItem
           class="bg-zinc-200 rounded-md"
           :class="currentStep > 0 ? 'bg-um-primary' : ''"
@@ -209,11 +224,12 @@ const findAddress = async (code: string) => {
           </AccordionTrigger>
           <AccordionContent class="mt-4">
             <CompanyForm
-              :find-address="findAddress"
+              :findAddress="findAddress"
               :loading="isLoadingAddress"
             />
           </AccordionContent>
         </AccordionItem>
+        <!-- @vue-skip -->
         <AccordionItem
           class="bg-zinc-200 rounded-md"
           :class="currentStep > 1 ? 'bg-um-primary' : ''"
@@ -227,6 +243,7 @@ const findAddress = async (code: string) => {
             <MasterManagerForm />
           </AccordionContent>
         </AccordionItem>
+        <!-- @vue-skip -->
         <AccordionItem
           class="bg-zinc-200 rounded-md"
           :class="currentStep > 2 ? 'bg-um-primary' : ''"
@@ -240,6 +257,7 @@ const findAddress = async (code: string) => {
             <ComercialConditionsForm />
           </AccordionContent>
         </AccordionItem>
+        <!-- @vue-skip -->
         <AccordionItem
           class="bg-zinc-200 rounded-md"
           :class="currentStep > 3 ? 'bg-um-primary' : ''"
@@ -250,9 +268,12 @@ const findAddress = async (code: string) => {
             4. Serviços do Contrato
           </AccordionTrigger>
           <AccordionContent>
-            <ServicesForm />
+            <FormField v-slot="{ componentField }" name="services">
+              <ServicesForm v-bind="componentField" />
+            </FormField>
           </AccordionContent>
         </AccordionItem>
+        <!-- @vue-skip -->
         <AccordionItem
           class="bg-zinc-200 rounded-md"
           :class="currentStep > 4 ? 'bg-um-primary' : ''"
@@ -266,6 +287,7 @@ const findAddress = async (code: string) => {
             <RatingPriceForm />
           </AccordionContent>
         </AccordionItem>
+        <!-- @vue-skip -->
         <AccordionItem
           class="bg-zinc-200 rounded-md"
           :class="currentStep > 5 ? 'bg-um-primary' : ''"
@@ -294,12 +316,7 @@ const findAddress = async (code: string) => {
           <ArrowLeft class="w-5 h-5" />
           Voltar
         </Button>
-        <!-- <Button v-if="currentStep !== 3" type="submit">Next</Button> -->
-        <Button
-          v-if="currentStep !== 5"
-          type="button"
-          @click.prevent="nextStep"
-        >
+        <Button v-if="currentStep !== 5" type="submit">
           Avançar
           <ArrowRight class="w-5 h-5" />
         </Button>

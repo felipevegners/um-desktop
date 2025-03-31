@@ -5,52 +5,63 @@ const services = [
   {
     id: 'free_km',
     label: 'Kilometragem Livre',
+    price: 0,
+  },
+  {
+    id: 'hour_price',
+    label: 'Valor por Hora',
+    price: 0,
+  },
+  {
+    id: 'km_price',
+    label: 'Valor por KM',
+    price: 0,
   },
   {
     id: 'aditional_km',
-    label: 'Kilometragem Adicional',
+    label: 'Valor p/ KM adicional',
+    price: 0,
   },
   {
-    id: 'hourly_km',
-    label: 'Valor por Hora',
+    id: 'weekend_km',
+    label: 'Valor KM Fim de Semana',
+    price: 0,
   },
 ] as const;
 </script>
 <template>
   <section class="px-6">
-    <div>
-      <FormField v-slot="{ componentField }" name="services">
-        <FormItem>
-          <FormLabel class="mb-4">Selecione os Serviços</FormLabel>
-          <div class="mt-4 flex items-start gap-6">
-            <FormField
-              v-for="item in services"
-              v-slot="{ handleChange, value }"
-              :key="item.id"
-              type="checkbox"
-              :value="item.id"
-              :unchecked-value="false"
-              name="restrictions"
-            >
-              <FormItem
-                class="mt-4 max-w-[200px] flex items-start space-x-2 space-y-0"
-              >
-                <FormControl>
-                  <Checkbox
-                    :checked="value?.includes(item.id)"
-                    @update:checked="handleChange"
-                  />
-                </FormControl>
-                <FormLabel class="font-normal">
-                  {{ item.label }}
-                </FormLabel>
-              </FormItem>
-            </FormField>
-          </div>
-          <FormMessage />
+    <FormItem>
+      <FormField
+        v-for="item in services"
+        v-slot="{ handleChange, value }"
+        :key="item.id"
+        type="checkbox"
+        :value="item.id"
+        :unchecked-value="false"
+        name="services"
+      >
+        <FormItem class="flex items-start space-x-3 space-y-0">
+          <FormControl>
+            <Checkbox
+              @update:checked="handleChange"
+              :checked="value?.includes(item.id)"
+            />
+          </FormControl>
+          <FormLabel class="mb-4">
+            {{ item.label }}
+            <Input
+              type="text"
+              placeholder="Insira o valor da tarifa"
+              class="mt-4"
+              :value="item.price"
+            />
+          </FormLabel>
         </FormItem>
+        {{ value }}
       </FormField>
-    </div>
+      <FormMessage />
+    </FormItem>
   </section>
 </template>
 <style scoped></style>

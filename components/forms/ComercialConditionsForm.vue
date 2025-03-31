@@ -12,6 +12,7 @@ definePageMeta({
           <FormControl>
             <Input type="text" v-bind="componentField" />
           </FormControl>
+          <FormMessage />
         </FormItem>
       </FormField>
       <FormField v-slot="{ componentField }" name="paymentDueDate">
@@ -20,6 +21,7 @@ definePageMeta({
           <FormControl>
             <Input type="number" v-bind="componentField" />
           </FormControl>
+          <FormMessage />
         </FormItem>
       </FormField>
     </div>
