@@ -35,7 +35,7 @@ useHead({
   title: 'Backoffice - Adicionar Novo Contrato | Urban Mobi',
 });
 
-const currentStep = ref<any>(3);
+const currentStep = ref<any>(0);
 
 const { toast } = useToast();
 const isLoadingAddress = ref<boolean>(false);
@@ -125,7 +125,7 @@ const form = useForm({
 
 const onSubmit = form.handleSubmit(async (values) => {
   console.log('Chamou!', values);
-  if (currentStep.value === 3) {
+  if (currentStep.value === 4) {
     console.log('Done: ', JSON.stringify(values, null, 2));
     return;
   }
@@ -137,6 +137,13 @@ function prevStep() {
     return;
   }
   currentStep.value--;
+}
+
+function nextStep() {
+  if (currentStep.value === 4) {
+    return;
+  }
+  currentStep.value++;
 }
 
 const findAddress = async (code: string) => {
@@ -265,7 +272,7 @@ const findAddress = async (code: string) => {
           disabled
         >
           <AccordionTrigger class="px-6 text-xl font-bold hover:no-underline">
-            4. Serviços do Contrato
+            4. Serviços e Tarifas
           </AccordionTrigger>
           <AccordionContent>
             <FormField v-slot="{ componentField }" name="services">
@@ -281,21 +288,7 @@ const findAddress = async (code: string) => {
           disabled
         >
           <AccordionTrigger class="px-6 text-xl font-bold hover:no-underline">
-            5. Tarifas Negociadas
-          </AccordionTrigger>
-          <AccordionContent>
-            <RatingPriceForm />
-          </AccordionContent>
-        </AccordionItem>
-        <!-- @vue-skip -->
-        <AccordionItem
-          class="bg-zinc-200 rounded-md"
-          :class="currentStep > 5 ? 'bg-um-primary' : ''"
-          :value="5"
-          disabled
-        >
-          <AccordionTrigger class="px-6 text-xl font-bold hover:no-underline">
-            6. Informações Adicionais
+            5. Informações Adicionais
           </AccordionTrigger>
           <AccordionContent>
             <AdditionalInfoForm />
@@ -316,11 +309,19 @@ const findAddress = async (code: string) => {
           <ArrowLeft class="w-5 h-5" />
           Voltar
         </Button>
-        <Button v-if="currentStep !== 5" type="submit">
+        <Button
+          v-if="currentStep !== 4"
+          type="button"
+          @click.prevent="nextStep"
+        >
           Avançar
           <ArrowRight class="w-5 h-5" />
         </Button>
-        <Button v-if="currentStep === 5" type="submit">
+        <!-- <Button v-if="currentStep !== 4" type="submit">
+          Avançar
+          <ArrowRight class="w-5 h-5" />
+        </Button> -->
+        <Button v-if="currentStep === 4" type="submit">
           <LoaderCircle v-if="false" class="w-5 h-5 animate-spin" />
           <Check class="w-5 h-5" />
           Finalizar Cadastro

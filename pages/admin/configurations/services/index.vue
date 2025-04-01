@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import DataTable from '@/components/shared/DataTable.vue';
 import DeleteAction from '@/components/shared/DeleteAction.vue';
+import FormSelect from '@/components/shared/FormSelect.vue';
 import { useToast } from '@/components/ui/toast';
 import { deleteServiceProfileService } from '@/server/services/services';
 import { createColumnHelper } from '@tanstack/vue-table';
@@ -143,7 +144,7 @@ const finalColumns = [
     <section class="mb-6 flex items-center justify-between">
       <h1 class="flex items-center gap-4 text-2xl font-bold">
         <BriefcaseBusiness />
-        Serviços Cadastrados
+        Tipos de Serviços Cadastrados
       </h1>
       <Button @click="toggleShowAddForm">
         <Plus class="w-4 h-4" /> Novo Serviço
@@ -156,8 +157,26 @@ const finalColumns = [
         </CardHeader>
         <CardContent>
           <form @submit.prevent="onSubmit" @keydown.enter.prevent="true">
-            <div class="mb-4 md:grid md:grid-cols-2 md:gap-6">
-              <FormField v-slot="{ componentField, errors }" name="name">
+            <div class="mb-4 md:grid md:grid-cols-4 md:gap-6">
+              <FormField v-slot="{ componentField }" name="serviceImage">
+                <FormItem>
+                  <FormLabel>Imagem</FormLabel>
+                  <FormControl>
+                    <Input type="file" v-bind="componentField" />
+                    <FormMessage />
+                  </FormControl>
+                </FormItem>
+              </FormField>
+              <FormField v-slot="{ componentField }" name="identifier">
+                <FormItem>
+                  <FormLabel>Sigla</FormLabel>
+                  <FormControl>
+                    <Input type="text" v-bind="componentField" />
+                    <FormMessage />
+                  </FormControl>
+                </FormItem>
+              </FormField>
+              <FormField v-slot="{ componentField }" name="name">
                 <FormItem>
                   <FormLabel>Nome</FormLabel>
                   <FormControl>
@@ -166,28 +185,76 @@ const finalColumns = [
                   </FormControl>
                 </FormItem>
               </FormField>
-              <FormField v-slot="{ componentField }" name="price">
+              <FormField v-slot="{ componentField }" name="capacity">
                 <FormItem>
-                  <FormLabel>Valor Padrão (R$)</FormLabel>
+                  <FormLabel>Capacidade</FormLabel>
+                  <FormControl>
+                    <Input type="number" v-bind="componentField" />
+                    <FormMessage />
+                  </FormControl>
+                </FormItem>
+              </FormField>
+              <FormField v-slot="{ componentField }" name="basePrice">
+                <FormItem>
+                  <FormLabel>Valor Base (R$)</FormLabel>
                   <FormControl>
                     <Input type="text" v-bind="componentField" />
                     <FormMessage />
                   </FormControl>
                 </FormItem>
               </FormField>
-            </div>
-            <div>
-              <FormField v-slot="{ componentField }" name="description">
+              <FormField v-slot="{ componentField }" name="baseDistance">
                 <FormItem>
-                  <FormLabel>Descrição</FormLabel>
+                  <FormLabel>Distância Base (KMs)</FormLabel>
                   <FormControl>
                     <Input type="text" v-bind="componentField" />
                     <FormMessage />
                   </FormControl>
                 </FormItem>
               </FormField>
+              <FormField v-slot="{ componentField }" name="baseTime">
+                <FormItem>
+                  <FormLabel>Tempo Base (min)</FormLabel>
+                  <FormControl>
+                    <Input type="text" v-bind="componentField" />
+                    <FormMessage />
+                  </FormControl>
+                </FormItem>
+              </FormField>
+              <FormField v-slot="{ componentField }" name="distancePrice">
+                <FormItem>
+                  <FormLabel>Valor Distância (R$)</FormLabel>
+                  <FormControl>
+                    <Input type="text" v-bind="componentField" />
+                    <FormMessage />
+                  </FormControl>
+                </FormItem>
+              </FormField>
+              <FormField v-slot="{ componentField }" name="timePrice">
+                <FormItem>
+                  <FormLabel>Valor Tempo (R$ x min)</FormLabel>
+                  <FormControl>
+                    <Input type="text" v-bind="componentField" />
+                    <FormMessage />
+                  </FormControl>
+                </FormItem>
+              </FormField>
+              <FormField v-slot="{ componentField }" name="priceCalculation">
+                <FormItem>
+                  <FormLabel>Base de Cálculo</FormLabel>
+                  <FormControl>
+                    <FormSelect
+                      :items="[
+                        { label: 'A', value: 'A' },
+                        { label: 'B', value: 'B' },
+                      ]"
+                    />
+                    <FormMessage />
+                  </FormControl>
+                </FormItem>
+              </FormField>
             </div>
-            <section class="mt-6">
+            <div class="mt-6">
               <Button type="submit">
                 <LoaderCircle
                   v-if="isLoadingSend"
@@ -202,7 +269,7 @@ const finalColumns = [
               >
                 Cancelar
               </Button>
-            </section>
+            </div>
           </form>
         </CardContent>
       </Card>
@@ -214,8 +281,8 @@ const finalColumns = [
       <DataTable
         :columns="finalColumns"
         :data="servicesList"
-        sortby="name"
-        :column-pin="['name']"
+        sortby="identifier"
+        :column-pin="['serviceImage']"
         filterBy="nome do serviço"
       />
     </section>

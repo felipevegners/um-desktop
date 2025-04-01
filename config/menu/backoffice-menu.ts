@@ -34,30 +34,30 @@ export const backofficeMenuData = {
       items: [
         {
           title: 'Contratos Ativos',
-          url: '/contracts/active',
+          url: '/admin/contracts/active',
         },
         {
           title: 'Contratos Inativos',
-          url: '/contracts/inactive',
+          url: '/admin/contracts/inactive',
         },
         {
           icon: Plus,
           title: 'Novo Contrato',
-          url: '/contracts/new',
+          url: '/admin/contracts/new',
         },
       ],
     },
-    {
-      title: 'OLD Clientes',
-      url: '#',
-      icon: Building2,
-      items: [
-        {
-          title: 'Base de Clientes',
-          url: '/admin/customers',
-        },
-      ],
-    },
+    // {
+    //   title: 'OLD Clientes',
+    //   url: '#',
+    //   icon: Building2,
+    //   items: [
+    //     {
+    //       title: 'Base de Clientes',
+    //       url: '/admin/customers',
+    //     },
+    //   ],
+    // },
     {
       title: 'Usuários',
       url: '#',
@@ -141,14 +141,9 @@ export const backofficeMenuData = {
   ],
   settings: [
     {
-      name: 'Serviços',
-      url: '/configurations/services/',
+      name: 'Tipos de Serviços',
+      url: '/admin/configurations/services/',
       icon: BriefcaseBusiness,
-    },
-    {
-      name: 'Tarifas',
-      url: '#',
-      icon: Coins,
     },
     {
       name: 'Repasse Motorista',
