@@ -97,3 +97,13 @@ model Drivers {
   createdAt     DateTime? @default(now())
   updatedAt     DateTime? @updatedAt()
 }
+
+model Services {
+  id          String    @id @default(auto()) @map("_id") @db.ObjectId
+  name        String?
+  price       String?
+  description String?
+  enabled     Boolean?
+  createdAt   DateTime? @default(now())
+  updatedAt   DateTime? @updatedAt()
+}

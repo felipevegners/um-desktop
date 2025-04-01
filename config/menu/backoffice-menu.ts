@@ -1,4 +1,5 @@
 import {
+  BriefcaseBusiness,
   Building2,
   CalendarDays,
   Car,
@@ -139,6 +140,11 @@ export const backofficeMenuData = {
     },
   ],
   settings: [
+    {
+      name: 'Serviços',
+      url: '/configurations/services/',
+      icon: BriefcaseBusiness,
+    },
     {
       name: 'Tarifas',
       url: '#',
