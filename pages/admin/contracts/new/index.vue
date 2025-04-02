@@ -3,9 +3,7 @@ import AdditionalInfoForm from '@/components/forms/AdditionalInfoForm.vue';
 import ComercialConditionsForm from '@/components/forms/ComercialConditionsForm.vue';
 import CompanyForm from '@/components/forms/CompanyForm.vue';
 import MasterManagerForm from '@/components/forms/MasterManagerForm.vue';
-import RatingPriceForm from '@/components/forms/RatingPriceForm.vue';
 import ServicesForm from '@/components/forms/ServicesForm.vue';
-import CheckBoxGroup from '@/components/shared/CheckBoxGroup.vue';
 import {
   Accordion,
   AccordionContent,
@@ -15,18 +13,20 @@ import {
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/components/ui/toast/use-toast';
 import { findAddressByZipcode } from '@/server/services/FindAddress';
+import { useContractsStore } from '@/stores/contracts.store';
 import { toTypedSchema } from '@vee-validate/zod';
 import {
   ArrowLeft,
   ArrowRight,
   Check,
+  FileText,
   LoaderCircle,
-  Search,
 } from 'lucide-vue-next';
-import { vMaska } from 'maska/vue';
-import { ErrorMessage, Field, Form, useForm } from 'vee-validate';
+import { useForm } from 'vee-validate';
 import { computed, ref } from 'vue';
 import * as z from 'zod';
+
+const { createContractAction } = useContractsStore();
 
 definePageMeta({
   layout: 'admin',
@@ -36,12 +36,20 @@ useHead({
 });
 
 const currentStep = ref<any>(0);
+const isLoadingSend = ref<boolean>(false);
 
 const { toast } = useToast();
 const isLoadingAddress = ref<boolean>(false);
 
 const MAX_FILE_SIZE = 4000000;
 const ACCEPTED_IMAGE_TYPES = ['image/jpeg', 'image/jpg', 'image/png'];
+
+const { startUpload } = useUploadThing('customerLogo', {
+  //@ts-ignore
+  onClientUploadComplete(res) {
+    return res;
+  },
+});
 
 const schemas = [
   toTypedSchema(
@@ -71,13 +79,6 @@ const schemas = [
           'Apenas arquivos nos formatos .jpg, .jpeg ou .png são aceitos ',
         )
         .optional(),
-      services: z.object({
-        services: z
-          .array(z.string())
-          .refine((value) => value.some((item) => item), {
-            message: 'Selecione ao menos uma restrição!',
-          }),
-      }),
     }),
   ),
   // Master Manager Schema
@@ -98,16 +99,12 @@ const schemas = [
       paymentDueDate: z.number().min(0),
     }),
   ),
-  // Services Schema
-  // toTypedSchema(
-  //   z.object({
-  //     services: z
-  //       .array(z.string())
-  //       .refine((value) => value.some((item) => item), {
-  //         message: 'Selecione ao menos uma restrição!',
-  //       }),
-  //   }),
-  // ),
+  // Additional Info
+  toTypedSchema(
+    z.object({
+      additionalInfo: z.string().min(1).max(200).optional(),
+    }),
+  ),
 ];
 
 const currentSchema = computed(() => {
@@ -124,10 +121,35 @@ const form = useForm({
 });
 
 const onSubmit = form.handleSubmit(async (values) => {
-  console.log('Chamou!', values);
   if (currentStep.value === 4) {
-    console.log('Done: ', JSON.stringify(values, null, 2));
-    return;
+    const files = [values?.logo];
+    try {
+      if (!files) return;
+      const filesResponse = await startUpload(files);
+      values.logo = {
+        //@ts-ignore
+        name: filesResponse[0]?.name || '',
+        //@ts-ignore
+        url: filesResponse[0]?.ufsUrl || '',
+      };
+      isLoadingSend.value = !isLoadingSend.value;
+      await createContractAction(values);
+    } catch (error) {
+      toast({
+        title: 'Opss!',
+        class: 'bg-red-500 border-0 text-white text-2xl',
+        description: `Ocorreu um erro ao cadastrar o contrato. Tente novamente.`,
+      });
+    } finally {
+      isLoadingSend.value = !isLoadingSend.value;
+      toast({
+        title: 'Tudo pronto!',
+        class: 'bg-green-600 border-0 text-white text-2xl',
+        description: `Contrato cadastrado com sucesso!`,
+      });
+
+      navigateTo('/admin/contracts/active');
+    }
   }
   currentStep.value++;
 });
@@ -208,8 +230,19 @@ const findAddress = async (code: string) => {
 </script>
 <template>
   <main class="p-6">
+    <header>
+      <div class="mb-8 flex items-center">
+        <NuxtLink to="/admin/contracts/active" class="flex hover:font-bold">
+          <ArrowLeft class="mr-2" />
+          Voltar
+        </NuxtLink>
+      </div>
+    </header>
     <section class="mb-10 flex items-center justify-between">
-      <h1 class="text-2xl font-bold">Adicionar Novo Contrato</h1>
+      <h1 class="flex items-center gap-2 text-2xl font-bold">
+        <FileText class="w-6 h-6" />
+        Adicionar Novo Contrato
+      </h1>
     </section>
     <form @submit="onSubmit" keep-values>
       <Accordion
@@ -309,21 +342,13 @@ const findAddress = async (code: string) => {
           <ArrowLeft class="w-5 h-5" />
           Voltar
         </Button>
-        <Button
-          v-if="currentStep !== 4"
-          type="button"
-          @click.prevent="nextStep"
-        >
+        <Button v-if="currentStep !== 4" type="submit">
           Avançar
           <ArrowRight class="w-5 h-5" />
         </Button>
-        <!-- <Button v-if="currentStep !== 4" type="submit">
-          Avançar
-          <ArrowRight class="w-5 h-5" />
-        </Button> -->
         <Button v-if="currentStep === 4" type="submit">
-          <LoaderCircle v-if="false" class="w-5 h-5 animate-spin" />
-          <Check class="w-5 h-5" />
+          <LoaderCircle v-if="isLoadingSend" class="w-5 h-5 animate-spin" />
+          <Check v-else class="w-5 h-5" />
           Finalizar Cadastro
         </Button>
       </div>

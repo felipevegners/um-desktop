@@ -46,7 +46,6 @@ export const useContractsStore = defineStore('contracts', {
       try {
         const newContract = await createContractService(contractData);
         this.contractId = newContract?.id;
-        console.log('New contract -> ', newContract);
       } catch (error) {
         console.log('Error from Store -> ', error);
       }

@@ -13,7 +13,8 @@ export default defineEventHandler(async (event) => {
         id: contractId,
       },
       include: {
-        company: true,
+        customer: true,
+        manager: true,
       },
     });
 

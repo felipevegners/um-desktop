@@ -1,7 +1,6 @@
 <script lang="ts" setup>
 import { LoaderCircle, Search } from 'lucide-vue-next';
 import { vMaska } from 'maska/vue';
-import { ref } from 'vue';
 
 definePageMeta({
   name: 'CompanyForm',

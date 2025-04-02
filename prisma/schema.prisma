@@ -22,15 +22,19 @@ model Accounts {
 
 model Contracts {
   id                  String         @id @default(auto()) @map("_id") @db.ObjectId
-  company             Customers?     @relation(fields: [companyId], references: [id])
-  companyId           String?        @db.ObjectId
+  customerName        String?
+  customer            Customers?     @relation(fields: [customerId], references: [id])
+  customerId          String?        @db.ObjectId
   customerBranches    Json?
   customerUsers       Json?
   comercialConditions Json?
-  pricing             Json?
   services            Json?
   manager             MasterManager? @relation(fields: [managerId], references: [id])
   managerId           String?        @db.ObjectId
+  managerName         String?
+  managerEmail        String?
+  status              String?
+  enabled             Boolean?
   createdAt           DateTime?      @default(now())
   updatedAt           DateTime?      @updatedAt()
 }
@@ -42,23 +46,27 @@ model MasterManager {
   position   String?
   department String?
   email      String?     @unique
+  password   String?
   Contracts  Contracts[]
+  createdAt  DateTime?   @default(now())
+  updatedAt  DateTime?   @updatedAt()
 }
 
 model Customers {
-  id          String      @id @default(auto()) @map("_id") @db.ObjectId
-  status      String?
-  name        String?
-  fantasyName String?
-  document    String?     @unique
-  address     Json?
-  phone       String?
-  website     String?
-  logo        Json?
-  enabled     Boolean?
-  createdAt   DateTime?   @default(now())
-  updatedAt   DateTime?   @updatedAt()
-  Contracts   Contracts[]
+  id             String      @id @default(auto()) @map("_id") @db.ObjectId
+  status         String?
+  name           String?
+  fantasyName    String?
+  document       String?     @unique
+  address        Json?
+  phone          String?
+  phoneExtension String?
+  website        String?
+  logo           Json?
+  enabled        Boolean?
+  createdAt      DateTime?   @default(now())
+  updatedAt      DateTime?   @updatedAt()
+  Contracts      Contracts[]
 }
 
 model Passengers {

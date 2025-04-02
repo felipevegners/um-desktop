@@ -3,24 +3,90 @@ import { prisma } from '~/utils/prisma';
 export default defineEventHandler(async (event) => {
   const payload = await readBody(event);
   const {
-    status,
+    logo,
+    name,
+    document,
+    fantasyName,
+    zipcode,
+    streetName,
+    streetNumber,
+    complement,
+    neighborhood,
+    city,
+    state,
+    phone,
+    phoneExtension,
+    website,
+    managerName,
+    managerCellPhone,
+    position,
+    department,
+    managerEmail,
+    password,
+    paymentTerm,
+    paymentDueDate,
+  } = payload;
+
+  const company = {
     name,
     fantasyName,
     document,
-    address,
+    address: {
+      zipcode,
+      streetName,
+      streetNumber,
+      complement,
+      neighborhood,
+      city,
+      state,
+    },
     phone,
+    phoneExtension,
     website,
     logo,
-    enabled,
-  } = payload;
+    enabled: true,
+    status: 'pending',
+  };
 
-  const newCompany = await prisma.customers.create({ data: payload });
-  // console.log('New Company --> ', newCompany);
+  const masterManager = {
+    name: managerName,
+    phone: managerCellPhone,
+    email: managerEmail,
+    position,
+    department,
+    password,
+  };
+
+  const comercialConditions = {
+    paymentTerm,
+    paymentDueDate,
+  };
+
+  const services = {};
+
+  const newCompany = await prisma.customers.create({ data: company });
+  const newMasterManager = await prisma.masterManager.create({
+    data: masterManager,
+  });
   const newContract = await prisma.contracts.create({
     data: {
-      company: {
+      customerName: newCompany.fantasyName,
+      managerName: newMasterManager.name,
+      managerEmail: newMasterManager.email,
+      customerBranches: [],
+      customerUsers: [],
+      comercialConditions,
+      services: [],
+      enabled: true,
+      status: 'active',
+      customer: {
         connect: {
           id: newCompany.id,
+        },
+      },
+      manager: {
+        connect: {
+          id: newMasterManager.id,
         },
       },
     },
