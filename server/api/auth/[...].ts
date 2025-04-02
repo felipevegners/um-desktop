@@ -25,8 +25,6 @@ export default NuxtAuthHandler({
           },
         });
 
-        console.log('Account ---> ', account);
-
         if (!account) {
           throw new Error('Conta não existente!');
         }
