@@ -25,6 +25,8 @@ export default NuxtAuthHandler({
           },
         });
 
+        console.log('Account ---> ', account);
+
         if (!account) {
           throw new Error('Conta não existente!');
         }
@@ -37,7 +39,7 @@ export default NuxtAuthHandler({
         if (!isValid) {
           throw createError({
             statusCode: 401,
-            statusMessage: 'Senha inválida!',
+            message: 'Senha inválida!',
           });
         }
         return {
