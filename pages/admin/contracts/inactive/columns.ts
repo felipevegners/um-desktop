@@ -5,7 +5,7 @@ import { ArrowUpDown } from 'lucide-vue-next';
 const columnHelper = createColumnHelper<any>();
 
 export const columns = [
-  columnHelper.accessor('number', {
+  columnHelper.accessor('customerName', {
     enablePinning: true,
     header: ({ column }) => {
       return h(
@@ -14,24 +14,19 @@ export const columns = [
           variant: 'ghost',
           onClick: () => column.toggleSorting(column.getIsSorted() === 'asc'),
         },
-        () => ['Número', h(ArrowUpDown, { class: 'ml-2 h-4 w-4' })],
+        () => ['Empresa', h(ArrowUpDown, { class: 'ml-2 h-4 w-4' })],
       );
     },
     cell: ({ row }) =>
-      h('div', { class: 'capitalize' }, row.getValue('number')),
-  }),
-  columnHelper.accessor('customer', {
-    header: () => h('div', { class: 'text-left' }, 'Empresa'),
-    cell: ({ row }) =>
-      h('div', { class: 'lowercase' }, row.getValue('customer')),
+      h('div', { class: 'capitalize' }, row.getValue('customerName')),
   }),
   columnHelper.accessor('managerName', {
-    header: () => h('div', { class: 'text-left' }, 'Gerente Master'),
+    header: () => h('div', { class: 'text-left' }, 'Gestor Master'),
     cell: ({ row }) =>
       h('div', { class: 'capitalize' }, row.getValue('managerName')),
   }),
   columnHelper.accessor('managerEmail', {
-    header: () => h('div', { class: 'text-left' }, 'E-mail Gerente'),
+    header: () => h('div', { class: 'text-left' }, 'E-mail Gestor Master'),
     cell: ({ row }) => {
       return h(
         'div',
@@ -40,24 +35,29 @@ export const columns = [
       );
     },
   }),
-  columnHelper.accessor('branches', {
+  columnHelper.accessor('customerBranches', {
     header: () => h('div', { class: 'text-left' }, 'Filiais'),
     cell: ({ row }) => {
+      const { customerBranches } = row.original;
       return h(
         'div',
         { class: 'text-left font-medium' },
-        row.getValue('branches'),
+        customerBranches.length,
       );
     },
   }),
-  columnHelper.accessor('users', {
-    header: () => h('div', { class: 'text-left' }, 'Usuários ativos'),
+  columnHelper.accessor('customerUsers', {
+    header: () => h('div', { class: 'text-left' }, 'Usuários Ativos'),
     cell: ({ row }) => {
-      return h(
-        'div',
-        { class: 'text-left font-medium' },
-        row.getValue('branches'),
-      );
+      const { customerUsers } = row.original;
+      return h('div', { class: 'text-left font-medium' }, customerUsers.length);
+    },
+  }),
+  columnHelper.accessor('services', {
+    header: () => h('div', { class: 'text-left' }, 'Serviços Prestados'),
+    cell: ({ row }) => {
+      const { services } = row.original;
+      return h('div', { class: 'text-left font-medium' }, services.length);
     },
   }),
   columnHelper.accessor('status', {
@@ -76,7 +76,7 @@ export const columns = [
           }`,
         },
         status === 'active'
-          ? 'Aprovado'
+          ? 'Ativo'
           : status === 'inactive'
             ? 'Inativo'
             : 'Pendente',

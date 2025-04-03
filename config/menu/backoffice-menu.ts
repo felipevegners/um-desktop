@@ -41,23 +41,11 @@ export const backofficeMenuData = {
           url: '/admin/contracts/inactive',
         },
         {
-          icon: Plus,
           title: 'Novo Contrato',
           url: '/admin/contracts/new',
         },
       ],
     },
-    // {
-    //   title: 'OLD Clientes',
-    //   url: '#',
-    //   icon: Building2,
-    //   items: [
-    //     {
-    //       title: 'Base de Clientes',
-    //       url: '/admin/customers',
-    //     },
-    //   ],
-    // },
     {
       title: 'Usuários',
       url: '#',

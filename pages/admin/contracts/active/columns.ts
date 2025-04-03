@@ -47,27 +47,31 @@ export const columns = [
     },
   }),
   columnHelper.accessor('customerUsers', {
-    header: () => h('div', { class: 'text-left' }, 'Usuários Ativos'),
+    header: () => h('div', { class: 'text-center' }, 'Usuários Ativos'),
     cell: ({ row }) => {
       const { customerUsers } = row.original;
-      return h('div', { class: 'text-left font-medium' }, customerUsers.length);
+      return h(
+        'div',
+        { class: 'text-center font-medium' },
+        customerUsers.length,
+      );
     },
   }),
   columnHelper.accessor('services', {
-    header: () => h('div', { class: 'text-left' }, 'Serviços Prestados'),
+    header: () => h('div', { class: 'text-center' }, 'Serviços Ativos'),
     cell: ({ row }) => {
       const { services } = row.original;
-      return h('div', { class: 'text-left font-medium' }, services.length);
+      return h('div', { class: 'text-center font-medium' }, services.length);
     },
   }),
   columnHelper.accessor('status', {
-    header: () => h('div', { class: 'text-left' }, 'Status'),
+    header: () => h('div', { class: 'text-center' }, 'Status'),
     cell: ({ row }) => {
       const status = row.getValue('status');
       return h(
         'div',
         {
-          class: `px-2 flex items-center justify-center h-6 rounded-lg text-white text-xs max-w-[80px] ${
+          class: `px-2 flex items-center justify-center h-6 rounded-full text-white text-xs max-w-[80px] ${
             status === 'active'
               ? 'bg-green-600'
               : status === 'inactive'
@@ -81,14 +85,6 @@ export const columns = [
             ? 'Inativo'
             : 'Pendente',
       );
-    },
-  }),
-  columnHelper.display({
-    id: 'actions',
-    enableHiding: false,
-    header: () => h('div', { class: 'text-left' }, 'Ações'),
-    cell: ({ row }) => {
-      return h('div', { class: 'relative text-left' }, h('p', 'Editar'));
     },
   }),
 ];

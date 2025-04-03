@@ -49,6 +49,7 @@ const fetchData = async () => {
 };
 
 servicesList.value = await fetchData();
+
 const formSchema = toTypedSchema(
   z.object({
     name: z

@@ -7,6 +7,7 @@ import { defineStore } from 'pinia';
 
 interface IContractsState {
   contracts?: any;
+  inactiveContracts?: any;
   contract?: Record<string, string> | unknown;
   contractId?: string;
   isLoading: boolean;
@@ -16,6 +17,7 @@ export const useContractsStore = defineStore('contracts', {
   state: (): IContractsState => {
     return {
       contracts: [],
+      inactiveContracts: [],
       contract: {},
       contractId: '',
       isLoading: false,
@@ -26,7 +28,12 @@ export const useContractsStore = defineStore('contracts', {
       this.isLoading = true;
       try {
         const data = await getContractsService('');
-        this.contracts = data as any;
+        this.contracts = (data as any).filter(
+          (contract: any) => contract.status !== 'inactive',
+        );
+        this.inactiveContracts = (data as any).filter(
+          (contract: any) => contract.status === 'inactive',
+        );
         this.isLoading = false;
       } catch (error) {
         console.log('Store GET All Error -> ', error);
