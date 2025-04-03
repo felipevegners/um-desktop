@@ -3,12 +3,13 @@ import {
   getContractsService,
   updateContractService,
 } from '@/server/services/contracts';
+import type { Contract } from '@/types/contracts/types';
 import { defineStore } from 'pinia';
 
 interface IContractsState {
   contracts?: any;
   inactiveContracts?: any;
-  contract?: Record<string, string> | unknown;
+  contract?: Contract | any;
   contractId?: string;
   isLoading: boolean;
 }

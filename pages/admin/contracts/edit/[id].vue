@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import BackLink from '@/components/shared/BackLink.vue';
 import { useContractsStore } from '@/stores/contracts.store';
 import {
   ArrowLeft,
@@ -26,12 +27,7 @@ onMounted(async () => {
 <template>
   <main class="p-6">
     <header>
-      <div class="mb-8 flex items-center">
-        <NuxtLink to="/admin/contracts/active" class="flex hover:font-bold">
-          <ArrowLeft class="mr-2" />
-          Voltar
-        </NuxtLink>
-      </div>
+      <BackLink />
     </header>
     <section class="p-6" v-if="isLoading">
       <LoaderCircle class="w-6 h-6 animate-spin" />

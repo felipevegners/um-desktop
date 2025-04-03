@@ -27,8 +27,8 @@ export const getDate = () => {
 
 export const dateFormat = (date: any) => {
   return new Date(date).toLocaleDateString('pt-BR', {
-    hour: '2-digit',
-    minute: '2-digit',
-    second: '2-digit',
+    // hour: '2-digit',
+    // minute: '2-digit',
+    // second: '2-digit',
   });
 };
