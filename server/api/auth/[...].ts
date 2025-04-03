@@ -2,7 +2,6 @@ import { NuxtAuthHandler } from '#auth';
 import { useToast } from '@/components/ui/toast/use-toast';
 import bcrypt from 'bcrypt';
 import CredentialsProvider from 'next-auth/providers/credentials';
-import Alert from '~/components/ui/alert/Alert.vue';
 import { prisma } from '~/utils/prisma';
 
 const { toast } = useToast();
