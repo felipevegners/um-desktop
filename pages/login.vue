@@ -60,6 +60,7 @@ const onSubmit = form.handleSubmit(async (values) => {
                 type="text"
                 placeholder="Insira seu e-mail"
                 v-bind="componentField"
+                :disabled="isLoading"
               />
             </FormControl>
           </FormItem>
@@ -73,26 +74,30 @@ const onSubmit = form.handleSubmit(async (values) => {
                 type="text"
                 placeholder="Insira a senha"
                 v-bind="componentField"
+                :disabled="isLoading"
               />
               <Input
                 v-else
                 type="password"
                 placeholder="Insira a senha"
                 v-bind="componentField"
+                :disabled="isLoading"
               />
               <Eye
-                class="h-5 w-5 absolute top-8 right-3 cursor-pointer hover:text-zinc-700"
+                class="h-5 w-5 absolute top-[33px] right-3 cursor-pointer hover:text-zinc-700"
                 :class="viewPassword ? 'text-zinc-700' : 'text-zinc-400'"
                 @click.prevent="revealPassword"
               />
             </FormControl>
           </FormItem>
         </FormField>
-        <Button class="mt-4 h-12 w-full" type="submit">
-          <LoaderCircle
-            v-if="isLoading"
-            class="h-full text-um-primary animate-spin"
-          />
+        <div
+          v-if="isLoading"
+          class="mt-4 p-2 flex items-center justify-center bg-zinc-900 rounded-md"
+        >
+          <LoaderCircle class="w-8 h-8 text-white animate-spin" />
+        </div>
+        <Button v-else class="p-0 mt-4 w-full h-[48px]" type="submit">
           Acessar
         </Button>
       </form>
