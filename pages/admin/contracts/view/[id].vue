@@ -14,19 +14,13 @@ const { getContractByIdAction } = store;
 const { contract, isLoading } = storeToRefs(store);
 
 const route = useRoute();
-
-onMounted(async () => {
-  await getContractByIdAction(route?.params?.id as string);
-});
+await getContractByIdAction(route?.params?.id as string);
 </script>
 <template>
   <main class="p-6">
     <header>
       <BackLink />
     </header>
-    <section class="p-6" v-if="isLoading">
-      <LoaderCircle class="w-6 h-6 animate-spin" />
-    </section>
     <section class="mb-6 flex items-center justify-between">
       <h1 class="flex items-center gap-2 text-2xl font-bold">
         <FileText class="w-6 h-6" />
@@ -49,7 +43,13 @@ onMounted(async () => {
         </Button>
       </div>
     </section>
-    <section class="mt-6">
+    <section
+      v-if="isLoading"
+      class="min-h-[300px] flex items-center justify-center"
+    >
+      <LoaderCircle class="w-10 h-10 animate-spin" />
+    </section>
+    <section v-else class="mt-6">
       <Card class="p-6 bg-zinc-200">
         <div>
           <h2 class="mb-4 text-2xl font-bold">Dados do Cliente</h2>
@@ -67,22 +67,22 @@ onMounted(async () => {
             <div class="p-6 bg-white rounded-md">
               <p class="text-sm text-zinc-600">Telefone</p>
               <p class="text-xl font-bold">
-                {{ contract?.customer.phone }}
+                {{ contract?.customer?.phone }}
               </p>
             </div>
             <div class="p-6 bg-white rounded-md">
               <p class="text-sm text-zinc-600">Ramal</p>
               <p class="text-xl font-bold">
-                {{ contract?.customer.phoneExtension }}
+                {{ contract?.customer?.phoneExtension }}
               </p>
             </div>
             <div class="p-6 bg-white rounded-md">
               <p class="text-sm text-zinc-600">Cadastro</p>
               <p class="text-xl font-bold">
                 {{
-                  contract?.customer.status === 'active'
+                  contract?.customer?.status === 'active'
                     ? 'Ativo'
-                    : contract.customer.status === 'pending'
+                    : contract.customer?.status === 'pending'
                       ? 'Pendente'
                       : 'Inativo'
                 }}

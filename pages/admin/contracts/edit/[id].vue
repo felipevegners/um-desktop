@@ -30,8 +30,6 @@ const { contract, isLoading } = storeToRefs(store);
 const route = useRoute();
 await getContractByIdAction(route?.params?.id as string);
 
-onMounted(async () => {});
-
 const { toast } = useToast();
 const isLoadingAddress = ref<boolean>(false);
 const contractStatus = ref<boolean>(true);
