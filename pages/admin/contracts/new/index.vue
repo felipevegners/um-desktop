@@ -4,6 +4,7 @@ import ComercialConditionsForm from '@/components/forms/ComercialConditionsForm.
 import CompanyForm from '@/components/forms/CompanyForm.vue';
 import MasterManagerForm from '@/components/forms/MasterManagerForm.vue';
 import ServicesForm from '@/components/forms/ServicesForm.vue';
+import BackLink from '@/components/shared/BackLink.vue';
 import {
   Accordion,
   AccordionContent,
@@ -231,12 +232,7 @@ const findAddress = async (code: string) => {
 <template>
   <main class="p-6">
     <header>
-      <div class="mb-8 flex items-center">
-        <NuxtLink to="/admin/contracts/active" class="flex hover:font-bold">
-          <ArrowLeft class="mr-2" />
-          Voltar
-        </NuxtLink>
-      </div>
+      <BackLink />
     </header>
     <section class="mb-10 flex items-center justify-between">
       <h1 class="flex items-center gap-2 text-2xl font-bold">

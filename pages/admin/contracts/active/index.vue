@@ -3,7 +3,7 @@ import DataTable from '@/components/shared/DataTable.vue';
 import TableActions from '@/components/shared/TableActions.vue';
 import { useContractsStore } from '@/stores/contracts.store';
 import { createColumnHelper } from '@tanstack/vue-table';
-import { FileText, Plus } from 'lucide-vue-next';
+import { FileText, LoaderCircle, Plus } from 'lucide-vue-next';
 import { storeToRefs } from 'pinia';
 
 import { columns } from './columns';
@@ -11,7 +11,7 @@ import { columns } from './columns';
 const columnHelper = createColumnHelper<any>();
 const store = useContractsStore();
 const { getContractsAction } = store;
-const { contracts } = storeToRefs(store);
+const { contracts, isLoading } = storeToRefs(store);
 
 definePageMeta({
   layout: 'admin',
@@ -75,7 +75,13 @@ const finalColumns = [
         <Plus class="w-4 h-4" /> Novo Contrato
       </Button>
     </section>
-    <section>
+    <section
+      v-if="isLoading"
+      class="min-h-[300px] flex items-center justify-center"
+    >
+      <LoaderCircle class="w-10 h-10 animate-spin" />
+    </section>
+    <section v-else>
       <DataTable
         :columns="finalColumns"
         :data="contracts"

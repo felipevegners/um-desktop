@@ -74,7 +74,10 @@ const finalColumns = [
         Contratos Inativos
       </h1>
     </section>
-    <section v-if="isLoading" class="p-10 flex items-center justify-center">
+    <section
+      v-if="isLoading"
+      class="min-h-[300px] flex items-center justify-center"
+    >
       <LoaderCircle class="w-10 h-10 animate-spin" />
     </section>
     <section v-else>

@@ -231,7 +231,7 @@ const findAddress = async (code: string) => {
     <Card class="py-6 bg-zinc-200">
       <section
         v-if="isLoading"
-        class="min-h-[300px] flex items-center justify-center h-full"
+        class="min-h-[300px] flex items-center justify-center"
       >
         <LoaderCircle class="w-10 h-10 animate-spin" />
       </section>
