@@ -2,7 +2,7 @@ import {
   createContractService,
   getContractsService,
   updateContractService,
-} from '@/server/services/contracts';
+} from '@/server/services/admin/contracts';
 import type { Contract } from '@/types/contracts/types';
 import { defineStore } from 'pinia';
 
@@ -30,10 +30,10 @@ export const useContractsStore = defineStore('contracts', {
       try {
         const data = await getContractsService('');
         this.contracts = (data as any).filter(
-          (contract: any) => contract.status !== 'inactive',
+          (contract: any) => contract.enabled === true,
         );
         this.inactiveContracts = (data as any).filter(
-          (contract: any) => contract.status === 'inactive',
+          (contract: any) => contract.enabled === false,
         );
         this.isLoading = false;
       } catch (error) {
@@ -53,6 +53,7 @@ export const useContractsStore = defineStore('contracts', {
     async createContractAction(contractData: any) {
       try {
         const newContract = await createContractService(contractData);
+        //@ts-ignore
         this.contractId = newContract?.id;
       } catch (error) {
         console.log('Error from Store -> ', error);

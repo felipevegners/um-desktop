@@ -5,16 +5,28 @@ import CompanyForm from '@/components/forms/CompanyForm.vue';
 import MasterManagerForm from '@/components/forms/MasterManagerForm.vue';
 import ServicesForm from '@/components/forms/ServicesForm.vue';
 import BackLink from '@/components/shared/BackLink.vue';
+import FormSelect from '@/components/shared/FormSelect.vue';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/components/ui/toast/use-toast';
 import { findAddressByZipcode } from '@/server/services/FindAddress';
-import { useContractsStore } from '@/stores/contracts.store';
+import { useContractsStore } from '@/stores/admin/contracts.store';
 import { toTypedSchema } from '@vee-validate/zod';
-import { FileText, LoaderCircle, Trash } from 'lucide-vue-next';
+import {
+  CircleX,
+  FileText,
+  LoaderCircle,
+  Paperclip,
+  Trash,
+} from 'lucide-vue-next';
 import { storeToRefs } from 'pinia';
 import { useForm } from 'vee-validate';
-import { computed, ref } from 'vue';
+import { ref } from 'vue';
 import * as z from 'zod';
+import Select from '~/components/ui/select/Select.vue';
+import { useFilesStore } from '~/stores/admin/files.store';
+
+const filesStore = useFilesStore();
+const { deleteFileAction } = filesStore;
 
 definePageMeta({
   layout: 'admin',
@@ -24,7 +36,7 @@ useHead({
 });
 
 const store = useContractsStore();
-const { getContractByIdAction } = store;
+const { getContractByIdAction, updateContractAction } = store;
 const { contract, isLoading } = storeToRefs(store);
 
 const route = useRoute();
@@ -32,8 +44,16 @@ await getContractByIdAction(route?.params?.id as string);
 
 const { toast } = useToast();
 const isLoadingAddress = ref<boolean>(false);
-const contractStatus = ref<boolean>(true);
+const contractSituation = ref<boolean>(true);
+const contractStatus = ref<any>();
 const isLoadingSend = ref<boolean>(false);
+const loadingFileData = ref<boolean>(false);
+const customerLogo = ref<any>({
+  name: contract?.value?.customer.logo.name,
+  url: contract?.value?.customer.logo.url,
+});
+
+contractSituation.value = contract?.value.enabled;
 
 const MAX_FILE_SIZE = 4000000;
 const ACCEPTED_IMAGE_TYPES = ['image/jpeg', 'image/jpg', 'image/png'];
@@ -77,6 +97,7 @@ const schema = toTypedSchema(
     paymentTerm: z.string().min(1).max(10),
     paymentDueDate: z.number().min(0),
     additionalInfo: z.string().min(1).max(200).optional(),
+    status: z.string().optional(),
   }),
 );
 
@@ -96,7 +117,7 @@ const form = useForm({
     phone: contract?.value?.customer.phone,
     phoneExtension: contract?.value?.customer.phoneExtension,
     website: contract?.value?.customer.website,
-    // logo: contract?.value?.customer.logo.name,
+    logo: contract?.value?.customer.logo.name,
     managerName: contract?.value?.managerName,
     managerCellPhone: contract?.value?.manager.phone,
     position: contract?.value?.manager.position,
@@ -106,38 +127,107 @@ const form = useForm({
     paymentTerm: contract?.value?.comercialConditions.paymentTerm,
     paymentDueDate: contract?.value?.comercialConditions.paymentDueDate,
     additionalInfo: contract?.value?.additionalInfo,
+    status: contract?.value.status,
   },
 });
 
 const onSubmit = form.handleSubmit(async (values) => {
-  // const files = [values?.logo];
-  // try {
-  //   if (!files) return;
-  //   const filesResponse = await startUpload(files);
-  //   values.logo = {
-  //     //@ts-ignore
-  //     name: filesResponse[0]?.name || '',
-  //     //@ts-ignore
-  //     url: filesResponse[0]?.ufsUrl || '',
-  //   };
-  //   isLoadingSend.value = !isLoadingSend.value;
-  //   await createContractAction(values);
-  // } catch (error) {
-  //   toast({
-  //     title: 'Opss!',
-  //     class: 'bg-red-500 border-0 text-white text-2xl',
-  //     description: `Ocorreu um erro ao cadastrar o contrato. Tente novamente.`,
-  //   });
-  // } finally {
-  //   isLoadingSend.value = !isLoadingSend.value;
-  //   toast({
-  //     title: 'Tudo pronto!',
-  //     class: 'bg-green-600 border-0 text-white text-2xl',
-  //     description: `Contrato cadastrado com sucesso!`,
-  //   });
-  //   navigateTo('/admin/contracts/active');
-  // }
+  try {
+    const payloadIds = {
+      contractId: contract?.value.id,
+      customerId: contract?.value.customer.id,
+      managerId: contract?.value.managerId,
+    };
+
+    const customerData = {
+      document: values.document,
+      name: values.name,
+      fantasyName: values.fantasyName,
+      address: {
+        zipcode: values.zipcode,
+        streetName: values.streetName,
+        streetNumber: values.streetNumber,
+        complement: values.complement,
+        neighborhood: values.neighborhood,
+        city: values.city,
+        state: values.state,
+      },
+      phone: values.phone,
+      phoneExtension: values.phoneExtension,
+      website: values.website,
+      logo: {
+        name: customerLogo.value.name,
+        url: customerLogo.value.url,
+      },
+    };
+
+    const masterManagerData = {
+      name: values.managerName,
+      phone: values.managerCellPhone,
+      position: values.position,
+      department: values.department,
+      email: values.managerEmail,
+      password: values.password,
+    };
+
+    const contractData = {
+      customerName: values.fantasyName,
+      managerName: values.managerName,
+      managerEmail: values.managerEmail,
+      customerBranches: [],
+      customerUsers: [],
+      comercialConditions: {
+        paymentTerm: values.paymentTerm,
+        paymentDueDate: values.paymentDueDate,
+      },
+      services: [],
+      additionalInfo: values.additionalInfo,
+      enabled: contractSituation.value,
+      status: values.status,
+    };
+    isLoadingSend.value = !isLoadingSend.value;
+    await updateContractAction({
+      payloadIds,
+      customerData,
+      masterManagerData,
+      contractData,
+    });
+  } catch (error) {
+    toast({
+      title: 'Opss!',
+      class: 'bg-red-500 border-0 text-white text-2xl',
+      description: `Ocorreu um erro ao atualizar o contrato. Tente novamente.`,
+    });
+  } finally {
+    isLoadingSend.value = !isLoadingSend.value;
+    toast({
+      title: 'Feito!',
+      class: 'bg-green-600 border-0 text-white text-2xl',
+      description: `Contrato atualizado com sucesso!`,
+    });
+    navigateTo('/admin/contracts/active');
+  }
 });
+
+const deleteFile = async (url: string) => {
+  try {
+    await deleteFileAction(url);
+  } catch (error) {
+    toast({
+      title: 'Oops!',
+      class: 'bg-red-500 border-0 text-white text-2xl',
+      description: `Arquivo do logotipo não pode ser removido. Tente novamente.`,
+    });
+  } finally {
+    toast({
+      title: 'Feito!',
+      class: 'bg-green-500 border-0 text-white text-2xl',
+      description: `Arquivo do logotipo foi removido com sucesso!`,
+    });
+    customerLogo.value.name = '';
+    customerLogo.value.url = '';
+  }
+};
 
 const findAddress = async (code: string) => {
   if (code?.length !== 9) {
@@ -210,12 +300,12 @@ const findAddress = async (code: string) => {
         Editar Contrato
       </h1>
       <div class="flex gap-10 items-center">
-        <div class="">
-          <Label class="text-md font-bold"> Status do Contrato </Label>
+        <div>
+          <Label class="text-md font-bold"> Desativar Contrato </Label>
           <div class="mt-2 flex items-center gap-3">
             <Label class="text-sm text-zinc-500"> Inativo </Label>
             <Switch
-              v-model:checked="contractStatus"
+              v-model:checked="contractSituation"
               class="data-[state=checked]:bg-green-600 data-[state=unchecked]:bg-red-500"
             />
             <Label class="text-sm text-zinc-500"> Ativo </Label>
@@ -235,12 +325,96 @@ const findAddress = async (code: string) => {
       </section>
       <section v-else>
         <form @submit="onSubmit">
+          <div class="mb-10 px-6 md:grid md:grid-cols-4">
+            <FormField v-slot="{ componentField }" name="status">
+              <FormItem>
+                <FormLabel class="font-bold">Status do Contrato</FormLabel>
+                <FormControl>
+                  <FormSelect
+                    v-bind="componentField"
+                    :items="[
+                      {
+                        label: 'Validado',
+                        value: 'validated',
+                      },
+                      {
+                        label: 'Pendente',
+                        value: 'pending',
+                      },
+                    ]"
+                    label="Selecione"
+                  />
+                </FormControl>
+              </FormItem>
+            </FormField>
+          </div>
           <div class="mb-10">
             <h2 class="px-6 mb-4 text-2xl font-bold">1. Dados do Cliente</h2>
             <CompanyForm
               :findAddress="findAddress"
               :loading="isLoadingAddress"
-            />
+              :isEditing="true"
+            >
+              <div class="flex gap-4 items-end">
+                <div v-if="!customerLogo?.name">
+                  <UploadButton
+                    class="relative ut-button:bg-zinc-900 ut-button:hover:bg-zinc-700 ut-button:ut-uploading:after:bg-green-500 ut-button:ut-uploading:cursor-not-allowed ut-button:ut-readying:bg-red-500"
+                    :config="{
+                      appearance: {
+                        container: '!items-start',
+                        allowedContent: '!absolute !top-10',
+                      },
+                      content: {
+                        allowedContent({ ready, fileTypes, isUploading }) {
+                          if (ready) return '';
+                          if (isUploading)
+                            return 'Enviando seu arquivo, aguarde...';
+                        },
+                      },
+                      endpoint: 'customerLogo',
+                      onClientUploadComplete: (file) => {
+                        customerLogo.name = file[0].name;
+                        customerLogo.url = file[0].ufsUrl;
+                      },
+                      onUploadError: (error) => {
+                        toast({
+                          title: 'Ooops!',
+                          class: 'bg-red-500 border-0 text-white text-2xl',
+                          description: `Erro ao enviar o arquivo. Tente novamente. ${error.cause}`,
+                        });
+                      },
+                    }"
+                  />
+                </div>
+                <div
+                  v-if="customerLogo?.name !== ''"
+                  class="flex gap-2 items-center"
+                >
+                  <Paperclip class="w-4 h-4 text-zinc-500" />
+                  <div
+                    class="px-4 py-2 border border-dashed border-zinc-500 rounded-md bg-white"
+                  >
+                    <a
+                      class="underline"
+                      :href="customerLogo?.url"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      {{ customerLogo?.name || 'Nenhum arquivo anexo' }}
+                    </a>
+                  </div>
+                  <LoaderCircle
+                    v-if="loadingFileData"
+                    class="w-4 h-4 animate-spin"
+                  />
+                  <CircleX
+                    v-else
+                    class="w-4 h-4 text-zinc-500 hover:text-red-500 cursor-pointer"
+                    @click.prevent="deleteFile(customerLogo?.url)"
+                  />
+                </div>
+              </div>
+            </CompanyForm>
           </div>
           <div class="mb-10">
             <h2 class="px-6 mb-4 text-2xl font-bold">2. Gestor Master</h2>

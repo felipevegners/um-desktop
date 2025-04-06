@@ -1,9 +1,9 @@
 export const getContractsService = async (contractId: string) => {
   try {
     if (contractId) {
-      return await $fetch(`/api/contracts/contracts?id=${contractId}`);
+      return await $fetch(`/api/admin/contracts?id=${contractId}`);
     }
-    return await $fetch('/api/contracts/contracts');
+    return await $fetch('/api/admin/contracts');
   } catch (error) {
     console.log('Error during service GET -> ', error);
   }
@@ -11,7 +11,7 @@ export const getContractsService = async (contractId: string) => {
 
 export const createContractService = async (contractData: any) => {
   try {
-    return await $fetch('/api/contracts/contracts', {
+    return await $fetch('/api/admin/contracts', {
       method: 'POST',
       body: contractData,
     });
@@ -22,7 +22,7 @@ export const createContractService = async (contractData: any) => {
 
 export const updateContractService = async (contractData: any) => {
   try {
-    await $fetch('/api/contracts/contracts', {
+    await $fetch('/api/admin/contracts', {
       method: 'PUT',
       body: contractData,
     });

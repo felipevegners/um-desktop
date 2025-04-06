@@ -1,8 +1,8 @@
 <script setup lang="ts">
-import { useContractsStore } from '@/stores/contracts.store';
-import { LoaderCircle, WandSparkles } from 'lucide-vue-next';
+import { WandSparkles } from 'lucide-vue-next';
 import { vMaska } from 'maska/vue';
 import { storeToRefs } from 'pinia';
+import { useContractsStore } from '~/stores/admin/contracts.store';
 
 const store = useContractsStore();
 const { contractId } = storeToRefs(store);

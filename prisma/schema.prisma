@@ -33,6 +33,7 @@ model Contracts {
   managerId           String?        @db.ObjectId
   managerName         String?
   managerEmail        String?
+  additionalInfo      String?
   status              String?
   enabled             Boolean?
   createdAt           DateTime?      @default(now())

@@ -1,9 +1,9 @@
 <script setup lang="ts">
 import BackLink from '@/components/shared/BackLink.vue';
-import { useContractsStore } from '@/stores/contracts.store';
 import { Edit, FileText, LoaderCircle, Trash } from 'lucide-vue-next';
 import { storeToRefs } from 'pinia';
 import { dateFormat } from '~/lib/utils';
+import { useContractsStore } from '~/stores/admin/contracts.store';
 
 definePageMeta({
   layout: 'admin',
@@ -37,9 +37,6 @@ await getContractByIdAction(route?.params?.id as string);
           "
         >
           <Edit class="w-4 h-4" /> Editar Contrato
-        </Button>
-        <Button variant="destructive" @click="">
-          <Trash class="w-4 h-4" /> Excluir Contrato
         </Button>
       </div>
     </section>
@@ -199,6 +196,13 @@ await getContractByIdAction(route?.params?.id as string);
                 {{ dateFormat(contract?.manager?.createdAt) }}
               </p>
             </div>
+          </div>
+        </div>
+        <Separator class="my-6 border-b border-zinc-300" />
+        <div>
+          <h2 class="mb-4 text-2xl font-bold">Informações Adicionais</h2>
+          <div class="p-6 bg-white rounded-md">
+            {{ contract.additionalInfo }}
           </div>
         </div>
         <!-- <pre>{{ contract }}</pre> -->

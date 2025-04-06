@@ -14,7 +14,6 @@ import {
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/components/ui/toast/use-toast';
 import { findAddressByZipcode } from '@/server/services/FindAddress';
-import { useContractsStore } from '@/stores/contracts.store';
 import { toTypedSchema } from '@vee-validate/zod';
 import {
   ArrowLeft,
@@ -26,6 +25,7 @@ import {
 import { useForm } from 'vee-validate';
 import { computed, ref } from 'vue';
 import * as z from 'zod';
+import { useContractsStore } from '~/stores/admin/contracts.store';
 
 const { createContractAction } = useContractsStore();
 

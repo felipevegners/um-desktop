@@ -78,7 +78,7 @@ export default defineEventHandler(async (event) => {
       comercialConditions,
       services: [],
       enabled: true,
-      status: 'active',
+      status: 'pending',
       customer: {
         connect: {
           id: newCompany.id,

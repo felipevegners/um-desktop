@@ -1,10 +1,10 @@
 <script setup lang="ts">
 import DataTable from '@/components/shared/DataTable.vue';
 import TableActions from '@/components/shared/TableActions.vue';
-import { useContractsStore } from '@/stores/contracts.store';
 import { createColumnHelper } from '@tanstack/vue-table';
 import { FileText, LoaderCircle } from 'lucide-vue-next';
 import { storeToRefs } from 'pinia';
+import { useContractsStore } from '~/stores/admin/contracts.store';
 
 import { columns } from './columns';
 

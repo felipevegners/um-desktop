@@ -9,6 +9,7 @@ definePageMeta({
 defineProps<{
   findAddress: any;
   loading: boolean;
+  isEditing?: boolean;
 }>();
 </script>
 <template v-if="currentStep === 0">
@@ -147,7 +148,7 @@ defineProps<{
           </FormControl>
         </FormItem>
       </FormField>
-      <FormField v-slot="{ componentField }" name="logo">
+      <FormField v-if="!isEditing" v-slot="{ componentField }" name="logo">
         <FormItem>
           <FormLabel>Logo da Empresa</FormLabel>
           <FormControl>
@@ -156,6 +157,7 @@ defineProps<{
           <FormMessage />
         </FormItem>
       </FormField>
+      <slot />
     </div>
   </section>
 </template>
