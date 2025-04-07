@@ -80,14 +80,6 @@ const schema = toTypedSchema(
     phone: z.string().min(2).max(16),
     phoneExtension: z.string().min(2).max(6).optional(),
     website: z.string().min(2).max(50),
-    logo: z
-      .any()
-      .refine((file) => file?.size <= MAX_FILE_SIZE, `Tamanho máximo é de 4Mb.`)
-      .refine(
-        (file) => ACCEPTED_IMAGE_TYPES.includes(file?.type),
-        'Apenas arquivos nos formatos .jpg, .jpeg ou .png são aceitos ',
-      )
-      .optional(),
     managerName: z.string().min(1).max(100),
     managerCellPhone: z.string().min(2).max(16),
     position: z.string().min(1).max(50),
@@ -117,7 +109,6 @@ const form = useForm({
     phone: contract?.value?.customer.phone,
     phoneExtension: contract?.value?.customer.phoneExtension,
     website: contract?.value?.customer.website,
-    logo: contract?.value?.customer.logo.name,
     managerName: contract?.value?.managerName,
     managerCellPhone: contract?.value?.manager.phone,
     position: contract?.value?.manager.position,
@@ -325,37 +316,14 @@ const findAddress = async (code: string) => {
       </section>
       <section v-else>
         <form @submit="onSubmit">
-          <div class="mb-10 px-6 md:grid md:grid-cols-4">
-            <FormField v-slot="{ componentField }" name="status">
-              <FormItem>
-                <FormLabel class="font-bold">Status do Contrato</FormLabel>
-                <FormControl>
-                  <FormSelect
-                    v-bind="componentField"
-                    :items="[
-                      {
-                        label: 'Validado',
-                        value: 'validated',
-                      },
-                      {
-                        label: 'Pendente',
-                        value: 'pending',
-                      },
-                    ]"
-                    label="Selecione"
-                  />
-                </FormControl>
-              </FormItem>
-            </FormField>
-          </div>
-          <div class="mb-10">
-            <h2 class="px-6 mb-4 text-2xl font-bold">1. Dados do Cliente</h2>
-            <CompanyForm
-              :findAddress="findAddress"
-              :loading="isLoadingAddress"
-              :isEditing="true"
-            >
-              <div class="flex gap-4 items-end">
+          <div class="mb-10 px-6 flex justify-between items-start gap-4">
+            <div class="flex flex-col gap-4">
+              <p class="font-bold">Logo</p>
+              <div
+                class="p-2 h-[100px] rounded-md bg-white bg-contain bg-no-repeat bg-center"
+                :style="{ backgroundImage: `url(${customerLogo.url})` }"
+              />
+              <div class="flex items-end justify-between gap-4">
                 <div v-if="!customerLogo?.name">
                   <UploadButton
                     class="relative ut-button:bg-zinc-900 ut-button:hover:bg-zinc-700 ut-button:ut-uploading:after:bg-green-500 ut-button:ut-uploading:cursor-not-allowed ut-button:ut-readying:bg-red-500"
@@ -414,7 +382,36 @@ const findAddress = async (code: string) => {
                   />
                 </div>
               </div>
-            </CompanyForm>
+            </div>
+            <FormField v-slot="{ componentField }" name="status">
+              <FormItem class="grid grid-cols-2 items-center gap-4">
+                <FormLabel class="font-bold">Status do Contrato</FormLabel>
+                <FormControl>
+                  <FormSelect
+                    v-bind="componentField"
+                    :items="[
+                      {
+                        label: 'Validado',
+                        value: 'validated',
+                      },
+                      {
+                        label: 'Pendente',
+                        value: 'pending',
+                      },
+                    ]"
+                    label="Selecione"
+                  />
+                </FormControl>
+              </FormItem>
+            </FormField>
+          </div>
+          <div class="mb-10">
+            <h2 class="px-6 mb-4 text-2xl font-bold">1. Dados do Cliente</h2>
+            <CompanyForm
+              :findAddress="findAddress"
+              :loading="isLoadingAddress"
+              :isEditing="true"
+            />
           </div>
           <div class="mb-10">
             <h2 class="px-6 mb-4 text-2xl font-bold">2. Gestor Master</h2>
@@ -449,4 +446,8 @@ const findAddress = async (code: string) => {
   </main>
 </template>
 
-<style scoped></style>
+<style scoped>
+/* .logo {
+  background-image: url('#{customerLogo.url}');
+} */
+</style>
