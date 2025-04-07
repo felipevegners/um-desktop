@@ -2,9 +2,9 @@ import { Prisma, prisma } from '~/utils/prisma';
 
 export default defineEventHandler(async (event) => {
   const payload = await readBody(event);
-  const { id } = payload;
   try {
-    await prisma.services.delete({ where: { id } });
+    const newProduct = await prisma.products.create({ data: payload });
+    return newProduct;
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
       if (error.code === 'P2002') {

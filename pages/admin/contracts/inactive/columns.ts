@@ -61,25 +61,17 @@ export const columns = [
     },
   }),
   columnHelper.accessor('status', {
-    header: () => h('div', { class: 'text-left' }, 'Status'),
+    header: () => h('div', { class: 'text-center' }, 'Status'),
     cell: ({ row }) => {
       const status = row.getValue('status');
       return h(
         'div',
         {
           class: `px-2 flex items-center justify-center h-6 rounded-full text-white text-xs max-w-[80px] ${
-            status === 'active'
-              ? 'bg-green-600'
-              : status === 'inactive'
-                ? 'bg-red-600'
-                : 'bg-yellow-500'
+            status === 'validated' ? 'bg-green-600' : 'bg-yellow-500'
           }`,
         },
-        status === 'active'
-          ? 'Ativo'
-          : status === 'inactive'
-            ? 'Inativo'
-            : 'Pendente',
+        status === 'validated' ? 'Validado' : 'Pendente',
       );
     },
   }),

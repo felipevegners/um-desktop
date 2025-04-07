@@ -1,5 +1,5 @@
 import {
-  BriefcaseBusiness,
+  Box,
   Building2,
   CalendarDays,
   Car,
@@ -129,9 +129,9 @@ export const backofficeMenuData = {
   ],
   settings: [
     {
-      name: 'Tipos de Serviços',
-      url: '/admin/configurations/services/',
-      icon: BriefcaseBusiness,
+      name: 'Nossos Produtos',
+      url: '/admin/configurations/products/',
+      icon: Box,
     },
     {
       name: 'Repasse Motorista',

@@ -2,21 +2,45 @@ import { Prisma, prisma } from '~/utils/prisma';
 
 export default defineEventHandler(async (event) => {
   const payload = await readBody(event);
-  const { id, name, description, price, enabled } = payload;
+  const {
+    id,
+    image,
+    code,
+    name,
+    type,
+    capacity,
+    price,
+    basePrice,
+    includedHours,
+    includedKms,
+    kmPrice,
+    minutePrice,
+    description,
+    enabled,
+  } = payload;
 
   try {
-    const updatedService = await prisma.services.update({
+    const updatedProduct = await prisma.products.update({
       where: {
         id,
       },
       data: {
+        image,
+        code,
         name,
-        description,
+        type,
+        capacity,
         price,
+        basePrice,
+        includedHours,
+        includedKms,
+        kmPrice,
+        minutePrice,
+        description,
         enabled,
       },
     });
-    return updatedService;
+    return updatedProduct;
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
       if (error.code === 'P2002') {

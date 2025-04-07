@@ -1,29 +1,29 @@
-export const getServiceProfileService = async (serviceId: string) => {
+export const getProductsService = async (productId: string) => {
   try {
-    if (serviceId) {
-      return await $fetch(`/api/services/services?id=${serviceId}`);
+    if (productId) {
+      return await $fetch(`/api/admin/products?id=${productId}`);
     }
 
-    return await $fetch('/api/services/services');
+    return await $fetch('/api/admin/products');
   } catch (error) {
     console.log('Error -> ', error);
   }
 };
-export const createServiceProfileService = async (serviceData: any) => {
+export const createProductService = async (productData: any) => {
   try {
-    return await $fetch('/api/services/services', {
+    return await $fetch('/api/admin/products', {
       method: 'POST',
-      body: serviceData,
+      body: productData,
     });
   } catch (error) {
     console.log('Error service ---> ', error);
   }
 };
-export const deleteServiceProfileService = async (serviceId: any) => {
+export const deleteProductService = async (productId: any) => {
   try {
-    return await $fetch('/api/services/services', {
+    return await $fetch('/api/admin/products', {
       method: 'DELETE',
-      body: { id: serviceId },
+      body: { id: productId },
     });
   } catch (error) {
     console.log('Error service ---> ', error);

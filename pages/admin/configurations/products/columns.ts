@@ -5,17 +5,17 @@ import { ArrowUpDown } from 'lucide-vue-next';
 const columnHelper = createColumnHelper<any>();
 
 export const columns = [
-  columnHelper.accessor('serviceImage', {
+  columnHelper.accessor('image', {
     header: () => h('div', { class: 'text-left' }, 'Imagem'),
     cell: ({ row }) => {
       return h(
         'div',
         { class: 'text-left font-medium' },
-        row.getValue('serviceImage'),
+        row.getValue('image'),
       );
     },
   }),
-  columnHelper.accessor('identifier', {
+  columnHelper.accessor('code', {
     enablePinning: true,
     header: ({ column }) => {
       return h(
@@ -27,8 +27,7 @@ export const columns = [
         () => ['Sigla', h(ArrowUpDown, { class: 'ml-2 h-4 w-4' })],
       );
     },
-    cell: ({ row }) =>
-      h('div', { class: 'capitalize' }, row.getValue('identifier')),
+    cell: ({ row }) => h('div', { class: 'capitalize' }, row.getValue('code')),
   }),
   columnHelper.accessor('name', {
     enablePinning: true,
@@ -39,18 +38,22 @@ export const columns = [
           variant: 'ghost',
           onClick: () => column.toggleSorting(column.getIsSorted() === 'asc'),
         },
-        () => ['Serviço', h(ArrowUpDown, { class: 'ml-2 h-4 w-4' })],
+        () => ['Nome', h(ArrowUpDown, { class: 'ml-2 h-4 w-4' })],
       );
     },
     cell: ({ row }) => h('div', { class: 'capitalize' }, row.getValue('name')),
+  }),
+  columnHelper.accessor('type', {
+    header: () => h('div', { class: 'text-left' }, 'Tipo de Cobrança'),
+    cell: ({ row }) => h('div', { class: 'capitalize' }, row.getValue('type')),
   }),
   columnHelper.accessor('capacity', {
     header: () => h('div', { class: 'text-left' }, 'Capacidade'),
     cell: ({ row }) =>
       h('div', { class: 'capitalize' }, row.getValue('capacity')),
   }),
-  columnHelper.accessor('basePrice', {
-    header: () => h('div', { class: 'text-left' }, 'Valor Base'),
+  columnHelper.accessor('price', {
+    header: () => h('div', { class: 'text-left' }, 'Valor'),
     cell: ({ row }) =>
       h(
         'div',
@@ -58,21 +61,27 @@ export const columns = [
         new Intl.NumberFormat('pt-BR', {
           style: 'currency',
           currency: 'BRL',
-        }).format(parseFloat(row.getValue('basePrice'))),
+        }).format(parseFloat(row.getValue('price'))),
       ),
   }),
-  columnHelper.accessor('baseDistance', {
-    header: () => h('div', { class: 'text-left' }, 'Distância Base (Km)'),
+  columnHelper.accessor('basePrice', {
+    header: () => h('div', { class: 'text-left' }, 'Valor Base'),
     cell: ({ row }) => {
+      const value = row.getValue('basePrice');
       return h(
         'div',
         { class: 'text-left font-medium' },
-        row.getValue('baseDistance'),
+        value !== null
+          ? new Intl.NumberFormat('pt-BR', {
+              style: 'currency',
+              currency: 'BRL',
+            }).format(parseFloat(value as string))
+          : '-',
       );
     },
   }),
-  columnHelper.accessor('baseTime', {
-    header: () => h('div', { class: 'text-left' }, 'Tempo Base'),
+  columnHelper.accessor('includedKms', {
+    header: () => h('div', { class: 'text-left' }, 'Franquia de Km'),
     cell: ({ row }) => {
       return h(
         'div',
@@ -81,33 +90,44 @@ export const columns = [
       );
     },
   }),
-  columnHelper.accessor('distancePrice', {
-    header: () => h('div', { class: 'text-left' }, 'Valor Distância'),
+  columnHelper.accessor('includedHours', {
+    header: () => h('div', { class: 'text-left' }, 'Franquia de Horas'),
     cell: ({ row }) => {
       return h(
         'div',
         { class: 'text-left font-medium' },
-        row.getValue('distancePrice'),
+        row.getValue('includedHours'),
       );
     },
   }),
-  columnHelper.accessor('timePrice', {
-    header: () => h('div', { class: 'text-left' }, 'Valor Tempo (R$ x min)'),
+  columnHelper.accessor('kmPrice', {
+    header: () => h('div', { class: 'text-left' }, 'Valor Km'),
     cell: ({ row }) => {
       return h(
         'div',
         { class: 'text-left font-medium' },
-        row.getValue('timePrice'),
+        row.getValue('kmPrice'),
       );
     },
   }),
-  columnHelper.accessor('priceCalculation', {
-    header: () => h('div', { class: 'text-left' }, 'Base de Cálculos'),
+  columnHelper.accessor('minutePrice', {
+    header: () => h('div', { class: 'text-left' }, 'Valor Minuto'),
     cell: ({ row }) => {
       return h(
         'div',
         { class: 'text-left font-medium' },
-        row.getValue('priceCalculation'),
+        row.getValue('minutePrice'),
+      );
+    },
+  }),
+  columnHelper.accessor('enabled', {
+    header: () => h('div', { class: 'text-left' }, 'Status'),
+    cell: ({ row }) => {
+      const status = row.getValue('enabled');
+      return h(
+        'div',
+        { class: 'text-left font-medium' },
+        status === true ? 'Ativo' : 'Inativo',
       );
     },
   }),
