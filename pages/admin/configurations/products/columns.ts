@@ -6,7 +6,7 @@ const columnHelper = createColumnHelper<any>();
 
 export const columns = [
   columnHelper.accessor('image', {
-    header: () => h('div', { class: 'text-left' }, 'Imagem'),
+    header: () => h('div', { class: 'text-left text-xs' }, 'Imagem'),
     cell: ({ row }) => {
       return h(
         'div',
@@ -16,18 +16,16 @@ export const columns = [
     },
   }),
   columnHelper.accessor('code', {
-    enablePinning: true,
-    header: ({ column }) => {
-      return h(
-        Button,
+    header: () => h('div', { class: 'text-left text-xs' }, 'Código'),
+    cell: ({ row }) =>
+      h(
+        'div',
         {
-          variant: 'ghost',
-          onClick: () => column.toggleSorting(column.getIsSorted() === 'asc'),
+          class:
+            'px-2 py-1 uppercase text-xs text-white text-center bg-zinc-700 rounded-md',
         },
-        () => ['Sigla', h(ArrowUpDown, { class: 'ml-2 h-4 w-4' })],
-      );
-    },
-    cell: ({ row }) => h('div', { class: 'capitalize' }, row.getValue('code')),
+        row.getValue('code'),
+      ),
   }),
   columnHelper.accessor('name', {
     enablePinning: true,
@@ -36,97 +34,112 @@ export const columns = [
         Button,
         {
           variant: 'ghost',
+          class: 'text-left text-xs',
           onClick: () => column.toggleSorting(column.getIsSorted() === 'asc'),
         },
         () => ['Nome', h(ArrowUpDown, { class: 'ml-2 h-4 w-4' })],
       );
     },
-    cell: ({ row }) => h('div', { class: 'capitalize' }, row.getValue('name')),
+    cell: ({ row }) =>
+      h('div', { class: 'capitalize text-left text-xs' }, row.getValue('name')),
   }),
   columnHelper.accessor('type', {
-    header: () => h('div', { class: 'text-left' }, 'Tipo de Cobrança'),
-    cell: ({ row }) => h('div', { class: 'capitalize' }, row.getValue('type')),
+    header: () =>
+      h('div', { class: 'text-center text-xs' }, 'Tipo de Cobrança'),
+    cell: ({ row }) => {
+      const value = row.getValue('type');
+      return h(
+        'div',
+        { class: 'capitalize text-xs text-center' },
+        value === 'contract'
+          ? 'Valor fechado'
+          : value === 'free-km'
+            ? 'Valor Km/Min'
+            : 'Valor Km',
+      );
+    },
   }),
   columnHelper.accessor('capacity', {
-    header: () => h('div', { class: 'text-left' }, 'Capacidade'),
-    cell: ({ row }) =>
-      h('div', { class: 'capitalize' }, row.getValue('capacity')),
-  }),
-  columnHelper.accessor('price', {
-    header: () => h('div', { class: 'text-left' }, 'Valor'),
+    header: () => h('div', { class: 'text-center text-xs' }, 'Capacidade'),
     cell: ({ row }) =>
       h(
         'div',
-        { class: 'capitalize' },
-        new Intl.NumberFormat('pt-BR', {
-          style: 'currency',
-          currency: 'BRL',
-        }).format(parseFloat(row.getValue('price'))),
+        { class: 'capitalize text-xs text-center' },
+        row.getValue('capacity'),
       ),
   }),
   columnHelper.accessor('basePrice', {
-    header: () => h('div', { class: 'text-left' }, 'Valor Base'),
+    header: () => h('div', { class: 'text-center text-xs' }, 'Valor Base'),
     cell: ({ row }) => {
-      const value = row.getValue('basePrice');
       return h(
         'div',
-        { class: 'text-left font-medium' },
-        value !== null
-          ? new Intl.NumberFormat('pt-BR', {
-              style: 'currency',
-              currency: 'BRL',
-            }).format(parseFloat(value as string))
-          : '-',
+        { class: 'text-center text-xs' },
+        new Intl.NumberFormat('pt-BR', {
+          style: 'currency',
+          currency: 'BRL',
+        }).format(parseFloat(row.getValue('basePrice'))),
       );
     },
   }),
   columnHelper.accessor('includedKms', {
-    header: () => h('div', { class: 'text-left' }, 'Franquia de Km'),
+    header: () => h('div', { class: 'text-center text-xs' }, 'Franquia de Km'),
     cell: ({ row }) => {
+      const value = row.getValue('includedKms');
       return h(
         'div',
-        { class: 'text-left font-medium' },
-        row.getValue('baseTime'),
+        { class: 'text-center  text-xs' },
+        `${row.getValue('includedKms') === null ? '-' : row.getValue('includedKms') + 'Km'}`,
       );
     },
   }),
   columnHelper.accessor('includedHours', {
-    header: () => h('div', { class: 'text-left' }, 'Franquia de Horas'),
+    header: () =>
+      h('div', { class: 'text-center text-xs' }, 'Franquia de Horas'),
     cell: ({ row }) => {
       return h(
         'div',
-        { class: 'text-left font-medium' },
-        row.getValue('includedHours'),
+        { class: 'text-center text-xs' },
+        `${row.getValue('includedHours') === null ? '-' : row.getValue('includedHours') + 'h'}`,
       );
     },
   }),
   columnHelper.accessor('kmPrice', {
-    header: () => h('div', { class: 'text-left' }, 'Valor Km'),
+    header: () => h('div', { class: 'text-center text-xs' }, 'Valor Km'),
     cell: ({ row }) => {
       return h(
         'div',
-        { class: 'text-left font-medium' },
-        row.getValue('kmPrice'),
+        { class: 'text-center text-xs' },
+        new Intl.NumberFormat('pt-BR', {
+          style: 'currency',
+          currency: 'BRL',
+        }).format(parseFloat(row.getValue('kmPrice'))),
       );
     },
   }),
   columnHelper.accessor('minutePrice', {
-    header: () => h('div', { class: 'text-left' }, 'Valor Minuto'),
+    header: () => h('div', { class: 'text-center text-xs' }, 'Valor Minuto'),
     cell: ({ row }) => {
       return h(
         'div',
-        { class: 'text-left font-medium' },
-        row.getValue('minutePrice'),
+        { class: 'text-center text-xs' },
+        new Intl.NumberFormat('pt-BR', {
+          style: 'currency',
+          currency: 'BRL',
+        }).format(row.getValue('minutePrice')),
       );
     },
   }),
   columnHelper.accessor('enabled', {
-    header: () => h('div', { class: 'text-left' }, 'Status'),
+    header: () => h('div', { class: 'text-center text-xs' }, 'Status'),
     cell: ({ row }) => {
       const status = row.getValue('enabled');
       return h(
         'div',
-        { class: 'text-left font-medium' },
+        {
+          class: `
+          uppercase px-1 text-white text-center text-[10px] rounded-md ${status === true ? 'bg-green-600' : 'bg-red-600'}
+          `,
+        },
         status === true ? 'Ativo' : 'Inativo',
       );
     },

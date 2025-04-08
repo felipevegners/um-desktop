@@ -114,7 +114,6 @@ model Products {
   name          String
   type          String
   capacity      Int?
-  price         String?
   basePrice     String?
   includedHours String?
   includedKms   Int?

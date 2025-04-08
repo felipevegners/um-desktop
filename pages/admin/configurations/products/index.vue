@@ -3,12 +3,16 @@ import DataTable from '@/components/shared/DataTable.vue';
 import DeleteAction from '@/components/shared/DeleteAction.vue';
 import FormSelect from '@/components/shared/FormSelect.vue';
 import { useToast } from '@/components/ui/toast';
-import { deleteProductService } from '@/server/services/services';
+import {
+  deleteProductService,
+  getProductsService,
+} from '@/server/services/services';
 import { createColumnHelper } from '@tanstack/vue-table';
 import { toTypedSchema } from '@vee-validate/zod';
-import { BriefcaseBusiness, LoaderCircle, Plus } from 'lucide-vue-next';
+import { Box, LoaderCircle, Plus } from 'lucide-vue-next';
 import { useForm } from 'vee-validate';
 import * as z from 'zod';
+import TableActions from '~/components/shared/TableActions.vue';
 
 import { columns } from './columns';
 
@@ -33,10 +37,13 @@ const showAddForm = ref<boolean>(false);
 const productsList = ref<any>([]);
 const productType = ref<string>('');
 
-const fetchData = async () => {
+const fetchData = async (productId: string) => {
   try {
     isLoading.value = true;
-    return await $fetch('/api/admin/products');
+    if (productId) {
+      return await getProductsService(productId);
+    }
+    return await getProductsService('');
   } catch (error) {
     toast({
       title: 'Opss!',
@@ -49,7 +56,7 @@ const fetchData = async () => {
   }
 };
 
-productsList.value = await fetchData();
+productsList.value = await fetchData('');
 
 const formSchema = toTypedSchema(
   z.object({
@@ -63,10 +70,9 @@ const formSchema = toTypedSchema(
       .max(50, 'O nome deve conter no máximo 50 caracteres'),
     capacity: z.number({ message: '*Obrigatório' }).min(1),
     type: z.string({ message: '*Obrigatório' }),
-    price: z.string({ message: '*Obrigatório' }).min(1),
     basePrice: z.string({ message: '*Obrigatório' }).min(1).optional(),
-    includedHours: z.string({ message: '*Obrigatório' }).min(1),
-    includedKms: z.number({ message: '*Obrigatório' }).min(1),
+    includedHours: z.string({ message: '*Obrigatório' }).min(1).optional(),
+    includedKms: z.number({ message: '*Obrigatório' }).min(1).optional(),
     kmPrice: z.string({ message: '*Obrigatório' }).min(1),
     minutePrice: z.string({ message: '*Obrigatório' }).min(1),
   }),
@@ -82,7 +88,15 @@ const onSubmit = form.handleSubmit(async (values) => {
     await $fetch('/api/admin/products', {
       method: 'POST',
       body: {
-        ...values,
+        code: values.code,
+        name: values.name,
+        capacity: values.capacity,
+        type: values.type,
+        basePrice: values.basePrice?.replace(',', '.') || null,
+        includedHours: values.includedHours || null,
+        includedKms: values.includedKms || null,
+        kmPrice: values.kmPrice.replace(',', '.'),
+        minutePrice: values.minutePrice.replace(',', '.'),
         enabled: true,
       },
     });
@@ -100,9 +114,11 @@ const onSubmit = form.handleSubmit(async (values) => {
       description: `Produto cadastrado com sucesso!`,
     });
     showAddForm.value = !showAddForm.value;
-    productsList.value = await fetchData();
+    productsList.value = await fetchData('');
   }
 });
+
+const onEdit = async () => {};
 
 const deleteProduct = async (productId: string) => {
   isLoadingSend.value = true;
@@ -121,7 +137,7 @@ const deleteProduct = async (productId: string) => {
       class: 'bg-green-600 border-0 text-white text-2xl',
       description: `Produto deletado com sucesso!`,
     });
-    productsList.value = await fetchData();
+    productsList.value = await fetchData('');
   }
 };
 
@@ -137,26 +153,28 @@ const finalColumns = [
   columnHelper.display({
     id: 'actions',
     enableHiding: false,
-    header: () => h('div', { class: 'text-left' }, 'Ações'),
+    header: () => h('div', { class: 'text-center text-xs' }, 'Ações'),
     cell: ({ row }) => {
       return h(
         'div',
-        { class: 'relative text-left' },
-        h(DeleteAction, {
-          data: row.original,
-          loading: isLoadingSend.value,
-          remove: deleteProduct,
+        { class: 'relative text-center' },
+        h(TableActions, {
+          dataId: row.original.id,
+          onEdit: foo,
         }),
       );
     },
   }),
 ];
+const foo = (value: any) => {
+  console.log(value);
+};
 </script>
 <template>
   <main class="p-6">
     <section class="mb-6 flex items-center justify-between">
       <h1 class="flex items-center gap-4 text-2xl font-bold">
-        <BriefcaseBusiness />
+        <Box />
         Produtos Cadastrados
       </h1>
       <Button @click="toggleShowAddForm">
@@ -233,9 +251,9 @@ const finalColumns = [
             >
               <h3 class="mb-4 font-bold text-lg">Inserir Valores</h3>
               <div class="md:grid md:grid-cols-4 gap-4">
-                <FormField v-slot="{ componentField }" name="price">
+                <FormField v-slot="{ componentField }" name="basePrice">
                   <FormItem>
-                    <FormLabel>Valor do Produto (R$)</FormLabel>
+                    <FormLabel>Valor do Base (R$)</FormLabel>
                     <FormControl>
                       <Input type="text" v-bind="componentField" />
                       <FormMessage />
@@ -343,8 +361,8 @@ const finalColumns = [
       <DataTable
         :columns="finalColumns"
         :data="productsList"
-        sortby="identifier"
-        :column-pin="['productImage']"
+        sortby="name"
+        :column-pin="['image']"
         filterBy="nome do produto"
       />
     </section>

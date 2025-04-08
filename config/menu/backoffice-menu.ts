@@ -97,7 +97,7 @@ export const backofficeMenuData = {
           url: '/admin/rides/canceled',
         },
         {
-          title: '+ Novo agendamento',
+          title: 'Novo agendamento',
           url: '/admin/rides/new',
         },
       ],
@@ -129,7 +129,7 @@ export const backofficeMenuData = {
   ],
   settings: [
     {
-      name: 'Nossos Produtos',
+      name: 'Produtos',
       url: '/admin/configurations/products/',
       icon: Box,
     },
