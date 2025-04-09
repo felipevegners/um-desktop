@@ -3,143 +3,150 @@ defineOptions({
   name: 'ProductsForm',
 });
 
-defineProps<{
-  products: any;
-}>();
-
-const selectedProducts = ref<any>([]);
+defineEmits(['update:modelValue']);
+const props = defineProps(['modelValue', 'products']);
 
 const productsData = (value: any) => {
-  selectedProducts.value = [...value];
+  const index = props.modelValue.findIndex((obj: any) => obj.id === value.id);
+  if (index > -1) {
+    props.modelValue.splice(index, 1);
+  } else {
+    props.modelValue.push(value);
+  }
+};
+
+const checkAdded = (id: string) => {
+  return !!props.modelValue.find((item: any) => item.id === id);
+};
+
+const sanitizeValues = (value: string) => {
+  return 'barretos';
 };
 </script>
 <template>
   <section class="px-6">
-    <FormItem>
-      <div class="md:grid md:grid-cols-2 gap-4">
-        <FormField
-          v-for="(product, i) in products"
-          v-slot="{ handleChange, value }"
-          :key="product.id"
-          type="checkbox"
-          :value="product"
-          :unchecked-value="false"
-          name="products"
-        >
-          <FormItem class="p-6 flex flex-col items-start bg-white rounded-md">
-            <FormControl>
-              <Checkbox
-                class="w-6 h-6"
-                :checked="!!value.find((item: any) => item.id === product.id)"
-                @update:checked="handleChange"
-              />
-            </FormControl>
-            <div>
-              <FormLabel class="font-normal uppercase text-lg">
-                <div
-                  class="w-[80px] h-[80px] rounded-md bg-white bg-contain bg-no-repeat bg-center relative flex items-center justify-center"
-                  :style="{ backgroundImage: `url(${product.image?.url})` }"
+    <div class="md:grid md:grid-cols-2 gap-4">
+      <div
+        v-for="product in props.products"
+        :key="product.id"
+        class="p-6 flex flex-col gap-4 bg-white rounded-md"
+      >
+        <Checkbox id="terms" @update:checked="productsData(product)" />
+        <div class="font-normal uppercase flex items-center gap-4">
+          <div
+            class="mb-4 w-[80px] h-[80px] rounded-md bg-zinc-200 bg-contain bg-no-repeat bg-center relative flex items-center justify-center"
+            :style="{ backgroundImage: `url(${product.image?.url})` }"
+          />
+          <p>
+            <span
+              class="mr-2 px-2 py-1 uppercase text-white text-center rounded-md"
+              :class="`${product.type === 'contract' ? 'bg-zinc-800' : product.type === 'free-km' ? 'bg-orange-400' : 'bg-purple-400'}`"
+              >{{ product.code }}</span
+            >
+            {{ product.name }}
+          </p>
+        </div>
+        <div v-if="checkAdded(product.id)">
+          <div
+            v-if="product.type === 'contract'"
+            class="p-4 border border-zinc-700 rounded-md"
+          >
+            <p class="mb-8 font-bold border-b border-b-zinc-700">
+              Editar valores
+            </p>
+            <div class="md:grid md:grid-cols-2 gap-4">
+              <div>
+                <Label for="basePrice">Valor Base (R$)</Label>
+                <Input
+                  type="text"
+                  v-model="product.basePrice"
+                  name="basePrice"
+                  class="mt-2"
                 />
-                <span
-                  class="mr-2 px-2 py-1 uppercase text-white text-center rounded-md"
-                  :class="`${product.type === 'contract' ? 'bg-zinc-800' : product.type === 'free-km' ? 'bg-orange-400' : 'bg-purple-400'}`"
-                  >{{ product.code }}</span
-                >
-                {{ product.name }}
-              </FormLabel>
-            </div>
-            <div v-if="!!value.find((item: any) => item.id === product.id)">
-              <div
-                v-if="product.type === 'contract'"
-                class="p-6 md:grid md:grid-cols-3 gap-4 border border-zinc-700 rounded-md"
-              >
-                <FormField v-slot="{ componentField }" name="basePrice">
-                  <FormItem>
-                    <FormLabel>Valor do Base (R$)</FormLabel>
-                    <FormControl>
-                      <Input type="text" v-bind="componentField" />
-                      <FormMessage />
-                    </FormControl>
-                  </FormItem>
-                </FormField>
-                <FormField v-slot="{ componentField }" name="includedHours">
-                  <FormItem>
-                    <FormLabel>Franquia Horas</FormLabel>
-                    <FormControl>
-                      <Input type="text" v-bind="componentField" />
-                      <FormMessage />
-                    </FormControl>
-                  </FormItem>
-                </FormField>
-                <FormField v-slot="{ componentField }" name="includedKms">
-                  <FormItem>
-                    <FormLabel>Franquia KMs</FormLabel>
-                    <FormControl>
-                      <Input type="number" v-bind="componentField" />
-                      <FormMessage />
-                    </FormControl>
-                  </FormItem>
-                </FormField>
-                <FormField v-slot="{ componentField }" name="kmPrice">
-                  <FormItem>
-                    <FormLabel>Valor KM Adicional (R$)</FormLabel>
-                    <FormControl>
-                      <Input type="text" v-bind="componentField" />
-                      <FormMessage />
-                    </FormControl>
-                  </FormItem>
-                </FormField>
-                <FormField v-slot="{ componentField }" name="minutePrice">
-                  <FormItem>
-                    <FormLabel>Valor Minuto Adicional (R$)</FormLabel>
-                    <FormControl>
-                      <Input type="text" v-bind="componentField" />
-                      <FormMessage />
-                    </FormControl>
-                  </FormItem>
-                </FormField>
               </div>
-              <div
-                v-if="product.type === 'free' || product.type === 'free-km'"
-                class="p-6 border-2 border-zinc-700 rounded-md"
-              >
-                <div class="p-6 md:grid md:grid-cols-3 gap-4">
-                  <FormField v-slot="{ componentField }" name="basePrice">
-                    <FormItem>
-                      <FormLabel>Valor Base (R$)</FormLabel>
-                      <FormControl>
-                        <Input type="text" v-bind="componentField" />
-                        <FormMessage />
-                      </FormControl>
-                    </FormItem>
-                  </FormField>
-                  <FormField v-slot="{ componentField }" name="kmPrice">
-                    <FormItem>
-                      <FormLabel>Valor KM (R$)</FormLabel>
-                      <FormControl>
-                        <Input type="text" v-bind="componentField" />
-                        <FormMessage />
-                      </FormControl>
-                    </FormItem>
-                  </FormField>
-                  <FormField v-slot="{ componentField }" name="minutePrice">
-                    <FormItem>
-                      <FormLabel>Valor Minuto (R$)</FormLabel>
-                      <FormControl>
-                        <Input type="text" v-bind="componentField" />
-                        <FormMessage />
-                      </FormControl>
-                    </FormItem>
-                  </FormField>
-                </div>
+              <div>
+                <Label for="includedHours">Franquia de Horas</Label>
+                <Input
+                  type="text"
+                  :default-value="product.includedHours"
+                  v-model="product.includedHours"
+                  name="includedHours"
+                  class="mt-2"
+                />
+              </div>
+              <div>
+                <Label for="includedHours">Franquia de KMs</Label>
+                <Input
+                  type="text"
+                  :default-value="product.includedKms"
+                  v-model="product.includedKms"
+                  name="includedKms"
+                  class="mt-2"
+                />
+              </div>
+              <div>
+                <Label for="includedHours">Km Adicional (R$)</Label>
+                <Input
+                  type="text"
+                  :value="sanitizeValues(product.kmPrice)"
+                  v-model="product.kmPrice"
+                  name="kmPrice"
+                  class="mt-2"
+                />
+              </div>
+              <div>
+                <Label for="includedHours">Minuto Adicional (R$)</Label>
+                <Input
+                  type="text"
+                  :default-value="product.minutePrice"
+                  v-model="product.minutePrice"
+                  name="minutePrice"
+                  class="mt-2"
+                />
               </div>
             </div>
-          </FormItem>
-        </FormField>
+          </div>
+          <div
+            v-if="product.type === 'free-km' || product.type === 'free'"
+            class="p-4 border border-zinc-700 rounded-md"
+          >
+            <p class="mb-8 font-bold border-b border-b-zinc-700">
+              Editar valores
+            </p>
+            <div class="md:grid md:grid-cols-2 gap-4">
+              <div>
+                <Label for="basePrice">Valor Base (R$)</Label>
+                <Input
+                  type="text"
+                  v-model="product.basePrice"
+                  name="basePrice"
+                  class="mt-2"
+                />
+              </div>
+              <div>
+                <Label for="includedHours">Valor Km Adicional (R$)</Label>
+                <Input
+                  type="text"
+                  v-model="product.kmPrice"
+                  name="kmPrice"
+                  class="mt-2"
+                />
+              </div>
+              <div>
+                <Label for="includedHours">Valor Minuto Adicional (R$)</Label>
+                <Input
+                  type="text"
+                  :default-value="product.minutePrice"
+                  v-model="product.minutePrice"
+                  name="minutePrice"
+                  class="mt-2"
+                />
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
-      <FormMessage />
-      {{ selectedProducts }}
-    </FormItem>
+    </div>
   </section>
 </template>
 <style scoped></style>

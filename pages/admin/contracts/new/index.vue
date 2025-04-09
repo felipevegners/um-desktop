@@ -41,6 +41,7 @@ const isLoadingSend = ref<boolean>(false);
 const isLoadingAddress = ref<boolean>(false);
 const availableProducts = ref();
 const isLoadingProducts = ref<boolean>(false);
+const selectedProducts = ref<any>([]);
 
 const { toast } = useToast();
 
@@ -111,17 +112,17 @@ const schemas = [
       password: z.string().min(8, 'Mínimo de 8 caracteres').max(8),
     }),
   ),
+  // Products Schema
+  toTypedSchema(
+    z.object({
+      products: z.any().optional(),
+    }),
+  ),
   // Comercial Conditions Schema
   toTypedSchema(
     z.object({
       paymentTerm: z.string().min(1).max(10),
       paymentDueDate: z.number().min(0),
-    }),
-  ),
-  // Products Schema
-  toTypedSchema(
-    z.object({
-      products: z.any(),
     }),
   ),
   // Additional Info
@@ -133,20 +134,18 @@ const schemas = [
 ];
 
 const currentSchema = computed(() => {
-  return schemas[currentStep.value];
+  return schemas[currentStep.value === 3 ? 4 : currentStep.value];
 });
 
 const form = useForm({
   validationSchema: currentSchema,
   keepValuesOnUnmount: true,
-  initialValues: {
-    //@ts-ignore
-    products: availableProducts?.value,
-  },
 });
 
 const onSubmit = form.handleSubmit(async (values) => {
-  console.log('--> ', values);
+  console.log('form values --> ', values);
+  currentStep.value++;
+
   // if (currentStep.value === 4) {
   //   const files = [values?.logo];
   //   try {
@@ -326,15 +325,13 @@ const findAddress = async (code: string) => {
           disabled
         >
           <AccordionTrigger class="px-6 text-xl font-bold hover:no-underline">
-            4. Serviços e Tarifas
+            4. Produtos e Valores
           </AccordionTrigger>
           <AccordionContent>
-            <FormField v-slot="{ componentField }" name="products">
-              <ProductsForm
-                :products="availableProducts"
-                v-bind="componentField"
-              />
-            </FormField>
+            <ProductsForm
+              v-model="selectedProducts"
+              :products="availableProducts"
+            />
           </AccordionContent>
         </AccordionItem>
         <!-- @vue-skip -->
