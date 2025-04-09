@@ -63,8 +63,14 @@ const userNameInitials = computed(() => {
               <SidebarMenuItem>
                 <CollapsibleTrigger as-child>
                   <SidebarMenuButton :tooltip="item.title">
-                    <component :is="item.icon" />
-                    <span>{{ item.title }}</span>
+                    <component
+                      :is="item.icon"
+                      :class="`${item.isActive ? 'text-um-primary' : 'text-white'}`"
+                    />
+                    <span
+                      :class="`${item.isActive ? 'text-um-primary' : 'text-white'}`"
+                      >{{ item.title }}</span
+                    >
                     <ChevronRight
                       class="ml-auto transition-transform duration-200 group-data-[state=open]/collapsible:rotate-90"
                     />
@@ -99,7 +105,11 @@ const userNameInitials = computed(() => {
           <SidebarMenu>
             <SidebarMenuItem v-for="item in menuData.settings" :key="item.name">
               <SidebarMenuButton as-child>
-                <a :href="item.url">
+                <!-- @vue-skip -->
+                <a
+                  :href="item.url"
+                  :class="`${item?.active ? 'text-um-primary' : 'text-white'}`"
+                >
                   <component :is="item.icon" />
                   <span>{{ item.name }}</span>
                 </a>
@@ -108,7 +118,7 @@ const userNameInitials = computed(() => {
           </SidebarMenu>
         </SidebarGroup>
       </SidebarContent>
-      <SidebarFooter class="bg-red-500 sidebar-footer">
+      <SidebarFooter class="sidebar-footer">
         <SidebarMenu>
           <SidebarMenuItem>
             <DropdownMenu>

@@ -13,6 +13,7 @@ import {
   UserPen,
 } from 'lucide-vue-next';
 
+const route = useRoute();
 const { data } = useAuth();
 //@ts-ignore
 const { user } = data.value;
@@ -28,9 +29,9 @@ export const backofficeMenuData = {
   navMain: [
     {
       title: 'Contratos',
-      url: '#',
+      url: '/admin/contracts/active',
       icon: Handshake,
-      isActive: true,
+      isActive: route.path.includes('contracts'),
       items: [
         {
           title: 'Contratos Ativos',
@@ -50,7 +51,7 @@ export const backofficeMenuData = {
       title: 'Usuários',
       url: '#',
       icon: User,
-      isActive: false,
+      isActive: route.path.includes('users'),
       items: [
         {
           title: 'Base de Usuários',
@@ -62,7 +63,7 @@ export const backofficeMenuData = {
       title: 'Motoristas',
       url: '#',
       icon: Car,
-      isActive: false,
+      isActive: route.path.includes('drivers'),
       items: [
         {
           title: 'Base de Motoristas',
@@ -82,7 +83,7 @@ export const backofficeMenuData = {
       title: 'Atendimentos',
       url: '',
       icon: CalendarDays,
-      isActive: false,
+      isActive: route.path.includes('rides'),
       items: [
         {
           title: 'Abertos',
@@ -106,7 +107,7 @@ export const backofficeMenuData = {
       title: 'Financeiro',
       url: '#',
       icon: HandCoins,
-      isActive: false,
+      isActive: route.path.includes('invoices'),
       items: [
         {
           title: 'Faturas em aberto',
@@ -132,21 +133,25 @@ export const backofficeMenuData = {
       name: 'Produtos',
       url: '/admin/configurations/products/',
       icon: Box,
+      active: route.path.includes('products'),
     },
     {
       name: 'Repasse Motorista',
       url: '#',
       icon: SquarePercent,
+      active: '',
     },
     {
       name: 'Usuários',
       url: '/admin/accounts',
       icon: UserPen,
+      active: '',
     },
     {
       name: 'Configurar Dashboards',
       url: '#',
       icon: LayoutDashboard,
+      active: '',
     },
   ],
 };

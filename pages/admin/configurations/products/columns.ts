@@ -4,28 +4,32 @@ import { ArrowUpDown } from 'lucide-vue-next';
 
 const columnHelper = createColumnHelper<any>();
 
+export type ProductImage = {
+  name: string;
+  url: string;
+};
+
 export const columns = [
   columnHelper.accessor('image', {
     header: () => h('div', { class: 'text-left text-xs' }, 'Imagem'),
     cell: ({ row }) => {
-      return h(
-        'div',
-        { class: 'text-left font-medium' },
-        row.getValue('image'),
-      );
+      const image: ProductImage = row.getValue('image');
+      return h('img', { class: 'h-20', src: image?.url });
     },
   }),
   columnHelper.accessor('code', {
     header: () => h('div', { class: 'text-left text-xs' }, 'Código'),
-    cell: ({ row }) =>
-      h(
+    cell: ({ row }) => {
+      const value = row.original;
+      return h(
         'div',
         {
-          class:
-            'px-2 py-1 uppercase text-xs text-white text-center bg-zinc-700 rounded-md',
+          class: `px-2 py-1 uppercase text-xs text-white text-center rounded-md
+          ${value.type === 'contract' ? 'bg-zinc-800' : value.type === 'free-km' ? 'bg-orange-400' : 'bg-purple-400'}`,
         },
         row.getValue('code'),
-      ),
+      );
+    },
   }),
   columnHelper.accessor('name', {
     enablePinning: true,
@@ -41,7 +45,11 @@ export const columns = [
       );
     },
     cell: ({ row }) =>
-      h('div', { class: 'capitalize text-left text-xs' }, row.getValue('name')),
+      h(
+        'div',
+        { class: 'text-left text-xs font-bold uppercase' },
+        row.getValue('name'),
+      ),
   }),
   columnHelper.accessor('type', {
     header: () =>
