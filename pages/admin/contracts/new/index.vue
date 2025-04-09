@@ -3,7 +3,6 @@ import AdditionalInfoForm from '@/components/forms/AdditionalInfoForm.vue';
 import ComercialConditionsForm from '@/components/forms/ComercialConditionsForm.vue';
 import CompanyForm from '@/components/forms/CompanyForm.vue';
 import MasterManagerForm from '@/components/forms/MasterManagerForm.vue';
-import ServicesForm from '@/components/forms/ServicesForm.vue';
 import BackLink from '@/components/shared/BackLink.vue';
 import {
   Accordion,
@@ -25,6 +24,7 @@ import {
 import { useForm } from 'vee-validate';
 import { computed, ref } from 'vue';
 import * as z from 'zod';
+import ProductsForm from '~/components/forms/ProductsForm.vue';
 import { useContractsStore } from '~/stores/admin/contracts.store';
 
 const { createContractAction } = useContractsStore();
@@ -36,11 +36,29 @@ useHead({
   title: 'Backoffice - Adicionar Novo Contrato | Urban Mobi',
 });
 
-const currentStep = ref<any>(0);
+const currentStep = ref<any>(3);
 const isLoadingSend = ref<boolean>(false);
+const isLoadingAddress = ref<boolean>(false);
+const availableProducts = ref();
+const isLoadingProducts = ref<boolean>(false);
 
 const { toast } = useToast();
-const isLoadingAddress = ref<boolean>(false);
+
+const fetchProducts = async () => {
+  isLoadingProducts.value = true;
+  try {
+    return await $fetch('/api/admin/products');
+  } catch (error) {
+    toast({
+      title: 'Opss!',
+      class: 'bg-red-500 border-0 text-white text-2xl',
+      description: `Ocorreu um erro ao carregar os Produtos. Atualize a página.`,
+    });
+  } finally {
+    isLoadingProducts.value = false;
+  }
+};
+availableProducts.value = await fetchProducts();
 
 const MAX_FILE_SIZE = 4000000;
 const ACCEPTED_IMAGE_TYPES = ['image/jpeg', 'image/jpg', 'image/png'];
@@ -100,6 +118,12 @@ const schemas = [
       paymentDueDate: z.number().min(0),
     }),
   ),
+  // Products Schema
+  toTypedSchema(
+    z.object({
+      products: z.any(),
+    }),
+  ),
   // Additional Info
   toTypedSchema(
     z.object({
@@ -117,42 +141,43 @@ const form = useForm({
   keepValuesOnUnmount: true,
   initialValues: {
     //@ts-ignore
-    services: [],
+    products: availableProducts?.value,
   },
 });
 
 const onSubmit = form.handleSubmit(async (values) => {
-  if (currentStep.value === 4) {
-    const files = [values?.logo];
-    try {
-      if (!files) return;
-      const filesResponse = await startUpload(files);
-      values.logo = {
-        //@ts-ignore
-        name: filesResponse[0]?.name || '',
-        //@ts-ignore
-        url: filesResponse[0]?.ufsUrl || '',
-      };
-      isLoadingSend.value = !isLoadingSend.value;
-      await createContractAction(values);
-    } catch (error) {
-      toast({
-        title: 'Opss!',
-        class: 'bg-red-500 border-0 text-white text-2xl',
-        description: `Ocorreu um erro ao cadastrar o contrato. Tente novamente.`,
-      });
-    } finally {
-      isLoadingSend.value = !isLoadingSend.value;
-      toast({
-        title: 'Tudo pronto!',
-        class: 'bg-green-600 border-0 text-white text-2xl',
-        description: `Contrato cadastrado com sucesso!`,
-      });
+  console.log('--> ', values);
+  // if (currentStep.value === 4) {
+  //   const files = [values?.logo];
+  //   try {
+  //     if (!files) return;
+  //     const filesResponse = await startUpload(files);
+  //     values.logo = {
+  //       //@ts-ignore
+  //       name: filesResponse[0]?.name || '',
+  //       //@ts-ignore
+  //       url: filesResponse[0]?.ufsUrl || '',
+  //     };
+  //     isLoadingSend.value = !isLoadingSend.value;
+  //     await createContractAction(values);
+  //   } catch (error) {
+  //     toast({
+  //       title: 'Opss!',
+  //       class: 'bg-red-500 border-0 text-white text-2xl',
+  //       description: `Ocorreu um erro ao cadastrar o contrato. Tente novamente.`,
+  //     });
+  //   } finally {
+  //     isLoadingSend.value = !isLoadingSend.value;
+  //     toast({
+  //       title: 'Tudo pronto!',
+  //       class: 'bg-green-600 border-0 text-white text-2xl',
+  //       description: `Contrato cadastrado com sucesso!`,
+  //     });
 
-      navigateTo('/admin/contracts/active');
-    }
-  }
-  currentStep.value++;
+  //     navigateTo('/admin/contracts/active');
+  //   }
+  // }
+  // currentStep.value++;
 });
 
 function prevStep() {
@@ -304,8 +329,11 @@ const findAddress = async (code: string) => {
             4. Serviços e Tarifas
           </AccordionTrigger>
           <AccordionContent>
-            <FormField v-slot="{ componentField }" name="services">
-              <ServicesForm v-bind="componentField" />
+            <FormField v-slot="{ componentField }" name="products">
+              <ProductsForm
+                :products="availableProducts"
+                v-bind="componentField"
+              />
             </FormField>
           </AccordionContent>
         </AccordionItem>

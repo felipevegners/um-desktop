@@ -3,7 +3,6 @@ import AdditionalInfoForm from '@/components/forms/AdditionalInfoForm.vue';
 import ComercialConditionsForm from '@/components/forms/ComercialConditionsForm.vue';
 import CompanyForm from '@/components/forms/CompanyForm.vue';
 import MasterManagerForm from '@/components/forms/MasterManagerForm.vue';
-import ServicesForm from '@/components/forms/ServicesForm.vue';
 import BackLink from '@/components/shared/BackLink.vue';
 import FormSelect from '@/components/shared/FormSelect.vue';
 import { Button } from '@/components/ui/button';
@@ -22,6 +21,7 @@ import { storeToRefs } from 'pinia';
 import { useForm } from 'vee-validate';
 import { ref } from 'vue';
 import * as z from 'zod';
+import ServicesForm from '~/components/forms/ProductsForm.vue';
 import Select from '~/components/ui/select/Select.vue';
 import { useFilesStore } from '~/stores/admin/files.store';
 
