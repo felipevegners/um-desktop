@@ -330,6 +330,7 @@ const findAddress = async (code: string) => {
             <ProductsForm
               v-model="selectedProducts"
               :products="availableProducts"
+              :editMode="false"
             />
           </AccordionContent>
         </AccordionItem>

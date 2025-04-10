@@ -328,7 +328,7 @@ const findAddress = async (code: string) => {
             <div class="flex flex-col gap-4">
               <p class="font-bold">Logo</p>
               <div
-                class="p-2 h-[100px] rounded-md bg-white bg-contain bg-no-repeat bg-center"
+                class="p-4 h-[100px] rounded-md bg-white bg-contain bg-no-repeat bg-center"
                 :style="{ backgroundImage: `url(${customerLogo?.url})` }"
               />
               <div class="flex items-end justify-between gap-4">
