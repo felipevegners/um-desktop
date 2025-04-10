@@ -28,7 +28,7 @@ model Contracts {
   customerBranches    Json?
   customerUsers       Json?
   comercialConditions Json?
-  services            Json?
+  products            Json?
   manager             MasterManager? @relation(fields: [managerId], references: [id])
   managerId           String?        @db.ObjectId
   managerName         String?

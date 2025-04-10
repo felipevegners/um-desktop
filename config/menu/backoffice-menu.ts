@@ -142,7 +142,7 @@ export const backofficeMenuData = {
       active: '',
     },
     {
-      name: 'Usuários',
+      name: 'Contas de Usuário',
       url: '/admin/accounts',
       icon: UserPen,
       active: '',

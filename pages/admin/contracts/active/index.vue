@@ -28,7 +28,7 @@ onMounted(async () => {
 
 const viewContract = (value: string) => {
   navigateTo({
-    name: 'admin-contracts-view-id',
+    name: 'admin-contracts-preview-id',
     params: {
       id: value,
     },

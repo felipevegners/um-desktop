@@ -57,11 +57,11 @@ export const columns = [
       );
     },
   }),
-  columnHelper.accessor('services', {
-    header: () => h('div', { class: 'text-center' }, 'Serviços Ativos'),
+  columnHelper.accessor('products', {
+    header: () => h('div', { class: 'text-center' }, 'Produtos Ativos'),
     cell: ({ row }) => {
-      const { services } = row.original;
-      return h('div', { class: 'text-center font-medium' }, services.length);
+      const { products } = row.original;
+      return h('div', { class: 'text-center font-medium' }, products.length);
     },
   }),
   columnHelper.accessor('status', {

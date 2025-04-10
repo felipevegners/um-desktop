@@ -51,9 +51,9 @@ await getContractByIdAction(route?.params?.id as string);
         <div>
           <h2 class="mb-4 text-2xl font-bold">Dados do Cliente</h2>
           <div class="mb-6 md:grid md:grid-cols-4 md:gap-6">
-            <div class="p-6 bg-white rounded-md col-span-3">
-              <p class="text-sm text-zinc-600">Razão Social</p>
-              <p class="text-xl font-bold">{{ contract?.customerName }}</p>
+            <div class="p-6 bg-white rounded-md">
+              <p class="text-sm text-zinc-600">Logo</p>
+              <img :src="contract.customer.logo.url" alt="" class="w-[100px]" />
             </div>
             <div class="p-6 bg-white rounded-md">
               <p class="text-sm text-zinc-600">CNPJ</p>
@@ -61,6 +61,17 @@ await getContractByIdAction(route?.params?.id as string);
                 {{ contract?.customer?.document }}
               </p>
             </div>
+            <div class="p-6 bg-white rounded-md col-span-2">
+              <p class="text-sm text-zinc-600">Razão Social</p>
+              <p class="text-xl font-bold">{{ contract?.customer.name }}</p>
+            </div>
+            <div class="p-6 bg-white rounded-md col-span-3">
+              <p class="text-sm text-zinc-600">Nome Fantasia</p>
+              <p class="text-xl font-bold">
+                {{ contract?.customer?.fantasyName }}
+              </p>
+            </div>
+
             <div class="p-6 bg-white rounded-md">
               <p class="text-sm text-zinc-600">Telefone</p>
               <p class="text-xl font-bold">
@@ -74,32 +85,16 @@ await getContractByIdAction(route?.params?.id as string);
               </p>
             </div>
             <div class="p-6 bg-white rounded-md">
-              <p class="text-sm text-zinc-600">Cadastro</p>
-              <p class="text-xl font-bold">
-                {{
-                  contract?.customer?.status === 'active'
-                    ? 'Ativo'
-                    : contract.customer?.status === 'pending'
-                      ? 'Pendente'
-                      : 'Inativo'
-                }}
-              </p>
-            </div>
-            <div class="p-6 bg-white rounded-md">
               <p class="text-sm text-zinc-600">Data Cadastro</p>
               <p class="text-xl font-bold">
                 {{ dateFormat(contract?.customer?.createdAt) }}
               </p>
             </div>
-            <div class="p-6 bg-white rounded-md col-span-3">
+            <div class="p-6 bg-white rounded-md col-span-2">
               <p class="text-sm text-zinc-600">Site</p>
               <p class="text-xl font-bold">
                 {{ contract?.customer?.website }}
               </p>
-            </div>
-            <div class="p-6 bg-white rounded-md">
-              <p class="text-sm text-zinc-600">Logo</p>
-              <img :src="contract.customer.logo.url" alt="" class="w-[100px]" />
             </div>
             <div class="p-6 bg-white rounded-md col-span-4">
               <p class="text-sm text-zinc-600">Endereço</p>
@@ -126,9 +121,20 @@ await getContractByIdAction(route?.params?.id as string);
               </p>
             </div>
             <div class="p-6 bg-white rounded-md">
-              <p class="text-sm text-zinc-600">Serviços Contratados</p>
-              <p class="text-2xl font-bold">
-                {{ contract?.customerBranches.length }}
+              <p class="text-sm text-zinc-600">Produtos Ativos</p>
+              <p class="mb-4 text-2xl font-bold">
+                {{ contract?.products.length }}
+              </p>
+              <p
+                v-for="product in contract?.products"
+                :key="product.id"
+                class="mb-4 text-sm"
+              >
+                <span
+                  class="mr-2 px-2 py-1 uppercase text-white text-center rounded-md text-sm"
+                  :class="`${product.type === 'contract' ? 'bg-zinc-800' : product.type === 'free-km' ? 'bg-orange-400' : 'bg-purple-400'}`"
+                  >{{ product.code }}</span
+                >{{ product.name }}
               </p>
             </div>
             <div class="p-6 bg-white rounded-md">

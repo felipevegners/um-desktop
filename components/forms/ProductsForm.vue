@@ -7,31 +7,50 @@ defineEmits(['update:modelValue']);
 const props = defineProps(['modelValue', 'products']);
 
 const productsData = (value: any) => {
+  const newProduct = {
+    id: value.id,
+    name: value.name,
+    code: value.code,
+    image: value.image,
+    type: value.type,
+    capacity: value.capacity,
+    basePrice: value.basePrice,
+    includedHours: value.includedHours || '-',
+    includedKms: value.includedKms || 0,
+    kmPrice: value.kmPrice,
+    minutePrice: value.minutePrice,
+    description: value.description || '-',
+    enabled: value.enabled,
+  };
   const index = props.modelValue.findIndex((obj: any) => obj.id === value.id);
   if (index > -1) {
     props.modelValue.splice(index, 1);
   } else {
-    props.modelValue.push(value);
+    props.modelValue.push(newProduct);
   }
 };
+
+const filteredProducts = computed(() => {
+  return props.products.filter((product: any) => product.enabled);
+});
 
 const checkAdded = (id: string) => {
   return !!props.modelValue.find((item: any) => item.id === id);
 };
-
-const sanitizeValues = (value: string) => {
-  return 'barretos';
-};
 </script>
 <template>
   <section class="px-6">
-    <div class="md:grid md:grid-cols-2 gap-4">
+    <div class="md:grid md:grid-cols-2 gap-4 items-start">
       <div
-        v-for="product in props.products"
+        v-for="product in filteredProducts"
         :key="product.id"
         class="p-6 flex flex-col gap-4 bg-white rounded-md"
       >
-        <Checkbox id="terms" @update:checked="productsData(product)" />
+        <Checkbox
+          id="terms"
+          @update:checked="productsData(product)"
+          :checked="checkAdded(product.id)"
+        />
         <div class="font-normal uppercase flex items-center gap-4">
           <div
             class="mb-4 w-[80px] h-[80px] rounded-md bg-zinc-200 bg-contain bg-no-repeat bg-center relative flex items-center justify-center"
@@ -46,6 +65,7 @@ const sanitizeValues = (value: string) => {
             {{ product.name }}
           </p>
         </div>
+        <p class="text-sm text-zinc-500">{{ product.description }}</p>
         <div v-if="checkAdded(product.id)">
           <div
             v-if="product.type === 'contract'"
@@ -88,7 +108,6 @@ const sanitizeValues = (value: string) => {
                 <Label for="includedHours">Km Adicional (R$)</Label>
                 <Input
                   type="text"
-                  :value="sanitizeValues(product.kmPrice)"
                   v-model="product.kmPrice"
                   name="kmPrice"
                   class="mt-2"

@@ -21,8 +21,7 @@ import { storeToRefs } from 'pinia';
 import { useForm } from 'vee-validate';
 import { ref } from 'vue';
 import * as z from 'zod';
-import ServicesForm from '~/components/forms/ProductsForm.vue';
-import Select from '~/components/ui/select/Select.vue';
+import ProductsForm from '~/components/forms/ProductsForm.vue';
 import { useFilesStore } from '~/stores/admin/files.store';
 
 const filesStore = useFilesStore();
@@ -45,25 +44,34 @@ await getContractByIdAction(route?.params?.id as string);
 const { toast } = useToast();
 const isLoadingAddress = ref<boolean>(false);
 const contractSituation = ref<boolean>(true);
-const contractStatus = ref<any>();
 const isLoadingSend = ref<boolean>(false);
 const loadingFileData = ref<boolean>(false);
 const customerLogo = ref<any>({
-  name: contract?.value?.customer.logo.name,
-  url: contract?.value?.customer.logo.url,
+  name: contract?.value?.customer?.logo?.name || '',
+  url: contract?.value?.customer?.logo?.url || '',
 });
+const availableProducts = ref();
+const isLoadingProducts = ref<boolean>(false);
+const selectedProducts = ref<any>([]);
 
 contractSituation.value = contract?.value.enabled;
+selectedProducts.value = contract?.value.products;
 
-const MAX_FILE_SIZE = 4000000;
-const ACCEPTED_IMAGE_TYPES = ['image/jpeg', 'image/jpg', 'image/png'];
-
-const { startUpload } = useUploadThing('customerLogo', {
-  //@ts-ignore
-  onClientUploadComplete(res) {
-    return res;
-  },
-});
+const fetchProducts = async () => {
+  isLoadingProducts.value = true;
+  try {
+    return await $fetch('/api/admin/products');
+  } catch (error) {
+    toast({
+      title: 'Opss!',
+      class: 'bg-red-500 border-0 text-white text-2xl',
+      description: `Ocorreu um erro ao carregar os Produtos. Atualize a página.`,
+    });
+  } finally {
+    isLoadingProducts.value = false;
+  }
+};
+availableProducts.value = await fetchProducts();
 
 const schema = toTypedSchema(
   z.object({
@@ -78,7 +86,7 @@ const schema = toTypedSchema(
     city: z.string().min(2).max(50),
     state: z.string().min(2).max(50),
     phone: z.string().min(2).max(16),
-    phoneExtension: z.string().min(2).max(6).optional(),
+    phoneExtension: z.string().min(0).max(6).optional(),
     website: z.string().min(2).max(50),
     managerName: z.string().min(1).max(100),
     managerCellPhone: z.string().min(2).max(16),
@@ -88,7 +96,7 @@ const schema = toTypedSchema(
     password: z.string().min(8, 'Mínimo de 8 caracteres').max(8),
     paymentTerm: z.string().min(1).max(10),
     paymentDueDate: z.number().min(0),
-    additionalInfo: z.string().min(1).max(200).optional(),
+    additionalInfo: z.string().min(0).max(200).optional(),
     status: z.string().optional(),
   }),
 );
@@ -171,7 +179,7 @@ const onSubmit = form.handleSubmit(async (values) => {
         paymentTerm: values.paymentTerm,
         paymentDueDate: values.paymentDueDate,
       },
-      services: [],
+      products: selectedProducts.value,
       additionalInfo: values.additionalInfo,
       enabled: contractSituation.value,
       status: values.status,
@@ -424,8 +432,11 @@ const findAddress = async (code: string) => {
             <ComercialConditionsForm />
           </div>
           <div class="mb-10">
-            <h2 class="px-6 mb-4 text-2xl font-bold">4. Serviços e Tarifas</h2>
-            <ServicesForm />
+            <h2 class="px-6 mb-4 text-2xl font-bold">4. Produtos e Valores</h2>
+            <ProductsForm
+              v-model="selectedProducts"
+              :products="availableProducts"
+            />
           </div>
           <div class="mb-10">
             <h2 class="px-6 mb-4 text-2xl font-bold">

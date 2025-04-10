@@ -36,7 +36,7 @@ useHead({
   title: 'Backoffice - Adicionar Novo Contrato | Urban Mobi',
 });
 
-const currentStep = ref<any>(3);
+const currentStep = ref<any>(0);
 const isLoadingSend = ref<boolean>(false);
 const isLoadingAddress = ref<boolean>(false);
 const availableProducts = ref();
@@ -86,7 +86,7 @@ const schemas = [
       city: z.string().min(2).max(50),
       state: z.string().min(2).max(50),
       phone: z.string().min(2).max(16),
-      phoneExtension: z.string().min(2).max(6).optional(),
+      phoneExtension: z.string().min(0).max(6).optional(),
       website: z.string().min(2).max(50),
       logo: z
         .any()
@@ -112,12 +112,6 @@ const schemas = [
       password: z.string().min(8, 'Mínimo de 8 caracteres').max(8),
     }),
   ),
-  // Products Schema
-  toTypedSchema(
-    z.object({
-      products: z.any().optional(),
-    }),
-  ),
   // Comercial Conditions Schema
   toTypedSchema(
     z.object({
@@ -134,7 +128,7 @@ const schemas = [
 ];
 
 const currentSchema = computed(() => {
-  return schemas[currentStep.value === 3 ? 4 : currentStep.value];
+  return schemas[currentStep.value];
 });
 
 const form = useForm({
@@ -143,40 +137,43 @@ const form = useForm({
 });
 
 const onSubmit = form.handleSubmit(async (values) => {
-  console.log('form values --> ', values);
-  currentStep.value++;
+  if (currentStep.value === 4) {
+    try {
+      if (values.logo) {
+        const files = [values?.logo];
+        const filesResponse = await startUpload(files);
+        values.logo = {
+          //@ts-ignore
+          name: filesResponse[0]?.name || '',
+          //@ts-ignore
+          url: filesResponse[0]?.ufsUrl || '',
+        };
+      }
+      isLoadingSend.value = !isLoadingSend.value;
+      const newContractData = {
+        ...values,
+        products: selectedProducts.value,
+      };
+      await createContractAction(newContractData);
+    } catch (error) {
+      toast({
+        title: 'Opss!',
+        class: 'bg-red-500 border-0 text-white text-2xl',
+        description: `Ocorreu um erro ao cadastrar o contrato. Tente novamente.`,
+      });
+    } finally {
+      isLoadingSend.value = !isLoadingSend.value;
+      toast({
+        title: 'Tudo pronto!',
+        class: 'bg-green-600 border-0 text-white text-2xl',
+        description: `Contrato cadastrado com sucesso!`,
+      });
 
-  // if (currentStep.value === 4) {
-  //   const files = [values?.logo];
-  //   try {
-  //     if (!files) return;
-  //     const filesResponse = await startUpload(files);
-  //     values.logo = {
-  //       //@ts-ignore
-  //       name: filesResponse[0]?.name || '',
-  //       //@ts-ignore
-  //       url: filesResponse[0]?.ufsUrl || '',
-  //     };
-  //     isLoadingSend.value = !isLoadingSend.value;
-  //     await createContractAction(values);
-  //   } catch (error) {
-  //     toast({
-  //       title: 'Opss!',
-  //       class: 'bg-red-500 border-0 text-white text-2xl',
-  //       description: `Ocorreu um erro ao cadastrar o contrato. Tente novamente.`,
-  //     });
-  //   } finally {
-  //     isLoadingSend.value = !isLoadingSend.value;
-  //     toast({
-  //       title: 'Tudo pronto!',
-  //       class: 'bg-green-600 border-0 text-white text-2xl',
-  //       description: `Contrato cadastrado com sucesso!`,
-  //     });
-
-  //     navigateTo('/admin/contracts/active');
-  //   }
-  // }
-  // currentStep.value++;
+      navigateTo('/admin/contracts/active');
+    }
+  } else {
+    currentStep.value++;
+  }
 });
 
 function prevStep() {

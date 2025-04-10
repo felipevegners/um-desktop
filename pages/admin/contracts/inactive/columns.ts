@@ -53,11 +53,11 @@ export const columns = [
       return h('div', { class: 'text-left font-medium' }, customerUsers.length);
     },
   }),
-  columnHelper.accessor('services', {
-    header: () => h('div', { class: 'text-left' }, 'Serviços Prestados'),
+  columnHelper.accessor('products', {
+    header: () => h('div', { class: 'text-left' }, 'Produtos Ativos'),
     cell: ({ row }) => {
-      const { services } = row.original;
-      return h('div', { class: 'text-left font-medium' }, services.length);
+      const { products } = row.original;
+      return h('div', { class: 'text-left font-medium' }, products.length);
     },
   }),
   columnHelper.accessor('status', {

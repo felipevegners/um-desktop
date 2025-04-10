@@ -2,6 +2,8 @@ import { prisma } from '~/utils/prisma';
 
 export default defineEventHandler(async (event) => {
   const payload = await readBody(event);
+  console.log('--->', payload);
+
   const {
     logo,
     name,
@@ -25,6 +27,7 @@ export default defineEventHandler(async (event) => {
     password,
     paymentTerm,
     paymentDueDate,
+    products,
   } = payload;
 
   const company = {
@@ -45,7 +48,7 @@ export default defineEventHandler(async (event) => {
     website,
     logo,
     enabled: true,
-    status: 'pending',
+    status: 'active',
   };
 
   const masterManager = {
@@ -62,8 +65,6 @@ export default defineEventHandler(async (event) => {
     paymentDueDate,
   };
 
-  const services = {};
-
   const newCompany = await prisma.customers.create({ data: company });
   const newMasterManager = await prisma.masterManager.create({
     data: masterManager,
@@ -76,7 +77,7 @@ export default defineEventHandler(async (event) => {
       customerBranches: [],
       customerUsers: [],
       comercialConditions,
-      services: [],
+      products,
       enabled: true,
       status: 'pending',
       customer: {
