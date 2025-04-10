@@ -55,6 +55,7 @@ defineProps<{
                 v-bind="componentField"
                 maxlength="9"
                 v-maska="'#####-###'"
+                name="zipcode"
               />
               <Button
                 @click.prevent="findAddress(value)"

@@ -1,5 +1,6 @@
 import {
   createContractService,
+  deleteContractService,
   getContractsService,
   updateContractService,
 } from '@/server/services/admin/contracts';
@@ -11,7 +12,7 @@ interface IContractsState {
   inactiveContracts?: any;
   contract?: Contract | any;
   contractId?: string;
-  isLoading: boolean;
+  isLoading: boolean | any;
 }
 
 export const useContractsStore = defineStore('contracts', {
@@ -44,7 +45,7 @@ export const useContractsStore = defineStore('contracts', {
       this.isLoading = true;
       try {
         const data = await getContractsService(contractId);
-        this.contract = { ...data };
+        this.contract = { ...(data as any) };
         this.isLoading = false;
       } catch (error) {
         console.log('Store GET by ID Error -> ', error);
@@ -57,14 +58,7 @@ export const useContractsStore = defineStore('contracts', {
         this.contractId = newContract?.id;
       } catch (error) {
         console.log('Error from Store -> ', error);
-      }
-    },
-    async createMasterManagerAction(managerData: any) {
-      try {
-        const newManager = await createContractService(managerData);
-        console.log('New Manager -> ', newManager);
-      } catch (error) {
-        console.log('Error from Store -> ', error);
+        throw error;
       }
     },
     async updateContractAction(dataToUpdate: any) {
@@ -72,6 +66,17 @@ export const useContractsStore = defineStore('contracts', {
         await updateContractService(dataToUpdate);
       } catch (error) {
         console.log('Error from Store -> ', error);
+        throw error;
+      }
+    },
+    async deleteContractAction(contractId: any) {
+      this.isLoading = true;
+      try {
+        await deleteContractService(contractId);
+        this.isLoading = false;
+      } catch (error) {
+        console.log('Error from Store -> ', error);
+        return error;
       }
     },
   },

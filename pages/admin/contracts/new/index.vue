@@ -41,7 +41,9 @@ const isLoadingSend = ref<boolean>(false);
 const isLoadingAddress = ref<boolean>(false);
 const availableProducts = ref();
 const isLoadingProducts = ref<boolean>(false);
-const selectedProducts = ref<any>([]);
+// const selectedProducts = ref<any>([]);
+
+const selectedProducts = reactive([]);
 
 const { toast } = useToast();
 
@@ -122,7 +124,7 @@ const schemas = [
   // Additional Info
   toTypedSchema(
     z.object({
-      additionalInfo: z.string().min(1).max(200).optional(),
+      additionalInfo: z.string().min(0).max(200).optional(),
     }),
   ),
 ];
@@ -139,6 +141,7 @@ const form = useForm({
 const onSubmit = form.handleSubmit(async (values) => {
   if (currentStep.value === 4) {
     try {
+      isLoadingSend.value = true;
       if (values.logo) {
         const files = [values?.logo];
         const filesResponse = await startUpload(files);
@@ -149,27 +152,26 @@ const onSubmit = form.handleSubmit(async (values) => {
           url: filesResponse[0]?.ufsUrl || '',
         };
       }
-      isLoadingSend.value = !isLoadingSend.value;
       const newContractData = {
         ...values,
-        products: selectedProducts.value,
+        phoneExtension: values.phoneExtension || '-',
+        products: selectedProducts,
       };
       await createContractAction(newContractData);
+      isLoadingSend.value = false;
+      toast({
+        title: 'Tudo pronto!',
+        class: 'bg-green-600 border-0 text-white text-2xl',
+        description: `Contrato cadastrado com sucesso!`,
+      });
+      navigateTo('/admin/contracts/active');
     } catch (error) {
       toast({
         title: 'Opss!',
         class: 'bg-red-500 border-0 text-white text-2xl',
         description: `Ocorreu um erro ao cadastrar o contrato. Tente novamente.`,
       });
-    } finally {
-      isLoadingSend.value = !isLoadingSend.value;
-      toast({
-        title: 'Tudo pronto!',
-        class: 'bg-green-600 border-0 text-white text-2xl',
-        description: `Contrato cadastrado com sucesso!`,
-      });
-
-      navigateTo('/admin/contracts/active');
+      throw error;
     }
   } else {
     currentStep.value++;
@@ -183,12 +185,12 @@ function prevStep() {
   currentStep.value--;
 }
 
-function nextStep() {
-  if (currentStep.value === 4) {
-    return;
-  }
-  currentStep.value++;
-}
+// function nextStep() {
+//   if (currentStep.value === 4) {
+//     return;
+//   }
+//   currentStep.value++;
+// }
 
 const findAddress = async (code: string) => {
   if (code?.length !== 9) {

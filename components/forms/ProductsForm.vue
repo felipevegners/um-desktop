@@ -1,32 +1,19 @@
 <script setup lang="ts">
+import { Plus } from 'lucide-vue-next';
+
 defineOptions({
   name: 'ProductsForm',
 });
 
 defineEmits(['update:modelValue']);
-const props = defineProps(['modelValue', 'products']);
+const props = defineProps(['modelValue', 'products', 'editMode']);
 
 const productsData = (value: any) => {
-  const newProduct = {
-    id: value.id,
-    name: value.name,
-    code: value.code,
-    image: value.image,
-    type: value.type,
-    capacity: value.capacity,
-    basePrice: value.basePrice,
-    includedHours: value.includedHours || '-',
-    includedKms: value.includedKms || 0,
-    kmPrice: value.kmPrice,
-    minutePrice: value.minutePrice,
-    description: value.description || '-',
-    enabled: value.enabled,
-  };
   const index = props.modelValue.findIndex((obj: any) => obj.id === value.id);
   if (index > -1) {
     props.modelValue.splice(index, 1);
   } else {
-    props.modelValue.push(newProduct);
+    props.modelValue.push(value);
   }
 };
 
@@ -164,6 +151,12 @@ const checkAdded = (id: string) => {
             </div>
           </div>
         </div>
+      </div>
+      <div>
+        <Button type="button">
+          <Plus class="w-6 h-6" />
+          Adicionar Produto
+        </Button>
       </div>
     </div>
   </section>

@@ -104,29 +104,29 @@ const schema = toTypedSchema(
 const form = useForm({
   validationSchema: schema,
   initialValues: {
-    document: contract?.value?.customer.document,
-    name: contract?.value?.customer.name,
-    fantasyName: contract?.value?.customer.fantasyName,
-    zipcode: contract?.value?.customer.address.zipcode,
-    streetName: contract?.value?.customer.address.streetName,
-    streetNumber: contract?.value?.customer.address.streetNumber,
-    complement: contract?.value?.customer.address.complement,
-    neighborhood: contract?.value?.customer.address.neighborhood,
-    city: contract?.value?.customer.address.city,
-    state: contract?.value?.customer.address.state,
-    phone: contract?.value?.customer.phone,
-    phoneExtension: contract?.value?.customer.phoneExtension,
-    website: contract?.value?.customer.website,
+    document: contract?.value?.customer?.document,
+    name: contract?.value?.customer?.name,
+    fantasyName: contract?.value?.customer?.fantasyName,
+    zipcode: contract?.value?.customer?.address?.zipcode,
+    streetName: contract?.value?.customer?.address?.streetName,
+    streetNumber: contract?.value?.customer?.address?.streetNumber,
+    complement: contract?.value?.customer?.address?.complement,
+    neighborhood: contract?.value?.customer?.address?.neighborhood,
+    city: contract?.value?.customer?.address?.city,
+    state: contract?.value?.customer?.address?.state,
+    phone: contract?.value?.customer?.phone,
+    phoneExtension: contract?.value?.customer?.phoneExtension,
+    website: contract?.value?.customer?.website,
     managerName: contract?.value?.managerName,
     managerCellPhone: contract?.value?.manager.phone,
-    position: contract?.value?.manager.position,
-    department: contract?.value?.manager.department,
-    managerEmail: contract?.value?.manager.email,
-    password: contract?.value?.manager.password,
-    paymentTerm: contract?.value?.comercialConditions.paymentTerm,
-    paymentDueDate: contract?.value?.comercialConditions.paymentDueDate,
+    position: contract?.value?.manager?.position,
+    department: contract?.value?.manager?.department,
+    managerEmail: contract?.value?.manager?.email,
+    password: contract?.value?.manager?.password,
+    paymentTerm: contract?.value?.comercialConditions?.paymentTerm,
+    paymentDueDate: contract?.value?.comercialConditions?.paymentDueDate,
     additionalInfo: contract?.value?.additionalInfo,
-    status: contract?.value.status,
+    status: contract?.value?.status,
   },
 });
 
@@ -329,7 +329,7 @@ const findAddress = async (code: string) => {
               <p class="font-bold">Logo</p>
               <div
                 class="p-2 h-[100px] rounded-md bg-white bg-contain bg-no-repeat bg-center"
-                :style="{ backgroundImage: `url(${customerLogo.url})` }"
+                :style="{ backgroundImage: `url(${customerLogo?.url})` }"
               />
               <div class="flex items-end justify-between gap-4">
                 <div v-if="!customerLogo?.name">
@@ -435,7 +435,8 @@ const findAddress = async (code: string) => {
             <h2 class="px-6 mb-4 text-2xl font-bold">4. Produtos e Valores</h2>
             <ProductsForm
               v-model="selectedProducts"
-              :products="availableProducts"
+              :products="contract?.products"
+              :editMode="true"
             />
           </div>
           <div class="mb-10">
@@ -457,8 +458,4 @@ const findAddress = async (code: string) => {
   </main>
 </template>
 
-<style scoped>
-/* .logo {
-  background-image: url('#{customerLogo.url}');
-} */
-</style>
+<style scoped></style>

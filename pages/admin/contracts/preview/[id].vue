@@ -25,20 +25,25 @@ await getContractByIdAction(route?.params?.id as string);
       <h1 class="flex items-center gap-2 text-2xl font-bold">
         <FileText class="w-6 h-6" />
         Detalhes do Contrato
-      </h1>
-      <div class="flex gap-4">
-        <Button
-          @click="
-            navigateTo({
-              name: 'admin-contracts-edit-id',
-              //@ts-ignore
-              params: { id: contract?.id },
-            })
-          "
+        <p
+          class="px-2 text-white font-bold text-lg uppercase rounded-md"
+          :class="`${contract?.enabled ? 'bg-green-600' : 'bg-red-600'}`"
         >
-          <Edit class="w-4 h-4" /> Editar Contrato
-        </Button>
-      </div>
+          {{ contract?.enabled ? 'Ativo' : 'Inativo' }}
+        </p>
+      </h1>
+      <Button
+        @click="
+          navigateTo({
+            name: 'admin-contracts-edit-id',
+            //@ts-ignore
+            params: { id: contract?.id },
+          })
+        "
+      >
+        <Edit class="w-4 h-4" />
+        Editar Contrato
+      </Button>
     </section>
     <section
       v-if="isLoading"
@@ -53,7 +58,11 @@ await getContractByIdAction(route?.params?.id as string);
           <div class="mb-6 md:grid md:grid-cols-4 md:gap-6">
             <div class="p-6 bg-white rounded-md">
               <p class="text-sm text-zinc-600">Logo</p>
-              <img :src="contract.customer.logo.url" alt="" class="w-[100px]" />
+              <img
+                :src="contract?.customer?.logo?.url"
+                alt=""
+                class="w-[100px]"
+              />
             </div>
             <div class="p-6 bg-white rounded-md">
               <p class="text-sm text-zinc-600">CNPJ</p>
@@ -63,7 +72,7 @@ await getContractByIdAction(route?.params?.id as string);
             </div>
             <div class="p-6 bg-white rounded-md col-span-2">
               <p class="text-sm text-zinc-600">Razão Social</p>
-              <p class="text-xl font-bold">{{ contract?.customer.name }}</p>
+              <p class="text-xl font-bold">{{ contract?.customerName }}</p>
             </div>
             <div class="p-6 bg-white rounded-md col-span-3">
               <p class="text-sm text-zinc-600">Nome Fantasia</p>
@@ -99,13 +108,13 @@ await getContractByIdAction(route?.params?.id as string);
             <div class="p-6 bg-white rounded-md col-span-4">
               <p class="text-sm text-zinc-600">Endereço</p>
               <p class="text-xl font-bold">
-                {{ contract.customer.address.streetName }},
-                {{ contract.customer.address.streetNumber }} -
-                {{ contract.customer.address.complement }} -
-                {{ contract.customer.address.neighborhood }} -
-                {{ contract.customer.address.city }} -
-                {{ contract.customer.address.state }} -
-                {{ contract.customer.address.zipcode }}
+                {{ contract?.customer?.address?.streetName }},
+                {{ contract?.customer?.address?.streetNumber }} -
+                {{ contract?.customer?.address?.complement }} -
+                {{ contract?.customer?.address?.neighborhood }} -
+                {{ contract?.customer?.address?.city }} -
+                {{ contract?.customer?.address?.state }} -
+                {{ contract?.customer?.address?.zipcode }}
               </p>
             </div>
           </div>

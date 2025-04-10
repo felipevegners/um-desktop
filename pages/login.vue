@@ -1,7 +1,7 @@
 // Transformar em Componente
 <script setup lang="ts">
 import { toTypedSchema } from '@vee-validate/zod';
-import { Eye, LoaderCircle } from 'lucide-vue-next';
+import { Eye, EyeOff, LoaderCircle } from 'lucide-vue-next';
 import { useForm } from 'vee-validate';
 import * as z from 'zod';
 
@@ -68,26 +68,33 @@ const onSubmit = form.handleSubmit(async (values) => {
         <FormField v-slot="{ componentField }" name="password">
           <FormItem class="relative">
             <FormLabel>Senha</FormLabel>
-            <FormControl class="relative">
-              <Input
-                v-if="viewPassword"
-                type="text"
-                placeholder="Insira a senha"
-                v-bind="componentField"
-                :disabled="isLoading"
-              />
-              <Input
-                v-else
-                type="password"
-                placeholder="Insira a senha"
-                v-bind="componentField"
-                :disabled="isLoading"
-              />
-              <Eye
-                class="h-5 w-5 absolute top-[33px] right-3 cursor-pointer hover:text-zinc-700"
-                :class="viewPassword ? 'text-zinc-700' : 'text-zinc-400'"
-                @click.prevent="revealPassword"
-              />
+            <FormControl>
+              <div v-if="viewPassword" class="relative">
+                <Input
+                  type="text"
+                  placeholder="Insira a senha"
+                  v-bind="componentField"
+                  :disabled="isLoading"
+                />
+                <EyeOff
+                  class="h-5 w-5 absolute top-[10px] right-3 cursor-pointer hover:text-zinc-700"
+                  :class="viewPassword ? 'text-zinc-700' : 'text-zinc-400'"
+                  @click.prevent="revealPassword"
+                />
+              </div>
+              <div v-else class="relative">
+                <Input
+                  type="password"
+                  placeholder="Insira a senha"
+                  v-bind="componentField"
+                  :disabled="isLoading"
+                />
+                <Eye
+                  class="h-5 w-5 absolute top-[10px] right-3 cursor-pointer hover:text-zinc-700"
+                  :class="viewPassword ? 'text-zinc-700' : 'text-zinc-400'"
+                  @click.prevent="revealPassword"
+                />
+              </div>
             </FormControl>
           </FormItem>
         </FormField>

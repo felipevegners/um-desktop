@@ -169,6 +169,7 @@ const finalColumns = [
         { class: 'relative text-center' },
         h(TableActions, {
           dataId: row.original.id,
+          options: ['edit', 'delete'],
           onEdit: editProduct,
         }),
       );

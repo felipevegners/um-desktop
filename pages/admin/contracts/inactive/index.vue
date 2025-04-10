@@ -1,17 +1,19 @@
 <script setup lang="ts">
 import DataTable from '@/components/shared/DataTable.vue';
 import TableActions from '@/components/shared/TableActions.vue';
+import { useContractsStore } from '@/stores/admin/contracts.store';
 import { createColumnHelper } from '@tanstack/vue-table';
 import { FileText, LoaderCircle } from 'lucide-vue-next';
 import { storeToRefs } from 'pinia';
-import { useContractsStore } from '~/stores/admin/contracts.store';
 
 import { columns } from './columns';
 
 const store = useContractsStore();
 
-const { getContractsAction } = store;
+const { getContractsAction, deleteContractAction } = store;
 const { inactiveContracts, isLoading } = storeToRefs(store);
+
+const loadingDelete = ref<boolean>(false);
 
 definePageMeta({
   layout: 'admin',
@@ -28,7 +30,7 @@ useHead({
 
 const viewContract = (value: string) => {
   navigateTo({
-    name: 'admin-contracts-view-id',
+    name: 'admin-contracts-preview-id',
     params: {
       id: value,
     },
@@ -41,6 +43,18 @@ const editContract = (value: string) => {
       id: value,
     },
   });
+};
+
+const deleteContract = async (contractId: string) => {
+  loadingDelete.value = true;
+  try {
+    await deleteContractAction(contractId);
+  } catch (error) {
+    console.log('Error ->', error);
+  } finally {
+    loadingDelete.value = false;
+    await getContractsAction();
+  }
 };
 
 const columnHelper = createColumnHelper<any>();
@@ -58,8 +72,11 @@ const finalColumns = [
         { class: 'relative text-left' },
         h(TableActions, {
           dataId: id,
+          options: ['preview', 'edit', 'delete'],
+          loading: loadingDelete.value,
           onView: viewContract,
           onEdit: editContract,
+          onDelete: deleteContract,
         }),
       );
     },

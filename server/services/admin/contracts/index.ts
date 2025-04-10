@@ -6,6 +6,7 @@ export const getContractsService = async (contractId: string) => {
     return await $fetch('/api/admin/contracts');
   } catch (error) {
     console.log('Error during service GET -> ', error);
+    return error;
   }
 };
 
@@ -17,6 +18,7 @@ export const createContractService = async (contractData: any) => {
     });
   } catch (error) {
     console.log('Error during service POST -> ', error);
+    throw error;
   }
 };
 
@@ -27,6 +29,19 @@ export const updateContractService = async (contractData: any) => {
       body: contractData,
     });
   } catch (error) {
-    console.log('Error Service -> error ');
+    console.log('Error during update Service -> ', error);
+    return error;
+  }
+};
+export const deleteContractService = async (id: string) => {
+  console.log('ID FROM SERVICE -> ', id);
+  try {
+    await $fetch('/api/admin/contracts', {
+      method: 'DELETE',
+      body: { id },
+    });
+  } catch (error) {
+    console.log('Error during delete Service -> ', error);
+    return error;
   }
 };
