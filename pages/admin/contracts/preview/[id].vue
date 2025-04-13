@@ -178,7 +178,7 @@ await getContractByIdAction(route?.params?.id as string);
             <div class="p-6 bg-white rounded-md">
               <p class="text-sm text-zinc-600">Nome</p>
               <p class="text-xl font-bold">
-                {{ contract?.manager.name }}
+                {{ contract?.manager?.name }}
               </p>
             </div>
             <div class="p-6 bg-white rounded-md col-span-2">
@@ -203,12 +203,6 @@ await getContractByIdAction(route?.params?.id as string);
               <p class="text-sm text-zinc-600">Departamento</p>
               <p class="text-xl font-bold">
                 {{ contract?.manager?.department }}
-              </p>
-            </div>
-            <div class="p-6 bg-white rounded-md">
-              <p class="text-sm text-zinc-600">Data Cadastro</p>
-              <p class="text-xl font-bold">
-                {{ dateFormat(contract?.manager?.createdAt) }}
               </p>
             </div>
           </div>

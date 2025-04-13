@@ -1,8 +1,10 @@
+import { createUserAccountService } from '~/server/services/accounts';
 import { Prisma, prisma } from '~/utils/prisma';
 
 export default defineEventHandler(async (event) => {
   const payload = await readBody(event);
-  console.log('CREATE CONTRACT --->', payload);
+
+  // console.log('CREATE CONTRACT --->', payload);
 
   const {
     logo,
@@ -31,7 +33,7 @@ export default defineEventHandler(async (event) => {
     additionalInfo,
   } = payload;
 
-  const company = {
+  const customer = {
     name,
     fantasyName,
     document,
@@ -52,45 +54,62 @@ export default defineEventHandler(async (event) => {
     status: 'active',
   };
 
-  const masterManager = {
-    name: managerName,
-    phone: managerCellPhone,
-    email: managerEmail,
-    position,
-    department,
-    password,
-  };
-
   const comercialConditions = {
     paymentTerm,
     paymentDueDate,
   };
 
   try {
-    const newCompany = await prisma.customers.create({ data: company });
-    const newMasterManager = await prisma.masterManager.create({
-      data: masterManager,
-    });
+    //Create the company record
+    const newCustomer = await prisma.customers.create({ data: customer });
+
+    //Create the new contract with company and master manager data
     const newContract = await prisma.contracts.create({
       data: {
-        customerName: newCompany.fantasyName,
-        managerName: newMasterManager.name,
-        managerEmail: newMasterManager.email,
+        customerName: newCustomer.fantasyName,
+        customer: {
+          connect: {
+            id: newCustomer.id,
+          },
+        },
         customerBranches: [],
-        customerUsers: [],
         comercialConditions,
         products,
         additionalInfo,
         enabled: true,
         status: 'pending',
-        customer: {
-          connect: {
-            id: newCompany.id,
-          },
-        },
+      },
+    });
+    // Create master manager user account
+    const newAccountData = {
+      username: managerName,
+      email: managerEmail,
+      password: password,
+      role: 'master-manager',
+      status: 'pending',
+      enabled: true,
+      contractId: newContract.id,
+      customerName: newCustomer.fantasyName,
+      customerId: newCustomer.id,
+    };
+    const newAccount = await createUserAccountService(newAccountData);
+    await prisma.contracts.update({
+      where: {
+        id: newContract.id,
+      },
+      data: {
         manager: {
+          id: newAccount?.id,
+          name: newAccount?.username,
+          email: newAccount?.email,
+          phone: managerCellPhone,
+          position,
+          department,
+        },
+        customerUsers: {
           connect: {
-            id: newMasterManager.id,
+            //@ts-ignore
+            id: newAccount?.id,
           },
         },
       },

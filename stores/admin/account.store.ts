@@ -15,16 +15,20 @@ export const useAccountStore = defineStore('accounts', {
         role: '',
       },
       isLoadingSend: false,
+      isLoading: false,
       isLoggedIn: false,
     };
   },
   actions: {
     async getUsersAccountsAction() {
+      this.isLoading = true;
       try {
         const data = await getUsersAccountsService('');
         this.accounts = data as any;
       } catch (error) {
         console.log('Error durging user register -> ', error);
+      } finally {
+        this.isLoading = false;
       }
     },
     async getUsersAccountsByIdAction(accountId: string) {

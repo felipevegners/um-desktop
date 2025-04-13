@@ -14,13 +14,17 @@ export default defineEventHandler(async (event) => {
       },
       include: {
         customer: true,
-        manager: true,
+        customerUsers: true,
       },
     });
 
     return contract;
   }
-  const customers = await prisma.contracts.findMany();
+  const customers = await prisma.contracts.findMany({
+    include: {
+      customerUsers: true,
+    },
+  });
 
   return customers;
 });

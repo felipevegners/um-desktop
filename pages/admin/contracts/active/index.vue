@@ -104,7 +104,7 @@ const finalColumns = [
         :data="contracts"
         sortby="customerName"
         :column-pin="['customerName']"
-        filterBy="nome da empresa"
+        filterBy="nome de usuário"
       />
     </section>
   </main>

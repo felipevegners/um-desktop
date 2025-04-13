@@ -20,19 +20,18 @@ export const columns = [
     cell: ({ row }) =>
       h('div', { class: 'capitalize' }, row.getValue('customerName')),
   }),
-  columnHelper.accessor('managerName', {
+  columnHelper.accessor('manager', {
     header: () => h('div', { class: 'text-left' }, 'Gestor Master'),
-    cell: ({ row }) =>
-      h('div', { class: 'capitalize' }, row.getValue('managerName')),
+    cell: ({ row }) => {
+      const value: any = row.getValue('manager');
+      return h('div', { class: 'capitalize' }, value?.name);
+    },
   }),
-  columnHelper.accessor('managerEmail', {
+  columnHelper.accessor('manager', {
     header: () => h('div', { class: 'text-left' }, 'E-mail Gestor Master'),
     cell: ({ row }) => {
-      return h(
-        'div',
-        { class: 'text-left font-medium' },
-        row.getValue('managerEmail'),
-      );
+      const value: any = row.getValue('manager');
+      return h('div', { class: 'lowercase' }, value?.email);
     },
   }),
   columnHelper.accessor('customerBranches', {
@@ -53,7 +52,7 @@ export const columns = [
       return h(
         'div',
         { class: 'text-center font-medium' },
-        customerUsers.length,
+        customerUsers?.length,
       );
     },
   }),
