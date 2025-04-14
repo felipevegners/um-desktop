@@ -16,6 +16,7 @@ model Accounts {
   password     String
   email        String     @unique
   role         String
+  avatar       Json?
   contract     Contracts? @relation(fields: [contractId], references: [id])
   contractId   String?    @db.ObjectId
   customerName String?

@@ -58,11 +58,17 @@ await getContractByIdAction(route?.params?.id as string);
           <div class="mb-6 md:grid md:grid-cols-4 md:gap-6">
             <div class="p-6 bg-white rounded-md">
               <p class="text-sm text-zinc-600">Logo</p>
-              <img
+              <!-- <img
                 :src="contract?.customer?.logo?.url"
                 alt=""
-                class="w-[100px]"
-              />
+                class="border border-red-500 h-10"
+              /> -->
+              <div
+                class="h-[80px] bg-contain bg-no-repeat bg-center"
+                :style="{
+                  backgroundImage: `url(${contract?.customer?.logo?.url})`,
+                }"
+              ></div>
             </div>
             <div class="p-6 bg-white rounded-md">
               <p class="text-sm text-zinc-600">CNPJ</p>

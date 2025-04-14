@@ -56,7 +56,7 @@ const fetchData = async () => {
 product.value = await fetchData();
 productType.value = product?.value.type;
 productSituation.value = product?.value.enabled;
-productImage.value = product.value.image || { name: '', url: '' };
+productImage.value = product.value.image;
 
 const formSchema = toTypedSchema(
   z.object({
@@ -98,8 +98,8 @@ const onSubmit = form.handleSubmit(async (values) => {
       method: 'PUT',
       body: {
         image: {
-          name: productImage?.value.name || '',
-          url: productImage?.value.url || '',
+          name: productImage?.value.name,
+          url: productImage?.value.url,
         },
         id: product.value.id,
         code: values.code,
@@ -133,20 +133,24 @@ const onSubmit = form.handleSubmit(async (values) => {
 });
 
 const deleteFile = async (url: string) => {
+  loadingFileData.value = true;
   try {
     await deleteFileAction(url);
   } catch (error) {
     toast({
       title: 'Oops!',
       class: 'bg-red-500 border-0 text-white text-2xl',
-      description: `Arquivo do logotipo não pode ser removido. Tente novamente.`,
+      description: `A imagem não pode ser removida. Tente novamente.`,
     });
   } finally {
     toast({
       title: 'Feito!',
       class: 'bg-green-500 border-0 text-white text-2xl',
-      description: `Arquivo do logotipo foi removido com sucesso!`,
+      description: `A imagem foi removida com sucesso!`,
     });
+    productImage.value.name = '';
+    productImage.value.url = '';
+    loadingFileData.value = false;
   }
 };
 </script>
@@ -188,7 +192,9 @@ const deleteFile = async (url: string) => {
         <CardHeader>
           <CardTitle>
             <h3 class="text-sm text-zinc-500">Editando produto</h3>
-            {{ product?.code }} - {{ product?.name }}
+            <span class="uppercase"
+              >{{ product?.code }} - {{ product?.name }}</span
+            >
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -197,17 +203,14 @@ const deleteFile = async (url: string) => {
               <div class="relative">
                 <p class="mb-2 font-bold">Imagem</p>
                 <div
-                  class="peer p-2 w-[200px] h-[200px] rounded-md bg-white bg-contain bg-no-repeat bg-center relative flex items-center justify-center"
-                  :style="{ backgroundImage: `url(${productImage?.url})` }"
-                >
-                  <LoaderCircle
-                    v-if="productImage?.url === ''"
-                    class="w-10 h-10 animate-spin"
-                  />
-                </div>
+                  class="peer p-2 w-[200px] h-[200px] rounded-md bg-white bg-cover bg-no-repeat bg-center relative flex items-center justify-center"
+                  :style="{
+                    backgroundImage: `url(${productImage?.url ? productImage?.url : '/images/no-image.png'})`,
+                  }"
+                />
               </div>
               <div class="flex flex-col items-center border w-[200px]">
-                <div class="flex" v-if="!productImage?.name">
+                <div class="flex" v-if="productImage?.name === ''">
                   <UploadButton
                     class="relative ut-button:bg-zinc-900 ut-button:hover:bg-zinc-700 ut-button:ut-uploading:after:bg-green-500 ut-button:ut-uploading:cursor-not-allowed ut-button:ut-readying:bg-red-500"
                     :config="{

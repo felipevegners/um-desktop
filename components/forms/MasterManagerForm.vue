@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { WandSparkles } from 'lucide-vue-next';
+import { Lock, WandSparkles } from 'lucide-vue-next';
 import { vMaska } from 'maska/vue';
 import { storeToRefs } from 'pinia';
 import { useContractsStore } from '~/stores/admin/contracts.store';
@@ -10,6 +10,10 @@ const { contractId } = storeToRefs(store);
 definePageMeta({
   name: 'MasterManagerForm',
 });
+
+defineProps<{
+  editMode?: boolean;
+}>();
 </script>
 <template v-if="currentStep === 1">
   <section class="px-6">
@@ -63,9 +67,9 @@ definePageMeta({
               <FormControl>
                 <Input type="email" v-bind="componentField" />
               </FormControl>
-              <!-- <FormMessage
-                      class="p-2 absolute w-full bg-red-500 text-white text-sm rounded-md"
-                    /> -->
+              <FormMessage
+                class="p-2 absolute w-full bg-red-500 text-white text-sm rounded-md"
+              />
             </FormItem>
           </FormField>
           <FormField v-slot="{ componentField }" name="password">
@@ -76,7 +80,15 @@ definePageMeta({
               </FormControl>
             </FormItem>
           </FormField>
-          <Button class="mb-1 px-2 max-w-[140px]" @click.prevent="">
+          <Button
+            v-if="editMode"
+            class="mb-1 px-2 max-w-[190px]"
+            @click.prevent=""
+          >
+            <Lock class="w-6 h-6" />
+            Gerar Nova Senha
+          </Button>
+          <Button v-else class="mb-1 px-2 max-w-[140px]" @click.prevent="">
             <WandSparkles class="w-6 h-6" />
             Gerar Senha
           </Button>

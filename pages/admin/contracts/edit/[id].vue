@@ -93,7 +93,6 @@ const schema = toTypedSchema(
     position: z.string().min(1).max(50),
     department: z.string().min(1).max(50),
     managerEmail: z.string().email().min(1).max(100),
-    password: z.string().min(8, 'Mínimo de 8 caracteres').max(8),
     paymentTerm: z.string().min(1).max(10),
     paymentDueDate: z.number().min(0),
     additionalInfo: z.string().min(0).max(200).optional(),
@@ -117,7 +116,7 @@ const form = useForm({
     phone: contract?.value?.customer?.phone,
     phoneExtension: contract?.value?.customer?.phoneExtension,
     website: contract?.value?.customer?.website,
-    managerName: contract?.value?.managerName,
+    managerName: contract?.value?.manager?.name,
     managerCellPhone: contract?.value?.manager.phone,
     position: contract?.value?.manager?.position,
     department: contract?.value?.manager?.department,
@@ -332,7 +331,7 @@ const findAddress = async (code: string) => {
                 :style="{ backgroundImage: `url(${customerLogo?.url})` }"
               />
               <div class="flex items-end justify-between gap-4">
-                <div v-if="!customerLogo?.name">
+                <div v-if="customerLogo?.name === ''">
                   <UploadButton
                     class="relative ut-button:bg-zinc-900 ut-button:hover:bg-zinc-700 ut-button:ut-uploading:after:bg-green-500 ut-button:ut-uploading:cursor-not-allowed ut-button:ut-readying:bg-red-500"
                     :config="{
@@ -423,7 +422,7 @@ const findAddress = async (code: string) => {
           </div>
           <div class="mb-10">
             <h2 class="px-6 mb-4 text-2xl font-bold">2. Gestor Master</h2>
-            <MasterManagerForm />
+            <MasterManagerForm :editMode="true" />
           </div>
           <div class="mb-10">
             <h2 class="px-6 mb-4 text-2xl font-bold">

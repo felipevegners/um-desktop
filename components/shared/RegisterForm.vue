@@ -93,6 +93,10 @@ const onSubmit = form.handleSubmit(async (values) => {
     enabled: true,
     status: 'pending',
     contractId: userData.value.contractId,
+    avatar: {
+      name: '',
+      url: '',
+    },
   };
 
   try {
@@ -109,6 +113,8 @@ const onSubmit = form.handleSubmit(async (values) => {
       description: `Ocorreu um erro ao cadastrar o usuário. Tente novamente.`,
     });
     throw error;
+  } finally {
+    emit('view-form');
   }
 });
 </script>
@@ -137,15 +143,13 @@ const onSubmit = form.handleSubmit(async (values) => {
           </FormItem>
         </FormField>
       </div>
-      <div
-        v-if="
+      <!-- v-if="
           form.values.role === 'master-manager' ||
           form.values.role === 'branch-manager' ||
           form.values.role === 'platform-admin' ||
           form.values.role === 'platform-corp-user'
-        "
-        class="md:max-w-[350px]"
-      >
+        " -->
+      <div v-if="form.values.role !== 'admin'" class="md:max-w-[350px]">
         <h3 class="mb-4 text-lg font-bold">
           2. Selecione o Contrato a vincular
         </h3>
@@ -222,12 +226,7 @@ const onSubmit = form.handleSubmit(async (values) => {
         </div>
       </div>
 
-      <div
-        v-if="
-          form.values.role === 'admin' || form.values.role === 'platform-user'
-        "
-        class="md:max-w-[350px]"
-      >
+      <div v-if="form.values.role === 'admin'" class="md:max-w-[350px]">
         <h3 class="mb-4 text-lg font-bold">2. Insira os dados do usuário</h3>
         <div class="flex flex-col gap-4">
           <FormField v-slot="{ componentField }" name="userName">

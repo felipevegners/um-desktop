@@ -50,16 +50,16 @@ export const backofficeMenuData = {
     {
       title: 'Usuários',
       url: '#',
-      icon: User,
-      isActive: route.path.includes('users'),
+      icon: UserPen,
+      isActive: route.path.includes('accounts'),
       items: [
         {
           title: 'Usuários Ativos',
-          url: '/admin/users/active',
+          url: '/admin/accounts',
         },
         {
           title: 'Usuários Inativos',
-          url: '/admin/users/inactive',
+          url: '/admin/accounts/inactive',
         },
       ],
     },
@@ -139,12 +139,12 @@ export const backofficeMenuData = {
       icon: Box,
       active: route.path.includes('products'),
     },
-    {
-      name: 'Contas de Usuário',
-      url: '/admin/configurations/accounts',
-      icon: UserPen,
-      active: '',
-    },
+    // {
+    //   name: 'Contas de Usuário',
+    //   url: '/admin/configurations/accounts',
+    //   icon: UserPen,
+    //   active: '',
+    // },
     {
       name: 'Repasse Motorista',
       url: '#',
