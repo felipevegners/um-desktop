@@ -100,7 +100,6 @@ const finalColumns = [
         filterBy="nome de usuário"
       />
     </section>
-    <pre>{{ accounts }}</pre>
   </main>
 </template>
 

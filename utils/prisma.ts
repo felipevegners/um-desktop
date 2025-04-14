@@ -1,11 +1,5 @@
 import { Prisma, PrismaClient } from '@prisma/client';
 
-const prisma = new PrismaClient({
-  omit: {
-    accounts: {
-      password: true,
-    },
-  },
-});
+const prisma = new PrismaClient();
 
 export { prisma, Prisma };
