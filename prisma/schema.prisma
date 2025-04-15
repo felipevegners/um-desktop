@@ -21,6 +21,7 @@ model Accounts {
   contractId   String?    @db.ObjectId
   customerName String?
   customerId   String?
+  history      Json?
   status       String?
   enabled      Boolean
   createdAt    DateTime?  @default(now())
@@ -32,12 +33,13 @@ model Contracts {
   customerName        String?
   customer            Customers? @relation(fields: [customerId], references: [id])
   customerId          String?    @db.ObjectId
-  customerBranches    Json?
+  customerBranches    Branches[]
   customerUsers       Accounts[]
   comercialConditions Json?
   products            Json?
   manager             Json?
   additionalInfo      String?
+  history             Json?
   status              String?
   enabled             Boolean?
   createdAt           DateTime?  @default(now())
@@ -55,28 +57,30 @@ model Customers {
   phoneExtension String?
   website        String?
   logo           Json?
+  budget         String?
   enabled        Boolean?
   createdAt      DateTime?   @default(now())
   updatedAt      DateTime?   @updatedAt()
   Contracts      Contracts[]
 }
 
-model Passengers {
-  id           String    @id @default(auto()) @map("_id") @db.ObjectId
-  name         String
-  email        String    @unique
-  phone        String
-  customerName String?
-  department   String?
-  position     String?
-  restrictions Json?
-  status       String
-  active       Boolean
-  type         String //Corp or Regular
-  document     String?
-  history      Json?
-  createdAt    DateTime? @default(now())
-  updatedAt    DateTime? @updatedAt()
+model Branches {
+  id             String     @id @default(auto()) @map("_id") @db.ObjectId
+  name           String?
+  fantasyName    String?
+  document       String?    @unique
+  address        Json?
+  phone          String?
+  phoneExtension String?
+  areas          Json?
+  manager        Json?
+  budget         String?
+  status         String?
+  enabled        Boolean?
+  contract       Contracts? @relation(fields: [contractId], references: [id])
+  contractId     String?    @db.ObjectId
+  createdAt      DateTime?  @default(now())
+  updatedAt      DateTime?  @updatedAt()
 }
 
 model Drivers {

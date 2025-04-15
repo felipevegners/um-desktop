@@ -7,8 +7,8 @@ definePageMeta({
 });
 
 defineProps<{
-  findAddress: any;
-  loading: boolean;
+  findAddress?: any;
+  loading?: boolean;
   isEditing?: boolean;
 }>();
 </script>

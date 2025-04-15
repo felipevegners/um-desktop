@@ -1,20 +1,17 @@
 <script setup lang="ts">
 import DataTable from '@/components/shared/DataTable.vue';
 import TableActions from '@/components/shared/TableActions.vue';
-import { useToast } from '@/components/ui/toast';
 import { useContractsStore } from '@/stores/admin/contracts.store';
 import { createColumnHelper } from '@tanstack/vue-table';
-import { FileText, LoaderCircle, Plus } from 'lucide-vue-next';
+import { Building2, LoaderCircle } from 'lucide-vue-next';
 import { storeToRefs } from 'pinia';
 
 import { columns } from './columns';
 
-const { toast } = useToast();
-
-const columnHelper = createColumnHelper<any>();
 const store = useContractsStore();
+
 const { getContractsAction, deleteContractAction } = store;
-const { contracts, isLoading } = storeToRefs(store);
+const { inactiveContracts, isLoading } = storeToRefs(store);
 
 const loadingDelete = ref<boolean>(false);
 
@@ -23,17 +20,17 @@ definePageMeta({
   middleware: 'sidebase-auth',
 });
 
-useHead({
-  title: 'Backoffice - Contratos Ativos | Urban Mobi',
-});
-
 onMounted(async () => {
   await getContractsAction();
 });
 
+useHead({
+  title: 'Backoffice - Filiais Inativas | Urban Mobi',
+});
+
 const viewContract = (value: string) => {
   navigateTo({
-    name: 'admin-contracts-preview-id',
+    name: 'admin-branches-preview-id',
     params: {
       id: value,
     },
@@ -55,10 +52,12 @@ const deleteContract = async (contractId: string) => {
   } catch (error) {
     console.log('Error ->', error);
   } finally {
-    loadingDelete.value = true;
+    loadingDelete.value = false;
     await getContractsAction();
   }
 };
+
+const columnHelper = createColumnHelper<any>();
 
 const finalColumns = [
   ...columns,
@@ -88,12 +87,9 @@ const finalColumns = [
   <main class="p-6">
     <section class="mb-6 flex items-center justify-between">
       <h1 class="flex items-center gap-2 text-2xl font-bold">
-        <FileText class="w-6 h-6" />
-        Gerenciar Contratos Ativos
+        <Building2 class="w-6 h-6" />
+        Gerenciar Filiais Inativas
       </h1>
-      <Button @click="navigateTo('/admin/contracts/new')">
-        <Plus class="w-4 h-4" /> Novo Contrato
-      </Button>
     </section>
     <section
       v-if="isLoading"
@@ -104,10 +100,10 @@ const finalColumns = [
     <section v-else>
       <DataTable
         :columns="finalColumns"
-        :data="contracts"
+        :data="[]"
         sortby="customerName"
         :column-pin="['customerName']"
-        filterBy="nome de usuário"
+        filterBy="nome da filial"
       />
     </section>
   </main>

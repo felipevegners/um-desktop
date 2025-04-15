@@ -48,6 +48,26 @@ export const backofficeMenuData = {
       ],
     },
     {
+      title: 'Clientes',
+      url: '#',
+      icon: Building2,
+      isActive: route.path.includes('branches'),
+      items: [
+        {
+          title: 'Filiais Ativas',
+          url: '/admin/branches/active',
+        },
+        {
+          title: 'Filiais Inativas',
+          url: '/admin/branches/inactive',
+        },
+        {
+          title: 'Nova Filial',
+          url: '/admin/branches/new',
+        },
+      ],
+    },
+    {
       title: 'Usuários',
       url: '#',
       icon: UserPen,
@@ -70,7 +90,7 @@ export const backofficeMenuData = {
       isActive: route.path.includes('drivers'),
       items: [
         {
-          title: 'Base de Motoristas',
+          title: 'Motoristas Ativos',
           url: '/admin/drivers',
         },
         {

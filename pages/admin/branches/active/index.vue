@@ -4,7 +4,7 @@ import TableActions from '@/components/shared/TableActions.vue';
 import { useToast } from '@/components/ui/toast';
 import { useContractsStore } from '@/stores/admin/contracts.store';
 import { createColumnHelper } from '@tanstack/vue-table';
-import { FileText, LoaderCircle, Plus } from 'lucide-vue-next';
+import { Building2, LoaderCircle, Plus } from 'lucide-vue-next';
 import { storeToRefs } from 'pinia';
 
 import { columns } from './columns';
@@ -24,14 +24,14 @@ definePageMeta({
 });
 
 useHead({
-  title: 'Backoffice - Contratos Ativos | Urban Mobi',
+  title: 'Backoffice - Filiais Ativos | Urban Mobi',
 });
 
 onMounted(async () => {
   await getContractsAction();
 });
 
-const viewContract = (value: string) => {
+const viewBranch = (value: string) => {
   navigateTo({
     name: 'admin-contracts-preview-id',
     params: {
@@ -39,23 +39,33 @@ const viewContract = (value: string) => {
     },
   });
 };
-const editContract = (value: string) => {
+const editBranch = (value: string) => {
   navigateTo({
-    name: 'admin-contracts-edit-id',
+    name: 'admin-branches-edit-id',
     params: {
       id: value,
     },
   });
 };
 
-const deleteContract = async (contractId: string) => {
+const deleteBranch = async (contractId: string) => {
   loadingDelete.value = true;
   try {
     await deleteContractAction(contractId);
   } catch (error) {
-    console.log('Error ->', error);
+    toast({
+      title: 'Opss!',
+      class: 'bg-red-500 border-0 text-white text-2xl',
+      description: `Ocorreu um erro ao deletar a filial. Tente novamente.`,
+    });
+    throw error;
   } finally {
     loadingDelete.value = true;
+    toast({
+      title: 'Tudo pronto!',
+      class: 'bg-green-600 border-0 text-white text-2xl',
+      description: `Produto cadastrado com sucesso!`,
+    });
     await getContractsAction();
   }
 };
@@ -75,9 +85,9 @@ const finalColumns = [
           dataId: id,
           options: ['preview', 'edit', 'delete'],
           loading: loadingDelete.value,
-          onView: viewContract,
-          onEdit: editContract,
-          onDelete: deleteContract,
+          onView: viewBranch,
+          onEdit: editBranch,
+          onDelete: deleteBranch,
         }),
       );
     },
@@ -88,11 +98,11 @@ const finalColumns = [
   <main class="p-6">
     <section class="mb-6 flex items-center justify-between">
       <h1 class="flex items-center gap-2 text-2xl font-bold">
-        <FileText class="w-6 h-6" />
-        Gerenciar Contratos Ativos
+        <Building2 class="w-6 h-6" />
+        Gerenciar Filiais Ativas
       </h1>
-      <Button @click="navigateTo('/admin/contracts/new')">
-        <Plus class="w-4 h-4" /> Novo Contrato
+      <Button @click="navigateTo('/admin/branches/new')">
+        <Plus class="w-4 h-4" /> Nova Filial
       </Button>
     </section>
     <section
@@ -104,10 +114,10 @@ const finalColumns = [
     <section v-else>
       <DataTable
         :columns="finalColumns"
-        :data="contracts"
+        :data="[]"
         sortby="customerName"
         :column-pin="['customerName']"
-        filterBy="nome de usuário"
+        filterBy="nome da filial"
       />
     </section>
   </main>
