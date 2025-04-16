@@ -34,17 +34,17 @@ export const columns = [
       return h('div', { class: 'lowercase' }, value?.email);
     },
   }),
-  columnHelper.accessor('customerBranches', {
-    header: () => h('div', { class: 'text-left' }, 'Filiais'),
-    cell: ({ row }) => {
-      const { customerBranches } = row.original;
-      return h(
-        'div',
-        { class: 'text-left font-medium' },
-        customerBranches.length,
-      );
-    },
-  }),
+  // columnHelper.accessor('customerBranches', {
+  //   header: () => h('div', { class: 'text-left' }, 'Filiais'),
+  //   cell: ({ row }) => {
+  //     const { customerBranches } = row.original;
+  //     return h(
+  //       'div',
+  //       { class: 'text-left font-medium' },
+  //       customerBranches.length,
+  //     );
+  //   },
+  // }),
   columnHelper.accessor('customerUsers', {
     header: () => h('div', { class: 'text-center' }, 'Usuários Ativos'),
     cell: ({ row }) => {

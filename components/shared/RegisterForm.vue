@@ -5,7 +5,7 @@ import { useToast } from '@/components/ui/toast/use-toast';
 import { useAccountStore } from '@/stores/admin/account.store';
 import { useContractsStore } from '@/stores/admin/contracts.store';
 import { toTypedSchema } from '@vee-validate/zod';
-import { Eye, LoaderCircle } from 'lucide-vue-next';
+import { Eye, EyeOff, LoaderCircle } from 'lucide-vue-next';
 import { useForm } from 'vee-validate';
 import { onBeforeMount } from 'vue';
 import * as z from 'zod';
@@ -31,6 +31,11 @@ definePageMeta({
 const emit = defineEmits(['view-form']);
 
 const props = defineProps(['accountRole']);
+
+const viewPassword = ref<boolean>(false);
+const revealPassword = () => {
+  viewPassword.value = !viewPassword.value;
+};
 
 const sanitizeContracts = computed(() => {
   //@ts-ignore
@@ -58,16 +63,11 @@ const formSchema = toTypedSchema(
   }),
 );
 
-const viewPassword = ref<boolean>(false);
 const userData = ref<any>({
+  contractId: '',
   customerId: '',
   customerName: '',
-  contractId: '',
 });
-
-const revealPassword = () => {
-  viewPassword.value = !viewPassword.value;
-};
 
 const form = useForm({
   validationSchema: formSchema,
@@ -79,12 +79,20 @@ const compileUserData = (value: string) => {
   const filtered = contractsStore.contracts?.find(
     (contract: any) => contract.id === value,
   );
+  userData.value.contractId = filtered.id;
   userData.value.customerId = filtered.customerId;
   userData.value.customerName = filtered.customerName;
-  userData.value.contractId = filtered.id;
 };
 
 const onSubmit = form.handleSubmit(async (values) => {
+  if (values.role === 'platform-user') {
+    const filtered = contractsStore.contracts?.find((contract: any) =>
+      contract.customerName.includes('Urban Mobi'),
+    );
+    userData.value.contractId = filtered.id;
+    userData.value.customerId = filtered.customerId;
+    userData.value.customerName = filtered.customerName;
+  }
   const accountData = {
     username: values.userName,
     password: values.userPassword,
@@ -93,6 +101,8 @@ const onSubmit = form.handleSubmit(async (values) => {
     enabled: true,
     status: 'pending',
     contractId: userData.value.contractId,
+    customerName: userData.value.customerName,
+    customerId: userData.value.customerId,
     avatar: {
       name: '',
       url: '',
@@ -135,7 +145,7 @@ const onSubmit = form.handleSubmit(async (values) => {
                   { label: 'Gestor Filial', value: 'branch-manager' },
                   { label: 'Administrador', value: 'platform-admin' },
                   { label: 'Usuário Corporativo', value: 'platform-corp-user' },
-                  { label: 'Usuário', value: 'platform-user' },
+                  { label: 'Usuário UM', value: 'platform-user' },
                 ]"
                 :label="'Selecione'"
               />
@@ -143,13 +153,15 @@ const onSubmit = form.handleSubmit(async (values) => {
           </FormItem>
         </FormField>
       </div>
-      <!-- v-if="
+      <div
+        v-if="
           form.values.role === 'master-manager' ||
           form.values.role === 'branch-manager' ||
           form.values.role === 'platform-admin' ||
           form.values.role === 'platform-corp-user'
-        " -->
-      <div v-if="form.values.role !== 'admin'" class="md:max-w-[350px]">
+        "
+        class="md:max-w-[350px]"
+      >
         <h3 class="mb-4 text-lg font-bold">
           2. Selecione o Contrato a vincular
         </h3>
@@ -191,24 +203,33 @@ const onSubmit = form.handleSubmit(async (values) => {
           <FormField v-slot="{ componentField }" name="userPassword">
             <FormItem class="relative">
               <FormLabel>Senha</FormLabel>
-              <FormControl class="relative">
-                <Input
-                  v-if="viewPassword"
-                  type="text"
-                  placeholder="Insira a senha"
-                  v-bind="componentField"
-                />
-                <Input
-                  v-else
-                  type="password"
-                  placeholder="Insira a senha"
-                  v-bind="componentField"
-                />
-                <Eye
-                  class="h-5 w-5 absolute top-8 right-3 cursor-pointer hover:text-zinc-700"
-                  :class="viewPassword ? 'text-zinc-700' : 'text-zinc-400'"
-                  @click.prevent="revealPassword"
-                />
+              <FormControl>
+                <div v-if="viewPassword" class="relative">
+                  <Input
+                    type="text"
+                    placeholder="Insira a senha"
+                    v-bind="componentField"
+                    :disabled="isLoading"
+                  />
+                  <EyeOff
+                    class="h-5 w-5 absolute top-[10px] right-3 cursor-pointer hover:text-zinc-700"
+                    :class="viewPassword ? 'text-zinc-700' : 'text-zinc-400'"
+                    @click.prevent="revealPassword"
+                  />
+                </div>
+                <div v-else class="relative">
+                  <Input
+                    type="password"
+                    placeholder="Insira a senha"
+                    v-bind="componentField"
+                    :disabled="isLoading"
+                  />
+                  <Eye
+                    class="h-5 w-5 absolute top-[10px] right-3 cursor-pointer hover:text-zinc-700"
+                    :class="viewPassword ? 'text-zinc-700' : 'text-zinc-400'"
+                    @click.prevent="revealPassword"
+                  />
+                </div>
               </FormControl>
               <small>*A senha deve conter de 6 a 8 caracteres</small>
               <FormMessage />
@@ -226,7 +247,12 @@ const onSubmit = form.handleSubmit(async (values) => {
         </div>
       </div>
 
-      <div v-if="form.values.role === 'admin'" class="md:max-w-[350px]">
+      <div
+        v-if="
+          form.values.role === 'admin' || form.values.role === 'platform-user'
+        "
+        class="md:max-w-[350px]"
+      >
         <h3 class="mb-4 text-lg font-bold">2. Insira os dados do usuário</h3>
         <div class="flex flex-col gap-4">
           <FormField v-slot="{ componentField }" name="userName">
@@ -250,24 +276,33 @@ const onSubmit = form.handleSubmit(async (values) => {
           <FormField v-slot="{ componentField }" name="userPassword">
             <FormItem class="relative">
               <FormLabel>Senha</FormLabel>
-              <FormControl class="relative">
-                <Input
-                  v-if="viewPassword"
-                  type="text"
-                  placeholder="Insira a senha"
-                  v-bind="componentField"
-                />
-                <Input
-                  v-else
-                  type="password"
-                  placeholder="Insira a senha"
-                  v-bind="componentField"
-                />
-                <Eye
-                  class="h-5 w-5 absolute top-8 right-3 cursor-pointer hover:text-zinc-700"
-                  :class="viewPassword ? 'text-zinc-700' : 'text-zinc-400'"
-                  @click.prevent="revealPassword"
-                />
+              <FormControl>
+                <div v-if="viewPassword" class="relative">
+                  <Input
+                    type="text"
+                    placeholder="Insira a senha"
+                    v-bind="componentField"
+                    :disabled="isLoading"
+                  />
+                  <EyeOff
+                    class="h-5 w-5 absolute top-[10px] right-3 cursor-pointer hover:text-zinc-700"
+                    :class="viewPassword ? 'text-zinc-700' : 'text-zinc-400'"
+                    @click.prevent="revealPassword"
+                  />
+                </div>
+                <div v-else class="relative">
+                  <Input
+                    type="password"
+                    placeholder="Insira a senha"
+                    v-bind="componentField"
+                    :disabled="isLoading"
+                  />
+                  <Eye
+                    class="h-5 w-5 absolute top-[10px] right-3 cursor-pointer hover:text-zinc-700"
+                    :class="viewPassword ? 'text-zinc-700' : 'text-zinc-400'"
+                    @click.prevent="revealPassword"
+                  />
+                </div>
               </FormControl>
               <small>*A senha deve conter de 6 a 8 caracteres</small>
               <FormMessage />

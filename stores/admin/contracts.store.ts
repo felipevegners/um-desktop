@@ -39,6 +39,7 @@ export const useContractsStore = defineStore('contracts', {
         this.isLoading = false;
       } catch (error) {
         console.log('Store GET All Error -> ', error);
+        throw error;
       }
     },
     async getContractByIdAction(contractId: string) {
@@ -49,6 +50,7 @@ export const useContractsStore = defineStore('contracts', {
         this.isLoading = false;
       } catch (error) {
         console.log('Store GET by ID Error -> ', error);
+        throw error;
       }
     },
     async createContractAction(contractData: any) {
@@ -76,7 +78,7 @@ export const useContractsStore = defineStore('contracts', {
         this.isLoading = false;
       } catch (error) {
         console.log('Error from Store -> ', error);
-        return error;
+        throw error;
       }
     },
   },

@@ -159,21 +159,18 @@ const onSubmit = form.handleSubmit(async (values) => {
       },
     };
 
-    const masterManagerData = {
-      name: values.managerName,
-      phone: values.managerCellPhone,
-      position: values.position,
-      department: values.department,
-      email: values.managerEmail,
-      password: values.password,
-    };
-
     const contractData = {
+      manager: {
+        id: contract?.value.manager.id,
+        name: values.managerName,
+        email: values.managerEmail,
+        phone: values.managerCellPhone,
+        position: values.position,
+        department: values.department,
+      },
       customerName: values.fantasyName,
-      managerName: values.managerName,
-      managerEmail: values.managerEmail,
-      customerBranches: [],
-      customerUsers: [],
+      customerBranches: null,
+      customerUsers: null,
       comercialConditions: {
         paymentTerm: values.paymentTerm,
         paymentDueDate: values.paymentDueDate,
@@ -187,7 +184,6 @@ const onSubmit = form.handleSubmit(async (values) => {
     await updateContractAction({
       payloadIds,
       customerData,
-      masterManagerData,
       contractData,
     });
   } catch (error) {
@@ -449,7 +445,13 @@ const findAddress = async (code: string) => {
               <LoaderCircle v-if="isLoadingSend" class="w-5 h-5 animate-spin" />
               Salvar Contrato
             </Button>
-            <Button type="button" variant="ghost"> Cancelar </Button>
+            <Button
+              type="button"
+              variant="ghost"
+              @click.prevent="navigateTo('../active/')"
+            >
+              Cancelar
+            </Button>
           </div>
         </form>
       </section>

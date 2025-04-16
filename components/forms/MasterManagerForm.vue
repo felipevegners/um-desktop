@@ -17,7 +17,6 @@ defineProps<{
 </script>
 <template v-if="currentStep === 1">
   <section class="px-6">
-    <pre>{{ contractId }}</pre>
     <div class="mb-4 grid grid-cols-4 gap-6">
       <FormField v-slot="{ componentField }" name="managerName">
         <FormItem>

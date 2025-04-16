@@ -3,16 +3,19 @@ import DataTable from '@/components/shared/DataTable.vue';
 import RegisterForm from '@/components/shared/RegisterForm.vue';
 import TableActions from '@/components/shared/TableActions.vue';
 import { Button } from '@/components/ui/button';
+import { useToast } from '@/components/ui/toast';
 import { useAccountStore } from '@/stores/admin/account.store';
 import { createColumnHelper } from '@tanstack/vue-table';
 import { LoaderCircle, Plus, UserPen, X } from 'lucide-vue-next';
 
 import { columns } from './columns';
 
+const { toast } = useToast();
+
 const columnHelper = createColumnHelper<any>();
 
 const accountStore = useAccountStore();
-const { getUsersAccountsAction } = accountStore;
+const { getUsersAccountsAction, deleteUserAccountAction } = accountStore;
 const { isLoading, accounts } = storeToRefs(accountStore);
 
 definePageMeta({
@@ -28,9 +31,32 @@ onBeforeMount(async () => {
 });
 
 const showForm = ref<boolean>(false);
+const loadingDelete = ref<boolean>(false);
 
 const showAddForm = () => {
   showForm.value = !showForm.value;
+};
+
+const deleteUserAccount = async (accountId: string) => {
+  loadingDelete.value = true;
+  try {
+    await deleteUserAccountAction(accountId);
+  } catch (error) {
+    toast({
+      title: 'Opss!',
+      class: 'bg-red-500 border-0 text-white text-2xl',
+      description: `Ocorreu um erro ao remover a conta de usuário. Tente novamente.`,
+    });
+    throw error;
+  } finally {
+    loadingDelete.value = false;
+    toast({
+      title: 'Tudo pronto!',
+      class: 'bg-green-600 border-0 text-white text-2xl',
+      description: `Conta de Usuário removida com sucesso!`,
+    });
+    await getUsersAccountsAction();
+  }
 };
 
 const finalColumns = [
@@ -47,10 +73,10 @@ const finalColumns = [
         h(TableActions, {
           dataId: id,
           options: ['edit', 'delete'],
-          loading: false,
+          loading: loadingDelete.value,
           onView: () => {},
           onEdit: () => {},
-          onDelete: () => {},
+          onDelete: deleteUserAccount,
         }),
       );
     },

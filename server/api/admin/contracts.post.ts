@@ -4,8 +4,6 @@ import { Prisma, prisma } from '~/utils/prisma';
 export default defineEventHandler(async (event) => {
   const payload = await readBody(event);
 
-  // console.log('CREATE CONTRACT --->', payload);
-
   const {
     logo,
     name,
@@ -72,7 +70,6 @@ export default defineEventHandler(async (event) => {
             id: newCustomer.id,
           },
         },
-        customerBranches: [],
         comercialConditions,
         products,
         additionalInfo,
