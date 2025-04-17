@@ -1,6 +1,6 @@
 import { Button } from '@/components/ui/button';
 import { createColumnHelper } from '@tanstack/vue-table';
-import { ArrowUpDown } from 'lucide-vue-next';
+import { ArrowUpDown, CircleCheck, CircleX } from 'lucide-vue-next';
 
 const columnHelper = createColumnHelper<any>();
 
@@ -36,22 +36,36 @@ export const columns = [
     },
   }),
   columnHelper.accessor('enabled', {
-    header: () => h('div', { class: 'text-left' }, 'Situação'),
+    header: () => h('div', { class: 'text-center' }, 'Situação'),
     cell: ({ row }) => {
-      return h(
-        'div',
-        { class: 'text-left font-medium' },
-        row.getValue('enabled'),
-      );
+      const { enabled } = row.original;
+      if (enabled) {
+        return h(
+          'div',
+          { class: 'flex justify-center' },
+          h(CircleCheck, { color: 'green' }),
+        );
+      } else {
+        return h(
+          'div',
+          { class: 'flex justify-center' },
+          h(CircleX, { color: 'red' }),
+        );
+      }
     },
   }),
   columnHelper.accessor('status', {
-    header: () => h('div', { class: 'text-left' }, 'Status'),
+    header: () => h('div', { class: 'text-center' }, 'Status'),
     cell: ({ row }) => {
+      const status = row.getValue('status');
       return h(
         'div',
-        { class: 'text-left font-medium' },
-        row.getValue('status'),
+        {
+          class: `px-2 flex items-center justify-center h-6 rounded-full text-white text-xs max-w-[80px] ${
+            status === 'validated' ? 'bg-green-600' : 'bg-yellow-500'
+          }`,
+        },
+        status === 'validated' ? 'Validado' : 'Pendente',
       );
     },
   }),

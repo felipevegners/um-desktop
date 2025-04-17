@@ -121,7 +121,6 @@ const form = useForm({
     position: contract?.value?.manager?.position,
     department: contract?.value?.manager?.department,
     managerEmail: contract?.value?.manager?.email,
-    password: contract?.value?.manager?.password,
     paymentTerm: contract?.value?.comercialConditions?.paymentTerm,
     paymentDueDate: contract?.value?.comercialConditions?.paymentDueDate,
     additionalInfo: contract?.value?.additionalInfo,

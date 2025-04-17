@@ -22,6 +22,18 @@ export const createUserAccountService = async (accountData: any) => {
   }
 };
 
+export const updateUserAccountService = async (accountData: any) => {
+  try {
+    return await $fetch('/api/auth/accounts', {
+      method: 'PUT',
+      body: accountData,
+    });
+  } catch (error) {
+    console.log('Error during POST Account -> ', error);
+    throw error;
+  }
+};
+
 export const deleteUserAccountService = async (accountId: string) => {
   try {
     return await $fetch('/api/auth/accounts', {

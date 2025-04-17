@@ -87,10 +87,12 @@ const finalColumns = [
 <template>
   <main class="p-6">
     <section class="mb-6 flex items-center justify-between">
-      <h1 class="flex items-center gap-2 text-2xl font-bold">
-        <FileText class="w-6 h-6" />
-        Gerenciar Contratos Ativos
-      </h1>
+      <div class="flex items-center gap-4">
+        <FileText :size="32" />
+        <h1 class="font-bold text-black text-3xl">
+          Gerenciar Contratos Ativos
+        </h1>
+      </div>
       <Button @click="navigateTo('/admin/contracts/new')">
         <Plus class="w-4 h-4" /> Novo Contrato
       </Button>

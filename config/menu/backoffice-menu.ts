@@ -68,18 +68,22 @@ export const backofficeMenuData = {
       ],
     },
     {
-      title: 'Usuários',
+      title: 'Contas de Usuários',
       url: '#',
       icon: UserPen,
       isActive: route.path.includes('accounts'),
       items: [
         {
           title: 'Usuários Ativos',
-          url: '/admin/accounts',
+          url: '/admin/accounts/active',
         },
         {
           title: 'Usuários Inativos',
           url: '/admin/accounts/inactive',
+        },
+        {
+          title: 'Novo Usuário',
+          url: '/admin/accounts/new',
         },
       ],
     },

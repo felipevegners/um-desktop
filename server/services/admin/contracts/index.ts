@@ -34,7 +34,6 @@ export const updateContractService = async (contractData: any) => {
   }
 };
 export const deleteContractService = async (id: string) => {
-  console.log('ID FROM SERVICE -> ', id);
   try {
     await $fetch('/api/admin/contracts', {
       method: 'DELETE',

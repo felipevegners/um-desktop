@@ -2,6 +2,7 @@ import {
   createUserAccountService,
   deleteUserAccountService,
   getUsersAccountsService,
+  updateUserAccountService,
 } from '@/server/services/accounts';
 import { defineStore } from 'pinia';
 
@@ -9,11 +10,8 @@ export const useAccountStore = defineStore('accounts', {
   state: () => {
     return {
       accounts: [],
-      userAccount: {
-        id: '',
-        name: '',
-        email: '',
-        role: '',
+      account: {
+        enabled: true,
       },
       isLoadingSend: false,
       isLoading: false,
@@ -37,8 +35,7 @@ export const useAccountStore = defineStore('accounts', {
       this.isLoading = true;
       try {
         const data = await getUsersAccountsService(accountId);
-        console.log('data user -> ', data);
-        this.userAccount = data as any;
+        this.account = data as any;
       } catch (error) {
         console.log('Error durging user register -> ', error);
         throw error;
@@ -52,6 +49,18 @@ export const useAccountStore = defineStore('accounts', {
         await createUserAccountService(accountData);
       } catch (error) {
         console.log('Error durging user register -> ', error);
+        throw error;
+      } finally {
+        this.isLoadingSend = false;
+      }
+    },
+
+    async updateUserAccountAction(accountData: any) {
+      this.isLoadingSend = true;
+      try {
+        await updateUserAccountService(accountData);
+      } catch (error) {
+        console.log('Error durging user update -> ', error);
         throw error;
       } finally {
         this.isLoadingSend = false;
