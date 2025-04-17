@@ -6,7 +6,7 @@ export const getUsersAccountsService = async (accountId: string) => {
     return await $fetch('/api/auth/accounts');
   } catch (error) {
     console.log('Error -> ', error);
-    throw error;
+    return error;
   }
 };
 
@@ -18,7 +18,7 @@ export const createUserAccountService = async (accountData: any) => {
     });
   } catch (error) {
     console.log('Error during POST Account -> ', error);
-    throw error;
+    return error;
   }
 };
 
@@ -30,7 +30,7 @@ export const updateUserAccountService = async (accountData: any) => {
     });
   } catch (error) {
     console.log('Error during POST Account -> ', error);
-    throw error;
+    return error;
   }
 };
 
@@ -42,6 +42,6 @@ export const deleteUserAccountService = async (accountId: string) => {
     });
   } catch (error) {
     console.log('Error during DELETE Account -> ', error);
-    throw error;
+    return error;
   }
 };

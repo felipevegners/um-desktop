@@ -35,25 +35,6 @@ export const columns = [
       return h('div', { class: 'text-left font-medium' }, row.getValue('role'));
     },
   }),
-  columnHelper.accessor('enabled', {
-    header: () => h('div', { class: 'text-center' }, 'Situação'),
-    cell: ({ row }) => {
-      const { enabled } = row.original;
-      if (enabled) {
-        return h(
-          'div',
-          { class: 'flex justify-center' },
-          h(CircleCheck, { color: 'green' }),
-        );
-      } else {
-        return h(
-          'div',
-          { class: 'flex justify-center' },
-          h(CircleX, { color: 'red' }),
-        );
-      }
-    },
-  }),
   columnHelper.accessor('status', {
     header: () => h('div', { class: 'text-center' }, 'Status'),
     cell: ({ row }) => {

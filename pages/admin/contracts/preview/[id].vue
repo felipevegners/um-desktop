@@ -3,6 +3,7 @@ import BackLink from '@/components/shared/BackLink.vue';
 import { Edit, FileText, LoaderCircle, Trash } from 'lucide-vue-next';
 import { storeToRefs } from 'pinia';
 import { dateFormat } from '~/lib/utils';
+import customersDelete from '~/server/api/admin/customers.delete';
 import { useContractsStore } from '~/stores/admin/contracts.store';
 
 definePageMeta({
@@ -128,11 +129,11 @@ await getContractByIdAction(route?.params?.id as string);
         <Separator class="my-6 border-b border-zinc-300" />
         <div>
           <h2 class="mb-4 text-2xl font-bold">Dados do Contrato</h2>
-          <div class="md:grid md:grid-cols-4 md:gap-6">
+          <div class="md:grid md:grid-cols-2 md:gap-6">
             <div class="p-6 bg-white rounded-md">
               <p class="text-sm text-zinc-600">Filiais</p>
-              <p class="text-2xl font-bold">
-                {{ contract?.customerBranches.length }}
+              <p class="mb-4 text-2xl font-bold">
+                {{ contract?.customerBranches?.length || 0 }}
               </p>
             </div>
             <div class="p-6 bg-white rounded-md">
@@ -154,8 +155,12 @@ await getContractByIdAction(route?.params?.id as string);
             </div>
             <div class="p-6 bg-white rounded-md">
               <p class="text-sm text-zinc-600">Usuários Cadastrados</p>
-              <p class="text-2xl font-bold">
+              <p class="mb-4 text-2xl font-bold">
                 {{ contract?.customerUsers.length }}
+              </p>
+              <p v-for="user in contract?.customerUsers" :key="user.id">
+                <span class="font-bold">{{ user.username }}</span> -
+                {{ user.role }}
               </p>
             </div>
             <div class="p-6 bg-white rounded-md">

@@ -18,7 +18,7 @@ export const createContractService = async (contractData: any) => {
     });
   } catch (error) {
     console.log('Error during service POST -> ', error);
-    throw error;
+    return error;
   }
 };
 

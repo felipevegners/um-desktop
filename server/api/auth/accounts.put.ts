@@ -3,16 +3,15 @@ import bcrypt from 'bcrypt';
 
 export default defineEventHandler(async (event) => {
   const body = await readBody(event);
-  if (!body.username || !body.email || !body.password || !body.role) {
+
+  console.log('BODY ---> ', body);
+  if (!body.username || !body.email || !body.role) {
     throw createError({
       statusCode: 400,
       statusMessage: 'Bad Request',
       message: 'Campos obrigatórios inválidos',
     });
   }
-  const salt = await bcrypt.genSalt(10);
-  const hashedPassword = await bcrypt.hash(body.password, salt);
-
   const {
     accountId,
     contractId,
@@ -23,6 +22,21 @@ export default defineEventHandler(async (event) => {
     status,
     avatar,
   } = body;
+
+  const userAccount = await prisma.accounts.findUnique({
+    where: {
+      id: accountId,
+    },
+  });
+
+  let hashedPassword;
+
+  if (body.password) {
+    const salt = await bcrypt.genSalt(10);
+    hashedPassword = await bcrypt.hash(body.password, salt);
+  } else {
+    hashedPassword = userAccount?.password;
+  }
 
   try {
     await prisma.accounts.update({

@@ -6,11 +6,35 @@ import {
 } from '@/server/services/accounts';
 import { defineStore } from 'pinia';
 
+export type Account = {};
+export interface IAccountsState {
+  isLoadingSend: boolean;
+  isLoading: boolean;
+  isLoggedIn: boolean;
+  accounts: Account[];
+  account: {
+    username: string;
+    email: string;
+    role: string;
+    contractId: string;
+    status: string;
+    enabled: boolean;
+  };
+}
+
 export const useAccountStore = defineStore('accounts', {
   state: () => {
     return {
       accounts: [],
       account: {
+        id: '',
+        username: '',
+        email: '',
+        role: '',
+        contractId: '',
+        customerId: '',
+        customerName: '',
+        status: '',
         enabled: true,
       },
       isLoadingSend: false,
