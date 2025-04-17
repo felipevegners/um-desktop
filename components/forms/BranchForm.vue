@@ -63,6 +63,7 @@ const form = useForm({
         </FormItem>
       </FormField>
     </div>
+    <h3 class="my-6 px-6">***ADICIONAR NUMERO DA FILIAL***</h3>
   </section>
   <section class="px-6">
     <h3 class="mb-4 text-lg font-bold">2. Insira os dados da Filial</h3>

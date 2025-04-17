@@ -3,8 +3,6 @@ import bcrypt from 'bcrypt';
 
 export default defineEventHandler(async (event) => {
   const body = await readBody(event);
-
-  console.log('BODY ---> ', body);
   if (!body.username || !body.email || !body.role) {
     throw createError({
       statusCode: 400,
