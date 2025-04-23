@@ -29,6 +29,7 @@ export default defineEventHandler(async (event) => {
     paymentDueDate,
     products,
     additionalInfo,
+    mainBudget,
   } = payload;
 
   const customer = {
@@ -71,8 +72,14 @@ export default defineEventHandler(async (event) => {
           },
         },
         comercialConditions,
+        mainBudget,
         products,
         additionalInfo,
+        managerInfo: {
+          phone: managerCellPhone,
+          position: position,
+          department: department,
+        },
         enabled: true,
         status: 'pending',
       },
@@ -86,8 +93,6 @@ export default defineEventHandler(async (event) => {
       status: 'pending',
       enabled: true,
       contractId: newContract.id,
-      // customerName: newCustomer.fantasyName,
-      // customerId: newCustomer.id,
     };
     const newAccount = await createUserAccountService(newAccountData);
     await prisma.contracts.update({

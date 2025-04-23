@@ -46,7 +46,7 @@ const formSchema = toTypedSchema(
     branchManagerPosition: z.string().min(2).max(50),
     branchManagerDepartment: z.string().min(2).max(50),
     branchManagerEmail: z.string().min(2).max(50),
-    branchBudget: z.string(),
+    branchBudget: z.string().optional(),
     password: z
       .string()
       .min(6, 'A senha deve conter no mínimo 6 caracteres')
@@ -179,7 +179,6 @@ const onSubmit = form.handleSubmit(async (values) => {
         </div>
       </form>
     </section>
-    <pre>{{ form.values }}</pre>
   </main>
 </template>
 

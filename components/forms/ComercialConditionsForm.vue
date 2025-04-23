@@ -1,14 +1,38 @@
 <script setup lang="ts">
+import { Info } from 'lucide-vue-next';
+
 definePageMeta({
   name: 'ComercialConditionsForm',
 });
 </script>
 <template>
   <section class="px-6">
-    <div class="mb-4 md:grid md:grid-cols-2 gap-6">
+    <div class="mb-6"></div>
+    <div class="mb-4 flex items-end gap-6">
+      <FormField v-slot="{ componentField }" name="mainBudget">
+        <FormItem class="max-w-[350px]">
+          <div class="flex flex-col">
+            <FormLabel> Budget do Contrato </FormLabel>
+            <small class="mt-2 flex items-center gap-1 text-muted-foreground">
+              <Info :size="14" />
+              Valor usado para definir investimento por filial</small
+            >
+          </div>
+          <FormControl>
+            <Input type="text" v-bind="componentField" />
+          </FormControl>
+          <FormMessage />
+        </FormItem>
+      </FormField>
       <FormField v-slot="{ componentField }" name="paymentTerm">
         <FormItem>
-          <FormLabel>Fechamento</FormLabel>
+          <div class="flex flex-col">
+            <FormLabel>Fechamento</FormLabel>
+            <small class="mt-2 flex items-center gap-1 text-muted-foreground">
+              <Info :size="14" />
+              Condição de fechamento de fatura</small
+            >
+          </div>
           <FormControl>
             <Input type="text" v-bind="componentField" />
           </FormControl>
@@ -17,7 +41,13 @@ definePageMeta({
       </FormField>
       <FormField v-slot="{ componentField }" name="paymentDueDate">
         <FormItem>
-          <FormLabel>Faturamento (Dias)</FormLabel>
+          <div class="flex flex-col">
+            <FormLabel>Faturamento (Dias)</FormLabel>
+            <small class="mt-2 flex items-center gap-1 text-muted-foreground">
+              <Info :size="14" />
+              Vencimento da fatura do cliente</small
+            >
+          </div>
           <FormControl>
             <Input type="number" v-bind="componentField" />
           </FormControl>

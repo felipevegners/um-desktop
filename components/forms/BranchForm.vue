@@ -313,7 +313,6 @@ const removeRow = (index: any) => {
   </section>
   <section class="p-6">
     <h3 class="mb-4 text-lg font-bold">4. Gerenciar Budget</h3>
-
     <div class="flex gap-6">
       <div
         class="p-6 flex flex-col gap-4 max-w-[300px] border border-zinc-700 rounded-md"
@@ -328,7 +327,10 @@ const removeRow = (index: any) => {
           {{ currencyFormat(calculatedBudget) }}
         </h1>
       </div>
-      <div class="p-6 max-w-[300px] border border-zinc-700 rounded-md">
+      <div
+        v-if="mainBudget !== ''"
+        class="p-6 max-w-[300px] border border-zinc-700 rounded-md"
+      >
         <FormField v-slot="{ componentField }" name="branchBudget">
           <FormItem>
             <FormLabel>Budget da Filial (R$)</FormLabel>

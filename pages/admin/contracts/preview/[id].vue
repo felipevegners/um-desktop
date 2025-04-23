@@ -2,7 +2,7 @@
 import BackLink from '@/components/shared/BackLink.vue';
 import { Edit, FileText, LoaderCircle, Trash } from 'lucide-vue-next';
 import { storeToRefs } from 'pinia';
-import { dateFormat } from '~/lib/utils';
+import { currencyFormat, dateFormat } from '~/lib/utils';
 import customersDelete from '~/server/api/admin/customers.delete';
 import { useContractsStore } from '~/stores/admin/contracts.store';
 
@@ -55,7 +55,7 @@ await getContractByIdAction(route?.params?.id as string);
     <section v-else class="mt-6">
       <Card class="p-6 bg-zinc-200">
         <div>
-          <h2 class="mb-4 text-2xl font-bold">Dados do Cliente</h2>
+          <h2 class="mb-4 text-2xl font-bold">Dados do Empresa</h2>
           <div class="mb-6 md:grid md:grid-cols-4 md:gap-6">
             <div class="p-6 bg-white rounded-md">
               <p class="text-sm text-zinc-600">Logo</p>
@@ -116,11 +116,17 @@ await getContractByIdAction(route?.params?.id as string);
               <p class="text-sm text-zinc-600">Endereço</p>
               <p class="text-xl font-bold">
                 {{ contract?.customer?.address?.streetName }},
-                {{ contract?.customer?.address?.streetNumber }} -
-                {{ contract?.customer?.address?.complement }} -
-                {{ contract?.customer?.address?.neighborhood }} -
-                {{ contract?.customer?.address?.city }} -
-                {{ contract?.customer?.address?.state }} -
+                {{ contract?.customer?.address?.streetNumber }}
+                {{
+                  contract?.customer?.address?.complement !== '-'
+                    ? contract?.customer?.address?.complement
+                    : ''
+                }}
+              </p>
+              <p>
+                {{ contract?.customer?.address?.neighborhood }},
+                {{ contract?.customer?.address?.city }},
+                {{ contract?.customer?.address?.state }},
                 {{ contract?.customer?.address?.zipcode }}
               </p>
             </div>
@@ -129,13 +135,13 @@ await getContractByIdAction(route?.params?.id as string);
         <Separator class="my-6 border-b border-zinc-300" />
         <div>
           <h2 class="mb-4 text-2xl font-bold">Dados do Contrato</h2>
-          <div class="md:grid md:grid-cols-2 md:gap-6">
-            <div class="p-6 bg-white rounded-md">
+          <div class="md:grid md:grid-cols-6 md:gap-6">
+            <!-- <div class="p-6 bg-white rounded-md">
               <p class="text-sm text-zinc-600">Filiais</p>
               <p class="mb-4 text-2xl font-bold">
                 {{ contract?.customerBranches?.length || 0 }}
               </p>
-            </div>
+            </div> -->
             <div class="p-6 bg-white rounded-md">
               <p class="text-sm text-zinc-600">Produtos Ativos</p>
               <p class="mb-4 text-2xl font-bold">
@@ -154,13 +160,9 @@ await getContractByIdAction(route?.params?.id as string);
               </p>
             </div>
             <div class="p-6 bg-white rounded-md">
-              <p class="text-sm text-zinc-600">Usuários Cadastrados</p>
-              <p class="mb-4 text-2xl font-bold">
-                {{ contract?.customerUsers.length }}
-              </p>
-              <p v-for="user in contract?.customerUsers" :key="user.id">
-                <span class="font-bold">{{ user.username }}</span> -
-                {{ user.role }}
+              <p class="mb-6 text-sm text-zinc-600">Budget Mensal Total</p>
+              <p class="text-2xl font-bold flex flex-col">
+                {{ currencyFormat(contract?.mainBudget) }}
               </p>
             </div>
             <div class="p-6 bg-white rounded-md">
@@ -183,13 +185,13 @@ await getContractByIdAction(route?.params?.id as string);
           </div>
         </div>
         <Separator class="my-6 border-b border-zinc-300" />
-        <div>
+        <section>
           <h2 class="mb-4 text-2xl font-bold">Dados do Gestor Master</h2>
           <div class="md:grid md:grid-cols-4 md:gap-6">
             <div class="p-6 bg-white rounded-md">
               <p class="text-sm text-zinc-600">Nome</p>
               <p class="text-xl font-bold">
-                {{ contract?.manager?.name }}
+                {{ contract?.manager?.username }}
               </p>
             </div>
             <div class="p-6 bg-white rounded-md col-span-2">
@@ -201,23 +203,37 @@ await getContractByIdAction(route?.params?.id as string);
             <div class="p-6 bg-white rounded-md">
               <p class="text-sm text-zinc-600">Celular</p>
               <p class="text-xl font-bold">
-                {{ contract?.manager?.phone }}
+                {{ contract?.managerInfo?.phone }}
               </p>
             </div>
             <div class="p-6 bg-white rounded-md">
               <p class="text-sm text-zinc-600">Cargo</p>
               <p class="text-xl font-bold">
-                {{ contract?.manager?.position }}
+                {{ contract?.managerInfo?.position }}
               </p>
             </div>
             <div class="p-6 bg-white rounded-md">
               <p class="text-sm text-zinc-600">Departamento</p>
               <p class="text-xl font-bold">
-                {{ contract?.manager?.department }}
+                {{ contract?.managerInfo?.department }}
               </p>
             </div>
           </div>
-        </div>
+        </section>
+        <Separator class="my-6 border-b border-zinc-300" />
+        <section>
+          <h2 class="mb-4 text-2xl font-bold">Usuários Cadastrados</h2>
+          <div class="p-8 bg-white rounded-md text-center">
+            <p class="text-muted-foreground">Nenhum usuário cadastrado.</p>
+          </div>
+        </section>
+        <Separator class="my-6 border-b border-zinc-300" />
+        <section>
+          <h2 class="mb-4 text-2xl font-bold">Filiais Cadastradas</h2>
+          <div class="p-8 bg-white rounded-md text-center">
+            <p class="text-muted-foreground">Nenhuma filial cadastrada.</p>
+          </div>
+        </section>
         <Separator class="my-6 border-b border-zinc-300" />
         <div>
           <h2 class="mb-4 text-2xl font-bold">Informações Adicionais</h2>

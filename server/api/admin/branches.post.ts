@@ -32,7 +32,7 @@ export default defineEventHandler(async (event) => {
   try {
     const newBranch = await prisma.branches.create({
       data: {
-        code: branchCode,
+        branchCode,
         name,
         document,
         fantasyName,
@@ -59,8 +59,6 @@ export default defineEventHandler(async (event) => {
       password: password,
       email: branchManagerEmail,
       role: 'branch-manager',
-      customerName: fantasyName,
-      customerId: newBranch.id,
       contractId: contract,
       status: 'pending',
       enabled: true,
@@ -73,43 +71,31 @@ export default defineEventHandler(async (event) => {
         id: newBranch.id,
       },
       data: {
-        manager: [
-          {
-            //@ts-expect-error
-            id: newAccount.id,
-            //@ts-expect-error
-            name: newAccount?.username,
-            //@ts-expect-error
-            role: newAccount?.role,
-            branchManagerPhone,
-            branchManagerPosition,
-            branchManagerDepartment,
-          },
-        ],
-      },
-    });
-
-    await prisma.contracts.update({
-      where: {
-        id: contract,
-      },
-      data: {
-        customerBranches: {
+        manager: {
           connect: {
-            id: newBranch.id,
+            //@ts-ignore
+            id: newAccount?.id,
           },
+        },
+        contract: {
+          connect: {
+            id: contract,
+          },
+        },
+        managerInfo: {
+          phone: branchManagerPhone,
+          position: branchManagerPosition,
+          department: branchManagerDepartment,
         },
       },
     });
   } catch (error: any) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
       console.log('Error Prisma -> ', error.message);
-      throw new Error('Erro ao cadastrar novo contrato no DB', {
-        cause: error.message,
-      });
+      throw error;
     }
     throw new Error('Erro ao cadastrar novo contrato no DB', {
-      cause: error.message,
+      cause: error,
     });
   }
 });

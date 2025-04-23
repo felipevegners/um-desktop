@@ -12,11 +12,18 @@ export default defineEventHandler(async (event) => {
       where: {
         id: branchId,
       },
+      include: {
+        manager: true,
+      },
     });
 
     return branch;
   }
-  const branches = await prisma.branches.findMany();
+  const branches = await prisma.branches.findMany({
+    include: {
+      manager: true,
+    },
+  });
 
   return branches;
 });

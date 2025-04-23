@@ -33,7 +33,7 @@ onMounted(async () => {
 
 const viewBranch = (value: string) => {
   navigateTo({
-    name: 'admin-contracts-preview-id',
+    name: 'admin-branches-preview-id',
     params: {
       id: value,
     },
@@ -115,12 +115,11 @@ const finalColumns = [
       <DataTable
         :columns="finalColumns"
         :data="branches"
-        sortby="fantasyName"
-        :column-pin="['fantasyName']"
+        sortby="branchCode"
+        :column-pin="['branchCode', 'fantasyName']"
         filterBy="nome da filial"
       />
     </section>
-    <pre>{{ branches }}</pre>
   </main>
 </template>
 

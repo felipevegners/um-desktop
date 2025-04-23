@@ -5,6 +5,22 @@ import { ArrowUpDown } from 'lucide-vue-next';
 const columnHelper = createColumnHelper<any>();
 
 export const columns = [
+  columnHelper.accessor('branchCode', {
+    enablePinning: true,
+    header: ({ column }) => {
+      return h(
+        Button,
+        {
+          variant: 'ghost',
+          class: 'p-0 hover:bg-transparent',
+          onClick: () => column.toggleSorting(column.getIsSorted() === 'asc'),
+        },
+        () => ['Código', h(ArrowUpDown, { class: 'ml-2 h-4 w-4' })],
+      );
+    },
+    cell: ({ row }) =>
+      h('div', { class: 'uppercase' }, row.getValue('branchCode')),
+  }),
   columnHelper.accessor('fantasyName', {
     enablePinning: true,
     header: ({ column }) => {
@@ -12,6 +28,7 @@ export const columns = [
         Button,
         {
           variant: 'ghost',
+          class: 'p-0 hover:bg-transparent',
           onClick: () => column.toggleSorting(column.getIsSorted() === 'asc'),
         },
         () => ['Empresa', h(ArrowUpDown, { class: 'ml-2 h-4 w-4' })],
@@ -19,6 +36,13 @@ export const columns = [
     },
     cell: ({ row }) =>
       h('div', { class: 'capitalize' }, row.getValue('fantasyName')),
+  }),
+  columnHelper.accessor('document', {
+    header: () => h('div', { class: 'text-left' }, 'CNPJ'),
+    cell: ({ row }) => {
+      const value: any = row.getValue('document');
+      return h('div', { class: 'capitalize' }, value);
+    },
   }),
   columnHelper.accessor('phone', {
     header: () => h('div', { class: 'text-left' }, 'Telefone'),
@@ -31,13 +55,13 @@ export const columns = [
     header: () => h('div', { class: 'text-left' }, 'Gestor da Filial'),
     cell: ({ row }) => {
       const value: any = row.getValue('manager');
-      console.log('--> ', value);
-      return h('div', { class: 'capitalize' }, value[0]?.name);
+      console.log('---> ', value);
+      return h('div', { class: 'capitalize' }, value?.username);
     },
   }),
 
   columnHelper.accessor('status', {
-    header: () => h('div', { class: 'text-center' }, 'Status'),
+    header: () => h('div', { class: 'text-left' }, 'Status'),
     cell: ({ row }) => {
       const status = row.getValue('status');
       return h(

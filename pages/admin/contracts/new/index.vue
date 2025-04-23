@@ -117,8 +117,9 @@ const schemas = [
   // Comercial Conditions Schema
   toTypedSchema(
     z.object({
-      paymentTerm: z.string().min(1).max(10),
-      paymentDueDate: z.number().min(0),
+      mainBudget: z.string().optional(),
+      paymentTerm: z.string({ message: 'Obrigatório' }).min(1).max(10),
+      paymentDueDate: z.number({ message: 'Obrigatório' }).min(0),
     }),
   ),
   // Additional Info
@@ -156,6 +157,8 @@ const onSubmit = form.handleSubmit(async (values) => {
         ...values,
         phoneExtension: values.phoneExtension || '-',
         products: selectedProducts,
+        //@ts-ignore
+        mainBudget: values?.mainBudget || '',
       };
       await createContractAction(newContractData);
       isLoadingSend.value = false;
