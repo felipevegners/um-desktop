@@ -24,7 +24,7 @@ export const columns = [
     header: () => h('div', { class: 'text-left' }, 'Gestor Master'),
     cell: ({ row }) => {
       const value: any = row.getValue('manager');
-      return h('div', { class: 'capitalize' }, value?.name);
+      return h('div', { class: 'capitalize' }, value?.username);
     },
   }),
   columnHelper.accessor('manager', {
@@ -45,17 +45,6 @@ export const columns = [
   //     );
   //   },
   // }),
-  columnHelper.accessor('customerUsers', {
-    header: () => h('div', { class: 'text-center' }, 'Usuários Ativos'),
-    cell: ({ row }) => {
-      const { customerUsers } = row.original;
-      return h(
-        'div',
-        { class: 'text-center font-medium' },
-        customerUsers?.length,
-      );
-    },
-  }),
   columnHelper.accessor('products', {
     header: () => h('div', { class: 'text-center' }, 'Produtos Ativos'),
     cell: ({ row }) => {
@@ -64,7 +53,7 @@ export const columns = [
     },
   }),
   columnHelper.accessor('status', {
-    header: () => h('div', { class: 'text-center' }, 'Status'),
+    header: () => h('div', { class: 'text-left' }, 'Status'),
     cell: ({ row }) => {
       const status = row.getValue('status');
       return h(

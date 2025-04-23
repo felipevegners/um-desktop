@@ -7,7 +7,7 @@ export default defineEventHandler(async (event) => {
   const query = getQuery<AccountId>(event);
   const accountId = query.id;
   if (accountId) {
-    const customer = await prisma.accounts.findUnique({
+    const account = await prisma.accounts.findUnique({
       omit: {
         password: true,
       },
@@ -16,7 +16,7 @@ export default defineEventHandler(async (event) => {
       },
     });
 
-    return customer;
+    return account;
   }
   const accounts = await prisma.accounts.findMany({
     omit: {

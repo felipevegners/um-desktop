@@ -4,10 +4,10 @@ defineProps<{
   label?: string;
 }>();
 
-const emit = defineEmits(["on-select"]);
+const emit = defineEmits(['on-select']);
 
 const selected = (value: any) => {
-  emit("on-select", value);
+  emit('on-select', value);
 };
 </script>
 
@@ -20,7 +20,12 @@ const selected = (value: any) => {
     </FormControl>
     <SelectContent v-if="items?.length">
       <SelectGroup>
-        <SelectItem v-for="item in items" :value="item.value">
+        <SelectItem
+          v-for="item in items"
+          :value="item.value"
+          :key="item.value"
+          :id="item.value"
+        >
           {{ item.label }}
         </SelectItem>
       </SelectGroup>

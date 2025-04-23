@@ -78,7 +78,7 @@ export const useContractsStore = defineStore('contracts', {
         this.isLoading = false;
       } catch (error) {
         console.log('Error from Store -> ', error);
-        throw error;
+        throw new Error();
       }
     },
   },

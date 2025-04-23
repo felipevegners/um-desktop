@@ -5,7 +5,7 @@ import { ArrowUpDown } from 'lucide-vue-next';
 const columnHelper = createColumnHelper<any>();
 
 export const columns = [
-  columnHelper.accessor('customerName', {
+  columnHelper.accessor('fantasyName', {
     enablePinning: true,
     header: ({ column }) => {
       return h(
@@ -18,51 +18,24 @@ export const columns = [
       );
     },
     cell: ({ row }) =>
-      h('div', { class: 'capitalize' }, row.getValue('customerName')),
+      h('div', { class: 'capitalize' }, row.getValue('fantasyName')),
   }),
-  columnHelper.accessor('manager', {
-    header: () => h('div', { class: 'text-left' }, 'Gestor Master'),
+  columnHelper.accessor('phone', {
+    header: () => h('div', { class: 'text-left' }, 'Telefone'),
     cell: ({ row }) => {
-      const value: any = row.getValue('manager');
-      return h('div', { class: 'capitalize' }, value?.name);
+      const value: any = row.getValue('phone');
+      return h('div', { class: 'capitalize' }, value);
     },
   }),
   columnHelper.accessor('manager', {
-    header: () => h('div', { class: 'text-left' }, 'E-mail Gestor Master'),
+    header: () => h('div', { class: 'text-left' }, 'Gestor da Filial'),
     cell: ({ row }) => {
       const value: any = row.getValue('manager');
-      return h('div', { class: 'lowercase' }, value?.email);
+      console.log('--> ', value);
+      return h('div', { class: 'capitalize' }, value[0]?.name);
     },
   }),
-  columnHelper.accessor('customerBranches', {
-    header: () => h('div', { class: 'text-left' }, 'Filiais'),
-    cell: ({ row }) => {
-      const { customerBranches } = row.original;
-      return h(
-        'div',
-        { class: 'text-left font-medium' },
-        customerBranches.length,
-      );
-    },
-  }),
-  columnHelper.accessor('customerUsers', {
-    header: () => h('div', { class: 'text-center' }, 'Usuários Ativos'),
-    cell: ({ row }) => {
-      const { customerUsers } = row.original;
-      return h(
-        'div',
-        { class: 'text-center font-medium' },
-        customerUsers?.length,
-      );
-    },
-  }),
-  columnHelper.accessor('products', {
-    header: () => h('div', { class: 'text-center' }, 'Produtos Ativos'),
-    cell: ({ row }) => {
-      const { products } = row.original;
-      return h('div', { class: 'text-center font-medium' }, products.length);
-    },
-  }),
+
   columnHelper.accessor('status', {
     header: () => h('div', { class: 'text-center' }, 'Status'),
     cell: ({ row }) => {

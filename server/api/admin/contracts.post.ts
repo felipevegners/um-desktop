@@ -86,8 +86,8 @@ export default defineEventHandler(async (event) => {
       status: 'pending',
       enabled: true,
       contractId: newContract.id,
-      customerName: newCustomer.fantasyName,
-      customerId: newCustomer.id,
+      // customerName: newCustomer.fantasyName,
+      // customerId: newCustomer.id,
     };
     const newAccount = await createUserAccountService(newAccountData);
     await prisma.contracts.update({
@@ -96,14 +96,6 @@ export default defineEventHandler(async (event) => {
       },
       data: {
         manager: {
-          id: newAccount?.id,
-          name: newAccount?.username,
-          email: newAccount?.email,
-          phone: managerCellPhone,
-          position,
-          department,
-        },
-        customerUsers: {
           connect: {
             //@ts-ignore
             id: newAccount?.id,
@@ -114,13 +106,9 @@ export default defineEventHandler(async (event) => {
     return newContract;
   } catch (error: any) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
-      console.log('Error Prisma -> ', error.message);
-      throw new Error('Erro ao cadastrar novo contrato no DB', {
-        cause: error.message,
-      });
+      console.log('Error Prisma -> ', error);
+      throw error;
     }
-    throw new Error('Erro ao cadastrar novo contrato no DB', {
-      cause: error.message,
-    });
+    throw error;
   }
 });

@@ -32,3 +32,10 @@ export const dateFormat = (date: any) => {
     // second: '2-digit',
   });
 };
+
+export const currencyFormat = (value: string) => {
+  return new Intl.NumberFormat('pt-BR', {
+    style: 'currency',
+    currency: 'BRL',
+  }).format(parseFloat(value));
+};

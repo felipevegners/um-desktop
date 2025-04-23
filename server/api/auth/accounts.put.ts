@@ -49,34 +49,15 @@ export default defineEventHandler(async (event) => {
         enabled,
         status,
         avatar,
-        contract: {
-          connect: {
-            id: contractId,
-          },
-        },
-      },
-    });
-
-    await prisma.contracts.update({
-      where: { id: contractId },
-      data: {
-        customerUsers: {
-          connect: {
-            email: email,
-          },
-        },
+        contractId,
       },
     });
   } catch (error: any) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
       console.log('Error Prisma -> ', error.message);
-      throw new Error('Erro ao cadastrar novo usuário no Banco de Dados', {
-        cause: error.message,
-      });
+      throw error;
     }
     console.log('Error Prisma -> ', error.message);
-    throw new Error('Erro ao cadastrar novo usuário no Banco de Dados', {
-      cause: error.message,
-    });
+    throw error;
   }
 });

@@ -2,7 +2,7 @@
 import DataTable from '@/components/shared/DataTable.vue';
 import TableActions from '@/components/shared/TableActions.vue';
 import { useToast } from '@/components/ui/toast';
-import { useContractsStore } from '@/stores/admin/contracts.store';
+import { useBranchesStore } from '@/stores/admin/branches.store';
 import { createColumnHelper } from '@tanstack/vue-table';
 import { Building2, LoaderCircle, Plus } from 'lucide-vue-next';
 import { storeToRefs } from 'pinia';
@@ -12,9 +12,9 @@ import { columns } from './columns';
 const { toast } = useToast();
 
 const columnHelper = createColumnHelper<any>();
-const store = useContractsStore();
-const { getContractsAction, deleteContractAction } = store;
-const { contracts, isLoading } = storeToRefs(store);
+const store = useBranchesStore();
+const { getBranchesAction, deleteBranchAction } = store;
+const { branches, isLoadingData } = storeToRefs(store);
 
 const loadingDelete = ref<boolean>(false);
 
@@ -24,11 +24,11 @@ definePageMeta({
 });
 
 useHead({
-  title: 'Backoffice - Filiais Ativos | Urban Mobi',
+  title: 'Backoffice - Filiais Ativas | Urban Mobi',
 });
 
 onMounted(async () => {
-  await getContractsAction();
+  await getBranchesAction();
 });
 
 const viewBranch = (value: string) => {
@@ -51,7 +51,7 @@ const editBranch = (value: string) => {
 const deleteBranch = async (contractId: string) => {
   loadingDelete.value = true;
   try {
-    await deleteContractAction(contractId);
+    await deleteBranchAction(contractId);
   } catch (error) {
     toast({
       title: 'Opss!',
@@ -64,9 +64,9 @@ const deleteBranch = async (contractId: string) => {
     toast({
       title: 'Tudo pronto!',
       class: 'bg-green-600 border-0 text-white text-2xl',
-      description: `Produto cadastrado com sucesso!`,
+      description: `Filial deletada com sucesso!`,
     });
-    await getContractsAction();
+    await getBranchesAction();
   }
 };
 
@@ -106,7 +106,7 @@ const finalColumns = [
       </Button>
     </section>
     <section
-      v-if="isLoading"
+      v-if="isLoadingData"
       class="min-h-[300px] flex items-center justify-center"
     >
       <LoaderCircle class="w-10 h-10 animate-spin" />
@@ -114,12 +114,13 @@ const finalColumns = [
     <section v-else>
       <DataTable
         :columns="finalColumns"
-        :data="[]"
-        sortby="customerName"
-        :column-pin="['customerName']"
+        :data="branches"
+        sortby="fantasyName"
+        :column-pin="['fantasyName']"
         filterBy="nome da filial"
       />
     </section>
+    <pre>{{ branches }}</pre>
   </main>
 </template>
 

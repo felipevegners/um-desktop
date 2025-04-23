@@ -14,7 +14,11 @@ export default defineEventHandler(async (event) => {
       },
       include: {
         customer: true,
-        customerUsers: true,
+        manager: {
+          omit: {
+            password: true,
+          },
+        },
       },
     });
 
@@ -22,7 +26,12 @@ export default defineEventHandler(async (event) => {
   }
   const customers = await prisma.contracts.findMany({
     include: {
-      customerUsers: true,
+      customer: true,
+      manager: {
+        omit: {
+          password: true,
+        },
+      },
     },
   });
 

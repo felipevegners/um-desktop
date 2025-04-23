@@ -42,6 +42,6 @@ export const deleteUserAccountService = async (accountId: string) => {
     });
   } catch (error) {
     console.log('Error during DELETE Account -> ', error);
-    return error;
+    throw error;
   }
 };

@@ -185,13 +185,6 @@ function prevStep() {
   currentStep.value--;
 }
 
-// function nextStep() {
-//   if (currentStep.value === 4) {
-//     return;
-//   }
-//   currentStep.value++;
-// }
-
 const findAddress = async (code: string) => {
   if (code?.length !== 9) {
     toast({

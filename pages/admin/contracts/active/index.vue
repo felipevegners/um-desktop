@@ -53,9 +53,19 @@ const deleteContract = async (contractId: string) => {
   try {
     await deleteContractAction(contractId);
   } catch (error) {
-    console.log('Error ->', error);
+    toast({
+      title: 'Opss!',
+      class: 'bg-red-500 border-0 text-white text-2xl',
+      description: `Ocorreu um erro ao deletar o contrato. Tente novamente.`,
+    });
+    throw error;
   } finally {
     loadingDelete.value = true;
+    toast({
+      title: 'Tudo pronto!',
+      class: 'bg-green-600 border-0 text-white text-2xl',
+      description: `Contrato deletado com sucesso!`,
+    });
     await getContractsAction();
   }
 };
