@@ -93,6 +93,7 @@ const schema = toTypedSchema(
     position: z.string().min(1).max(50),
     department: z.string().min(1).max(50),
     managerEmail: z.string().email().min(1).max(100),
+    mainBudget: z.string().optional(),
     paymentTerm: z.string().min(1).max(10),
     paymentDueDate: z.number().min(0),
     additionalInfo: z.string().min(0).max(200).optional(),
@@ -102,6 +103,7 @@ const schema = toTypedSchema(
 
 const form = useForm({
   validationSchema: schema,
+  keepValuesOnUnmount: true,
   initialValues: {
     document: contract?.value?.customer?.document,
     name: contract?.value?.customer?.name,
@@ -116,11 +118,12 @@ const form = useForm({
     phone: contract?.value?.customer?.phone,
     phoneExtension: contract?.value?.customer?.phoneExtension,
     website: contract?.value?.customer?.website,
-    managerName: contract?.value?.manager?.name,
-    managerCellPhone: contract?.value?.manager.phone,
-    position: contract?.value?.manager?.position,
-    department: contract?.value?.manager?.department,
+    managerName: contract?.value?.manager?.username,
+    managerCellPhone: contract?.value?.managerInfo?.phone,
+    position: contract?.value?.managerInfo?.position,
+    department: contract?.value?.managerInfo?.department,
     managerEmail: contract?.value?.manager?.email,
+    mainBudget: contract?.value.mainBudget,
     paymentTerm: contract?.value?.comercialConditions?.paymentTerm,
     paymentDueDate: contract?.value?.comercialConditions?.paymentDueDate,
     additionalInfo: contract?.value?.additionalInfo,
@@ -133,7 +136,7 @@ const onSubmit = form.handleSubmit(async (values) => {
     const payloadIds = {
       contractId: contract?.value.id,
       customerId: contract?.value.customer.id,
-      managerId: contract?.value.managerId,
+      managerId: contract?.value.manager.id,
     };
 
     const customerData = {
@@ -159,17 +162,13 @@ const onSubmit = form.handleSubmit(async (values) => {
     };
 
     const contractData = {
-      manager: {
-        id: contract?.value.manager.id,
-        name: values.managerName,
-        email: values.managerEmail,
+      managerInfo: {
         phone: values.managerCellPhone,
         position: values.position,
         department: values.department,
       },
       customerName: values.fantasyName,
-      customerBranches: null,
-      customerUsers: null,
+      mainBudget: values.mainBudget,
       comercialConditions: {
         paymentTerm: values.paymentTerm,
         paymentDueDate: values.paymentDueDate,
@@ -417,7 +416,10 @@ const findAddress = async (code: string) => {
           </div>
           <div class="mb-10">
             <h2 class="px-6 mb-4 text-2xl font-bold">2. Gestor Master</h2>
-            <MasterManagerForm :editMode="true" />
+            <MasterManagerForm
+              :editMode="true"
+              :editId="contract?.manager.id"
+            />
           </div>
           <div class="mb-10">
             <h2 class="px-6 mb-4 text-2xl font-bold">

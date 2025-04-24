@@ -1,3 +1,4 @@
+import { getBranchesService } from '@/server/services/admin/branches';
 import {
   createContractService,
   deleteContractService,
@@ -11,6 +12,7 @@ interface IContractsState {
   contracts?: any;
   inactiveContracts?: any;
   contract?: Contract | any;
+  contractBranches?: any;
   contractId?: string;
   isLoading: boolean | any;
 }
@@ -21,6 +23,7 @@ export const useContractsStore = defineStore('contracts', {
       contracts: [],
       inactiveContracts: [],
       contract: {},
+      contractBranches: [],
       contractId: '',
       isLoading: false,
     };
@@ -50,6 +53,18 @@ export const useContractsStore = defineStore('contracts', {
         this.isLoading = false;
       } catch (error) {
         console.log('Store GET by ID Error -> ', error);
+        throw error;
+      }
+    },
+
+    async getContractBranchesAction(contractId: string) {
+      try {
+        const allBranches: any = await getBranchesService();
+        const branches = allBranches.filter(
+          (branch: any) => branch.contractId === contractId,
+        );
+        this.contractBranches = branches;
+      } catch (error) {
         throw error;
       }
     },

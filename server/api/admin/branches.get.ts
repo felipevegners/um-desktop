@@ -13,7 +13,11 @@ export default defineEventHandler(async (event) => {
         id: branchId,
       },
       include: {
-        manager: true,
+        manager: {
+          omit: {
+            password: true,
+          },
+        },
       },
     });
 
@@ -21,7 +25,11 @@ export default defineEventHandler(async (event) => {
   }
   const branches = await prisma.branches.findMany({
     include: {
-      manager: true,
+      manager: {
+        omit: {
+          password: true,
+        },
+      },
     },
   });
 

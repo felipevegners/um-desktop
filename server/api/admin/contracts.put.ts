@@ -2,15 +2,15 @@ import { Prisma, prisma } from '~/utils/prisma';
 
 export default defineEventHandler(async (event) => {
   const payload = await readBody(event);
-  const { customerData, contractData, payloadIds } = payload;
+  const { customerData, contractData, managerData, payloadIds } = payload;
+
+  console.log('PAYLOAD -> ', payload);
 
   try {
     await prisma.contracts.update({
       where: { id: payloadIds.contractId },
       data: {
         ...contractData,
-        customerBranches: {},
-        customerUsers: {},
       },
     });
 

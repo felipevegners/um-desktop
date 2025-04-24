@@ -157,7 +157,7 @@ const onSubmit = form.handleSubmit(async (values) => {
       <form @submit="onSubmit" @keydown.enter.prevent="true" id="form">
         <div class="flex flex-col gap-10">
           <BranchForm
-            :isEditing="false"
+            :editMode="false"
             :findAddress="findAddress"
             :loading="isLoadingAddress"
             v-model="ccAreas"

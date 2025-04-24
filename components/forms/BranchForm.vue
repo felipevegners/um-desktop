@@ -7,18 +7,23 @@ import {
   Plus,
   Search,
   Trash,
+  User,
   WandSparkles,
 } from 'lucide-vue-next';
 import { vMaska } from 'maska/vue';
+import { storeToRefs } from 'pinia';
 import { currencyFormat } from '~/lib/utils';
 
 const contractsStore = useContractsStore();
-const { getContractsAction } = contractsStore;
+const { getContractsAction, getContractByIdAction } = contractsStore;
+const { contracts, contract } = storeToRefs(contractsStore);
 
-defineProps<{
+const props = defineProps<{
   findAddress?: any;
   loading?: boolean;
-  isEditing?: boolean;
+  editMode?: boolean;
+  managerId?: string;
+  contractId?: string;
   disabledFields?: boolean;
 }>();
 
@@ -29,11 +34,18 @@ const modelValue = defineModel<any>({
 defineEmits(['update:modelValue']);
 
 onBeforeMount(async () => {
+  if (props.editMode) {
+    await getContractByIdAction(props.contractId as string);
+  }
   await getContractsAction();
 });
 
-const mainBudget = ref('');
+const mainBudget = ref<string>('');
 const calculatedBudget = ref('');
+
+//@ts-ignore
+// mainBudget.value = contract?.value.mainBudget;
+// calculatedBudget.value = contract?.value.mainBudget;
 
 const calculateBudget = (event: any) => {
   const { value } = event.target;
@@ -55,13 +67,15 @@ const sanitizeContracts = computed(() => {
   });
 });
 
-const compileUserData = (value: string) => {
+const compileBudget = (value: string) => {
   const filtered = contractsStore.contracts?.find(
     (contract: any) => contract.id === value,
   );
-  mainBudget.value = filtered.mainBudget;
-  calculatedBudget.value = filtered.mainBudget;
+  mainBudget.value = filtered?.mainBudget;
+  calculatedBudget.value = filtered?.mainBudget;
 };
+
+compileBudget(props.contractId as string);
 
 const addRow = () => {
   modelValue?.value.push({ areaCode: '', areaName: '' });
@@ -73,17 +87,22 @@ const removeRow = (index: any) => {
 </script>
 <template>
   <section>
-    <div class="px-6 max-w-[350px]">
-      <h3 class="mb-4 text-lg font-bold">1. Selecione o Contrato a vincular</h3>
-      <FormField v-slot="{ componentField }" name="contract">
+    <div class="mb-4 px-6 max-w-[350px]">
+      <h3 v-if="editMode" class="mb-4 text-lg font-bold">
+        1. Contrato vinculado
+      </h3>
+      <h3 v-else class="mb-4 text-lg font-bold">
+        1. Selecione o Contrato a vincular
+      </h3>
+      <FormField v-slot="{ componentField, value }" name="contract">
         <FormItem>
-          <FormLabel>Contrato</FormLabel>
+          <FormLabel v-if="!editMode">Contrato</FormLabel>
           <FormControl>
             <FormSelect
               v-bind="componentField"
               :items="sanitizeContracts"
               :label="'Selecione'"
-              @on-select="compileUserData"
+              @on-select="compileBudget"
             />
           </FormControl>
         </FormItem>
@@ -91,7 +110,8 @@ const removeRow = (index: any) => {
     </div>
   </section>
   <section class="px-6">
-    <h3 class="mb-4 text-lg font-bold">2. Insira os dados da Filial</h3>
+    <h3 v-if="editMode" class="mb-4 text-lg font-bold">2. Dados da Filial</h3>
+    <h3 v-else class="mb-4 text-lg font-bold">2. Insira os dados da Filial</h3>
     <div class="mb-6 max-w-[150px]">
       <FormField v-slot="{ componentField }" name="branchCode">
         <FormItem>
@@ -231,13 +251,16 @@ const removeRow = (index: any) => {
     </div>
   </section>
   <section class="p-6">
-    <h3 class="mb-4 text-lg font-bold">3. Gestor da Filial</h3>
+    <h3 v-if="editMode" class="mb-4 text-lg font-bold">
+      3. Dados do Gestor da Filial
+    </h3>
+    <h3 v-else class="mb-4 text-lg font-bold">3. Gestor da Filial</h3>
     <div class="mb-4 grid grid-cols-4 gap-6">
       <FormField v-slot="{ componentField }" name="branchManagerName">
         <FormItem>
           <FormLabel>Nome</FormLabel>
           <FormControl>
-            <Input type="text" v-bind="componentField" />
+            <Input type="text" v-bind="componentField" :disabled="editMode" />
           </FormControl>
         </FormItem>
       </FormField>
@@ -271,48 +294,62 @@ const removeRow = (index: any) => {
       </FormField>
       <div class="col-span-4 p-6 border border-zinc-900 rounded-md">
         <p class="font-bold">Dados de Acesso</p>
-        <p class="flex items-center gap-1 text-muted-foreground text-sm">
-          <Info :size="14" />
-          O Gestor da Filial usará os dados abaixo para acessar a plataforma
-        </p>
-        <div class="mt-6 grid grid-cols-3 gap-6 items-end">
-          <FormField v-slot="{ componentField }" name="branchManagerEmail">
-            <FormItem class="relative">
-              <FormLabel>E-mail de Acesso</FormLabel>
-              <FormControl>
-                <Input type="email" v-bind="componentField" />
-              </FormControl>
-              <!-- <FormMessage
-                class="p-2 absolute w-full bg-red-500 text-white text-sm rounded-md"
-              /> -->
-            </FormItem>
-          </FormField>
-          <FormField v-slot="{ componentField }" name="password">
-            <FormItem>
-              <FormLabel>Senha Temporária</FormLabel>
-              <FormControl>
-                <Input type="text" v-bind="componentField" maxlength="8" />
-              </FormControl>
-            </FormItem>
-          </FormField>
-          <!-- <Button
-            v-if="editMode"
-            class="mb-1 px-2 max-w-[190px]"
-            @click.prevent=""
+        <div v-if="editMode">
+          <p class="flex gap-1 items-center text-muted-foreground text-sm">
+            <Info :size="14" />
+            Para editar os dados de acesso (Nome, Email e Senha) do Gestor da
+            Filial clique no botão abaixo
+          </p>
+          <Button
+            type="button"
+            class="my-4"
+            @click="
+              navigateTo(
+                {
+                  name: 'admin-accounts-edit-id',
+                  params: { id: managerId },
+                },
+                { open: { target: '_blank' } },
+              )
+            "
           >
-            <Lock class="w-6 h-6" />
-            Gerar Nova Senha
-          </Button> -->
-          <Button class="mb-1 px-2 max-w-[140px]" @click.prevent="">
-            <WandSparkles class="w-6 h-6" />
-            Gerar Senha
+            <User />
+            Editar Conta de Usuário
           </Button>
+        </div>
+        <div v-else>
+          <p class="flex gap-1 items-center text-muted-foreground text-sm">
+            <Info :size="14" />
+            O Gestor da Filial usará os dados abaixo para acessar a plataforma
+          </p>
+          <div class="mt-6 grid grid-cols-3 gap-6 items-end">
+            <FormField v-slot="{ componentField }" name="branchManagerEmail">
+              <FormItem class="relative">
+                <FormLabel>E-mail de Acesso</FormLabel>
+                <FormControl>
+                  <Input type="email" v-bind="componentField" />
+                </FormControl>
+              </FormItem>
+            </FormField>
+            <FormField v-slot="{ componentField }" name="password">
+              <FormItem>
+                <FormLabel>Senha Temporária</FormLabel>
+                <FormControl>
+                  <Input type="text" v-bind="componentField" maxlength="8" />
+                </FormControl>
+              </FormItem>
+            </FormField>
+            <Button class="mb-1 px-2 max-w-[140px]" @click.prevent="">
+              <WandSparkles class="w-6 h-6" />
+              Gerar Senha
+            </Button>
+          </div>
         </div>
       </div>
     </div>
   </section>
   <section class="p-6">
-    <h3 class="mb-4 text-lg font-bold">4. Gerenciar Budget</h3>
+    <h3 class="mb-4 text-lg font-bold">4. Gerenciar Budget da Filial</h3>
     <div class="flex gap-6">
       <div
         class="p-6 flex flex-col gap-4 max-w-[300px] border border-zinc-700 rounded-md"
@@ -320,10 +357,7 @@ const removeRow = (index: any) => {
         <span class="text-muted-foreground text-sm"
           >Budget total do contrato</span
         >
-        <h1 v-if="mainBudget === ''" class="font-bold text-3xl">
-          {{ currencyFormat('0') }}
-        </h1>
-        <h1 v-else class="font-bold text-3xl">
+        <h1 class="font-bold text-3xl">
           {{ currencyFormat(calculatedBudget) }}
         </h1>
       </div>

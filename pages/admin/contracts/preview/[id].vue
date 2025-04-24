@@ -11,11 +11,12 @@ definePageMeta({
 });
 
 const store = useContractsStore();
-const { getContractByIdAction } = store;
-const { contract, isLoading } = storeToRefs(store);
+const { getContractByIdAction, getContractBranchesAction } = store;
+const { contract, contractBranches, isLoading } = storeToRefs(store);
 
 const route = useRoute();
 await getContractByIdAction(route?.params?.id as string);
+await getContractBranchesAction(route?.params?.id as string);
 </script>
 <template>
   <main class="p-6">
@@ -55,15 +56,10 @@ await getContractByIdAction(route?.params?.id as string);
     <section v-else class="mt-6">
       <Card class="p-6 bg-zinc-200">
         <div>
-          <h2 class="mb-4 text-2xl font-bold">Dados do Empresa</h2>
+          <h2 class="mb-4 text-2xl font-bold">Dados da Empresa</h2>
           <div class="mb-6 md:grid md:grid-cols-4 md:gap-6">
             <div class="p-6 bg-white rounded-md">
               <p class="text-sm text-zinc-600">Logo</p>
-              <!-- <img
-                :src="contract?.customer?.logo?.url"
-                alt=""
-                class="border border-red-500 h-10"
-              /> -->
               <div
                 class="h-[80px] bg-contain bg-no-repeat bg-center"
                 :style="{
@@ -136,12 +132,36 @@ await getContractByIdAction(route?.params?.id as string);
         <div>
           <h2 class="mb-4 text-2xl font-bold">Dados do Contrato</h2>
           <div class="md:grid md:grid-cols-6 md:gap-6">
-            <!-- <div class="p-6 bg-white rounded-md">
+            <div class="p-6 bg-white rounded-md col-span-2">
               <p class="text-sm text-zinc-600">Filiais</p>
               <p class="mb-4 text-2xl font-bold">
-                {{ contract?.customerBranches?.length || 0 }}
+                {{ contractBranches.length }}
               </p>
-            </div> -->
+              <p
+                v-for="branch in contractBranches"
+                :key="branch.id"
+                class="mb-4 flex items-center gap-2 text-sm"
+              >
+                <span
+                  class="mr-2 px-2 py-1 uppercase text-white text-center rounded-md text-sm bg-zinc-800"
+                >
+                  {{ branch.branchCode }}
+                </span>
+                {{ branch.fantasyName }}
+                <Edit
+                  :size="16"
+                  class="text-zinc-500 cursor-pointer"
+                  @click="
+                    navigateTo({
+                      name: 'admin-branches-edit-id',
+                      params: {
+                        id: branch.id,
+                      },
+                    })
+                  "
+                />
+              </p>
+            </div>
             <div class="p-6 bg-white rounded-md">
               <p class="text-sm text-zinc-600">Produtos Ativos</p>
               <p class="mb-4 text-2xl font-bold">
@@ -225,13 +245,6 @@ await getContractByIdAction(route?.params?.id as string);
           <h2 class="mb-4 text-2xl font-bold">Usuários Cadastrados</h2>
           <div class="p-8 bg-white rounded-md text-center">
             <p class="text-muted-foreground">Nenhum usuário cadastrado.</p>
-          </div>
-        </section>
-        <Separator class="my-6 border-b border-zinc-300" />
-        <section>
-          <h2 class="mb-4 text-2xl font-bold">Filiais Cadastradas</h2>
-          <div class="p-8 bg-white rounded-md text-center">
-            <p class="text-muted-foreground">Nenhuma filial cadastrada.</p>
           </div>
         </section>
         <Separator class="my-6 border-b border-zinc-300" />

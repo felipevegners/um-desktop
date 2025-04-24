@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Lock, WandSparkles } from 'lucide-vue-next';
+import { Lock, User, WandSparkles } from 'lucide-vue-next';
 import { vMaska } from 'maska/vue';
 import { storeToRefs } from 'pinia';
 import { useContractsStore } from '~/stores/admin/contracts.store';
@@ -13,6 +13,7 @@ definePageMeta({
 
 defineProps<{
   editMode?: boolean;
+  editId?: string;
 }>();
 </script>
 <template v-if="currentStep === 1">
@@ -22,7 +23,7 @@ defineProps<{
         <FormItem>
           <FormLabel>Nome</FormLabel>
           <FormControl>
-            <Input type="text" v-bind="componentField" />
+            <Input type="text" v-bind="componentField" :disabled="editMode" />
           </FormControl>
         </FormItem>
       </FormField>
@@ -56,10 +57,30 @@ defineProps<{
       </FormField>
       <div class="col-span-4 p-6 border border-zinc-900 rounded-md">
         <p class="font-bold">Dados de Acesso</p>
-        <p class="text-muted-foreground text-sm">
+        <p v-if="!editMode" class="text-muted-foreground text-sm">
           O Gestor Master usará os dados abaixo para acessar a plataforma
         </p>
-        <div class="mt-6 grid grid-cols-3 gap-6 items-end">
+        <p v-else class="text-muted-foreground text-sm">
+          Para editar os dados de acesso (Nome, Email e Senha) do Gestor Master
+          clique no botão abaixo
+        </p>
+        <Button
+          type="button"
+          class="my-4"
+          @click="
+            navigateTo(
+              {
+                name: 'admin-accounts-edit-id',
+                params: { id: editId },
+              },
+              { open: { target: '_blank' } },
+            )
+          "
+        >
+          <User />
+          Editar Conta de Usuário
+        </Button>
+        <div v-if="!editMode" class="mt-6 grid grid-cols-3 gap-6 items-end">
           <FormField v-slot="{ componentField }" name="managerEmail">
             <FormItem class="relative">
               <FormLabel>E-mail de Acesso</FormLabel>
