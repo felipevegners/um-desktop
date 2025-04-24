@@ -55,7 +55,6 @@ export const columns = [
     header: () => h('div', { class: 'text-left' }, 'Gestor da Filial'),
     cell: ({ row }) => {
       const value: any = row.getValue('manager');
-      console.log('---> ', value);
       return h('div', { class: 'capitalize' }, value?.username);
     },
   }),

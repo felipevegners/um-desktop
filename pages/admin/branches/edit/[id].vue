@@ -1,13 +1,15 @@
 <script setup lang="ts">
 import BranchForm from '@/components/forms/BranchForm.vue';
 import BackLink from '@/components/shared/BackLink.vue';
+import { useToast } from '@/components/ui/toast';
 import { useBranchesStore } from '@/stores/admin/branches.store';
 import { toTypedSchema } from '@vee-validate/zod';
-import { Edit, FileText, LoaderCircle, Trash } from 'lucide-vue-next';
+import { FileText, LoaderCircle, Trash } from 'lucide-vue-next';
 import { storeToRefs } from 'pinia';
 import { useForm } from 'vee-validate';
 import * as z from 'zod';
-import { currencyFormat, dateFormat } from '~/lib/utils';
+import AddressForm from '~/components/forms/AddressForm.vue';
+import { useContractsStore } from '~/stores/admin/contracts.store';
 
 definePageMeta({
   layout: 'admin',
@@ -16,12 +18,18 @@ useHead({
   title: 'Backoffice - Editar Filial | Urban Mobi',
 });
 
-const store = useBranchesStore();
-const { getBranchByIdAction, deleteBranchAction } = store;
-const { branch, isLoadingData } = storeToRefs(store);
+const { toast } = useToast();
+
+const branchStore = useBranchesStore();
+const contractStore = useContractsStore();
+const { getBranchByIdAction, deleteBranchAction } = branchStore;
+const { branch, isLoadingData } = storeToRefs(branchStore);
+const { getContractByIdAction } = contractStore;
+const { contract } = storeToRefs(contractStore);
 
 const route = useRoute();
 await getBranchByIdAction(route?.params?.id as string);
+await getContractByIdAction(route?.params?.id as string);
 
 const branchSituation = ref<boolean>(true);
 branchSituation.value = branch?.value.enabled;
@@ -47,12 +55,14 @@ const formSchema = toTypedSchema(
     branchManagerPosition: z.string().min(2).max(50),
     branchManagerDepartment: z.string().min(2).max(50),
     branchManagerEmail: z.string().min(2).max(50),
-    branchBudget: z.string().optional(),
+    branchBudget: z.array(
+      z.number().min(0).max(parseFloat(contract?.value.mainBudget)),
+    ),
   }),
 );
 
 const form = useForm({
-  validationSchema: formSchema,
+  // validationSchema: formSchema,
   initialValues: {
     ...branch.value,
     contract: branch?.value.contractId,
@@ -67,8 +77,12 @@ const form = useForm({
     branchManagerPhone: branch?.value.managerInfo.phone,
     branchManagerPosition: branch?.value.managerInfo.position,
     branchManagerDepartment: branch?.value.managerInfo.department,
-    branchBudget: branch?.value.budget,
+    branchBudget: [branch?.value.budget],
   },
+});
+
+const onSubmit = form.handleSubmit(async (values) => {
+  console.log('VALUES ---> ', values.branchBudget.toString());
 });
 </script>
 <template>
@@ -106,15 +120,32 @@ const form = useForm({
     </section>
     <section v-else class="mt-6">
       <Card class="py-6 bg-zinc-200">
-        <BranchForm
-          :editMode="true"
-          :managerId="branch?.manager.id"
-          :contractId="branch?.contractId"
-          v-model="branch.areas"
-        />
+        <form @submit="onSubmit" @keydown.enter.prevent="true" id="form">
+          <BranchForm
+            :editMode="true"
+            :managerId="branch?.manager.id"
+            :contractId="branch?.contractId"
+            v-model="branch.areas"
+            :form="form"
+          >
+            <AddressForm :form="form" />
+          </BranchForm>
+          <div class="mt-6 px-6 flex gap-4">
+            <Button type="submit" form="form">
+              <LoaderCircle v-if="isLoadingData" class="w-5 h-5 animate-spin" />
+              Salvar Alterações
+            </Button>
+            <Button
+              type="button"
+              variant="ghost"
+              @click="navigateTo('/admin/branches/active')"
+            >
+              Cancelar
+            </Button>
+          </div>
+        </form>
       </Card>
     </section>
-    <pre>{{ branch }}</pre>
   </main>
 </template>
 

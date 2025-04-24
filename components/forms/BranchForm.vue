@@ -25,6 +25,7 @@ const props = defineProps<{
   managerId?: string;
   contractId?: string;
   disabledFields?: boolean;
+  form?: any;
 }>();
 
 const modelValue = defineModel<any>({
@@ -34,32 +35,17 @@ const modelValue = defineModel<any>({
 defineEmits(['update:modelValue']);
 
 onBeforeMount(async () => {
+  console.log('onBeforeMount');
+
   if (props.editMode) {
     await getContractByIdAction(props.contractId as string);
   }
   await getContractsAction();
 });
 
-const mainBudget = ref<string>('');
-const calculatedBudget = ref('');
-
-//@ts-ignore
-// mainBudget.value = contract?.value.mainBudget;
-// calculatedBudget.value = contract?.value.mainBudget;
-
-const calculateBudget = (event: any) => {
-  const { value } = event.target;
-  const sum = parseFloat(mainBudget.value) - parseFloat(value);
-  if (value === '') {
-    calculatedBudget.value = mainBudget.value;
-  } else {
-    calculatedBudget.value = sum.toString();
-  }
-};
-
 const sanitizeContracts = computed(() => {
   //@ts-ignore
-  return contractsStore.contracts?.map((contract: any) => {
+  return contracts?.value.map((contract: any) => {
     return {
       label: contract.customerName,
       value: contract.id,
@@ -67,22 +53,17 @@ const sanitizeContracts = computed(() => {
   });
 });
 
-const compileBudget = (value: string) => {
-  const filtered = contractsStore.contracts?.find(
-    (contract: any) => contract.id === value,
-  );
-  mainBudget.value = filtered?.mainBudget;
-  calculatedBudget.value = filtered?.mainBudget;
-};
-
-compileBudget(props.contractId as string);
-
 const addRow = () => {
   modelValue?.value.push({ areaCode: '', areaName: '' });
 };
 
 const removeRow = (index: any) => {
   modelValue.splice(index, 1);
+};
+
+const calculateBudgetRest = (value: any) => {
+  const result = parseFloat(contract?.value.mainBudget) - parseFloat(value);
+  return currencyFormat(result.toString());
 };
 </script>
 <template>
@@ -102,8 +83,8 @@ const removeRow = (index: any) => {
               v-bind="componentField"
               :items="sanitizeContracts"
               :label="'Selecione'"
-              @on-select="compileBudget"
             />
+            <!-- @on-select="compileBudget" -->
           </FormControl>
         </FormItem>
       </FormField>
@@ -112,7 +93,8 @@ const removeRow = (index: any) => {
   <section class="px-6">
     <h3 v-if="editMode" class="mb-4 text-lg font-bold">2. Dados da Filial</h3>
     <h3 v-else class="mb-4 text-lg font-bold">2. Insira os dados da Filial</h3>
-    <div class="mb-6 max-w-[150px]">
+    <div class="mb-6 max-w-[150px]"></div>
+    <div class="mb-4 w-full md:grid md:grid-cols-4 gap-6">
       <FormField v-slot="{ componentField }" name="branchCode">
         <FormItem>
           <FormLabel>Código da Filial</FormLabel>
@@ -121,8 +103,6 @@ const removeRow = (index: any) => {
           </FormControl>
         </FormItem>
       </FormField>
-    </div>
-    <div class="mb-4 w-full md:grid md:grid-cols-3 gap-6">
       <FormField v-slot="{ componentField }" name="document">
         <FormItem>
           <FormLabel>CNPJ</FormLabel>
@@ -152,79 +132,7 @@ const removeRow = (index: any) => {
         </FormItem>
       </FormField>
     </div>
-    <div class="mb-4 w-full grid grid-cols-4 gap-6">
-      <FormField v-slot="{ componentField, value }" name="zipcode">
-        <FormItem class="col-span-1">
-          <FormLabel>CEP</FormLabel>
-          <FormControl>
-            <div class="flex gap-2">
-              <Input
-                type="text"
-                v-bind="componentField"
-                maxlength="9"
-                v-maska="'#####-###'"
-              />
-              <Button
-                @click.prevent="findAddress(value)"
-                :disabled="value?.length !== 9"
-                type="button"
-              >
-                <Search v-if="!loading" class="w-10 h-10" />
-                <LoaderCircle v-if="loading" class="w-10 h-10 animate-spin" />
-              </Button>
-            </div>
-          </FormControl>
-        </FormItem>
-      </FormField>
-      <FormField v-slot="{ componentField }" name="streetName">
-        <FormItem class="col-span-2">
-          <FormLabel>Endereço</FormLabel>
-          <FormControl>
-            <Input type="text" v-bind="componentField" />
-          </FormControl>
-        </FormItem>
-      </FormField>
-      <FormField v-slot="{ componentField }" name="streetNumber">
-        <FormItem class="col-span-1">
-          <FormLabel>Número</FormLabel>
-          <FormControl>
-            <Input type="text" v-bind="componentField" />
-          </FormControl>
-        </FormItem>
-      </FormField>
-      <FormField v-slot="{ componentField }" name="complement">
-        <FormItem class="col-span-1">
-          <FormLabel>Complemento</FormLabel>
-          <FormControl>
-            <Input type="text" v-bind="componentField" />
-          </FormControl>
-        </FormItem>
-      </FormField>
-      <FormField v-slot="{ componentField }" name="neighborhood">
-        <FormItem class="col-span-1">
-          <FormLabel>Bairro</FormLabel>
-          <FormControl>
-            <Input type="text" v-bind="componentField" />
-          </FormControl>
-        </FormItem>
-      </FormField>
-      <FormField v-slot="{ componentField }" name="city">
-        <FormItem class="col-span-1">
-          <FormLabel>Cidade</FormLabel>
-          <FormControl>
-            <Input type="text" v-bind="componentField" />
-          </FormControl>
-        </FormItem>
-      </FormField>
-      <FormField v-slot="{ componentField }" name="state">
-        <FormItem class="col-span-1">
-          <FormLabel>Estado</FormLabel>
-          <FormControl>
-            <Input type="text" v-bind="componentField" />
-          </FormControl>
-        </FormItem>
-      </FormField>
-    </div>
+    <slot />
     <div class="mb-4 w-full grid grid-cols-4 gap-6">
       <FormField v-slot="{ componentField }" name="phone">
         <FormItem>
@@ -350,36 +258,35 @@ const removeRow = (index: any) => {
   </section>
   <section class="p-6">
     <h3 class="mb-4 text-lg font-bold">4. Gerenciar Budget da Filial</h3>
-    <div class="flex gap-6">
-      <div
-        class="p-6 flex flex-col gap-4 max-w-[300px] border border-zinc-700 rounded-md"
-      >
-        <span class="text-muted-foreground text-sm"
-          >Budget total do contrato</span
-        >
-        <h1 class="font-bold text-3xl">
-          {{ currencyFormat(calculatedBudget) }}
-        </h1>
-      </div>
-      <div
-        v-if="mainBudget !== ''"
-        class="p-6 max-w-[300px] border border-zinc-700 rounded-md"
-      >
-        <FormField v-slot="{ componentField }" name="branchBudget">
-          <FormItem>
-            <FormLabel>Budget da Filial (R$)</FormLabel>
-            <FormControl>
-              <Input
-                type="text"
-                v-bind="componentField"
-                class="text-3xl h-20"
-                @input="calculateBudget"
-                :disabled="!disabledFields"
-              />
-            </FormControl>
-          </FormItem>
-        </FormField>
-      </div>
+    <div class="p-6 border border-zinc-700 rounded-md">
+      <FormField v-slot="{ componentField, value }" name="branchBudget">
+        <FormItem>
+          <FormLabel class="mb-10 flex items-center justify-between">
+            <span>Budget da Filial</span>
+            <span>Budget total do contrato</span>
+          </FormLabel>
+          <FormControl>
+            <Slider
+              :model-value="componentField.modelValue"
+              :default-value="[0]"
+              :max="190000"
+              :min="0"
+              :step="1000"
+              :name="componentField.name"
+              @update:model-value="componentField['onUpdate:modelValue']"
+              class="mt-4"
+            />
+            <FormDescription class="flex items-center justify-between gap-2">
+              <span class="my-2 font-bold text-2xl text-black">
+                {{ currencyFormat(value?.[0]) }}
+              </span>
+              <span class="my-2 font-bold text-2xl text-black">
+                {{ calculateBudgetRest(value) }}
+              </span>
+            </FormDescription>
+          </FormControl>
+        </FormItem>
+      </FormField>
     </div>
   </section>
   <section class="p-6">
