@@ -412,6 +412,7 @@ const findAddress = async (code: string) => {
               :findAddress="findAddress"
               :loading="isLoadingAddress"
               :isEditing="true"
+              :form="form"
             />
           </div>
           <div class="mb-10">

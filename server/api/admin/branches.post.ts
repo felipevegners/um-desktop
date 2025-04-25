@@ -104,11 +104,10 @@ export default defineEventHandler(async (event) => {
     });
   } catch (error: any) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
-      console.log('Error Prisma -> ', error.message);
+      console.error('Error Prisma -> ', error);
       throw error;
     }
-    throw new Error('Erro ao cadastrar novo contrato no DB', {
-      cause: error,
-    });
+    console.error('Error Prisma -> ', error);
+    throw error;
   }
 });

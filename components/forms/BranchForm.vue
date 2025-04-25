@@ -3,9 +3,8 @@ import FormSelect from '@/components/shared/FormSelect.vue';
 import { useContractsStore } from '@/stores/admin/contracts.store';
 import {
   Info,
-  LoaderCircle,
   Plus,
-  Search,
+  SlidersHorizontal,
   Trash,
   User,
   WandSparkles,
@@ -19,20 +18,24 @@ const { getContractsAction, getContractByIdAction } = contractsStore;
 const { contracts, contract } = storeToRefs(contractsStore);
 
 const props = defineProps<{
-  findAddress?: any;
-  loading?: boolean;
   editMode?: boolean;
   managerId?: string;
   contractId?: string;
   disabledFields?: boolean;
+  actualBranchBudget?: any;
   form?: any;
 }>();
 
-const modelValue = defineModel<any>({
+const ccAreasModel = defineModel<any>({
   default: [{ areaCode: '', areaName: '' }],
 });
 
-defineEmits(['update:modelValue']);
+defineEmits(['update:ccAreasModel']);
+
+const showBudgetControl = ref<boolean>(false);
+const contractRemainBudget = ref(0);
+const calculatedBudget = ref(0);
+const contractMainBudget = ref(0);
 
 onBeforeMount(async () => {
   if (props.editMode) {
@@ -52,16 +55,46 @@ const sanitizeContracts = computed(() => {
 });
 
 const addRow = () => {
-  modelValue?.value.push({ areaCode: '', areaName: '' });
+  ccAreasModel?.value.push({ areaCode: '', areaName: '' });
 };
 
 const removeRow = (index: any) => {
-  modelValue.value.splice(index, 1);
+  ccAreasModel.value.splice(index, 1);
 };
 
 const calculateBudgetRest = (value: any) => {
-  const result = parseFloat(contract?.value.mainBudget) - parseFloat(value);
-  return currencyFormat(result.toString());
+  const result = contractRemainBudget.value - parseFloat(value);
+  calculatedBudget.value = result + 1000;
+};
+
+const compileBudget = (value: string) => {
+  if (props.editMode) {
+    showBudgetControl.value = true;
+
+    const remainBudget = contract?.value.branches.reduce(
+      (acc: any, curr: any) => acc - parseFloat(curr.budget),
+      contract?.value.mainBudget,
+    );
+    contractRemainBudget.value =
+      remainBudget + parseFloat(props.actualBranchBudget);
+    calculatedBudget.value = remainBudget;
+  } else {
+    showBudgetControl.value = true;
+
+    const contract = contracts?.value.find(
+      (contract: any) => contract.id === value,
+    );
+
+    const { branches, mainBudget } = contract;
+    contractMainBudget.value = parseFloat(mainBudget);
+
+    const remainBudget = branches.reduce(
+      (acc: any, curr: any) => acc - parseFloat(curr.budget),
+      contract.mainBudget,
+    );
+    contractRemainBudget.value = remainBudget;
+    calculatedBudget.value = remainBudget;
+  }
 };
 </script>
 <template>
@@ -81,8 +114,8 @@ const calculateBudgetRest = (value: any) => {
               v-bind="componentField"
               :items="sanitizeContracts"
               :label="'Selecione'"
+              @on-select="compileBudget"
             />
-            <!-- @on-select="compileBudget" -->
           </FormControl>
         </FormItem>
       </FormField>
@@ -279,36 +312,64 @@ const calculateBudgetRest = (value: any) => {
   </section>
   <section class="p-6">
     <h3 class="mb-4 text-lg font-bold">4. Gerenciar Budget da Filial</h3>
-    <div class="p-6 border border-zinc-700 rounded-md">
+    <div v-if="showBudgetControl" class="p-6 border border-zinc-700 rounded-md">
       <FormField v-slot="{ componentField, value }" name="branchBudget">
         <FormItem>
           <FormLabel class="mb-10 flex items-center justify-between">
             <span>Budget da Filial</span>
-            <span>Budget total do contrato</span>
+            <span>Saldo do Budget do Contrato</span>
           </FormLabel>
           <FormControl>
             <Slider
               :model-value="componentField.modelValue"
               :default-value="[0]"
-              :max="190000"
+              :max="contractMainBudget"
               :min="0"
               :step="1000"
               :name="componentField.name"
               @update:model-value="componentField['onUpdate:modelValue']"
+              @input="calculateBudgetRest(value)"
               class="mt-4"
+              :class="`${calculatedBudget < 0 ? 'bg-red-600' : ''}`"
             />
             <FormDescription class="flex items-center justify-between gap-2">
               <span class="my-2 font-bold text-2xl text-black">
                 {{ currencyFormat(value?.[0]) }}
               </span>
-              <span class="my-2 font-bold text-2xl text-black">
-                {{ calculateBudgetRest(value) }}
-              </span>
+              <div class="flex flex-col items-end">
+                <span
+                  class="my-2 font-bold text-2xl text-black"
+                  :class="`${calculatedBudget < 0 ? 'text-red-600' : ''}`"
+                >
+                  {{ currencyFormat(calculatedBudget.toString()) }}
+                </span>
+                <span v-if="calculatedBudget < 0" class="text-red-600">
+                  Você entrou no limite extra do Budget
+                </span>
+              </div>
             </FormDescription>
           </FormControl>
           <FormMessage />
         </FormItem>
       </FormField>
+    </div>
+    <div v-else class="p-6 border border-zinc-700 rounded-md">
+      <div v-if="props.editMode" class="flex items-center gap-4">
+        <h2 class="font-bold text-2xl">
+          {{ currencyFormat(props.form?.values?.branchBudget?.toString()) }}
+        </h2>
+        <Button
+          type="button"
+          @click.prevent="compileBudget(props.contractId as string)"
+        >
+          <SlidersHorizontal />
+          Editar Budget
+        </Button>
+      </div>
+      <h2 v-else class="flex items-center justify-center gap-2">
+        <Info :size="20" />
+        Vincule um Contrato para gerenciar o Budget da Filial
+      </h2>
     </div>
   </section>
   <section class="p-6">
@@ -347,12 +408,7 @@ const calculateBudgetRest = (value: any) => {
           </div>
         </div>
       </div>
-      <Button
-        type="button"
-        variant="outline"
-        class="hover:border-zinc-900"
-        @click.prevent="addRow"
-      >
+      <Button type="button" @click.prevent="addRow">
         <Plus />
         Adicionar
       </Button>

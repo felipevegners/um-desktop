@@ -1,15 +1,16 @@
 <script lang="ts" setup>
-import { LoaderCircle, Search } from 'lucide-vue-next';
 import { vMaska } from 'maska/vue';
+
+import AddressForm from './AddressForm.vue';
 
 definePageMeta({
   name: 'CompanyForm',
 });
 
-defineProps<{
-  findAddress?: any;
+const props = defineProps<{
   loading?: boolean;
   isEditing?: boolean;
+  form?: any;
 }>();
 </script>
 <template v-if="currentStep === 0">
@@ -44,80 +45,8 @@ defineProps<{
         </FormItem>
       </FormField>
     </div>
-    <div class="mb-4 w-full grid grid-cols-4 gap-6">
-      <FormField v-slot="{ componentField, value }" name="zipcode">
-        <FormItem class="col-span-1">
-          <FormLabel>CEP</FormLabel>
-          <FormControl>
-            <div class="flex gap-2">
-              <Input
-                type="text"
-                v-bind="componentField"
-                maxlength="9"
-                v-maska="'#####-###'"
-                name="zipcode"
-              />
-              <Button
-                @click.prevent="findAddress(value)"
-                :disabled="value?.length !== 9"
-                type="button"
-              >
-                <Search v-if="!loading" class="w-10 h-10" />
-                <LoaderCircle v-if="loading" class="w-10 h-10 animate-spin" />
-              </Button>
-            </div>
-          </FormControl>
-        </FormItem>
-      </FormField>
-      <FormField v-slot="{ componentField }" name="streetName">
-        <FormItem class="col-span-2">
-          <FormLabel>Endereço</FormLabel>
-          <FormControl>
-            <Input type="text" v-bind="componentField" />
-          </FormControl>
-        </FormItem>
-      </FormField>
-      <FormField v-slot="{ componentField }" name="streetNumber">
-        <FormItem class="col-span-1">
-          <FormLabel>Número</FormLabel>
-          <FormControl>
-            <Input type="text" v-bind="componentField" />
-          </FormControl>
-        </FormItem>
-      </FormField>
-      <FormField v-slot="{ componentField }" name="complement">
-        <FormItem class="col-span-1">
-          <FormLabel>Complemento</FormLabel>
-          <FormControl>
-            <Input type="text" v-bind="componentField" />
-          </FormControl>
-        </FormItem>
-      </FormField>
-      <FormField v-slot="{ componentField }" name="neighborhood">
-        <FormItem class="col-span-1">
-          <FormLabel>Bairro</FormLabel>
-          <FormControl>
-            <Input type="text" v-bind="componentField" />
-          </FormControl>
-        </FormItem>
-      </FormField>
-      <FormField v-slot="{ componentField }" name="city">
-        <FormItem class="col-span-1">
-          <FormLabel>Cidade</FormLabel>
-          <FormControl>
-            <Input type="text" v-bind="componentField" />
-          </FormControl>
-        </FormItem>
-      </FormField>
-      <FormField v-slot="{ componentField }" name="state">
-        <FormItem class="col-span-1">
-          <FormLabel>Estado</FormLabel>
-          <FormControl>
-            <Input type="text" v-bind="componentField" />
-          </FormControl>
-        </FormItem>
-      </FormField>
-    </div>
+    <!-- Address Form -->
+    <AddressForm :form="props.form" />
     <div class="mb-4 w-full grid grid-cols-4 gap-6">
       <FormField v-slot="{ componentField }" name="phone">
         <FormItem>

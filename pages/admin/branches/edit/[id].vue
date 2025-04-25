@@ -157,6 +157,7 @@ const onSubmit = form.handleSubmit(async (values) => {
             :managerId="branch?.manager.id"
             :contractId="branch?.contractId"
             v-model="ccAreas"
+            :actualBranchBudget="branch?.budget"
             :form="form"
           >
             <AddressForm :form="form" />

@@ -1,6 +1,14 @@
 <script setup lang="ts">
 import BackLink from '@/components/shared/BackLink.vue';
-import { Edit, FileText, LoaderCircle, Trash } from 'lucide-vue-next';
+import { useAccountStore } from '@/stores/admin/account.store';
+import {
+  Edit,
+  FileText,
+  LoaderCircle,
+  Mail,
+  Trash,
+  User,
+} from 'lucide-vue-next';
 import { storeToRefs } from 'pinia';
 import { currencyFormat, dateFormat } from '~/lib/utils';
 import { useContractsStore } from '~/stores/admin/contracts.store';
@@ -9,9 +17,18 @@ definePageMeta({
   layout: 'admin',
 });
 
-const store = useContractsStore();
-const { getContractByIdAction } = store;
-const { contract, isLoading } = storeToRefs(store);
+const contractStore = useContractsStore();
+const { getContractByIdAction } = contractStore;
+const { contract, isLoading } = storeToRefs(contractStore);
+
+const accountsStore = useAccountStore();
+const { accounts } = storeToRefs(accountsStore);
+
+const contractAccounts = computed((): any => {
+  return accounts?.value.filter(
+    (account: any) => account.contractId === (route?.params?.id as string),
+  );
+});
 
 const route = useRoute();
 await getContractByIdAction(route?.params?.id as string);
@@ -129,8 +146,8 @@ await getContractByIdAction(route?.params?.id as string);
         <Separator class="my-6 border-b border-zinc-300" />
         <div>
           <h2 class="mb-4 text-2xl font-bold">Dados do Contrato</h2>
-          <div class="md:grid md:grid-cols-6 md:gap-6">
-            <div class="p-6 bg-white rounded-md col-span-2">
+          <div class="md:grid md:grid-cols-2 md:gap-6">
+            <div class="p-6 bg-white rounded-md">
               <p class="text-sm text-zinc-600">Filiais</p>
               <p class="mb-4 text-2xl font-bold">
                 {{ contract?.branches.length }}
@@ -242,7 +259,94 @@ await getContractByIdAction(route?.params?.id as string);
         <section>
           <h2 class="mb-4 text-2xl font-bold">Usuários Cadastrados</h2>
           <div class="p-8 bg-white rounded-md text-center">
-            <p class="text-muted-foreground">Nenhum usuário cadastrado.</p>
+            <ul class="flex gap-6 flex-wrap" v-if="contractAccounts.length">
+              <li
+                class="flex flex-col items-start"
+                v-for="account in contractAccounts"
+                :key="account?.id"
+              >
+                <Card class="md:min-w-[250px]">
+                  <CardHeader class="flex items-center">
+                    <Avatar class="h-20 w-20 mb-6">
+                      <AvatarImage
+                        src="/images/no-avatar.png"
+                        :alt="account.username"
+                      />
+                      <AvatarFallback>UM</AvatarFallback>
+                    </Avatar>
+                    <div class="flex flex-col">
+                      <h2 class="font-bold text-xl">{{ account.username }}</h2>
+                      <small class="text-muted-foreground">
+                        {{ account.email }}
+                      </small>
+                      <small>{{ account.role }} </small>
+                    </div>
+                  </CardHeader>
+                  <CardContent class="flex flex-col justify-start gap-6">
+                    <div class="grid grid-cols-3 gap-4">
+                      <div
+                        class="flex flex-col items-center p-1 border border-zinc-900 rounded-md"
+                      >
+                        <small
+                          class="text-[10px] text-muted-foreground uppercase"
+                        >
+                          Cadastrado
+                        </small>
+                        <span class="font-bold text-xs">
+                          {{ dateFormat(account.createdAt) }}
+                        </span>
+                      </div>
+                      <div
+                        class="flex flex-col items-center p-1 border border-zinc-900 rounded-md"
+                      >
+                        <span
+                          class="text-[10px] text-muted-foreground uppercase"
+                        >
+                          Status
+                        </span>
+                        <span class="font-bold text-sm">
+                          {{
+                            account.status === 'pending'
+                              ? 'Pendente'
+                              : 'Validado'
+                          }}
+                        </span>
+                      </div>
+                      <div
+                        class="flex flex-col items-center p-1 border border-zinc-900 rounded-md"
+                      >
+                        <span
+                          class="text-[10px] text-muted-foreground uppercase"
+                        >
+                          Ativo
+                        </span>
+                        <span class="font-bold text-sm">
+                          {{ account.enabled ? 'Sim' : 'Não' }}
+                        </span>
+                      </div>
+                    </div>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      @click="
+                        navigateTo({
+                          name: 'admin-accounts-edit-id',
+                          params: {
+                            id: account.id,
+                          },
+                        })
+                      "
+                    >
+                      <User />
+                      Editar Usuário
+                    </Button>
+                  </CardContent>
+                </Card>
+              </li>
+            </ul>
+            <p v-else class="text-muted-foreground">
+              Nenhum usuário cadastrado.
+            </p>
           </div>
         </section>
         <Separator class="my-6 border-b border-zinc-300" />

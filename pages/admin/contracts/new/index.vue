@@ -38,11 +38,8 @@ useHead({
 
 const currentStep = ref<any>(0);
 const isLoadingSend = ref<boolean>(false);
-const isLoadingAddress = ref<boolean>(false);
 const availableProducts = ref();
 const isLoadingProducts = ref<boolean>(false);
-// const selectedProducts = ref<any>([]);
-
 const selectedProducts = reactive([]);
 
 const { toast } = useToast();
@@ -187,66 +184,6 @@ function prevStep() {
   }
   currentStep.value--;
 }
-
-const findAddress = async (code: string) => {
-  if (code?.length !== 9) {
-    toast({
-      title: 'Opss!',
-      class: 'bg-red-500 border-0 text-white text-2xl',
-      description: `CEP inválido. Digite novamente.`,
-    });
-  } else {
-    try {
-      isLoadingAddress.value = true;
-      const response: any = await findAddressByZipcode(code);
-      form.setValues({
-        streetName: response.logradouro,
-        neighborhood: response.bairro,
-        city: response.localidade,
-        state: response.estado,
-        complement: response.complemento ? response.complemento : '-',
-      });
-      if (response.erro) {
-        toast({
-          title: 'CEP Inválido',
-          class: 'bg-red-500 border-0 text-white text-2xl',
-          description: `Confira o CEP e tente novamente.`,
-        });
-        //@ts-ignore
-        document.querySelector("input[name='zipcode']").focus();
-        document
-          .querySelector("input[name='zipcode']")
-          ?.classList.add(
-            'bg-red-300',
-            'focus:ring-0',
-            'focus-visible:ring-0',
-            'focus-visible:outline-3',
-            'focus-visible:outline-offset-2',
-            'focus-visible:outline-red-500',
-          );
-      } else {
-        document
-          .querySelector("input[name='zipcode']")
-          ?.classList.remove(
-            'bg-red-300',
-            'focus-visible:ring-0',
-            'focus-visible:outline-3',
-            'focus-visible:outline-offset-2',
-            'focus-visible:outline-red-500',
-          );
-      }
-    } catch (error) {
-      toast({
-        title: 'Opss!',
-        class: 'bg-red-500 border-0 text-white text-2xl',
-        description: `Ocorreu um erro ao buscar o endereço. Tente novamente.`,
-      });
-      console.log('Erro ao buscar endereço -> ', error);
-    } finally {
-      isLoadingAddress.value = false;
-    }
-  }
-};
 </script>
 <template>
   <main class="p-6">
@@ -278,10 +215,7 @@ const findAddress = async (code: string) => {
             1. Dados da Empresa Matriz
           </AccordionTrigger>
           <AccordionContent class="mt-4">
-            <CompanyForm
-              :findAddress="findAddress"
-              :loading="isLoadingAddress"
-            />
+            <CompanyForm :form="form" />
           </AccordionContent>
         </AccordionItem>
         <!-- @vue-skip -->
