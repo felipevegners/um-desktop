@@ -70,24 +70,18 @@ const calculateBudgetRest = (value: any) => {
 const compileBudget = (value: string) => {
   if (props.editMode) {
     showBudgetControl.value = true;
-
     const remainBudget = contract?.value.branches.reduce(
       (acc: any, curr: any) => acc - parseFloat(curr.budget),
       contract?.value.mainBudget,
     );
-    contractRemainBudget.value =
-      remainBudget + parseFloat(props.actualBranchBudget);
+    contractRemainBudget.value = remainBudget + parseFloat(props.actualBranchBudget);
     calculatedBudget.value = remainBudget;
+    contractMainBudget.value = parseFloat(contract?.value.mainBudget);
   } else {
     showBudgetControl.value = true;
-
-    const contract = contracts?.value.find(
-      (contract: any) => contract.id === value,
-    );
-
+    const contract = contracts?.value.find((contract: any) => contract.id === value);
     const { branches, mainBudget } = contract;
     contractMainBudget.value = parseFloat(mainBudget);
-
     const remainBudget = branches.reduce(
       (acc: any, curr: any) => acc - parseFloat(curr.budget),
       contract.mainBudget,
@@ -100,12 +94,8 @@ const compileBudget = (value: string) => {
 <template>
   <section class="mb-6 px-6 flex items-center justify-between">
     <div class="md:max-w-[350px]">
-      <h3 v-if="editMode" class="mb-4 text-lg font-bold">
-        1. Contrato vinculado
-      </h3>
-      <h3 v-else class="mb-4 text-lg font-bold">
-        1. Selecione o Contrato a vincular
-      </h3>
+      <h3 v-if="editMode" class="mb-4 text-lg font-bold">1. Contrato vinculado</h3>
+      <h3 v-else class="mb-4 text-lg font-bold">1. Selecione o Contrato a vincular</h3>
       <FormField v-slot="{ componentField, value }" name="contract">
         <FormItem>
           <FormLabel v-if="!editMode">Contrato</FormLabel>
@@ -161,11 +151,7 @@ const compileBudget = (value: string) => {
         <FormItem>
           <FormLabel>CNPJ</FormLabel>
           <FormControl>
-            <Input
-              type="text"
-              v-bind="componentField"
-              v-maska="'##.###.###/####-##'"
-            />
+            <Input type="text" v-bind="componentField" v-maska="'##.###.###/####-##'" />
           </FormControl>
         </FormItem>
       </FormField>
@@ -192,11 +178,7 @@ const compileBudget = (value: string) => {
         <FormItem>
           <FormLabel>Telefone</FormLabel>
           <FormControl>
-            <Input
-              type="text"
-              v-bind="componentField"
-              v-maska="'(##) ####-####'"
-            />
+            <Input type="text" v-bind="componentField" v-maska="'(##) ####-####'" />
           </FormControl>
           <FormMessage />
         </FormItem>
@@ -213,9 +195,7 @@ const compileBudget = (value: string) => {
     </div>
   </section>
   <section class="p-6">
-    <h3 v-if="editMode" class="mb-4 text-lg font-bold">
-      3. Dados do Gestor da Filial
-    </h3>
+    <h3 v-if="editMode" class="mb-4 text-lg font-bold">3. Dados do Gestor da Filial</h3>
     <h3 v-else class="mb-4 text-lg font-bold">3. Gestor da Filial</h3>
     <div class="mb-4 grid grid-cols-4 gap-6">
       <FormField v-slot="{ componentField }" name="branchManagerName">
@@ -230,11 +210,7 @@ const compileBudget = (value: string) => {
         <FormItem>
           <FormLabel>Celular</FormLabel>
           <FormControl>
-            <Input
-              type="text"
-              v-bind="componentField"
-              v-maska="'(##) # ####-####'"
-            />
+            <Input type="text" v-bind="componentField" v-maska="'(##) # ####-####'" />
           </FormControl>
         </FormItem>
       </FormField>
@@ -259,8 +235,8 @@ const compileBudget = (value: string) => {
         <div v-if="editMode">
           <p class="flex gap-1 items-center text-muted-foreground text-sm">
             <Info :size="14" />
-            Para editar os dados de acesso (Nome, Email e Senha) do Gestor da
-            Filial clique no botão abaixo
+            Para editar os dados de acesso (Nome, Email e Senha) do Gestor da Filial
+            clique no botão abaixo
           </p>
           <Button
             type="button"
@@ -354,14 +330,11 @@ const compileBudget = (value: string) => {
       </FormField>
     </div>
     <div v-else class="p-6 border border-zinc-700 rounded-md">
-      <div v-if="props.editMode" class="flex items-center gap-4">
+      <div v-if="props.editMode" class="flex items-center justify-between gap-4">
         <h2 class="font-bold text-2xl">
           {{ currencyFormat(props.form?.values?.branchBudget?.toString()) }}
         </h2>
-        <Button
-          type="button"
-          @click.prevent="compileBudget(props.contractId as string)"
-        >
+        <Button type="button" @click.prevent="compileBudget(props.contractId as string)">
           <SlidersHorizontal />
           Editar Budget
         </Button>
