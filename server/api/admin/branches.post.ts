@@ -54,6 +54,19 @@ export default defineEventHandler(async (event) => {
       },
     });
 
+    await prisma.contracts.update({
+      where: {
+        id: contract,
+      },
+      data: {
+        branches: {
+          connect: {
+            id: newBranch.id,
+          },
+        },
+      },
+    });
+
     const branchManagerData = {
       username: branchManagerName,
       password: password,

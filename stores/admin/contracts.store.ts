@@ -41,7 +41,7 @@ export const useContractsStore = defineStore('contracts', {
         );
         this.isLoading = false;
       } catch (error) {
-        console.log('Store GET All Error -> ', error);
+        console.error('Store GET All Error -> ', error);
         throw error;
       }
     },
@@ -52,19 +52,7 @@ export const useContractsStore = defineStore('contracts', {
         this.contract = { ...(data as any) };
         this.isLoading = false;
       } catch (error) {
-        console.log('Store GET by ID Error -> ', error);
-        throw error;
-      }
-    },
-
-    async getContractBranchesAction(contractId: string) {
-      try {
-        const allBranches: any = await getBranchesService();
-        const branches = allBranches.filter(
-          (branch: any) => branch.contractId === contractId,
-        );
-        this.contractBranches = branches;
-      } catch (error) {
+        console.error('Store GET by ID Error -> ', error);
         throw error;
       }
     },
@@ -74,7 +62,7 @@ export const useContractsStore = defineStore('contracts', {
         //@ts-ignore
         this.contractId = newContract?.id;
       } catch (error) {
-        console.log('Error from Store -> ', error);
+        console.error('Error from Store -> ', error);
         throw error;
       }
     },
@@ -82,7 +70,7 @@ export const useContractsStore = defineStore('contracts', {
       try {
         await updateContractService(dataToUpdate);
       } catch (error) {
-        console.log('Error from Store -> ', error);
+        console.error('Error from Store -> ', error);
         throw error;
       }
     },
@@ -92,7 +80,7 @@ export const useContractsStore = defineStore('contracts', {
         await deleteContractService(contractId);
         this.isLoading = false;
       } catch (error) {
-        console.log('Error from Store -> ', error);
+        console.error('Error from Store -> ', error);
         throw new Error();
       }
     },

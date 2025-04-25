@@ -26,10 +26,13 @@ export const useBranchesStore = defineStore('braches', {
     async getBranchesAction() {
       this.isLoadingData = true;
       try {
-        const response = await getBranchesService();
-        this.branches = response as any;
+        const data: any = await getBranchesService();
+        this.branches = data.filter((branch: any) => branch.enabled === true);
+        this.inactiveBranches = data.filter(
+          (branch: any) => branch.enabled === false,
+        );
       } catch (error) {
-        console.log('Erro from GET store --> ', error);
+        console.error('Erro from GET store --> ', error);
         throw error;
       } finally {
         this.isLoadingData = false;
@@ -42,7 +45,7 @@ export const useBranchesStore = defineStore('braches', {
         const response = await getBranchesService(branchId);
         this.branch = response as any;
       } catch (error) {
-        console.log('Error from GET by ID store --> ', error);
+        console.error('Error from GET by ID store --> ', error);
         throw error;
       } finally {
         this.isLoadingData = false;
@@ -54,7 +57,7 @@ export const useBranchesStore = defineStore('braches', {
       try {
         await createBranchService(branchData);
       } catch (error) {
-        console.log('Error from create store --> ', error);
+        console.error('Error from create store --> ', error);
         throw error;
       } finally {
         this.isLoadingData = false;
@@ -65,7 +68,7 @@ export const useBranchesStore = defineStore('braches', {
       try {
         await updateBranchService(branchData);
       } catch (error) {
-        console.log('Error from update store --> ', error);
+        console.error('Error from update store --> ', error);
         throw error;
       } finally {
         this.isLoadingData = false;
@@ -76,7 +79,7 @@ export const useBranchesStore = defineStore('braches', {
       try {
         await deleteBranchService(branchId);
       } catch (error) {
-        console.log('Error from delete store --> ', error);
+        console.error('Error from delete store --> ', error);
         throw error;
       } finally {
         this.isLoadingData = false;

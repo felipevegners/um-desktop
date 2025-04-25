@@ -35,8 +35,6 @@ const modelValue = defineModel<any>({
 defineEmits(['update:modelValue']);
 
 onBeforeMount(async () => {
-  console.log('onBeforeMount');
-
   if (props.editMode) {
     await getContractByIdAction(props.contractId as string);
   }
@@ -58,7 +56,7 @@ const addRow = () => {
 };
 
 const removeRow = (index: any) => {
-  modelValue.splice(index, 1);
+  modelValue.value.splice(index, 1);
 };
 
 const calculateBudgetRest = (value: any) => {
@@ -67,8 +65,8 @@ const calculateBudgetRest = (value: any) => {
 };
 </script>
 <template>
-  <section>
-    <div class="mb-4 px-6 max-w-[350px]">
+  <section class="mb-6 px-6 flex items-center justify-between">
+    <div class="md:max-w-[350px]">
       <h3 v-if="editMode" class="mb-4 text-lg font-bold">
         1. Contrato vinculado
       </h3>
@@ -85,6 +83,29 @@ const calculateBudgetRest = (value: any) => {
               :label="'Selecione'"
             />
             <!-- @on-select="compileBudget" -->
+          </FormControl>
+        </FormItem>
+      </FormField>
+    </div>
+    <div v-if="editMode">
+      <FormField v-slot="{ componentField }" name="status">
+        <FormItem class="grid grid-cols-2 items-center gap-4">
+          <FormLabel class="font-bold">Status do Contrato</FormLabel>
+          <FormControl>
+            <FormSelect
+              v-bind="componentField"
+              :items="[
+                {
+                  label: 'Validado',
+                  value: 'validated',
+                },
+                {
+                  label: 'Pendente',
+                  value: 'pending',
+                },
+              ]"
+              label="Selecione"
+            />
           </FormControl>
         </FormItem>
       </FormField>
@@ -285,6 +306,7 @@ const calculateBudgetRest = (value: any) => {
               </span>
             </FormDescription>
           </FormControl>
+          <FormMessage />
         </FormItem>
       </FormField>
     </div>
@@ -292,20 +314,16 @@ const calculateBudgetRest = (value: any) => {
   <section class="p-6">
     <h3 class="mb-4 text-lg font-bold">5. Gerenciar Centros de Custo</h3>
     <div class="p-6 rounded-md bg-zinc-100">
-      <h3 class="mb-4 font-bold">Adicionar CC ou Área</h3>
+      <h3 class="mb-4 font-bold">Centro de Custo / Áreas Cadastradas</h3>
       <div
-        class="mb-4 md:grid md:grid-cols-3 gap-4 items-end"
+        class="mb-4 md:grid md:grid-cols-6 gap-4 items-end"
         v-for="(area, index) in modelValue"
       >
         <FormField name="areaCode">
           <FormItem>
             <FormLabel>Código</FormLabel>
             <FormControl>
-              <Input
-                type="text"
-                placeholder="ex.: CC0001"
-                v-model="area.areaCode"
-              />
+              <Input type="text" v-model="area.areaCode" />
             </FormControl>
             <FormMessage />
           </FormItem>
@@ -314,11 +332,7 @@ const calculateBudgetRest = (value: any) => {
           <FormItem>
             <FormLabel>Nome</FormLabel>
             <FormControl>
-              <Input
-                type="text"
-                placeholder="ex.: Jurídico"
-                v-model="area.areaName"
-              />
+              <Input type="text" v-model="area.areaName" />
             </FormControl>
             <FormMessage />
           </FormItem>
@@ -330,13 +344,18 @@ const calculateBudgetRest = (value: any) => {
               @click.prevent="removeRow(index)"
               class="w-5 h-5 text-zinc-800 cursor-pointer hover:text-red-600"
             />
-            <Plus
-              class="text-white bg-zinc-800 h-5 w-5 rounded-full cursor-pointer hover:bg-zinc-600"
-              @click.prevent="addRow"
-            />
           </div>
         </div>
       </div>
+      <Button
+        type="button"
+        variant="outline"
+        class="hover:border-zinc-900"
+        @click.prevent="addRow"
+      >
+        <Plus />
+        Adicionar
+      </Button>
     </div>
   </section>
 </template>

@@ -3,7 +3,6 @@ import BackLink from '@/components/shared/BackLink.vue';
 import { Edit, FileText, LoaderCircle, Trash } from 'lucide-vue-next';
 import { storeToRefs } from 'pinia';
 import { currencyFormat, dateFormat } from '~/lib/utils';
-import customersDelete from '~/server/api/admin/customers.delete';
 import { useContractsStore } from '~/stores/admin/contracts.store';
 
 definePageMeta({
@@ -11,12 +10,11 @@ definePageMeta({
 });
 
 const store = useContractsStore();
-const { getContractByIdAction, getContractBranchesAction } = store;
-const { contract, contractBranches, isLoading } = storeToRefs(store);
+const { getContractByIdAction } = store;
+const { contract, isLoading } = storeToRefs(store);
 
 const route = useRoute();
 await getContractByIdAction(route?.params?.id as string);
-await getContractBranchesAction(route?.params?.id as string);
 </script>
 <template>
   <main class="p-6">
@@ -135,10 +133,10 @@ await getContractBranchesAction(route?.params?.id as string);
             <div class="p-6 bg-white rounded-md col-span-2">
               <p class="text-sm text-zinc-600">Filiais</p>
               <p class="mb-4 text-2xl font-bold">
-                {{ contractBranches.length }}
+                {{ contract?.branches.length }}
               </p>
               <p
-                v-for="branch in contractBranches"
+                v-for="branch in contract?.branches"
                 :key="branch.id"
                 class="mb-4 flex items-center gap-2 text-sm"
               >

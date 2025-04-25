@@ -22,7 +22,8 @@ const { toast } = useToast();
 
 const branchStore = useBranchesStore();
 const contractStore = useContractsStore();
-const { getBranchByIdAction, deleteBranchAction } = branchStore;
+const { getBranchByIdAction, deleteBranchAction, updateBranchAction } =
+  branchStore;
 const { branch, isLoadingData } = storeToRefs(branchStore);
 const { getContractByIdAction } = contractStore;
 const { contract } = storeToRefs(contractStore);
@@ -33,6 +34,8 @@ await getContractByIdAction(route?.params?.id as string);
 
 const branchSituation = ref<boolean>(true);
 branchSituation.value = branch?.value.enabled;
+const ccAreas = ref();
+ccAreas.value = branch?.value.areas;
 
 const formSchema = toTypedSchema(
   z.object({
@@ -54,18 +57,21 @@ const formSchema = toTypedSchema(
     branchManagerPhone: z.string().min(2).max(50),
     branchManagerPosition: z.string().min(2).max(50),
     branchManagerDepartment: z.string().min(2).max(50),
-    branchManagerEmail: z.string().min(2).max(50),
     branchBudget: z.array(
-      z.number().min(0).max(parseFloat(contract?.value.mainBudget)),
+      z.number().min(0).max(parseFloat(contract?.value.mainBudget)).optional(),
     ),
+    status: z.string().optional(),
   }),
 );
 
 const form = useForm({
-  // validationSchema: formSchema,
+  validationSchema: formSchema,
   initialValues: {
-    ...branch.value,
     contract: branch?.value.contractId,
+    branchCode: branch?.value.branchCode,
+    document: branch?.value.document,
+    name: branch?.value.name,
+    fantasyName: branch?.value.fantasyName,
     zipcode: branch?.value.address.zipcode,
     streetName: branch?.value.address.streetName,
     streetNumber: branch?.value.address.streetNumber,
@@ -73,16 +79,41 @@ const form = useForm({
     neighborhood: branch?.value.address.neighborhood,
     city: branch?.value.address.city,
     state: branch?.value.address.state,
+    phone: branch?.value.phone,
+    phoneExtension: branch?.value.phoneExtension || '-',
     branchManagerName: branch?.value.manager.username,
     branchManagerPhone: branch?.value.managerInfo.phone,
     branchManagerPosition: branch?.value.managerInfo.position,
     branchManagerDepartment: branch?.value.managerInfo.department,
-    branchBudget: [branch?.value.budget],
+    branchBudget: [parseFloat(branch?.value.budget)],
+    status: branch?.value.status,
   },
 });
 
 const onSubmit = form.handleSubmit(async (values) => {
-  console.log('VALUES ---> ', values.branchBudget.toString());
+  try {
+    const newBranchData = {
+      ...values,
+      branchId: branch?.value.id,
+      areas: [...ccAreas.value],
+      branchBudget: values.branchBudget.toString(),
+      enabled: branchSituation.value,
+    };
+    await updateBranchAction(newBranchData);
+    toast({
+      title: 'Tudo pronto!',
+      class: 'bg-green-600 border-0 text-white text-2xl',
+      description: `Filial cadastrada com sucesso!`,
+    });
+    navigateTo('/admin/branches/active');
+  } catch (error) {
+    toast({
+      title: 'Opss!',
+      class: 'bg-red-500 border-0 text-white text-2xl',
+      description: `Ocorreu um erro ao cadastrar a Filial. Tente novamente.`,
+    });
+    throw error;
+  }
 });
 </script>
 <template>
@@ -119,32 +150,32 @@ const onSubmit = form.handleSubmit(async (values) => {
       <LoaderCircle class="w-10 h-10 animate-spin" />
     </section>
     <section v-else class="mt-6">
-      <Card class="py-6 bg-zinc-200">
-        <form @submit="onSubmit" @keydown.enter.prevent="true" id="form">
+      <form @submit="onSubmit" @keydown.enter.prevent="true" id="form">
+        <Card class="py-6 bg-zinc-200">
           <BranchForm
             :editMode="true"
             :managerId="branch?.manager.id"
             :contractId="branch?.contractId"
-            v-model="branch.areas"
+            v-model="ccAreas"
             :form="form"
           >
             <AddressForm :form="form" />
           </BranchForm>
-          <div class="mt-6 px-6 flex gap-4">
-            <Button type="submit" form="form">
-              <LoaderCircle v-if="isLoadingData" class="w-5 h-5 animate-spin" />
-              Salvar Alterações
-            </Button>
-            <Button
-              type="button"
-              variant="ghost"
-              @click="navigateTo('/admin/branches/active')"
-            >
-              Cancelar
-            </Button>
-          </div>
-        </form>
-      </Card>
+        </Card>
+        <div class="mt-6 flex gap-4">
+          <Button type="submit" form="form">
+            <LoaderCircle v-if="isLoadingData" class="w-5 h-5 animate-spin" />
+            Salvar Alterações
+          </Button>
+          <Button
+            type="button"
+            variant="ghost"
+            @click="navigateTo('/admin/branches/active')"
+          >
+            Cancelar
+          </Button>
+        </div>
+      </form>
     </section>
   </main>
 </template>

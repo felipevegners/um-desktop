@@ -36,6 +36,7 @@ model Contracts {
   customerId          String?    @db.ObjectId
   comercialConditions Json?
   mainBudget          String?
+  availableBudget     String?
   products            Json?
   manager             Accounts?  @relation(fields: [managerId, managerName], references: [id, username])
   managerId           String?    @db.ObjectId
@@ -47,7 +48,7 @@ model Contracts {
   enabled             Boolean?
   createdAt           DateTime?  @default(now())
   updatedAt           DateTime?  @updatedAt()
-  Branches            Branches[]
+  branches            Branches[]
 }
 
 model Branches {
