@@ -1,18 +1,15 @@
 <script setup lang="ts">
+import CurrencyInput from '@/components/shared/CurrencyInput.vue';
 import DataTable from '@/components/shared/DataTable.vue';
-import DeleteAction from '@/components/shared/DeleteAction.vue';
 import FormSelect from '@/components/shared/FormSelect.vue';
+import TableActions from '@/components/shared/TableActions.vue';
 import { useToast } from '@/components/ui/toast';
-import {
-  deleteProductService,
-  getProductsService,
-} from '@/server/services/services';
+import { deleteProductService, getProductsService } from '@/server/services/services';
 import { createColumnHelper } from '@tanstack/vue-table';
 import { toTypedSchema } from '@vee-validate/zod';
 import { Box, LoaderCircle, Plus } from 'lucide-vue-next';
 import { useForm } from 'vee-validate';
 import * as z from 'zod';
-import TableActions from '~/components/shared/TableActions.vue';
 
 import { columns } from './columns';
 
@@ -28,7 +25,7 @@ defineOptions({
 });
 
 useHead({
-  title: 'Backoffice - Nossos Produtos | Urban Mobi',
+  title: 'Backoffice - Gerenciar Produtos Produtos | Urban Mobi',
 });
 
 const isLoading = ref<boolean>(false);
@@ -171,6 +168,7 @@ const finalColumns = [
           dataId: row.original.id,
           options: ['edit', 'delete'],
           onEdit: editProduct,
+          onDelete: deleteProduct,
         }),
       );
     },
@@ -184,9 +182,7 @@ const finalColumns = [
         <Box />
         Produtos Cadastrados
       </h1>
-      <Button @click="toggleShowAddForm">
-        <Plus class="w-4 h-4" /> Novo Produto
-      </Button>
+      <Button @click="toggleShowAddForm"> <Plus class="w-4 h-4" /> Novo Produto </Button>
     </section>
     <section v-if="showAddForm" class="mb-4 py-4">
       <Card class="bg-zinc-200">
@@ -248,7 +244,6 @@ const finalColumns = [
               <FormField v-slot="{ componentField }" name="type">
                 <FormItem>
                   <FormLabel>Tipo de Cobrança</FormLabel>
-                  {{ productType }}
                   <FormControl>
                     <FormSelect
                       :items="[
@@ -273,9 +268,9 @@ const finalColumns = [
               <div class="md:grid md:grid-cols-4 gap-4">
                 <FormField v-slot="{ componentField }" name="basePrice">
                   <FormItem>
-                    <FormLabel>Valor do Base (R$)</FormLabel>
+                    <FormLabel>Valor do Base</FormLabel>
                     <FormControl>
-                      <Input type="text" v-bind="componentField" />
+                      <CurrencyInput v-bind="componentField" />
                       <FormMessage />
                     </FormControl>
                   </FormItem>
@@ -300,18 +295,18 @@ const finalColumns = [
                 </FormField>
                 <FormField v-slot="{ componentField }" name="kmPrice">
                   <FormItem>
-                    <FormLabel>Valor KM Adicional (R$)</FormLabel>
+                    <FormLabel>Valor KM Adicional</FormLabel>
                     <FormControl>
-                      <Input type="text" v-bind="componentField" />
+                      <CurrencyInput v-bind="componentField" />
                       <FormMessage />
                     </FormControl>
                   </FormItem>
                 </FormField>
                 <FormField v-slot="{ componentField }" name="minutePrice">
                   <FormItem>
-                    <FormLabel>Valor Minuto Adicional (R$)</FormLabel>
+                    <FormLabel>Valor Minuto Adicional</FormLabel>
                     <FormControl>
-                      <Input type="text" v-bind="componentField" />
+                      <CurrencyInput v-bind="componentField" />
                       <FormMessage />
                     </FormControl>
                   </FormItem>
@@ -327,46 +322,39 @@ const finalColumns = [
               <div class="md:grid md:grid-cols-4 gap-4">
                 <FormField v-slot="{ componentField }" name="basePrice">
                   <FormItem>
-                    <FormLabel>Valor Base (R$)</FormLabel>
+                    <FormLabel>Valor Base</FormLabel>
                     <FormControl>
-                      <Input type="text" v-bind="componentField" />
+                      <CurrencyInput v-bind="componentField" />
                       <FormMessage />
                     </FormControl>
                   </FormItem>
                 </FormField>
                 <FormField v-slot="{ componentField }" name="kmPrice">
                   <FormItem>
-                    <FormLabel>Valor KM (R$)</FormLabel>
+                    <FormLabel>Valor KM</FormLabel>
                     <FormControl>
-                      <Input type="text" v-bind="componentField" />
+                      <CurrencyInput v-bind="componentField" />
                       <FormMessage />
                     </FormControl>
                   </FormItem>
                 </FormField>
                 <FormField v-slot="{ componentField }" name="minutePrice">
                   <FormItem>
-                    <FormLabel>Valor Minuto (R$)</FormLabel>
+                    <FormLabel>Valor Minuto</FormLabel>
                     <FormControl>
-                      <Input type="text" v-bind="componentField" />
+                      <CurrencyInput v-bind="componentField" />
                       <FormMessage />
                     </FormControl>
                   </FormItem>
                 </FormField>
               </div>
             </div>
-            <div class="mt-6">
+            <div v-if="productType !== ''" class="mt-6">
               <Button type="submit">
-                <LoaderCircle
-                  v-if="isLoadingSend"
-                  class="w-10 h-10 animate-spin"
-                />
+                <LoaderCircle v-if="isLoadingSend" class="w-10 h-10 animate-spin" />
                 Cadastrar
               </Button>
-              <Button
-                variant="ghost"
-                class="ml-4"
-                @click.prevent="toggleShowAddForm"
-              >
+              <Button variant="ghost" class="ml-4" @click.prevent="toggleShowAddForm">
                 Cancelar
               </Button>
             </div>

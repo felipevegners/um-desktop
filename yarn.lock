@@ -457,6 +457,19 @@
     "@floating-ui/utils" "^0.2.9"
     vue-demi ">=0.13.0"
 
+"@googlemaps/js-api-loader@^1.16.2":
+  version "1.16.8"
+  resolved "https://registry.yarnpkg.com/@googlemaps/js-api-loader/-/js-api-loader-1.16.8.tgz#1595a2af80ca07e551fc961d921a2437d1cb3643"
+  integrity sha512-CROqqwfKotdO6EBjZO/gQGVTbeDps5V7Mt9+8+5Q+jTg5CRMi3Ii/L9PmV3USROrt2uWxtGzJHORmByxyo9pSQ==
+
+"@googlemaps/markerclusterer@^2.4.0":
+  version "2.5.3"
+  resolved "https://registry.yarnpkg.com/@googlemaps/markerclusterer/-/markerclusterer-2.5.3.tgz#9f891ce7e8e161775f3a3e2c9f66956810284591"
+  integrity sha512-x7lX0R5yYOoiNectr10wLgCBasNcXFHiADIBdmn7jQllF2B5ENQw5XtZK+hIw4xnV0Df0xhN4LN98XqA5jaiOw==
+  dependencies:
+    fast-deep-equal "^3.1.3"
+    supercluster "^8.0.1"
+
 "@internationalized/date@^3.5.0", "@internationalized/date@^3.5.4":
   version "3.7.0"
   resolved "https://registry.yarnpkg.com/@internationalized/date/-/date-3.7.0.tgz#23a4956308ee108e308517a7137c69ab8f5f2ad9"
@@ -1353,6 +1366,11 @@
   version "1.0.6"
   resolved "https://registry.yarnpkg.com/@types/estree/-/estree-1.0.6.tgz#628effeeae2064a1b4e79f78e81d87b7e5fc7b50"
   integrity sha512-AYnb1nQyY49te+VRAVgmzfcgjYS91mY5P0TKUDCLEM+gNnA+3T6rWITXRLYCpahpqSQbN5cE+gHpnPyXjHWxcw==
+
+"@types/googlemaps@^3.39.1":
+  version "3.43.3"
+  resolved "https://registry.yarnpkg.com/@types/googlemaps/-/googlemaps-3.43.3.tgz#70cf962154a160fe78bcd69d6ccc296dd9175b1f"
+  integrity sha512-ZWNoz/O8MPEpiajvj7QiqCY8tTLFNqNZ/a+s+zTV58wFVNAvvqV4bdGfnsjTb5Cs4V6wEsLrX8XRhmnyYJ2Tdg==
 
 "@types/http-proxy@^1.17.15":
   version "1.17.15"
@@ -3256,6 +3274,13 @@ globby@^14.1.0:
     slash "^5.1.0"
     unicorn-magic "^0.3.0"
 
+google-maps@^4.3.3:
+  version "4.3.3"
+  resolved "https://registry.yarnpkg.com/google-maps/-/google-maps-4.3.3.tgz#b8026723534e04713303f80853c32a1f1f6ed3cd"
+  integrity sha512-MQbEgBNQbGyV7mfS2tlFgW4EoGKLia24BvAl4a+kgsYWt4283kyPpaay/yKIsScQLr7nSUONaLNfOdMsCuJDEw==
+  dependencies:
+    "@types/googlemaps" "^3.39.1"
+
 gopd@^1.2.0:
   version "1.2.0"
   resolved "https://registry.yarnpkg.com/gopd/-/gopd-1.2.0.tgz#89f56b8217bdbc8802bd299df6d7f1081d7e51a1"
@@ -3746,6 +3771,11 @@ jws@^3.2.2:
   dependencies:
     jwa "^1.4.1"
     safe-buffer "^5.0.1"
+
+kdbush@^4.0.2:
+  version "4.0.2"
+  resolved "https://registry.yarnpkg.com/kdbush/-/kdbush-4.0.2.tgz#2f7b7246328b4657dd122b6c7f025fbc2c868e39"
+  integrity sha512-WbCVYJ27Sz8zi9Q7Q0xHC+05iwkm3Znipc2XTlrnJbsHMYktW4hPhXUE8Ys1engBrvffoSCqbil1JQAa7clRpA==
 
 keygrip@~1.1.0:
   version "1.1.0"
@@ -5768,6 +5798,13 @@ sucrase@^3.35.0:
     pirates "^4.0.1"
     ts-interface-checker "^0.1.9"
 
+supercluster@^8.0.1:
+  version "8.0.1"
+  resolved "https://registry.yarnpkg.com/supercluster/-/supercluster-8.0.1.tgz#9946ba123538e9e9ab15de472531f604e7372df5"
+  integrity sha512-IiOea5kJ9iqzD2t7QJq/cREyLHTtSmUT6gQsweojg9WH2sYJqZK9SswTu6jrscO6D1G5v5vYZ9ru/eq85lXeZQ==
+  dependencies:
+    kdbush "^4.0.2"
+
 superjson@^2.2.1:
   version "2.2.2"
   resolved "https://registry.yarnpkg.com/superjson/-/superjson-2.2.2.tgz#9d52bf0bf6b5751a3c3472f1292e714782ba3173"
@@ -6470,6 +6507,15 @@ vue-router@^4.5.0, vue-router@latest:
   integrity sha512-HDuk+PuH5monfNuY+ct49mNmkCRK4xJAV9Ts4z9UFc4rzdDnxQLyCMGGc8pKhZhHTVzfanpNwB/lwqevcBwI4w==
   dependencies:
     "@vue/devtools-api" "^6.6.4"
+
+vue3-google-map@^0.21.1:
+  version "0.21.1"
+  resolved "https://registry.yarnpkg.com/vue3-google-map/-/vue3-google-map-0.21.1.tgz#5907aa34e55b61fe520cc324fe4a37be70bfeb10"
+  integrity sha512-5CA/1GLei4thQgXhNVBSBcJvylOhcrk2a/ISdaticdn0/Ipsw0/zHyGL7tp98eAajPwiwFOnl9epKkhdMfv8sA==
+  dependencies:
+    "@googlemaps/js-api-loader" "^1.16.2"
+    "@googlemaps/markerclusterer" "^2.4.0"
+    fast-deep-equal "^3.1.3"
 
 vue@^3.4.5, vue@^3.5.13, vue@latest:
   version "3.5.13"

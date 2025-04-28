@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { useToast } from '@/components/ui/toast/use-toast';
 import { createColumnHelper } from '@tanstack/vue-table';
 import { toTypedSchema } from '@vee-validate/zod';
-import { ArrowUpDown, LoaderCircle, Plus, Info, Search } from 'lucide-vue-next';
+import { ArrowUpDown, Car, Info, LoaderCircle, Plus, Search } from 'lucide-vue-next';
 import { storeToRefs } from 'pinia';
 import { useForm } from 'vee-validate';
 import { onMounted, ref } from 'vue';
@@ -19,8 +19,7 @@ const { toast } = useToast();
 
 const driverStore = userDriverStore();
 const { loadingData, drivers, loadingSend } = storeToRefs(driverStore);
-const { getDriversAction, createNewDriverAction, deleteDriverAction } =
-  driverStore;
+const { getDriversAction, createNewDriverAction, deleteDriverAction } = driverStore;
 
 definePageMeta({
   layout: 'admin',
@@ -42,12 +41,10 @@ const driverCars = reactive([
     carYear: '',
     carDocumentFile: {
       name: '',
-      url: ''
-    }
+      url: '',
+    },
   },
 ]);
-
-
 
 onMounted(async () => {
   await getDriversAction();
@@ -71,33 +68,25 @@ const columns = [
         Button,
         {
           variant: 'ghost',
-          onClick: () =>
-            column.toggleSorting(column.getIsSorted() === 'asc'),
+          onClick: () => column.toggleSorting(column.getIsSorted() === 'asc'),
         },
-        () => ['Nome', h(ArrowUpDown, { class: 'ml-2 h-4 w-4' })]
+        () => ['Nome', h(ArrowUpDown, { class: 'ml-2 h-4 w-4' })],
       );
     },
-    cell: ({ row }) =>
-      h('div', { class: 'capitalize' }, row.getValue('name')),
+    cell: ({ row }) => h('div', { class: 'capitalize' }, row.getValue('name')),
   }),
   columnHelper.accessor('email', {
     header: () => h('div', { class: 'text-left' }, 'E-mail'),
-    cell: ({ row }) =>
-      h('div', { class: 'lowercase' }, row.getValue('email')),
+    cell: ({ row }) => h('div', { class: 'lowercase' }, row.getValue('email')),
   }),
   columnHelper.accessor('phone', {
     header: () => h('div', { class: 'text-left' }, 'Celular'),
-    cell: ({ row }) =>
-      h('div', { class: 'capitalize' }, row.getValue('phone')),
+    cell: ({ row }) => h('div', { class: 'capitalize' }, row.getValue('phone')),
   }),
   columnHelper.accessor('document', {
     header: () => h('div', { class: 'text-left' }, 'CPF'),
     cell: ({ row }) => {
-      return h(
-        'div',
-        { class: 'text-left font-medium' },
-        row.getValue('document')
-      );
+      return h('div', { class: 'text-left font-medium' }, row.getValue('document'));
     },
   }),
   columnHelper.accessor('status', {
@@ -107,10 +96,11 @@ const columns = [
       return h(
         'div',
         {
-          class: `px-2 flex items-center justify-center h-6 rounded-lg text-white text-xs max-w-[80px] ${status === 'active' ? 'bg-green-600' : 'bg-red-600'
-            }`,
+          class: `px-2 flex items-center justify-center h-6 rounded-lg text-white text-xs max-w-[80px] ${
+            status === 'active' ? 'bg-green-600' : 'bg-red-600'
+          }`,
         },
-        status === 'active' ? 'Ativo' : 'Inativo'
+        status === 'active' ? 'Ativo' : 'Inativo',
       );
     },
   }),
@@ -121,10 +111,11 @@ const columns = [
       return h(
         'div',
         {
-          class: `px-1 flex items-center justify-center h-6 rounded-lg text-white text-xs max-w-[80px] ${enabled === true ? 'bg-blue-600' : 'bg-zinc-600'
-            }`,
+          class: `px-1 flex items-center justify-center h-6 rounded-lg text-white text-xs max-w-[80px] ${
+            enabled === true ? 'bg-blue-600' : 'bg-zinc-600'
+          }`,
         },
-        enabled === true ? 'Permitido' : 'Negado'
+        enabled === true ? 'Permitido' : 'Negado',
       );
     },
   }),
@@ -142,7 +133,7 @@ const columns = [
           data: driverData,
           remove: handleDeleteDriver,
           formControl: toggleShowAddForm,
-        })
+        }),
       );
     },
   }),
@@ -175,45 +166,33 @@ const driverSchema = toTypedSchema(
     status: z.string().min(2).max(50),
     picture: z
       .any()
-      .refine(
-        (file) => file?.size <= MAX_FILE_SIZE,
-        `Tamanho máximo é de 5Mb.`
-      )
+      .refine((file) => file?.size <= MAX_FILE_SIZE, `Tamanho máximo é de 5Mb.`)
       .refine(
         (file) => ACCEPTED_IMAGE_TYPES.includes(file?.type),
-        'Apenas arquivos nos formatos .jpg, .jpeg, .png, .webp ou PDF são aceitos '
+        'Apenas arquivos nos formatos .jpg, .jpeg, .png, .webp ou PDF são aceitos ',
       ),
     cnhCopy: z
       .any()
-      .refine(
-        (file) => file?.size <= MAX_FILE_SIZE,
-        `Tamanho máximo é de 5Mb.`
-      )
+      .refine((file) => file?.size <= MAX_FILE_SIZE, `Tamanho máximo é de 5Mb.`)
       .refine(
         (file) => ACCEPTED_IMAGE_TYPES.includes(file?.type),
-        'Apenas arquivos nos formatos .jpg, .jpeg, .png, .webp ou PDF são aceitos '
+        'Apenas arquivos nos formatos .jpg, .jpeg, .png, .webp ou PDF são aceitos ',
       ),
     addressCopy: z
       .any()
-      .refine(
-        (file) => file?.size <= MAX_FILE_SIZE,
-        `Tamanho máximo é de 5Mb.`
-      )
+      .refine((file) => file?.size <= MAX_FILE_SIZE, `Tamanho máximo é de 5Mb.`)
       .refine(
         (file) => ACCEPTED_IMAGE_TYPES.includes(file?.type),
-        'Apenas arquivos nos formatos .jpg, .jpeg, .png, .webp ou PDF são aceitos '
+        'Apenas arquivos nos formatos .jpg, .jpeg, .png, .webp ou PDF são aceitos ',
       ),
     bankCopy: z
       .any()
-      .refine(
-        (file) => file?.size <= MAX_FILE_SIZE,
-        `Tamanho máximo é de 5Mb.`
-      )
+      .refine((file) => file?.size <= MAX_FILE_SIZE, `Tamanho máximo é de 5Mb.`)
       .refine(
         (file) => ACCEPTED_IMAGE_TYPES.includes(file?.type),
-        'Apenas arquivos nos formatos .jpg, .jpeg, .png, .webp ou PDF são aceitos '
+        'Apenas arquivos nos formatos .jpg, .jpeg, .png, .webp ou PDF são aceitos ',
       ),
-  })
+  }),
 );
 
 const driversForm = useForm({
@@ -245,7 +224,7 @@ const onSubmit = driversForm.handleSubmit(async (values) => {
         streetNumber: values.streetNumber,
         addComplement: values.addComplement,
         city: values.city,
-        state: values.state
+        state: values.state,
       },
       rideArea: values.rideArea,
       driverFiles: {
@@ -280,7 +259,6 @@ const onSubmit = driversForm.handleSubmit(async (values) => {
       enabled: true,
     };
     await createNewDriverAction(newDriverData);
-
   } catch (error) {
     toast({
       title: 'Oops!',
@@ -300,56 +278,75 @@ const onSubmit = driversForm.handleSubmit(async (values) => {
 });
 
 const findAddress = async () => {
-  const { zipcode } = driversForm.values
+  const { zipcode } = driversForm.values;
 
   if (zipcode?.length !== 8) {
     toast({
-      title: "Opss!",
-      class: "bg-red-500 border-0 text-white text-2xl",
-      description: `CEP inválido. Digite novamente.`
+      title: 'Opss!',
+      class: 'bg-red-500 border-0 text-white text-2xl',
+      description: `CEP inválido. Digite novamente.`,
     });
   } else {
     try {
       isLoadingAddress.value = true;
-      const address: any = await findAddressByZipcode(zipcode as string)
+      const address: any = await findAddressByZipcode(zipcode as string);
       if (address.erro) {
         toast({
-          title: "CEP Inválido",
-          class: "bg-red-500 border-0 text-white text-2xl",
-          description: `Confira o CEP e tente novamente.`
+          title: 'CEP Inválido',
+          class: 'bg-red-500 border-0 text-white text-2xl',
+          description: `Confira o CEP e tente novamente.`,
         });
         //@ts-ignore
         document.querySelector("input[name='zipcode']").focus();
-        document.querySelector("input[name='zipcode']")?.classList.add("bg-red-300", "focus:ring-0", "focus-visible:ring-0", "focus-visible:outline-3", "focus-visible:outline-offset-2", "focus-visible:outline-red-500");
+        document
+          .querySelector("input[name='zipcode']")
+          ?.classList.add(
+            'bg-red-300',
+            'focus:ring-0',
+            'focus-visible:ring-0',
+            'focus-visible:outline-3',
+            'focus-visible:outline-offset-2',
+            'focus-visible:outline-red-500',
+          );
       } else {
-        document.querySelector("input[name='zipcode']")?.classList.remove("bg-red-300", "focus-visible:ring-0", "focus-visible:outline-3", "focus-visible:outline-offset-2", "focus-visible:outline-red-500");
+        document
+          .querySelector("input[name='zipcode']")
+          ?.classList.remove(
+            'bg-red-300',
+            'focus-visible:ring-0',
+            'focus-visible:outline-3',
+            'focus-visible:outline-offset-2',
+            'focus-visible:outline-red-500',
+          );
         driversForm.setValues({
           zipcode: address?.cep.replace('-', ''),
           streetName: address?.logradouro,
           city: address?.localidade,
           neighborhood: address?.bairro,
           state: address?.estado,
-        })
+        });
       }
     } catch (error) {
       toast({
-        title: "Opss!",
-        class: "bg-red-500 border-0 text-white text-2xl",
-        description: `Ocorreu um erro ao buscar o endereço. Tente novamente.`
+        title: 'Opss!',
+        class: 'bg-red-500 border-0 text-white text-2xl',
+        description: `Ocorreu um erro ao buscar o endereço. Tente novamente.`,
       });
-      console.log("Erro ao buscar endereço -> ", error)
+      console.log('Erro ao buscar endereço -> ', error);
     } finally {
-      isLoadingAddress.value = false
+      isLoadingAddress.value = false;
     }
   }
-
-}
+};
 </script>
 
 <template>
   <main class="p-6">
-    <section class="mb-6 flex items-center gap-6">
-      <h1 class="font-bold text-black text-3xl">Base de Motoristas</h1>
+    <section class="mb-6 flex items-center justify-between gap-6">
+      <h1 class="flex items-center gap-2 font-bold text-2xl">
+        <Car />
+        Base de Motoristas
+      </h1>
       <div>
         <Button @click="toggleShowAddForm">
           <Plus class="w-4 h-4" /> Cadastrar Motorista
@@ -369,7 +366,11 @@ const findAddress = async () => {
                 <FormItem>
                   <FormLabel>Nome</FormLabel>
                   <FormControl>
-                    <Input type="text" placeholder="ex.: João Silva" v-bind="componentField" />
+                    <Input
+                      type="text"
+                      placeholder="ex.: João Silva"
+                      v-bind="componentField"
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -378,7 +379,11 @@ const findAddress = async () => {
                 <FormItem>
                   <FormLabel>E-mail</FormLabel>
                   <FormControl>
-                    <Input type="text" placeholder="joao_silva@email.com.br" v-bind="componentField" />
+                    <Input
+                      type="text"
+                      placeholder="joao_silva@email.com.br"
+                      v-bind="componentField"
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -387,7 +392,11 @@ const findAddress = async () => {
                 <FormItem>
                   <FormLabel>Celular</FormLabel>
                   <FormControl>
-                    <Input type="text" placeholder="ex.: (11) 99876-5432" v-bind="componentField" />
+                    <Input
+                      type="text"
+                      placeholder="ex.: (11) 99876-5432"
+                      v-bind="componentField"
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -398,7 +407,11 @@ const findAddress = async () => {
                 <FormItem class="col-span-1">
                   <FormLabel>CPF</FormLabel>
                   <FormControl>
-                    <Input type="text" placeholder="222.333.444-56" v-bind="componentField" />
+                    <Input
+                      type="text"
+                      placeholder="222.333.444-56"
+                      v-bind="componentField"
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -407,7 +420,11 @@ const findAddress = async () => {
                 <FormItem class="col-span-1">
                   <FormLabel>Número CNH</FormLabel>
                   <FormControl>
-                    <Input type="text" placeholder="ex. 23456789019" v-bind="componentField" />
+                    <Input
+                      type="text"
+                      placeholder="ex. 23456789019"
+                      v-bind="componentField"
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -416,16 +433,20 @@ const findAddress = async () => {
                 <FormItem>
                   <FormLabel>Status</FormLabel>
                   <FormControl>
-                    <FormSelect v-bind="componentField" :items="[
-                      {
-                        label: 'Ativo',
-                        value: 'active',
-                      },
-                      {
-                        label: 'Inativo',
-                        value: 'inactive',
-                      },
-                    ]" :label="'Selecione'" />
+                    <FormSelect
+                      v-bind="componentField"
+                      :items="[
+                        {
+                          label: 'Ativo',
+                          value: 'active',
+                        },
+                        {
+                          label: 'Inativo',
+                          value: 'inactive',
+                        },
+                      ]"
+                      :label="'Selecione'"
+                    />
                   </FormControl>
                 </FormItem>
               </FormField>
@@ -439,11 +460,23 @@ const findAddress = async () => {
                     <FormLabel>CEP</FormLabel>
                     <FormControl>
                       <div class="flex gap-2">
-                        <Input type="text" placeholder="12345-000" v-bind="componentField" v-model="zipcode"
-                          maxlength="8" />
-                        <Button @click.prevent="findAddress" :disabled="zipcode.length !== 8" type="button">
+                        <Input
+                          type="text"
+                          placeholder="12345-000"
+                          v-bind="componentField"
+                          v-model="zipcode"
+                          maxlength="8"
+                        />
+                        <Button
+                          @click.prevent="findAddress"
+                          :disabled="zipcode.length !== 8"
+                          type="button"
+                        >
                           <Search v-if="!isLoadingAddress" class="w-10 h-10" />
-                          <LoaderCircle v-if="isLoadingAddress" class="w-10 h-10 animate-spin" />
+                          <LoaderCircle
+                            v-if="isLoadingAddress"
+                            class="w-10 h-10 animate-spin"
+                          />
                         </Button>
                       </div>
                     </FormControl>
@@ -454,7 +487,11 @@ const findAddress = async () => {
                   <FormItem class="col-span-1">
                     <FormLabel>Endereço</FormLabel>
                     <FormControl>
-                      <Input type="text" placeholder="Insira o nome da rua" v-bind="componentField" />
+                      <Input
+                        type="text"
+                        placeholder="Insira o nome da rua"
+                        v-bind="componentField"
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -472,7 +509,11 @@ const findAddress = async () => {
                   <FormItem class="col-span-1">
                     <FormLabel>Complemento</FormLabel>
                     <FormControl>
-                      <Input type="text" placeholder="ex. BL A - AP 11" v-bind="componentField" />
+                      <Input
+                        type="text"
+                        placeholder="ex. BL A - AP 11"
+                        v-bind="componentField"
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -481,7 +522,11 @@ const findAddress = async () => {
                   <FormItem class="col-span-1">
                     <FormLabel>Bairro</FormLabel>
                     <FormControl>
-                      <Input type="text" placeholder="ex.: Vila Santana" v-bind="componentField" />
+                      <Input
+                        type="text"
+                        placeholder="ex.: Vila Santana"
+                        v-bind="componentField"
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -490,7 +535,11 @@ const findAddress = async () => {
                   <FormItem class="col-span-1">
                     <FormLabel>Cidade</FormLabel>
                     <FormControl>
-                      <Input type="text" placeholder="ex.: São Paulo" v-bind="componentField" />
+                      <Input
+                        type="text"
+                        placeholder="ex.: São Paulo"
+                        v-bind="componentField"
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -499,7 +548,11 @@ const findAddress = async () => {
                   <FormItem class="col-span-1">
                     <FormLabel>Estado</FormLabel>
                     <FormControl>
-                      <Input type="text" placeholder="ex.: São Paulo" v-bind="componentField" />
+                      <Input
+                        type="text"
+                        placeholder="ex.: São Paulo"
+                        v-bind="componentField"
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -508,7 +561,11 @@ const findAddress = async () => {
                   <FormItem class="col-span-1">
                     <FormLabel>Área de atuação</FormLabel>
                     <FormControl>
-                      <Input type="text" placeholder="ex.: São Paulo, Jundiaí, Campinas" v-bind="componentField" />
+                      <Input
+                        type="text"
+                        placeholder="ex.: São Paulo, Jundiaí, Campinas"
+                        v-bind="componentField"
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -516,18 +573,14 @@ const findAddress = async () => {
               </div>
             </section>
             <section class="my-10">
-              <h2 class="mb-4 text-lg font-bold">
-                Dados do(s) Veículo(s)
-              </h2>
+              <h2 class="mb-4 text-lg font-bold">Dados do(s) Veículo(s)</h2>
               <Separator class="mb-4" />
               <div class="grid grid-cols-3 gap-8">
                 <AddCarsForm v-model="driverCars" class="col-span-3" />
               </div>
             </section>
             <section class="mt-6 mb-8">
-              <h2 class="mb-4 text-lg font-bold">
-                Enviar arquivos
-              </h2>
+              <h2 class="mb-4 text-lg font-bold">Enviar arquivos</h2>
               <div class="grid grid-cols-3 gap-6">
                 <FormField v-slot="{ handleChange, handleBlur }" name="picture">
                   <FormItem class="col-span-1">
@@ -546,7 +599,12 @@ const findAddress = async () => {
                       </TooltipProvider>
                     </div>
                     <FormControl>
-                      <Input id="picture" type="file" @change="handleChange" @blur="handleBlur" />
+                      <Input
+                        id="picture"
+                        type="file"
+                        @change="handleChange"
+                        @blur="handleBlur"
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -568,7 +626,12 @@ const findAddress = async () => {
                       </TooltipProvider>
                     </div>
                     <FormControl>
-                      <Input id="cnhCopy" type="file" @change="handleChange" @blur="handleBlur" />
+                      <Input
+                        id="cnhCopy"
+                        type="file"
+                        @change="handleChange"
+                        @blur="handleBlur"
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -590,7 +653,12 @@ const findAddress = async () => {
                       </TooltipProvider>
                     </div>
                     <FormControl>
-                      <Input id="addressCopy" type="file" @change="handleChange" @blur="handleBlur" />
+                      <Input
+                        id="addressCopy"
+                        type="file"
+                        @change="handleChange"
+                        @blur="handleBlur"
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -606,13 +674,21 @@ const findAddress = async () => {
                           </TooltipTrigger>
                           <TooltipContent class="bg-zinc-700 text-white">
                             <TooltipArrow />
-                            <p>Enviar comprovante dos dados bancário constando nome completo, agência e conta</p>
+                            <p>
+                              Enviar comprovante dos dados bancário constando nome
+                              completo, agência e conta
+                            </p>
                           </TooltipContent>
                         </Tooltip>
                       </TooltipProvider>
                     </div>
                     <FormControl>
-                      <Input id="bankCopy" type="file" @change="handleChange" @blur="handleBlur" />
+                      <Input
+                        id="bankCopy"
+                        type="file"
+                        @change="handleChange"
+                        @blur="handleBlur"
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>

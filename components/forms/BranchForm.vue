@@ -137,7 +137,6 @@ const compileBudget = (value: string) => {
   <section class="px-6">
     <h3 v-if="editMode" class="mb-4 text-lg font-bold">2. Dados da Filial</h3>
     <h3 v-else class="mb-4 text-lg font-bold">2. Insira os dados da Filial</h3>
-    <div class="mb-6 max-w-[150px]"></div>
     <div class="mb-4 w-full md:grid md:grid-cols-4 gap-6">
       <FormField v-slot="{ componentField }" name="branchCode">
         <FormItem>

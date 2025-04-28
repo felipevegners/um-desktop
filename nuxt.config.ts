@@ -1,5 +1,7 @@
 import type { RouteHandlerConfig } from 'uploadthing/types';
 
+const { GMAPS_API_KEY, DATABASE_URL } = process.env;
+
 // https://nuxt.com/docs/api/configuration/nuxt-config
 export type ModuleOptions = RouteHandlerConfig & {
   /**
@@ -13,8 +15,7 @@ export default defineNuxtConfig({
   devtools: { enabled: true },
   app: {
     head: {
-      title:
-        'Urban Mobi - Plataforma de Gestão de Mobilidade Urbana e Corporativa',
+      title: 'Urban Mobi - Plataforma de Gestão de Mobilidade Urbana e Corporativa',
       htmlAttrs: {
         lang: 'pt-BR',
       },
@@ -61,7 +62,8 @@ export default defineNuxtConfig({
     authSecret: process.env.AUTH_SECRET,
     DATABASE_URL: process.env.DATABASE_URL,
     public: {
-      DATABASE_URL: process.env.DATABASE_URL,
+      GMAPS_API_KEY,
+      DATABASE_URL,
     },
   },
   imports: {

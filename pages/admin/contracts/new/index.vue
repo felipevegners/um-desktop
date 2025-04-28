@@ -14,13 +14,7 @@ import { Button } from '@/components/ui/button';
 import { useToast } from '@/components/ui/toast/use-toast';
 import { findAddressByZipcode } from '@/server/services/FindAddress';
 import { toTypedSchema } from '@vee-validate/zod';
-import {
-  ArrowLeft,
-  ArrowRight,
-  Check,
-  FileText,
-  LoaderCircle,
-} from 'lucide-vue-next';
+import { ArrowLeft, ArrowRight, Check, FileText, LoaderCircle } from 'lucide-vue-next';
 import { useForm } from 'vee-validate';
 import { computed, ref } from 'vue';
 import * as z from 'zod';
@@ -89,10 +83,7 @@ const schemas = [
       website: z.string().min(2).max(50),
       logo: z
         .any()
-        .refine(
-          (file) => file?.size <= MAX_FILE_SIZE,
-          `Tamanho máximo é de 4Mb.`,
-        )
+        .refine((file) => file?.size <= MAX_FILE_SIZE, `Tamanho máximo é de 4Mb.`)
         .refine(
           (file) => ACCEPTED_IMAGE_TYPES.includes(file?.type),
           'Apenas arquivos nos formatos .jpg, .jpeg ou .png são aceitos ',
@@ -192,7 +183,7 @@ function prevStep() {
     </header>
     <section class="mb-10 flex items-center justify-between">
       <h1 class="flex items-center gap-2 text-2xl font-bold">
-        <FileText class="w-6 h-6" />
+        <FileText :size="24" />
         Adicionar Novo Contrato
       </h1>
     </section>

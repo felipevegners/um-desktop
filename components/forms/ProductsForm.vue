@@ -2,6 +2,7 @@
 import { Button } from '@/components/ui/button';
 import { useProductsStore } from '@/stores/admin/products.store';
 import { Plus } from 'lucide-vue-next';
+import { vMaska } from 'maska/vue';
 import { storeToRefs } from 'pinia';
 import { computed, onBeforeMount, ref } from 'vue';
 
@@ -40,9 +41,7 @@ const addProduct = (value: any) => {
 };
 
 const addNewProduct = (value: any) => {
-  const index = newProductsList.value.findIndex(
-    (obj: any) => obj.id === value.id,
-  );
+  const index = newProductsList.value.findIndex((obj: any) => obj.id === value.id);
   if (index > -1) {
     newProductsList.value.splice(index, 1);
   } else {
@@ -70,10 +69,7 @@ const checkAdded = (id: string) => {
 </script>
 <template>
   <section class="px-6">
-    <div
-      v-if="editMode"
-      class="my-6 p-6 flex items-center gap-6 bg-white rounded-md"
-    >
+    <div v-if="editMode" class="my-6 p-6 flex items-center gap-6 bg-white rounded-md">
       <div class="flex gap-4">
         <Button
           v-if="!showNewProductsList && eligibleProducts.length > 0"
@@ -139,17 +135,18 @@ const checkAdded = (id: string) => {
             v-if="product.type === 'contract'"
             class="p-4 border border-zinc-700 rounded-md"
           >
-            <p class="mb-8 font-bold border-b border-b-zinc-700">
-              Editar valores
-            </p>
+            <p class="mb-8 font-bold border-b border-b-zinc-700">Editar valores</p>
             <div class="md:grid md:grid-cols-2 gap-4">
               <div>
-                <Label for="basePrice">Valor Base (R$)</Label>
+                <Label for="basePrice">Valor Base</Label>
                 <Input
                   type="text"
                   v-model="product.basePrice"
                   name="basePrice"
                   class="mt-2"
+                  v-maska="'R$ 9#.99#,##'"
+                  data-maska-tokens="9:[0-9]:repeated"
+                  data-maska-reversed
                 />
               </div>
               <div>
@@ -173,7 +170,7 @@ const checkAdded = (id: string) => {
                 />
               </div>
               <div>
-                <Label for="includedHours">Km Adicional (R$)</Label>
+                <Label for="includedHours">Km Adicional</Label>
                 <Input
                   type="text"
                   v-model="product.kmPrice"
@@ -182,7 +179,7 @@ const checkAdded = (id: string) => {
                 />
               </div>
               <div>
-                <Label for="includedHours">Minuto Adicional (R$)</Label>
+                <Label for="includedHours">Minuto Adicional</Label>
                 <Input
                   type="text"
                   :default-value="product.minutePrice"
@@ -197,12 +194,10 @@ const checkAdded = (id: string) => {
             v-if="product.type === 'free-km' || product.type === 'free'"
             class="p-4 border border-zinc-700 rounded-md"
           >
-            <p class="mb-8 font-bold border-b border-b-zinc-700">
-              Editar valores
-            </p>
+            <p class="mb-8 font-bold border-b border-b-zinc-700">Editar valores</p>
             <div class="md:grid md:grid-cols-2 gap-4">
               <div>
-                <Label for="basePrice">Valor Base (R$)</Label>
+                <Label for="basePrice">Valor Base</Label>
                 <Input
                   type="text"
                   v-model="product.basePrice"
@@ -211,7 +206,7 @@ const checkAdded = (id: string) => {
                 />
               </div>
               <div>
-                <Label for="includedHours">Valor Km Adicional (R$)</Label>
+                <Label for="includedHours">Valor Km Adicional</Label>
                 <Input
                   type="text"
                   v-model="product.kmPrice"
@@ -220,7 +215,7 @@ const checkAdded = (id: string) => {
                 />
               </div>
               <div>
-                <Label for="includedHours">Valor Minuto Adicional (R$)</Label>
+                <Label for="includedHours">Valor Minuto Adicional</Label>
                 <Input
                   type="text"
                   :default-value="product.minutePrice"
@@ -244,9 +239,7 @@ const checkAdded = (id: string) => {
         <Checkbox
           id="terms"
           @update:checked="addNewProduct(product)"
-          :checked="
-            !!newProductsList.find((item: any) => item.id === product.id)
-          "
+          :checked="!!newProductsList.find((item: any) => item.id === product.id)"
         />
         <div class="font-normal uppercase flex items-center gap-4">
           <div
@@ -268,12 +261,10 @@ const checkAdded = (id: string) => {
             v-if="product.type === 'contract'"
             class="p-4 border border-zinc-700 rounded-md"
           >
-            <p class="mb-8 font-bold border-b border-b-zinc-700">
-              Editar valores
-            </p>
+            <p class="mb-8 font-bold border-b border-b-zinc-700">Editar valores</p>
             <div class="md:grid md:grid-cols-2 gap-4">
               <div>
-                <Label for="basePrice">Valor Base (R$)</Label>
+                <Label for="basePrice">Valor Base</Label>
                 <Input
                   type="text"
                   v-model="product.basePrice"
@@ -302,7 +293,7 @@ const checkAdded = (id: string) => {
                 />
               </div>
               <div>
-                <Label for="includedHours">Km Adicional (R$)</Label>
+                <Label for="includedHours">Km Adicional</Label>
                 <Input
                   type="text"
                   v-model="product.kmPrice"
@@ -311,7 +302,7 @@ const checkAdded = (id: string) => {
                 />
               </div>
               <div>
-                <Label for="includedHours">Minuto Adicional (R$)</Label>
+                <Label for="includedHours">Minuto Adicional</Label>
                 <Input
                   type="text"
                   :default-value="product.minutePrice"
@@ -326,12 +317,10 @@ const checkAdded = (id: string) => {
             v-if="product.type === 'free-km' || product.type === 'free'"
             class="p-4 border border-zinc-700 rounded-md"
           >
-            <p class="mb-8 font-bold border-b border-b-zinc-700">
-              Editar valores
-            </p>
+            <p class="mb-8 font-bold border-b border-b-zinc-700">Editar valores</p>
             <div class="md:grid md:grid-cols-2 gap-4">
               <div>
-                <Label for="basePrice">Valor Base (R$)</Label>
+                <Label for="basePrice">Valor Base</Label>
                 <Input
                   type="text"
                   v-model="product.basePrice"
@@ -340,7 +329,7 @@ const checkAdded = (id: string) => {
                 />
               </div>
               <div>
-                <Label for="includedHours">Valor Km Adicional (R$)</Label>
+                <Label for="includedHours">Valor Km Adicional</Label>
                 <Input
                   type="text"
                   v-model="product.kmPrice"
@@ -349,7 +338,7 @@ const checkAdded = (id: string) => {
                 />
               </div>
               <div>
-                <Label for="includedHours">Valor Minuto Adicional (R$)</Label>
+                <Label for="includedHours">Valor Minuto Adicional</Label>
                 <Input
                   type="text"
                   :default-value="product.minutePrice"

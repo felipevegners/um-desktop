@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import CurrencyInput from '@/components/shared/CurrencyInput.vue';
 import { Info } from 'lucide-vue-next';
 
 definePageMeta({
@@ -8,7 +9,7 @@ definePageMeta({
 <template>
   <section class="px-6">
     <div class="mb-6"></div>
-    <div class="mb-4 flex items-end gap-6">
+    <div class="mb-4 flex items-end gap-10">
       <FormField v-slot="{ componentField }" name="mainBudget">
         <FormItem class="max-w-[350px]">
           <div class="flex flex-col">
@@ -19,9 +20,9 @@ definePageMeta({
             >
           </div>
           <FormControl>
-            <Input type="text" v-bind="componentField" />
+            <CurrencyInput v-bind="componentField" />
           </FormControl>
-          <FormMessage />
+          <FormMessage class="absolute" />
         </FormItem>
       </FormField>
       <FormField v-slot="{ componentField }" name="paymentTerm">
@@ -36,7 +37,7 @@ definePageMeta({
           <FormControl>
             <Input type="text" v-bind="componentField" />
           </FormControl>
-          <FormMessage />
+          <FormMessage class="absolute" />
         </FormItem>
       </FormField>
       <FormField v-slot="{ componentField }" name="paymentDueDate">
@@ -51,7 +52,7 @@ definePageMeta({
           <FormControl>
             <Input type="number" v-bind="componentField" />
           </FormControl>
-          <FormMessage />
+          <FormMessage class="absolute" />
         </FormItem>
       </FormField>
     </div>
