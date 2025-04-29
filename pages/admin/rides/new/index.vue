@@ -247,7 +247,7 @@ const onMapClick = (event: any) => {
               </div>
               <div>
                 <GoogleMap
-                  api-key="AIzaSyBWGVwrdiUr3IzWGFC713hIzRaNx2fYV4U"
+                  api-key=""
                   style="width: 100%; height: 500px"
                   :center="center"
                   :zoom="16"
