@@ -1,6 +1,6 @@
 import type { RouteHandlerConfig } from 'uploadthing/types';
 
-const { GMAPS_API_KEY, DATABASE_URL } = process.env;
+const { DATABASE_URL } = process.env;
 
 // https://nuxt.com/docs/api/configuration/nuxt-config
 export type ModuleOptions = RouteHandlerConfig & {
@@ -62,7 +62,7 @@ export default defineNuxtConfig({
     authSecret: process.env.AUTH_SECRET,
     DATABASE_URL: process.env.DATABASE_URL,
     public: {
-      GMAPS_API_KEY,
+      // GOOGLE_MAPS_API_KEY,
       DATABASE_URL,
     },
   },
@@ -73,4 +73,13 @@ export default defineNuxtConfig({
     routerPath: '~/server/uploadthing.ts',
   },
   ssr: false,
+  plugins: ['~/plugins/VueGoogleMaps'],
+  build: {
+    transpile: ['@fawmi/vue-google-maps'],
+  },
+  vite: {
+    optimizeDeps: {
+      include: ['@fawmi/vue-google-maps', 'fast-deep-equal'],
+    },
+  },
 });
