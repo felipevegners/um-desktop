@@ -1,7 +1,7 @@
 export default defineEventHandler(async (event) => {
   const query = getQuery(event);
   const { origins, destinations } = query;
-  const API_KEY = 'AIzaSyBWGVwrdiUr3IzWGFC713hIzRaNx2fYV4U';
+  const API_KEY = '';
   const url = 'https://maps.googleapis.com/maps/api/distancematrix/json';
   try {
     const response: any = await $fetch(url, {
