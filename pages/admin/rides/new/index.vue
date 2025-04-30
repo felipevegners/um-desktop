@@ -1,13 +1,15 @@
 <script setup lang="ts">
+import DatePicker from '@/components/shared/DatePicker.vue';
 import FormSelect from '@/components/shared/FormSelect.vue';
 import { getRideCalculationService, getRideRoutesService } from '@/server/services/rides';
+import { useBranchesStore } from '@/stores/admin/branches.store';
 import { useContractsStore } from '@/stores/admin/contracts.store';
 import {
-  Calculator,
   CalendarDays,
   LoaderCircle,
-  MapPin,
-  MapPinCheck,
+  SquareDot,
+  SquareSquare,
+  Waypoints,
 } from 'lucide-vue-next';
 import { storeToRefs } from 'pinia';
 import { GoogleMap, Marker, Polyline } from 'vue3-google-map';
@@ -22,11 +24,22 @@ useHead({
 });
 
 const contractsStore = useContractsStore();
+const branchesStore = useBranchesStore();
 const { getContractsAction, getContractByIdAction } = contractsStore;
 const { contracts, contract, isLoading } = storeToRefs(contractsStore);
+const { getBranchByIdAction } = branchesStore;
+const { branch } = storeToRefs(branchesStore);
 
 const selectedBranches = ref<any>([]);
+const selectedAreas = ref<any>([]);
 const loadingBraches = ref<boolean>(false);
+const loadingAreas = ref<boolean>(false);
+const loadingProducts = ref<boolean>(false);
+const showAvailableProducts = ref<boolean>(false);
+const availableProducts = ref<any>([]);
+const selectedProduct = ref<any>();
+const travelDate = ref<any>();
+
 const API_KEY = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
 const originCoords = ref<any>({
   lat: '',
@@ -88,10 +101,47 @@ const getBranches = async (contractId: string) => {
       };
     });
   } catch (error) {
-    console.log('Error -> ', error);
+    console.error('Error -> ', error);
   }
 };
 
+const getAreas = async (branchId: string) => {
+  loadingAreas.value = true;
+  try {
+    await getBranchByIdAction(branchId);
+    setTimeout(() => {
+      loadingAreas.value = false;
+    }, 1000);
+    selectedAreas.value = branch.value.areas.map((area: any) => {
+      return {
+        label: `${area.areaCode} - ${area.areaName}`,
+        value: area.areaCode,
+      };
+    });
+  } catch (error) {
+    console.error('Error -> ', error);
+  }
+};
+
+const getProducts = async () => {
+  showAvailableProducts.value = true;
+  loadingProducts.value = true;
+  try {
+    availableProducts.value = await contract?.value.products;
+    setTimeout(() => {
+      loadingProducts.value = false;
+    }, 1000);
+  } catch (error) {
+    console.error('Error -> ', error);
+  }
+};
+
+const setSelectedProduct = (value: any) => {
+  console.log('Product added -> ', value);
+  selectedProduct.value = value;
+};
+
+// Google Maps Area
 const decodePolyline = (polyline: string) => {
   const decode: any = polyLineCodec(polyline);
   const coords = decode.map((path: any) => ({
@@ -176,19 +226,19 @@ const setDestinationPlace = (place: any) => {
       </h1>
     </section>
     <section>
-      <Card class="py-6 bg-zinc-300">
-        <!-- <CardHeader>
-          <CardTitle>Dados do Atendimento</CardTitle>
-        </CardHeader> -->
-        <CardContent>
-          <form @submit.prevent="" @keydown.enter.prevent="true">
+      <form @submit.prevent="" @keydown.enter.prevent="true">
+        <Card class="bg-zinc-300">
+          <CardHeader>
+            <CardTitle>Dados do Atendimento</CardTitle>
+          </CardHeader>
+          <CardContent>
             <div class="grid grid-cols-2 gap-6">
               <!-- COLUNA DE DADOS -->
               <div class="flex flex-col gap-6">
-                <h3 class="mb-4 text-lg font-bold">1. Selecione o Contrato</h3>
+                <!-- <LoaderCircle v-if="isLoading" class="animate-spin" /> -->
                 <FormField v-slot="{ componentField }" name="contract">
                   <FormItem>
-                    <FormLabel>Contrato</FormLabel>
+                    <FormLabel>1. Selecione o Contrato</FormLabel>
                     <FormControl>
                       <FormSelect
                         v-bind="componentField"
@@ -199,41 +249,91 @@ const setDestinationPlace = (place: any) => {
                     </FormControl>
                   </FormItem>
                 </FormField>
-                <FormField v-slot="{ componentField }" name="branch">
-                  <FormItem>
-                    <FormLabel>Filial</FormLabel>
-                    <FormControl>
-                      <LoaderCircle v-if="isLoading" class="animate-spin" />
-                      <FormSelect
-                        v-else
-                        v-bind="componentField"
-                        :items="selectedBranches"
-                        :label="'Selecione'"
-                      />
-                    </FormControl>
-                  </FormItem>
-                </FormField>
-                <FormField v-slot="{ componentField }" name="area">
-                  <FormItem>
-                    <FormLabel>Centro de Custo</FormLabel>
-                    <FormControl>
-                      <LoaderCircle v-if="isLoading" class="animate-spin" />
-                      <FormSelect
-                        v-else
-                        v-bind="componentField"
-                        :items="[]"
-                        :label="'Selecione'"
-                      />
-                    </FormControl>
-                  </FormItem>
-                  <div class="p-6 flex flex-col gap-6 border border-zinc-900 rounded-md">
-                    <h3 class="font-bold">Dados da Viagem</h3>
+                <div v-if="selectedBranches.length">
+                  <LoaderCircle v-if="loadingBraches" class="animate-spin" />
+                  <FormField v-else v-slot="{ componentField }" name="branch">
+                    <FormItem>
+                      <FormLabel>2. Selecione a Filial</FormLabel>
+                      <FormControl>
+                        <FormSelect
+                          v-bind="componentField"
+                          :items="selectedBranches"
+                          :label="'Selecione'"
+                          @on-select="getAreas"
+                        />
+                      </FormControl>
+                    </FormItem>
+                  </FormField>
+                </div>
+                <div v-if="selectedAreas.length">
+                  <LoaderCircle v-if="loadingAreas" class="animate-spin" />
+                  <FormField v-else v-slot="{ componentField }" name="area">
+                    <FormItem>
+                      <FormLabel>3. Selecione o Centro de Custo</FormLabel>
+                      <FormControl>
+                        <FormSelect
+                          v-bind="componentField"
+                          :items="selectedAreas"
+                          :label="'Selecione'"
+                          @on-select="getProducts"
+                        />
+                      </FormControl>
+                    </FormItem>
+                  </FormField>
+                </div>
+                <div v-if="showAvailableProducts">
+                  <LoaderCircle v-if="loadingProducts" class="animate-spin" />
+                  <div v-else>
+                    <label class="text-sm font-medium">4. Selecione o Produto</label>
+                    <ul class="mt-2 flex justify-evenly gap-4">
+                      <li
+                        class="w-full"
+                        v-for="product in availableProducts"
+                        :key="product.id"
+                      >
+                        <article
+                          class="p-4 flex items-center justify-start gap-4 bg-white rounded-md border border-zinc-900"
+                        >
+                          <Checkbox
+                            @update:checked="setSelectedProduct(product)"
+                            :checked="selectedProduct?.id === product.id"
+                          />
+                          <div
+                            class="font-normal uppercase flex items-center justify-start gap-2"
+                          >
+                            <div
+                              class="w-[50px] h-[50px] rounded-md bg-zinc-200 bg-contain bg-no-repeat bg-center relative flex items-center justify-center"
+                              :style="{ backgroundImage: `url(${product.image?.url})` }"
+                            />
+                            <small
+                              class="px-2 py-1 uppercase text-white text-center rounded-md"
+                              :class="`${product.type === 'contract' ? 'bg-zinc-800' : product.type === 'free-km' ? 'bg-orange-400' : 'bg-purple-400'}`"
+                            >
+                              {{ product.code }}
+                            </small>
+                            <small>{{ product.name }}</small>
+                          </div>
+                        </article>
+                      </li>
+                    </ul>
+                  </div>
+                </div>
+                <div
+                  v-if="selectedProduct"
+                  class="p-6 flex flex-col items-start gap-6 border border-zinc-900 rounded-md"
+                >
+                  <h3 class="font-bold">Dados da Viagem</h3>
+                  <div class="flex flex-col gap-6 w-full">
+                    <div class="flex flex-col">
+                      <label class="mb-2 text-sm font-medium">Data</label>
+                      <DatePicker v-model="travelDate" />
+                    </div>
                     <FormField v-slot="{ componentField }" name="origin">
                       <FormItem>
                         <FormLabel>Origem</FormLabel>
                         <FormControl>
                           <div class="flex items-center gap-2">
-                            <MapPin />
+                            <SquareDot />
                             <GMapAutocomplete
                               placeholder="Insira a Origem"
                               @place_changed="setOriginPlace"
@@ -250,7 +350,7 @@ const setDestinationPlace = (place: any) => {
                         <FormLabel>Destino</FormLabel>
                         <FormControl>
                           <div class="flex items-center gap-2">
-                            <MapPinCheck />
+                            <SquareSquare />
                             <GMapAutocomplete
                               placeholder="Insira o Destino"
                               @place_changed="setDestinationPlace"
@@ -263,15 +363,15 @@ const setDestinationPlace = (place: any) => {
                       </FormItem>
                     </FormField>
                   </div>
-                </FormField>
-                <Button type="button" @click.prevent="getRideCalculation">
-                  <LoaderCircle v-if="loadingRoute" class="animate-spin" />
-                  <Calculator v-else />
-                  Calcular Rota
-                </Button>
+                  <Button type="button" @click.prevent="getRideCalculation">
+                    <LoaderCircle v-if="loadingRoute" class="animate-spin" />
+                    <Waypoints v-else />
+                    Calcular Rota
+                  </Button>
+                </div>
               </div>
               <!-- COLUNA MAPA E ROTA -->
-              <div class="flex items-center">
+              <div class="flex items-start justify-start">
                 <div
                   v-if="loadingRoute"
                   class="flex flex-col gap-6 items-center justify-center w-full"
@@ -279,29 +379,31 @@ const setDestinationPlace = (place: any) => {
                   <LoaderCircle :size="60" class="animate-spin" />
                   <small>Calculando rota...</small>
                 </div>
-                <div v-else class="flex flex-col items-start w-full">
-                  <GoogleMap
-                    v-if="showRenderedMap"
-                    :api-key="API_KEY"
-                    style="width: 100%; height: 500px"
-                    :center="center"
-                    :zoom="15"
-                  >
-                    <Marker
-                      v-for="marker in markers"
-                      ref="markerRef"
-                      :key="marker.id"
-                      :options="{
-                        position: {
-                          lat: marker.lat,
-                          lng: marker.lng,
-                        },
-                        icon: marker.icon,
-                      }"
-                      class="w-10 h-10"
-                    />
-                    <Polyline :options="ridePath" />
-                  </GoogleMap>
+                <div v-else class="flex flex-col items-start justify-start w-full">
+                  <div v-if="showRenderedMap" class="w-full">
+                    <h2 class="mb-4 font-bold text-xl">Rota e Dados do Atendimento</h2>
+                    <GoogleMap
+                      :api-key="API_KEY"
+                      style="width: 100%; height: 500px"
+                      :center="center"
+                      :zoom="15"
+                    >
+                      <Marker
+                        v-for="marker in markers"
+                        ref="markerRef"
+                        :key="marker.id"
+                        :options="{
+                          position: {
+                            lat: marker.lat,
+                            lng: marker.lng,
+                          },
+                          icon: marker.icon,
+                        }"
+                        class="w-10 h-10"
+                      />
+                      <Polyline :options="ridePath" />
+                    </GoogleMap>
+                  </div>
                   <div v-if="calculatedTravel?.rows" class="mt-6 flex gap-4">
                     <div
                       class="p-6 flex flex-col items-start justify-center bg-white rounded-md"
@@ -323,10 +425,22 @@ const setDestinationPlace = (place: any) => {
                 </div>
               </div>
             </div>
-            <div></div>
-          </form>
-        </CardContent>
-      </Card>
+          </CardContent>
+        </Card>
+        <div v-if="calculatedTravel" class="mt-6 flex gap-4">
+          <Button type="submit" form="form">
+            <LoaderCircle v-if="false" class="w-5 h-5 animate-spin" />
+            Gerar Atendimento
+          </Button>
+          <Button
+            type="button"
+            variant="ghost"
+            @click="navigateTo('/admin/rides/active')"
+          >
+            Cancelar
+          </Button>
+        </div>
+      </form>
     </section>
   </main>
 </template>
