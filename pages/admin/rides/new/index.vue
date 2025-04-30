@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import DatePicker from '@/components/shared/DatePicker.vue';
 import FormSelect from '@/components/shared/FormSelect.vue';
+import { useToast } from '@/components/ui/toast/use-toast';
 import { getRideCalculationService, getRideRoutesService } from '@/server/services/rides';
 import { useAccountStore } from '@/stores/admin/account.store';
 import { useBranchesStore } from '@/stores/admin/branches.store';
@@ -15,7 +16,6 @@ import {
 import { storeToRefs } from 'pinia';
 import { useForm } from 'vee-validate';
 import { GoogleMap, Marker, Polyline } from 'vue3-google-map';
-import { useToast } from '~/components/ui/toast';
 import { polyLineCodec } from '~/lib/utils';
 
 definePageMeta({
@@ -169,6 +169,7 @@ const useBrachAddressOnOrigin = (value: any) => {
   const { address } = branch?.value;
   if (value === true) {
     originLocationDetails.value.address = `${address.streetName}, ${address.streetNumber} - ${address.neighborhood}, ${address.city}`;
+    document.getElementById('originField')?.focus();
     form.setValues({
       origin: `${address.streetName}, ${address.streetNumber} - ${address.neighborhood}, ${address.city}`,
     });
@@ -225,7 +226,7 @@ const getRideCalculation = async () => {
     const travelCalculation = await getRideCalculationService(rideData);
     calculatedTravel.value = travelCalculation;
     const routeCalculation: any = await getRideRoutesService(rideData);
-    routePolyLine.value = routeCalculation[0].polyline.encodedPolyline;
+    routePolyLine.value = routeCalculation[0]?.polyline?.encodedPolyline;
   } catch (error) {
     toast({
       title: 'Opss!',
@@ -361,8 +362,8 @@ const setDestinationPlace = (place: any) => {
                     </ul>
                   </div>
                 </div>
-                <!-- v-if="selectedProduct" -->
                 <div
+                  v-if="selectedProduct"
                   class="p-6 flex flex-col items-start gap-6 border border-zinc-900 rounded-md"
                 >
                   <h3 class="font-bold">Dados da Viagem</h3>
@@ -448,13 +449,14 @@ const setDestinationPlace = (place: any) => {
                                 @place_changed="setOriginPlace"
                                 v-bind="componentField"
                                 :value="value"
+                                id="originField"
                                 class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                               />
                             </div>
-                            <!-- <div class="ml-8 flex items-center gap-2">
+                            <div v-if="true" class="ml-8 flex items-center gap-2">
                               <Checkbox @update:checked="useBrachAddressOnOrigin" />
                               <small>Usar endereço da filial</small>
-                            </div> -->
+                            </div>
                           </div>
                         </FormControl>
                         <FormMessage />
