@@ -27,7 +27,7 @@ const { contracts, contract, isLoading } = storeToRefs(contractsStore);
 
 const selectedBranches = ref<any>([]);
 const loadingBraches = ref<boolean>(false);
-const GMAPS_API_KEY = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
+const API_KEY = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
 const originCoords = ref<any>({
   lat: '',
   lng: '',
@@ -282,7 +282,7 @@ const setDestinationPlace = (place: any) => {
                 <div v-else class="flex flex-col items-start w-full">
                   <GoogleMap
                     v-if="showRenderedMap"
-                    :api-key="GMAPS_API_KEY"
+                    :api-key="API_KEY"
                     style="width: 100%; height: 500px"
                     :center="center"
                     :zoom="15"
