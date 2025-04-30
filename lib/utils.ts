@@ -1,3 +1,4 @@
+import { decode, encode } from '@googlemaps/polyline-codec';
 import type { Updater } from '@tanstack/vue-table';
 import { type ClassValue, clsx } from 'clsx';
 import { twMerge } from 'tailwind-merge';
@@ -7,14 +8,9 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
-export function valueUpdater<T extends Updater<any>>(
-  updaterOrValue: T,
-  ref: Ref,
-) {
+export function valueUpdater<T extends Updater<any>>(updaterOrValue: T, ref: Ref) {
   ref.value =
-    typeof updaterOrValue === 'function'
-      ? updaterOrValue(ref.value)
-      : updaterOrValue;
+    typeof updaterOrValue === 'function' ? updaterOrValue(ref.value) : updaterOrValue;
 }
 
 export const getDate = () => {
@@ -38,4 +34,8 @@ export const currencyFormat = (value: string) => {
     style: 'currency',
     currency: 'BRL',
   }).format(parseFloat(value));
+};
+// To decode Google Maps Polyline into a Paths
+export const polyLineCodec = (polyline: string) => {
+  return decode(polyline, 5);
 };

@@ -1,6 +1,6 @@
 import type { RouteHandlerConfig } from 'uploadthing/types';
 
-const { DATABASE_URL } = process.env;
+const { DATABASE_URL, VITE_GOOGLE_MAPS_API_KEY } = process.env;
 
 // https://nuxt.com/docs/api/configuration/nuxt-config
 export type ModuleOptions = RouteHandlerConfig & {
@@ -61,8 +61,9 @@ export default defineNuxtConfig({
   runtimeConfig: {
     authSecret: process.env.AUTH_SECRET,
     DATABASE_URL: process.env.DATABASE_URL,
+    VITE_GOOGLE_MAPS_API_KEY,
     public: {
-      // GOOGLE_MAPS_API_KEY,
+      VITE_GOOGLE_MAPS_API_KEY,
       DATABASE_URL,
     },
   },

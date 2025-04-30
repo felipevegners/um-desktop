@@ -1,10 +1,11 @@
 export default defineEventHandler(async (event) => {
   const query = getQuery(event);
   const { origins, destinations } = query;
-  const API_KEY = '';
-  const url = 'https://maps.googleapis.com/maps/api/distancematrix/json';
+  const API_KEY = process.env.VITE_GOOGLE_MAPS_API_KEY;
+  const distanceUrl = 'https://maps.googleapis.com/maps/api/distancematrix/json';
+
   try {
-    const response: any = await $fetch(url, {
+    const response: any = await $fetch(distanceUrl, {
       method: 'GET',
       params: {
         origins: origins,
@@ -18,5 +19,6 @@ export default defineEventHandler(async (event) => {
     return response;
   } catch (error) {
     console.error(error);
+    throw error;
   }
 });

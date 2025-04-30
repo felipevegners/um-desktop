@@ -477,6 +477,11 @@
     fast-deep-equal "^3.1.3"
     supercluster "^8.0.1"
 
+"@googlemaps/polyline-codec@^1.0.28":
+  version "1.0.28"
+  resolved "https://registry.yarnpkg.com/@googlemaps/polyline-codec/-/polyline-codec-1.0.28.tgz#8e41aaa117fac31811dcd1c238aaa42d139fba89"
+  integrity sha512-m7rh8sbxlrHvebXEweBHX8r1uPtToPRYxWDD6p6k2YG8hyhBe0Wi6xRUVFpxpEseMNgF+OBotFQC5senj8K7TQ==
+
 "@internationalized/date@^3.5.0", "@internationalized/date@^3.5.4":
   version "3.7.0"
   resolved "https://registry.yarnpkg.com/@internationalized/date/-/date-3.7.0.tgz#23a4956308ee108e308517a7137c69ab8f5f2ad9"
