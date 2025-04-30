@@ -1,4 +1,14 @@
 <script lang="ts" setup>
+import {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectLabel,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+
 defineProps<{
   items?: any[];
   label?: string;
@@ -13,11 +23,9 @@ const selected = (value: any) => {
 
 <template>
   <Select @update:model-value="selected">
-    <FormControl>
-      <SelectTrigger>
-        <SelectValue :placeholder="label" />
-      </SelectTrigger>
-    </FormControl>
+    <SelectTrigger>
+      <SelectValue :placeholder="label" />
+    </SelectTrigger>
     <SelectContent v-if="items?.length">
       <SelectGroup>
         <SelectItem
@@ -25,6 +33,7 @@ const selected = (value: any) => {
           :value="item.value"
           :key="item.value"
           :id="item.value"
+          class="hover:bg-zinc-500 hover:text-red-500"
         >
           {{ item.label }}
         </SelectItem>

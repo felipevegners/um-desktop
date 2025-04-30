@@ -48,8 +48,8 @@ export const backofficeMenuData = {
       ],
     },
     {
-      title: 'Clientes',
-      url: '#',
+      title: 'Empresas',
+      url: '/admin/branches/active',
       icon: Building2,
       isActive: route.path.includes('branches'),
       items: [
@@ -69,7 +69,7 @@ export const backofficeMenuData = {
     },
     {
       title: 'Contas de Usuários',
-      url: '#',
+      url: '/admin/accounts/active',
       icon: UserPen,
       isActive: route.path.includes('accounts'),
       items: [

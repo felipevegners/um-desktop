@@ -2,6 +2,7 @@
 import DatePicker from '@/components/shared/DatePicker.vue';
 import FormSelect from '@/components/shared/FormSelect.vue';
 import { getRideCalculationService, getRideRoutesService } from '@/server/services/rides';
+import { useAccountStore } from '@/stores/admin/account.store';
 import { useBranchesStore } from '@/stores/admin/branches.store';
 import { useContractsStore } from '@/stores/admin/contracts.store';
 import {
@@ -12,7 +13,9 @@ import {
   Waypoints,
 } from 'lucide-vue-next';
 import { storeToRefs } from 'pinia';
+import { useForm } from 'vee-validate';
 import { GoogleMap, Marker, Polyline } from 'vue3-google-map';
+import { useToast } from '~/components/ui/toast';
 import { polyLineCodec } from '~/lib/utils';
 
 definePageMeta({
@@ -25,10 +28,20 @@ useHead({
 
 const contractsStore = useContractsStore();
 const branchesStore = useBranchesStore();
+const accountStore = useAccountStore();
 const { getContractsAction, getContractByIdAction } = contractsStore;
 const { contracts, contract, isLoading } = storeToRefs(contractsStore);
 const { getBranchByIdAction } = branchesStore;
 const { branch } = storeToRefs(branchesStore);
+const { getUsersAccountsAction } = accountStore;
+const { accounts } = storeToRefs(accountStore);
+
+const API_KEY = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
+const customIconStart = `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="#FFFFFF" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-square-dot-icon lucide-square-dot"><rect width="18" height="18" x="3" y="3" rx="2"/><circle cx="12" cy="12" r="1"/></svg>`;
+const customIconEnd = `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="#FFFFFF" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-square-square-icon lucide-square-square"><rect x="3" y="3" width="18" height="18" rx="2"/><rect x="8" y="8" width="8" height="8" rx="1"/></svg>`;
+
+const form = useForm();
+const { toast } = useToast();
 
 const selectedBranches = ref<any>([]);
 const selectedAreas = ref<any>([]);
@@ -39,8 +52,9 @@ const showAvailableProducts = ref<boolean>(false);
 const availableProducts = ref<any>([]);
 const selectedProduct = ref<any>();
 const travelDate = ref<any>();
+const availableUsers = ref<any>([]);
+const selectedUser = ref<any>();
 
-const API_KEY = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
 const originCoords = ref<any>({
   lat: '',
   lng: '',
@@ -70,8 +84,6 @@ const ridePath = ref<any>({
 });
 const markers = ref<any>([]);
 const showRenderedMap = ref<boolean>(false);
-const customIconStart = `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="#FFFFFF" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-square-dot-icon lucide-square-dot"><rect width="18" height="18" x="3" y="3" rx="2"/><circle cx="12" cy="12" r="1"/></svg>`;
-const customIconEnd = `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="#FFFFFF" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-square-square-icon lucide-square-square"><rect x="3" y="3" width="18" height="18" rx="2"/><rect x="8" y="8" width="8" height="8" rx="1"/></svg>`;
 
 onBeforeMount(async () => {
   await getContractsAction();
@@ -87,7 +99,7 @@ const sanitizeContracts = computed(() => {
   });
 });
 
-const getBranches = async (contractId: string) => {
+const getBranchesAndUsers = async (contractId: string) => {
   loadingBraches.value = true;
   try {
     await getContractByIdAction(contractId);
@@ -98,6 +110,16 @@ const getBranches = async (contractId: string) => {
       return {
         label: `${branch.branchCode} - ${branch.name}`,
         value: branch?.id,
+      };
+    });
+    await getUsersAccountsAction();
+    const filteredUsers = accounts?.value.filter(
+      (account: any) => account?.contractId === contractId,
+    );
+    availableUsers.value = filteredUsers.map((user: any) => {
+      return {
+        label: user.username,
+        value: user.id,
       };
     });
   } catch (error) {
@@ -137,8 +159,24 @@ const getProducts = async () => {
 };
 
 const setSelectedProduct = (value: any) => {
-  console.log('Product added -> ', value);
   selectedProduct.value = value;
+};
+
+const setSelectedUser = (value: string) => {
+  selectedUser.value = value;
+};
+const useBrachAddressOnOrigin = (value: any) => {
+  const { address } = branch?.value;
+  if (value === true) {
+    originLocationDetails.value.address = `${address.streetName}, ${address.streetNumber} - ${address.neighborhood}, ${address.city}`;
+    form.setValues({
+      origin: `${address.streetName}, ${address.streetNumber} - ${address.neighborhood}, ${address.city}`,
+    });
+  } else {
+    form.setValues({
+      origin: '',
+    });
+  }
 };
 
 // Google Maps Area
@@ -189,7 +227,12 @@ const getRideCalculation = async () => {
     const routeCalculation: any = await getRideRoutesService(rideData);
     routePolyLine.value = routeCalculation[0].polyline.encodedPolyline;
   } catch (error) {
-    console.error(error);
+    toast({
+      title: 'Opss!',
+      class: 'bg-red-500 border-0 text-white text-2xl',
+      description: `Ocorreu um erro ao calcular a rota. Tente novamente.`,
+    });
+    loadingRoute.value = false;
   } finally {
     decodePolyline(routePolyLine.value);
     loadingRoute.value = false;
@@ -232,7 +275,7 @@ const setDestinationPlace = (place: any) => {
             <CardTitle>Dados do Atendimento</CardTitle>
           </CardHeader>
           <CardContent>
-            <div class="grid grid-cols-2 gap-6">
+            <div class="md:grid md:grid-cols-2 gap-6">
               <!-- COLUNA DE DADOS -->
               <div class="flex flex-col gap-6">
                 <!-- <LoaderCircle v-if="isLoading" class="animate-spin" /> -->
@@ -244,7 +287,7 @@ const setDestinationPlace = (place: any) => {
                         v-bind="componentField"
                         :items="sanitizeContracts"
                         :label="'Selecione'"
-                        @on-select="getBranches"
+                        @on-select="getBranchesAndUsers"
                       />
                     </FormControl>
                   </FormItem>
@@ -318,28 +361,100 @@ const setDestinationPlace = (place: any) => {
                     </ul>
                   </div>
                 </div>
+                <!-- v-if="selectedProduct" -->
                 <div
-                  v-if="selectedProduct"
                   class="p-6 flex flex-col items-start gap-6 border border-zinc-900 rounded-md"
                 >
                   <h3 class="font-bold">Dados da Viagem</h3>
                   <div class="flex flex-col gap-6 w-full">
-                    <div class="flex flex-col">
-                      <label class="mb-2 text-sm font-medium">Data</label>
-                      <DatePicker v-model="travelDate" />
+                    <div class="md:grid md:grid-cols-2 gap-6">
+                      <FormField v-slot="{ componentField }" name="user">
+                        <FormItem>
+                          <FormLabel>Selecione o Usuário</FormLabel>
+                          <FormControl>
+                            <FormSelect
+                              v-bind="componentField"
+                              :items="availableUsers"
+                              :label="'Selecione'"
+                              @on-select="setSelectedUser"
+                            />
+                          </FormControl>
+                        </FormItem>
+                      </FormField>
+                      <FormField v-slot="{ componentField }" name="reason">
+                        <FormItem>
+                          <FormLabel>Motivo da viagem</FormLabel>
+                          <FormControl>
+                            <Input type="text" v-bind="componentField" />
+                          </FormControl>
+                        </FormItem>
+                      </FormField>
                     </div>
-                    <FormField v-slot="{ componentField }" name="origin">
+                    <div class="flex items-center gap-6">
+                      <div class="flex flex-col">
+                        <label class="mb-2 text-sm font-medium">Data</label>
+                        <DatePicker v-model="travelDate" />
+                      </div>
+                      <div class="flex flex-col">
+                        <FormField v-slot="{ componentField }" name="departTime">
+                          <FormItem class="md:min-w-[200px]">
+                            <FormLabel>Hora da Partida</FormLabel>
+                            <FormControl>
+                              <FormSelect
+                                v-bind="componentField"
+                                :items="[
+                                  {
+                                    label: '08:00',
+                                    value: '08:00',
+                                  },
+                                  {
+                                    label: '08:10',
+                                    value: '08:10',
+                                  },
+                                  {
+                                    label: '08:15',
+                                    value: '08:15',
+                                  },
+                                  {
+                                    label: '08:20',
+                                    value: '08:20',
+                                  },
+                                  {
+                                    label: '08:25',
+                                    value: '08:25',
+                                  },
+                                  {
+                                    label: '08:30',
+                                    value: '08:30',
+                                  },
+                                ]"
+                                :label="'Selecione'"
+                                @on-select=""
+                              />
+                            </FormControl>
+                          </FormItem>
+                        </FormField>
+                      </div>
+                    </div>
+                    <FormField v-slot="{ componentField, value }" name="origin">
                       <FormItem>
                         <FormLabel>Origem</FormLabel>
                         <FormControl>
-                          <div class="flex items-center gap-2">
-                            <SquareDot />
-                            <GMapAutocomplete
-                              placeholder="Insira a Origem"
-                              @place_changed="setOriginPlace"
-                              v-bind="componentField"
-                              class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                            />
+                          <div class="flex flex-col items-start gap-2">
+                            <div class="flex items-center w-full gap-2">
+                              <SquareDot />
+                              <GMapAutocomplete
+                                placeholder="Insira a Origem"
+                                @place_changed="setOriginPlace"
+                                v-bind="componentField"
+                                :value="value"
+                                class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                              />
+                            </div>
+                            <!-- <div class="ml-8 flex items-center gap-2">
+                              <Checkbox @update:checked="useBrachAddressOnOrigin" />
+                              <small>Usar endereço da filial</small>
+                            </div> -->
                           </div>
                         </FormControl>
                         <FormMessage />
