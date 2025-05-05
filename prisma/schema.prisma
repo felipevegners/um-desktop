@@ -92,22 +92,24 @@ model Customers {
 }
 
 model Drivers {
-  id            String    @id @default(auto()) @map("_id") @db.ObjectId
-  name          String
-  email         String    @unique
-  phone         String
-  document      String
-  driverLicense String
-  driverFiles   Json?
-  address       Json?
-  rideArea      String?
-  driverCars    Json?
-  rating        Json?
-  history       Json?
-  status        String
-  enabled       Boolean
-  createdAt     DateTime? @default(now())
-  updatedAt     DateTime? @updatedAt()
+  id                String    @id @default(auto()) @map("_id") @db.ObjectId
+  name              String
+  email             String    @unique
+  phone             String
+  document          String
+  driverLicense     String
+  licenseExpiration String
+  licenseCategory   String
+  driverFiles       Json?
+  address           Json?
+  actuationArea     String?
+  driverCars        Json?
+  rating            Json?
+  history           Json?
+  status            String
+  enabled           Boolean
+  createdAt         DateTime? @default(now())
+  updatedAt         DateTime? @updatedAt()
 }
 
 model Products {
