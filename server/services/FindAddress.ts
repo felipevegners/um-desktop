@@ -1,4 +1,4 @@
-import { VIACEP } from '~/config/menu/paths';
+import { VIACEP } from '@/config/paths';
 
 export const findAddressByZipcode = async (zipcode: string) => {
   const path = VIACEP.replace('[[CEP]]', zipcode);

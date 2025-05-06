@@ -89,20 +89,28 @@ export const backofficeMenuData = {
     },
     {
       title: 'Motoristas',
-      url: '#',
+      url: '/admin/drivers/active',
       icon: Car,
       isActive: route.path.includes('drivers'),
       items: [
         {
           title: 'Motoristas Ativos',
-          url: '/admin/drivers',
+          url: '/admin/drivers/active',
+        },
+        {
+          title: 'Motoristas Inativos',
+          url: '/admin/drivers/inactive',
+        },
+        {
+          title: 'Novo Motorista',
+          url: '/admin/drivers/new',
+        },
+        {
+          title: '',
+          url: '',
         },
         {
           title: 'Parceiros',
-          url: '#',
-        },
-        {
-          title: 'Inativos',
           url: '#',
         },
       ],

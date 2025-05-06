@@ -1,8 +1,19 @@
 import Button from '@/components/ui/button/Button.vue';
+import { WPP_API } from '@/config/paths';
 import { createColumnHelper } from '@tanstack/vue-table';
-import { ArrowUpDown } from 'lucide-vue-next';
+import { ArrowUpDown, MessageCircleMore } from 'lucide-vue-next';
 
 const columnHelper = createColumnHelper<any>();
+
+const sanitizePhone = (phone: string) => {
+  const sanitized = phone
+    .split(' ')
+    .join('')
+    .replace('(', '')
+    .replace(')', '')
+    .replace('-', '');
+  return sanitized;
+};
 
 export const columns = [
   columnHelper.accessor('name', {
@@ -25,7 +36,21 @@ export const columns = [
   }),
   columnHelper.accessor('phone', {
     header: () => h('div', { class: 'text-left' }, 'Celular'),
-    cell: ({ row }) => h('div', { class: 'capitalize' }, row.getValue('phone')),
+    cell: ({ row }) => {
+      const phone = row.getValue('phone');
+      return h(
+        'a',
+        {
+          href: WPP_API.replace('[[phone]]', sanitizePhone(phone as string)),
+          target: '_blank',
+          class: 'flex items-center gap-2',
+        },
+        [
+          row.getValue('phone'),
+          h(MessageCircleMore, { class: 'text-green-500', size: 18 }),
+        ] as any,
+      );
+    },
   }),
   columnHelper.accessor('document', {
     header: () => h('div', { class: 'text-left' }, 'CPF'),

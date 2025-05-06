@@ -65,7 +65,7 @@ const finalColumns = [
       </h1>
       <div>
         <Button @click="navigateTo('/admin/drivers/new')">
-          <Plus class="w-4 h-4" /> Cadastrar Motorista
+          <Plus class="w-4 h-4" /> Novo Motorista
         </Button>
       </div>
     </section>
