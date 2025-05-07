@@ -39,3 +39,13 @@ export const currencyFormat = (value: string) => {
 export const polyLineCodec = (polyline: string) => {
   return decode(polyline, 5);
 };
+
+export const sanitizePhone = (phone: string) => {
+  const sanitized = phone
+    .split(' ')
+    .join('')
+    .replace('(', '')
+    .replace(')', '')
+    .replace('-', '');
+  return sanitized;
+};

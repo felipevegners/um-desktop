@@ -2,18 +2,9 @@ import Button from '@/components/ui/button/Button.vue';
 import { WPP_API } from '@/config/paths';
 import { createColumnHelper } from '@tanstack/vue-table';
 import { ArrowUpDown, MessageCircleMore } from 'lucide-vue-next';
+import { sanitizePhone } from '~/lib/utils';
 
 const columnHelper = createColumnHelper<any>();
-
-const sanitizePhone = (phone: string) => {
-  const sanitized = phone
-    .split(' ')
-    .join('')
-    .replace('(', '')
-    .replace(')', '')
-    .replace('-', '');
-  return sanitized;
-};
 
 export const columns = [
   columnHelper.accessor('name', {

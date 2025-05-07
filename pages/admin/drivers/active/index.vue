@@ -36,6 +36,14 @@ const editDriver = (id: string) => {
     },
   });
 };
+const viewDriver = (id: string) => {
+  navigateTo({
+    name: 'admin-drivers-preview-id',
+    params: {
+      id: id,
+    },
+  });
+};
 
 const deleteDriver = async (id: string) => {
   await deleteDriverAction(id);
@@ -56,7 +64,7 @@ const finalColumns = [
           dataId: id,
           options: ['preview', 'edit', 'delete'],
           loading: () => {},
-          onView: () => {},
+          onView: viewDriver,
           onEdit: editDriver,
           onDelete: deleteDriver,
         }),

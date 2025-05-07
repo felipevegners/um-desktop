@@ -1,20 +1,18 @@
 <script setup lang="ts">
 import BackLink from '@/components/shared/BackLink.vue';
 import { useAccountStore } from '@/stores/admin/account.store';
-import {
-  Edit,
-  FileText,
-  LoaderCircle,
-  Mail,
-  Trash,
-  User,
-} from 'lucide-vue-next';
+import { Edit, FileText, LoaderCircle, User } from 'lucide-vue-next';
 import { storeToRefs } from 'pinia';
 import { currencyFormat, dateFormat } from '~/lib/utils';
 import { useContractsStore } from '~/stores/admin/contracts.store';
 
 definePageMeta({
   layout: 'admin',
+  middleware: 'sidebase-auth',
+});
+
+useHead({
+  title: `Backoffice - Visualizar Contrato | Urban Mobi`,
 });
 
 const contractStore = useContractsStore();
@@ -22,6 +20,7 @@ const { getContractByIdAction } = contractStore;
 const { contract, isLoading } = storeToRefs(contractStore);
 
 const accountsStore = useAccountStore();
+const { getUsersAccountsAction } = accountsStore;
 const { accounts } = storeToRefs(accountsStore);
 
 const contractAccounts = computed((): any => {
@@ -32,6 +31,7 @@ const contractAccounts = computed((): any => {
 
 const route = useRoute();
 await getContractByIdAction(route?.params?.id as string);
+await getUsersAccountsAction();
 </script>
 <template>
   <main class="p-6">
@@ -62,10 +62,7 @@ await getContractByIdAction(route?.params?.id as string);
         Editar Contrato
       </Button>
     </section>
-    <section
-      v-if="isLoading"
-      class="min-h-[300px] flex items-center justify-center"
-    >
+    <section v-if="isLoading" class="min-h-[300px] flex items-center justify-center">
       <LoaderCircle class="w-10 h-10 animate-spin" />
     </section>
     <section v-else class="mt-6">
@@ -205,15 +202,11 @@ await getContractByIdAction(route?.params?.id as string);
               <div class="flex items-center justify-between">
                 <p class="text-2xl font-bold flex flex-col">
                   {{ contract?.comercialConditions.paymentTerm }}
-                  <span class="font-normal text-sm text-zinc-500"
-                    >Fechamento</span
-                  >
+                  <span class="font-normal text-sm text-zinc-500">Fechamento</span>
                 </p>
                 <p class="text-2xl font-bold flex flex-col">
                   {{ contract?.comercialConditions.paymentDueDate }} dias
-                  <span class="font-normal text-sm text-zinc-500"
-                    >Faturamento</span
-                  >
+                  <span class="font-normal text-sm text-zinc-500">Faturamento</span>
                 </p>
               </div>
             </div>
@@ -268,10 +261,7 @@ await getContractByIdAction(route?.params?.id as string);
                 <Card class="md:min-w-[250px]">
                   <CardHeader class="flex items-center">
                     <Avatar class="h-20 w-20 mb-6">
-                      <AvatarImage
-                        src="/images/no-avatar.png"
-                        :alt="account.username"
-                      />
+                      <AvatarImage src="/images/no-avatar.png" :alt="account.username" />
                       <AvatarFallback>UM</AvatarFallback>
                     </Avatar>
                     <div class="flex flex-col">
@@ -287,9 +277,7 @@ await getContractByIdAction(route?.params?.id as string);
                       <div
                         class="flex flex-col items-center p-1 border border-zinc-900 rounded-md"
                       >
-                        <small
-                          class="text-[10px] text-muted-foreground uppercase"
-                        >
+                        <small class="text-[10px] text-muted-foreground uppercase">
                           Cadastrado
                         </small>
                         <span class="font-bold text-xs">
@@ -299,25 +287,17 @@ await getContractByIdAction(route?.params?.id as string);
                       <div
                         class="flex flex-col items-center p-1 border border-zinc-900 rounded-md"
                       >
-                        <span
-                          class="text-[10px] text-muted-foreground uppercase"
-                        >
+                        <span class="text-[10px] text-muted-foreground uppercase">
                           Status
                         </span>
                         <span class="font-bold text-sm">
-                          {{
-                            account.status === 'pending'
-                              ? 'Pendente'
-                              : 'Validado'
-                          }}
+                          {{ account.status === 'pending' ? 'Pendente' : 'Validado' }}
                         </span>
                       </div>
                       <div
                         class="flex flex-col items-center p-1 border border-zinc-900 rounded-md"
                       >
-                        <span
-                          class="text-[10px] text-muted-foreground uppercase"
-                        >
+                        <span class="text-[10px] text-muted-foreground uppercase">
                           Ativo
                         </span>
                         <span class="font-bold text-sm">
@@ -344,9 +324,7 @@ await getContractByIdAction(route?.params?.id as string);
                 </Card>
               </li>
             </ul>
-            <p v-else class="text-muted-foreground">
-              Nenhum usuário cadastrado.
-            </p>
+            <p v-else class="text-muted-foreground">Nenhum usuário cadastrado.</p>
           </div>
         </section>
         <Separator class="my-6 border-b border-zinc-300" />
