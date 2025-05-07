@@ -37,6 +37,7 @@ export default defineNuxtConfig({
     '@pinia/nuxt',
     '@uploadthing/nuxt',
     '@sidebase/nuxt-auth',
+    '@nuxt/image',
   ],
   auth: {
     globalAppMiddleware: true,
@@ -81,6 +82,18 @@ export default defineNuxtConfig({
   vite: {
     optimizeDeps: {
       include: ['@fawmi/vue-google-maps', 'fast-deep-equal'],
+    },
+  },
+  image: {
+    presets: {
+      cover: {
+        modifiers: {
+          fit: 'cover',
+          format: 'jpg',
+          width: 200,
+          height: 240,
+        },
+      },
     },
   },
 });

@@ -1,33 +1,33 @@
 <script setup lang="ts">
-import { Plus, Trash, Paperclip, CircleX, LoaderCircle, Eye } from "lucide-vue-next";
-import { useFilesStore } from "~/stores/admin/files.store";
-import { storeToRefs } from 'pinia'
 import { useToast } from '@/components/ui/toast/use-toast';
+import { CircleX, Eye, LoaderCircle, Paperclip, Plus, Trash } from 'lucide-vue-next';
+import { vMaska } from 'maska/vue';
+import { storeToRefs } from 'pinia';
+import { useFilesStore } from '~/stores/admin/files.store';
+
 const { toast } = useToast();
 
-
-const emit = defineEmits(["update:modelValue"]);
-const props = defineProps(["modelValue"]);
+const emit = defineEmits(['update:modelValue']);
+const props = defineProps(['modelValue']);
 
 const store = useFilesStore();
 const { deleteFileAction } = store;
-const { loadingFileData } = storeToRefs(store)
+const { loadingFileData } = storeToRefs(store);
 
 const addRow = () => {
   props.modelValue.push({
-    carModel: "",
-    carColor: "",
-    carPlate: "",
-    carYear: "",
+    carModel: '',
+    carColor: '',
+    carPlate: '',
+    carYear: '',
     carDocumentFile: {
-      name: "",
-      url: ""
-    }
+      name: '',
+      url: '',
+    },
   });
 };
 
 const deleteFile = async (url: string, idx: number) => {
-
   try {
     await deleteFileAction(url);
   } catch (error) {
@@ -37,16 +37,15 @@ const deleteFile = async (url: string, idx: number) => {
       description: `Documento do veículo ${props.modelValue[idx].carModel} não pode ser removido. Tente novamente.`,
     });
   } finally {
-    props.modelValue[idx].carDocumentFile.name = ''
-    props.modelValue[idx].carDocumentFile.url = ''
+    props.modelValue[idx].carDocumentFile.name = '';
+    props.modelValue[idx].carDocumentFile.url = '';
     toast({
       title: 'Feito!',
       class: 'bg-green-500 border-0 text-white text-2xl',
       description: `Documento do veículo ${props.modelValue[idx].carModel} foi removido com sucesso!`,
     });
-
   }
-}
+};
 
 const removeRow = (index: any) => {
   props.modelValue.splice(index, 1);
@@ -55,13 +54,17 @@ const removeRow = (index: any) => {
 <template>
   <div class="p-6 rounded-md bg-zinc-100">
     <h3 class="mb-4 font-bold">Adicionar veículo</h3>
-    <div class="grid grid-cols-12 gap-4" v-for="(car, index) in props.modelValue" :key="car.id">
+    <div
+      class="grid grid-cols-12 gap-4"
+      v-for="(car, index) in props.modelValue"
+      :key="car.id"
+    >
       <div class="col-span-11 mb-8 grid grid-cols-5 gap-4 items-end">
         <FormField name="carModel">
           <FormItem>
-            <FormLabel>Modelo</FormLabel>
+            <FormLabel>Marca / Modelo</FormLabel>
             <FormControl>
-              <Input type="text" placeholder="ex.: Toyota Corolla LX" v-model="car.carModel" />
+              <Input type="text" v-model="car.carModel" />
             </FormControl>
             <FormMessage />
           </FormItem>
@@ -70,7 +73,7 @@ const removeRow = (index: any) => {
           <FormItem>
             <FormLabel>Cor</FormLabel>
             <FormControl>
-              <Input type="text" placeholder="ex.: Preto" v-model="car.carColor" />
+              <Input type="text" v-model="car.carColor" />
             </FormControl>
             <FormMessage />
           </FormItem>
@@ -79,16 +82,16 @@ const removeRow = (index: any) => {
           <FormItem>
             <FormLabel>Placa</FormLabel>
             <FormControl>
-              <Input type="text" placeholder="ex.: ABC-3456" v-model="car.carPlate" />
+              <Input type="text" v-model="car.carPlate" />
             </FormControl>
             <FormMessage />
           </FormItem>
         </FormField>
         <FormField name="carYear">
           <FormItem>
-            <FormLabel>Ano/Modelo</FormLabel>
+            <FormLabel>Ano Fabr.</FormLabel>
             <FormControl>
-              <Input type="text" placeholder="ex.: 2024/2025" v-model="car.carYear" />
+              <Input type="text" v-model="car.carYear" />
             </FormControl>
             <FormMessage />
           </FormItem>
@@ -105,7 +108,6 @@ const removeRow = (index: any) => {
                       appearance: {
                         container: '!items-start',
                         allowedContent: '!absolute !top-10',
-
                       },
                       content: {
                         allowedContent({ ready, fileTypes, isUploading }) {
@@ -116,8 +118,8 @@ const removeRow = (index: any) => {
                       endpoint: 'driverCarFiles',
                       onClientUploadComplete: (file) => {
                         console.log('uploaded', file);
-                        modelValue[index].carDocumentFile.name = file[0].name
-                        modelValue[index].carDocumentFile.url = file[0].ufsUrl
+                        modelValue[index].carDocumentFile.name = file[0].name;
+                        modelValue[index].carDocumentFile.url = file[0].ufsUrl;
                       },
                       onUploadError: (error) => {
                         toast({
@@ -126,13 +128,23 @@ const removeRow = (index: any) => {
                           description: `Erro ao enviar o arquivo. Tente novamente. ${error.cause}`,
                         });
                       },
-                    }" />
+                    }"
+                  />
                 </div>
-                <div v-if="modelValue[index]?.carDocumentFile?.name !== ''" class="flex gap-2 items-center">
+                <div
+                  v-if="modelValue[index]?.carDocumentFile?.name !== ''"
+                  class="flex gap-2 items-center"
+                >
                   <Paperclip class="w-4 h-4 text-zinc-500" />
-                  <div class="px-4 py-2 border border-dashed border-zinc-500 rounded-md bg-white">
-                    <a class="underline" :href="props.modelValue[index]?.carDocumentFile?.url" target="_blank"
-                      rel="noopener noreferrer">
+                  <div
+                    class="px-4 py-2 border border-dashed border-zinc-500 rounded-md bg-white"
+                  >
+                    <a
+                      class="underline"
+                      :href="props.modelValue[index]?.carDocumentFile?.url"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
                       {{ props.modelValue[index]?.carDocumentFile?.name || '' }}
                     </a>
                   </div>
@@ -140,8 +152,12 @@ const removeRow = (index: any) => {
                   <TooltipProvider v-else>
                     <Tooltip>
                       <TooltipTrigger as-child>
-                        <CircleX class="w-5 h-5 text-zinc-500 hover:text-red-500 cursor-pointer"
-                          @click.prevent="deleteFile(modelValue[index]?.carDocumentFile.url, index)" />
+                        <CircleX
+                          class="w-5 h-5 text-zinc-500 hover:text-red-500 cursor-pointer"
+                          @click.prevent="
+                            deleteFile(modelValue[index]?.carDocumentFile.url, index)
+                          "
+                        />
                       </TooltipTrigger>
                       <TooltipContent class="bg-zinc-700 text-white">
                         <p>Remover Arquivo</p>
@@ -159,8 +175,11 @@ const removeRow = (index: any) => {
         <TooltipProvider>
           <Tooltip>
             <TooltipTrigger as-child>
-              <Trash v-if="index > 0" @click.prevent="removeRow(index)"
-                class="mb-2 mr-2 w-5 h-5 text-zinc-800 cursor-pointer hover:text-red-600" />
+              <Trash
+                v-if="index > 0"
+                @click.prevent="removeRow(index)"
+                class="mb-2 mr-2 w-5 h-5 text-zinc-800 cursor-pointer hover:text-red-600"
+              />
             </TooltipTrigger>
             <TooltipContent class="bg-zinc-700 text-white">
               <p>Remover Veículo</p>
@@ -170,8 +189,10 @@ const removeRow = (index: any) => {
         <TooltipProvider>
           <Tooltip>
             <TooltipTrigger as-child>
-              <Plus class="mb-2 text-white bg-zinc-700 hover:bg-zinc-400 h-5 w-5 rounded-full cursor-pointer"
-                @click.prevent="addRow" />
+              <Plus
+                class="mb-2 text-white bg-zinc-700 hover:bg-zinc-400 h-5 w-5 rounded-full cursor-pointer"
+                @click.prevent="addRow"
+              />
             </TooltipTrigger>
             <TooltipContent class="bg-zinc-700 text-white">
               <p>Adicionar Veículo</p>

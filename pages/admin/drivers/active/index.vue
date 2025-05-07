@@ -28,6 +28,15 @@ onMounted(async () => {
   await getDriversAction();
 });
 
+const editDriver = (id: string) => {
+  navigateTo({
+    name: 'admin-drivers-edit-id',
+    params: {
+      id: id,
+    },
+  });
+};
+
 const deleteDriver = async (id: string) => {
   await deleteDriverAction(id);
 };
@@ -48,7 +57,7 @@ const finalColumns = [
           options: ['preview', 'edit', 'delete'],
           loading: () => {},
           onView: () => {},
-          onEdit: () => {},
+          onEdit: editDriver,
           onDelete: deleteDriver,
         }),
       );

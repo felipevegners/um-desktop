@@ -210,7 +210,7 @@ const onSubmit = driversForm.handleSubmit(async (values) => {
             <div class="mb-4 w-full grid grid-cols-3 gap-8">
               <FormField v-slot="{ componentField }" name="name">
                 <FormItem>
-                  <FormLabel>Nome</FormLabel>
+                  <FormLabel>Nome Completo</FormLabel>
                   <FormControl>
                     <Input type="text" v-bind="componentField" />
                   </FormControl>
@@ -285,15 +285,17 @@ const onSubmit = driversForm.handleSubmit(async (values) => {
             <section class="my-10">
               <h2 class="mt-4 mb-6 text-lg font-bold">Endereço e Área de Atuação</h2>
               <AddressForm :edit-mode="false" :form="driversForm" />
-              <FormField v-slot="{ componentField }" name="actuationArea">
-                <FormItem class="col-span-1">
-                  <FormLabel>Área de atuação</FormLabel>
-                  <FormControl>
-                    <Input type="text" v-bind="componentField" />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              </FormField>
+              <div class="mb-4 w-full md:grid md:grid-cols-4 gap-8">
+                <FormField v-slot="{ componentField }" name="actuationArea">
+                  <FormItem class="col-span-1">
+                    <FormLabel>Área de atuação</FormLabel>
+                    <FormControl>
+                      <Input type="text" v-bind="componentField" />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                </FormField>
+              </div>
             </section>
             <section class="my-10">
               <h2 class="mb-4 text-lg font-bold">Dados do(s) Veículo(s)</h2>

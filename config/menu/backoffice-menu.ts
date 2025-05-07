@@ -106,10 +106,6 @@ export const backofficeMenuData = {
           url: '/admin/drivers/new',
         },
         {
-          title: '',
-          url: '',
-        },
-        {
           title: 'Parceiros',
           url: '#',
         },

@@ -65,26 +65,11 @@ export const columns = [
       return h(
         'div',
         {
-          class: `px-2 flex items-center justify-center h-6 rounded-lg text-white text-xs max-w-[80px] ${
-            status === 'active' ? 'bg-green-600' : 'bg-red-600'
+          class: `px-2 flex items-center justify-center h-6 rounded-full text-white text-xs max-w-[80px] ${
+            status === 'validated' ? 'bg-green-600' : 'bg-yellow-500'
           }`,
         },
-        status === 'active' ? 'Ativo' : 'Inativo',
-      );
-    },
-  }),
-  columnHelper.accessor('enabled', {
-    header: () => h('div', { class: 'text-left' }, 'Acesso'),
-    cell: ({ row }) => {
-      const enabled = row.getValue('enabled');
-      return h(
-        'div',
-        {
-          class: `px-1 flex items-center justify-center h-6 rounded-lg text-white text-xs max-w-[80px] ${
-            enabled === true ? 'bg-blue-600' : 'bg-zinc-600'
-          }`,
-        },
-        enabled === true ? 'Permitido' : 'Negado',
+        status === 'validated' ? 'Validado' : 'Pendente',
       );
     },
   }),
