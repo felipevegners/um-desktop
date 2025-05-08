@@ -3,12 +3,12 @@ import BackLink from '@/components/shared/BackLink.vue';
 import CurrencyInput from '@/components/shared/CurrencyInput.vue';
 import FormSelect from '@/components/shared/FormSelect.vue';
 import { useToast } from '@/components/ui/toast';
-import { getProductsService } from '@/server/services/services';
 import { useFilesStore } from '@/stores/admin/files.store';
 import { toTypedSchema } from '@vee-validate/zod';
 import { Box, CircleX, LoaderCircle, Paperclip, Trash } from 'lucide-vue-next';
 import { useForm } from 'vee-validate';
 import * as z from 'zod';
+import { getProductsService } from '~/server/services/products';
 
 const filesStore = useFilesStore();
 const { deleteFileAction } = filesStore;
@@ -265,7 +265,7 @@ const deleteFile = async (url: string) => {
               </div>
             </div>
             <Separator class="my-6 border-b border-b-zinc-300" />
-            <div class="mb-4 md:grid md:grid-cols-4 md:gap-6">
+            <div class="mb-4 md:grid md:grid-cols-3 md:gap-6">
               <FormField v-slot="{ componentField }" name="code">
                 <FormItem>
                   <FormLabel>Código</FormLabel>
@@ -332,13 +332,7 @@ const deleteFile = async (url: string) => {
               <h3 class="mb-4 font-bold text-lg">Editar Valores</h3>
               <div class="md:grid md:grid-cols-4 gap-4">
                 <FormField v-slot="{ componentField }" name="basePrice">
-                  <FormItem>
-                    <FormLabel>Valor do Base</FormLabel>
-                    <FormControl>
-                      <CurrencyInput v-bind="componentField" />
-                      <FormMessage />
-                    </FormControl>
-                  </FormItem>
+                  <CurrencyInput :componentField="componentField" label="Valor Base" />
                 </FormField>
                 <FormField v-slot="{ componentField }" name="includedHours">
                   <FormItem>
@@ -359,22 +353,16 @@ const deleteFile = async (url: string) => {
                   </FormItem>
                 </FormField>
                 <FormField v-slot="{ componentField }" name="kmPrice">
-                  <FormItem>
-                    <FormLabel>Valor KM Adicional</FormLabel>
-                    <FormControl>
-                      <CurrencyInput v-bind="componentField" />
-                      <FormMessage />
-                    </FormControl>
-                  </FormItem>
+                  <CurrencyInput
+                    :componentField="componentField"
+                    label="Valor KM Adicional"
+                  />
                 </FormField>
                 <FormField v-slot="{ componentField }" name="minutePrice">
-                  <FormItem>
-                    <FormLabel>Valor Minuto Adicional</FormLabel>
-                    <FormControl>
-                      <CurrencyInput v-bind="componentField" />
-                      <FormMessage />
-                    </FormControl>
-                  </FormItem>
+                  <CurrencyInput
+                    :componentField="componentField"
+                    label="Valor Minuto Adicional"
+                  />
                 </FormField>
               </div>
             </div>
@@ -386,31 +374,13 @@ const deleteFile = async (url: string) => {
 
               <div class="md:grid md:grid-cols-4 gap-4">
                 <FormField v-slot="{ componentField }" name="basePrice">
-                  <FormItem>
-                    <FormLabel>Valor Base</FormLabel>
-                    <FormControl>
-                      <CurrencyInput v-bind="componentField" />
-                      <FormMessage />
-                    </FormControl>
-                  </FormItem>
+                  <CurrencyInput :componentField="componentField" label="Valor Base" />
                 </FormField>
                 <FormField v-slot="{ componentField }" name="kmPrice">
-                  <FormItem>
-                    <FormLabel>Valor KM</FormLabel>
-                    <FormControl>
-                      <CurrencyInput v-bind="componentField" />
-                      <FormMessage />
-                    </FormControl>
-                  </FormItem>
+                  <CurrencyInput :componentField="componentField" label="Valor KM" />
                 </FormField>
                 <FormField v-slot="{ componentField }" name="minutePrice">
-                  <FormItem>
-                    <FormLabel>Valor Minuto</FormLabel>
-                    <FormControl>
-                      <CurrencyInput v-bind="componentField" />
-                      <FormMessage />
-                    </FormControl>
-                  </FormItem>
+                  <CurrencyInput :componentField="componentField" label="Valor Minuto" />
                 </FormField>
               </div>
             </div>

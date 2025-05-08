@@ -10,6 +10,7 @@ import type { Driver } from '~/types/drivers/driver-types';
 
 interface IDriversState {
   drivers: Driver[];
+  inactiveDrivers: Driver[];
   driver: any;
   loadingData: boolean;
   loadingSend: boolean;
@@ -20,6 +21,7 @@ export const userDriverStore = defineStore('driver', {
     return {
       drivers: [],
       driver: {},
+      inactiveDrivers: [],
       loadingData: false,
       loadingSend: false,
     };
@@ -29,7 +31,10 @@ export const userDriverStore = defineStore('driver', {
       this.loadingData = true;
       try {
         const data = await getDrivers();
-        this.drivers = data as any;
+        this.drivers = (data as any).filter((driver: Driver) => driver.enabled === true);
+        this.inactiveDrivers = (data as any).filter(
+          (driver: Driver) => driver.enabled === false,
+        );
       } catch (error) {
         console.log('Driver Store Error -> ', error);
         throw error;

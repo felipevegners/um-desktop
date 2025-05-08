@@ -49,18 +49,18 @@ export const columns = [
       return h('div', { class: 'text-left font-medium' }, row.getValue('document'));
     },
   }),
-  columnHelper.accessor('status', {
-    header: () => h('div', { class: 'text-left' }, 'Cadastro'),
+  columnHelper.accessor('enabled', {
+    header: () => h('div', { class: 'text-left' }, 'Status'),
     cell: ({ row }) => {
-      const status = row.getValue('status');
+      const status = row.getValue('enabled');
       return h(
         'div',
         {
           class: `px-2 flex items-center justify-center h-6 rounded-full text-white text-xs max-w-[80px] ${
-            status === 'validated' ? 'bg-green-600' : 'bg-yellow-500'
+            status === 'true' ? 'bg-green-600' : 'bg-red-600'
           }`,
         },
-        status === 'validated' ? 'Validado' : 'Pendente',
+        status === 'true' ? 'Ativo' : 'Inativo',
       );
     },
   }),

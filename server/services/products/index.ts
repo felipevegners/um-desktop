@@ -6,7 +6,7 @@ export const getProductsService = async (productId: string) => {
 
     return await $fetch('/api/admin/products');
   } catch (error) {
-    console.log('Error -> ', error);
+    throw error;
   }
 };
 export const createProductService = async (productData: any) => {
@@ -16,7 +16,17 @@ export const createProductService = async (productData: any) => {
       body: productData,
     });
   } catch (error) {
-    console.log('Error service ---> ', error);
+    throw error;
+  }
+};
+export const updtateProductService = async (productData: any) => {
+  try {
+    return await $fetch('/api/admin/products', {
+      method: 'PUT',
+      body: productData,
+    });
+  } catch (error) {
+    throw error;
   }
 };
 export const deleteProductService = async (productId: any) => {
@@ -26,6 +36,6 @@ export const deleteProductService = async (productId: any) => {
       body: { id: productId },
     });
   } catch (error) {
-    console.log('Error service ---> ', error);
+    throw error;
   }
 };

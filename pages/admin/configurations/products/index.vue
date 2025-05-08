@@ -4,12 +4,12 @@ import DataTable from '@/components/shared/DataTable.vue';
 import FormSelect from '@/components/shared/FormSelect.vue';
 import TableActions from '@/components/shared/TableActions.vue';
 import { useToast } from '@/components/ui/toast';
-import { deleteProductService, getProductsService } from '@/server/services/services';
 import { createColumnHelper } from '@tanstack/vue-table';
 import { toTypedSchema } from '@vee-validate/zod';
 import { Box, LoaderCircle, Plus } from 'lucide-vue-next';
 import { useForm } from 'vee-validate';
 import * as z from 'zod';
+import { deleteProductService, getProductsService } from '~/server/services/products';
 
 import { columns } from './columns';
 
@@ -267,13 +267,7 @@ const finalColumns = [
               <h3 class="mb-4 font-bold text-lg">Inserir Valores</h3>
               <div class="md:grid md:grid-cols-4 gap-4">
                 <FormField v-slot="{ componentField }" name="basePrice">
-                  <FormItem>
-                    <FormLabel>Valor do Base</FormLabel>
-                    <FormControl>
-                      <CurrencyInput v-bind="componentField" />
-                      <FormMessage />
-                    </FormControl>
-                  </FormItem>
+                  <CurrencyInput :componentField="componentField" label="Valor Base" />
                 </FormField>
                 <FormField v-slot="{ componentField }" name="includedHours">
                   <FormItem>
@@ -294,22 +288,16 @@ const finalColumns = [
                   </FormItem>
                 </FormField>
                 <FormField v-slot="{ componentField }" name="kmPrice">
-                  <FormItem>
-                    <FormLabel>Valor KM Adicional</FormLabel>
-                    <FormControl>
-                      <CurrencyInput v-bind="componentField" />
-                      <FormMessage />
-                    </FormControl>
-                  </FormItem>
+                  <CurrencyInput
+                    :componentField="componentField"
+                    label="Valor KM Adicional"
+                  />
                 </FormField>
                 <FormField v-slot="{ componentField }" name="minutePrice">
-                  <FormItem>
-                    <FormLabel>Valor Minuto Adicional</FormLabel>
-                    <FormControl>
-                      <CurrencyInput v-bind="componentField" />
-                      <FormMessage />
-                    </FormControl>
-                  </FormItem>
+                  <CurrencyInput
+                    :componentField="componentField"
+                    label="Valor Minuto Adicional"
+                  />
                 </FormField>
               </div>
             </div>
@@ -321,31 +309,13 @@ const finalColumns = [
 
               <div class="md:grid md:grid-cols-4 gap-4">
                 <FormField v-slot="{ componentField }" name="basePrice">
-                  <FormItem>
-                    <FormLabel>Valor Base</FormLabel>
-                    <FormControl>
-                      <CurrencyInput v-bind="componentField" />
-                      <FormMessage />
-                    </FormControl>
-                  </FormItem>
+                  <CurrencyInput :componentField="componentField" label="Valor Base" />
                 </FormField>
                 <FormField v-slot="{ componentField }" name="kmPrice">
-                  <FormItem>
-                    <FormLabel>Valor KM</FormLabel>
-                    <FormControl>
-                      <CurrencyInput v-bind="componentField" />
-                      <FormMessage />
-                    </FormControl>
-                  </FormItem>
+                  <CurrencyInput :componentField="componentField" label="Valor KM" />
                 </FormField>
                 <FormField v-slot="{ componentField }" name="minutePrice">
-                  <FormItem>
-                    <FormLabel>Valor Minuto</FormLabel>
-                    <FormControl>
-                      <CurrencyInput v-bind="componentField" />
-                      <FormMessage />
-                    </FormControl>
-                  </FormItem>
+                  <CurrencyInput :componentField="componentField" label="Valor Minuto" />
                 </FormField>
               </div>
             </div>
