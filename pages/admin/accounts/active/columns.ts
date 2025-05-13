@@ -1,6 +1,6 @@
 import { Button } from '@/components/ui/button';
 import { createColumnHelper } from '@tanstack/vue-table';
-import { ArrowUpDown, CircleCheck, CircleX } from 'lucide-vue-next';
+import { ArrowUpDown } from 'lucide-vue-next';
 
 const columnHelper = createColumnHelper<any>();
 
@@ -17,17 +17,22 @@ export const columns = [
         () => ['Nome de Usuário', h(ArrowUpDown, { class: 'ml-2 h-4 w-4' })],
       );
     },
-    cell: ({ row }) =>
-      h('div', { class: 'capitalize' }, row.getValue('username')),
+    cell: ({ row }) => h('div', { class: 'capitalize' }, row.getValue('username')),
   }),
   columnHelper.accessor('email', {
     header: () => h('div', { class: 'text-left' }, 'E-mail'),
     cell: ({ row }) => h('div', { class: 'lowecase' }, row.getValue('email')),
   }),
-  columnHelper.accessor('customerName', {
+  columnHelper.accessor('contract', {
     header: () => h('div', { class: 'text-left' }, 'Empresa'),
-    cell: ({ row }) =>
-      h('div', { class: 'capitilize' }, row.getValue('customerName')),
+    cell: ({ row }) => {
+      const data: any = row.original;
+      return h(
+        'div',
+        { class: 'capitilize' },
+        data.contract?.name ? data.contract.name : '-',
+      );
+    },
   }),
   columnHelper.accessor('role', {
     header: () => h('div', { class: 'text-left' }, 'Nível de Permissão'),

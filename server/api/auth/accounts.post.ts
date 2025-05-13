@@ -13,7 +13,7 @@ export default defineEventHandler(async (event) => {
   const salt = await bcrypt.genSalt(10);
   const hashedPassword = await bcrypt.hash(body.password, salt);
 
-  const { contractId, username, email, role, enabled, status, avatar } = body;
+  const { contract, username, email, role, enabled, status, avatar } = body;
 
   try {
     const newAccount = await prisma.accounts.create({
@@ -22,32 +22,12 @@ export default defineEventHandler(async (event) => {
         email,
         password: hashedPassword,
         role,
+        contract,
         enabled,
         status,
         avatar,
       },
     });
-
-    await prisma.accounts.update({
-      where: {
-        id: newAccount.id,
-      },
-      data: {
-        contractId,
-      },
-    });
-
-    // await prisma.contracts.update({
-    //   where: { id: contractId },
-    //   data: {
-    //     customerUsers: {
-    //       connect: {
-    //         email: newAccount.email,
-    //       },
-    //     },
-    //   },
-    // });
-
     return newAccount;
   } catch (error: any) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
