@@ -22,15 +22,14 @@ const { toast } = useToast();
 
 const branchStore = useBranchesStore();
 const contractStore = useContractsStore();
-const { getBranchByIdAction, deleteBranchAction, updateBranchAction } =
-  branchStore;
+const { getBranchByIdAction, deleteBranchAction, updateBranchAction } = branchStore;
 const { branch, isLoadingData } = storeToRefs(branchStore);
 const { getContractByIdAction } = contractStore;
 const { contract } = storeToRefs(contractStore);
 
 const route = useRoute();
 await getBranchByIdAction(route?.params?.id as string);
-await getContractByIdAction(route?.params?.id as string);
+await getContractByIdAction(branch.value.contractId as string);
 
 const branchSituation = ref<boolean>(true);
 branchSituation.value = branch?.value.enabled;
@@ -58,7 +57,11 @@ const formSchema = toTypedSchema(
     branchManagerPosition: z.string().min(2).max(50),
     branchManagerDepartment: z.string().min(2).max(50),
     branchBudget: z.array(
-      z.number().min(0).max(parseFloat(contract?.value.mainBudget)).optional(),
+      z
+        .number()
+        .min(0)
+        .max(Number(contract?.value.mainBudget) / 100)
+        .optional(),
     ),
     status: z.string().optional(),
   }),
@@ -143,10 +146,7 @@ const onSubmit = form.handleSubmit(async (values) => {
         </Button>
       </div>
     </section>
-    <section
-      v-if="isLoadingData"
-      class="min-h-[300px] flex items-center justify-center"
-    >
+    <section v-if="isLoadingData" class="min-h-[300px] flex items-center justify-center">
       <LoaderCircle class="w-10 h-10 animate-spin" />
     </section>
     <section v-else class="mt-6">
