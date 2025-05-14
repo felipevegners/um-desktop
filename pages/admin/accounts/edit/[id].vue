@@ -14,7 +14,8 @@ import { onBeforeMount } from 'vue';
 import * as z from 'zod';
 
 const contractsStore = useContractsStore();
-const { getContractsAction } = contractsStore;
+const { getContractsAction, getContractByIdAction } = contractsStore;
+const { contract } = storeToRefs(contractsStore);
 
 const accountStore = useAccountStore();
 const {
@@ -27,9 +28,6 @@ const { isLoadingSend, account } = storeToRefs(accountStore);
 
 const route = useRoute();
 const { toast } = useToast();
-const { data } = useAuth();
-//@ts-ignore
-const { user } = data.value;
 
 await getUsersAccountsByIdAction(route?.params?.id as string);
 await getContractsAction();
@@ -44,38 +42,74 @@ defineOptions({
 const accountSituation = ref<boolean>(false);
 const accountData = ref<any>();
 const loadingDelete = ref<boolean>(false);
+const loadingAreas = ref<boolean>(false);
 const viewPassword = ref<boolean>(false);
-const userData = ref<any>({
-  contractId: account?.value?.contractId,
-  customerId: account?.value?.customerId,
-  customerName: account?.value?.customerName,
-});
+const contractName = ref('');
+const branchesList = ref<any>([]);
+const branchAreasList = ref<any>([]);
+const { role } = account?.value;
+
 accountSituation.value = account?.value?.enabled;
-
-const compileUserData = (value: string) => {
-  userData.value.contractId = '';
-
-  const filtered = contractsStore.contracts?.find(
-    (contract: any) => contract.id === value,
-  );
-  userData.value.contractId = filtered.id;
-  userData.value.customerId = filtered.customerId;
-  userData.value.customerName = filtered.customerName;
-};
+contractName.value = role === 'admin' ? '-' : account?.value.contract?.name;
 
 const revealPassword = () => {
   viewPassword.value = !viewPassword.value;
 };
 
-const sanitizeContracts = computed(() => {
-  //@ts-ignore
-  return contractsStore.contracts?.map((contract: any) => {
+onBeforeMount(() => {
+  if (role !== 'admin') {
+    const contract = contractsStore.contracts.find(
+      (contract: any) => contract.id === account?.value.contract.contractId,
+    );
+    if (
+      role === 'platform-admin' ||
+      role === 'branch-manager' ||
+      role === 'platform-corp-user'
+    ) {
+      branchesList.value = contract?.branches?.map((branch: any) => {
+        return {
+          label: `${branch.branchCode} - ${branch.name}`,
+          value: branch.id,
+        };
+      });
+      const branch = contract?.branches?.find(
+        (branch: any) => branch.id === account.value.contract.branchId,
+      );
+
+      branchAreasList.value = branch?.areas?.map((area: any) => {
+        return {
+          label: `${area.areaCode} - ${area.areaName}`,
+          value: area.areaCode,
+        };
+      });
+    }
+  }
+});
+
+const checkUserRole = computed(() => {
+  return (
+    role === 'platform-admin' ||
+    role === 'branch-manager' ||
+    role === 'platform-corp-user'
+  );
+});
+
+const getBranchAreas = (value: string) => {
+  loadingAreas.value = true;
+  const contract = contractsStore.contracts.find(
+    (contract: any) => contract.id === account?.value.contract.contractId,
+  );
+  const selectedBranch = contract.branches.find((branch: any) => branch.id === value);
+  branchAreasList.value = selectedBranch.areas.map((area: any) => {
     return {
-      label: contract.customerName,
-      value: contract.id,
+      label: `${area.areaCode} - ${area.areaName}`,
+      value: area.areaCode,
     };
   });
-});
+  setTimeout(() => {
+    loadingAreas.value = false;
+  }, 500);
+};
 
 const deleteUserAccount = async () => {
   loadingDelete.value = true;
@@ -114,6 +148,8 @@ const formSchema = toTypedSchema(
     role: z.string().min(2).max(20),
     status: z.string(),
     contract: z.any().optional(),
+    branch: z.any().optional(),
+    area: z.any().optional(),
   }),
 );
 
@@ -123,31 +159,28 @@ const form = useForm({
     userName: account?.value.username,
     userEmail: account?.value.email,
     role: account?.value.role,
-    contract: account?.value.contractId,
+    contract: account?.value.contract?.contractId || '-',
+    branch: account?.value.contract?.branchId || '-',
+    area: account?.value.contract?.area || '-',
     status: account?.value.status,
   },
 });
 
 const onSubmit = form.handleSubmit(async (values) => {
-  if (values.role === 'platform-user') {
-    const filtered = contractsStore.contracts?.find((contract: any) =>
-      contract.customerName.includes('Urban Mobi'),
-    );
-    userData.value.contractId = filtered.id;
-    userData.value.customerId = filtered.customerId;
-    userData.value.customerName = filtered.customerName;
-  }
   const accountData = {
-    accountId: '',
+    accountId: account?.value.id,
     username: values.userName,
     password: values.newPassword || '',
     email: values.userEmail,
     role: values.role,
     enabled: accountSituation.value,
     status: values.status,
-    contractId: userData.value.contractId,
-    customerName: userData.value.customerName,
-    customerId: userData.value.customerId,
+    contract: {
+      contractId: values.contract || '-',
+      name: contractName.value || '-',
+      branchId: values.branch || '-',
+      area: values.area || '-',
+    },
     avatar: {
       name: '',
       url: '',
@@ -155,7 +188,6 @@ const onSubmit = form.handleSubmit(async (values) => {
   };
 
   try {
-    accountData.accountId = account?.value.id;
     await updateUserAccountAction(accountData);
   } catch (error) {
     toast({
@@ -204,12 +236,11 @@ const onSubmit = form.handleSubmit(async (values) => {
     <section class="p-6">
       <form @submit="onSubmit" @keydown.enter.prevent="true">
         <Card class="bg-zinc-200">
-          <CardHeader class="mb-6">
-            <CardTitle class="mb-4">Dados do novo usuário</CardTitle>
-            <div class="md:max-w-[350px]">
+          <CardHeader class="gap-6">
+            <div class="md:max-w-[350px] w-full">
+              <h3 class="mb-4 text-lg font-bold">Status</h3>
               <FormField v-slot="{ componentField }" name="status">
                 <FormItem>
-                  <FormLabel>Status</FormLabel>
                   <FormControl>
                     <FormSelect
                       v-bind="componentField"
@@ -223,191 +254,133 @@ const onSubmit = form.handleSubmit(async (values) => {
                 </FormItem>
               </FormField>
             </div>
+            <div class="md:max-w-[350px] w-full">
+              <h3 class="mb-4 text-lg font-bold">Tipo de acesso</h3>
+              <FormField v-slot="{ componentField }" name="role">
+                <FormItem>
+                  <FormControl>
+                    <FormSelect
+                      v-bind="componentField"
+                      :items="[
+                        { label: 'Backoffice', value: 'admin' },
+                        { label: 'Gestor Master', value: 'master-manager' },
+                        { label: 'Gestor Filial', value: 'branch-manager' },
+                        { label: 'Administrador', value: 'platform-admin' },
+                        {
+                          label: 'Usuário Corporativo',
+                          value: 'platform-corp-user',
+                        },
+                        { label: 'Usuário UM', value: 'platform-user' },
+                      ]"
+                      :label="'Selecione'"
+                    />
+                  </FormControl>
+                </FormItem>
+              </FormField>
+            </div>
           </CardHeader>
           <CardContent>
             <div class="mb-6 flex flex-col md:grid md:grid-cols-3 gap-10">
-              <div class="md:max-w-[350px]">
-                <h3 class="mb-4 text-lg font-bold">
-                  1. Selecione o tipo de acesso
-                </h3>
-                <FormField v-slot="{ componentField }" name="role">
+              <div v-if="checkUserRole" class="md:max-w-[350px]">
+                <h3 class="mb-4 text-lg font-bold">Editar Filial</h3>
+                <FormField v-slot="{ componentField }" name="branch">
                   <FormItem>
-                    <FormLabel>Tipo de Acesso</FormLabel>
                     <FormControl>
                       <FormSelect
                         v-bind="componentField"
-                        :items="[
-                          { label: 'Backoffice', value: 'admin' },
-                          { label: 'Gestor Master', value: 'master-manager' },
-                          { label: 'Gestor Filial', value: 'branch-manager' },
-                          { label: 'Administrador', value: 'platform-admin' },
-                          {
-                            label: 'Usuário Corporativo',
-                            value: 'platform-corp-user',
-                          },
-                          { label: 'Usuário UM', value: 'platform-user' },
-                        ]"
+                        :items="branchesList"
                         :label="'Selecione'"
+                        @on-select="getBranchAreas"
                       />
                     </FormControl>
+                    <FormMessage />
                   </FormItem>
                 </FormField>
               </div>
-              <div
-                v-if="
-                  form.values.role === 'master-manager' ||
-                  form.values.role === 'branch-manager' ||
-                  form.values.role === 'platform-admin' ||
-                  form.values.role === 'platform-corp-user'
-                "
-                class="md:max-w-[350px]"
-              >
-                <h3 class="mb-4 text-lg font-bold">
-                  2. Selecione o Contrato a vincular
-                </h3>
-                <FormField v-slot="{ componentField }" name="contract">
+              <div v-if="checkUserRole" class="md:max-w-[350px]">
+                <h3 class="mb-4 text-lg font-bold">Editar Centro de Custo</h3>
+                <div v-if="loadingAreas" class="p-2 bg-white rounded-md">
+                  <LoaderCircle class="animate-spin" />
+                </div>
+                <div
+                  v-if="!loadingAreas && !branchAreasList.length"
+                  class="bg-zinc-300 rounded-md h-10 cursor-not-allowed"
+                ></div>
+                <FormField
+                  v-if="!loadingAreas && branchAreasList.length"
+                  v-slot="{ componentField }"
+                  name="area"
+                >
                   <FormItem>
-                    <FormLabel>Contrato</FormLabel>
                     <FormControl>
                       <FormSelect
                         v-bind="componentField"
-                        :items="sanitizeContracts"
+                        :items="branchAreasList"
                         :label="'Selecione'"
-                        @on-select="compileUserData"
                       />
                     </FormControl>
+                    <FormMessage />
                   </FormItem>
                 </FormField>
               </div>
-              <div v-if="form.values.contract">
-                <h3 class="mb-4 text-lg font-bold">
-                  3. Insira os dados do usuário
-                </h3>
-                <div class="flex flex-col gap-4 md:max-w-[350px]">
-                  <FormField v-slot="{ componentField }" name="userName">
-                    <FormItem>
-                      <FormLabel>Nome de Usuário</FormLabel>
-                      <FormControl>
-                        <Input type="text" v-bind="componentField" />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  </FormField>
-                  <FormField v-slot="{ componentField }" name="userEmail">
-                    <FormItem>
-                      <FormLabel>E-mail</FormLabel>
-                      <FormControl>
-                        <Input type="text" v-bind="componentField" />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  </FormField>
-                  <FormField v-slot="{ componentField }" name="newPassword">
-                    <FormItem class="relative">
-                      <FormLabel> Alterar Senha </FormLabel>
-                      <FormControl>
-                        <div v-if="viewPassword" class="relative">
-                          <Input
-                            type="text"
-                            placeholder="Insira a senha"
-                            v-bind="componentField"
-                          />
-                          <EyeOff
-                            class="h-5 w-5 absolute top-[10px] right-3 cursor-pointer hover:text-zinc-700"
-                            :class="
-                              viewPassword ? 'text-zinc-700' : 'text-zinc-400'
-                            "
-                            @click.prevent="revealPassword"
-                          />
-                        </div>
-                        <div v-else class="relative">
-                          <Input
-                            type="password"
-                            placeholder="Insira a senha"
-                            v-bind="componentField"
-                          />
-                          <Eye
-                            class="h-5 w-5 absolute top-[10px] right-3 cursor-pointer hover:text-zinc-700"
-                            :class="
-                              viewPassword ? 'text-zinc-700' : 'text-zinc-400'
-                            "
-                            @click.prevent="revealPassword"
-                          />
-                        </div>
-                      </FormControl>
-                      <small>*A senha deve conter de 6 a 8 caracteres</small>
-                      <FormMessage />
-                    </FormItem>
-                  </FormField>
-                </div>
-              </div>
-              <div
-                v-if="
-                  form.values.role === 'admin' ||
-                  form.values.role === 'platform-user'
-                "
-                class="md:max-w-[350px]"
-              >
-                <h3 class="mb-4 text-lg font-bold">
-                  2. Insira os dados do usuário
-                </h3>
-                <div class="flex flex-col gap-4">
-                  <FormField v-slot="{ componentField }" name="userName">
-                    <FormItem>
-                      <FormLabel>Nome de Usuário</FormLabel>
-                      <FormControl>
-                        <Input type="text" v-bind="componentField" />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  </FormField>
-                  <FormField v-slot="{ componentField }" name="userEmail">
-                    <FormItem>
-                      <FormLabel>E-mail</FormLabel>
-                      <FormControl>
-                        <Input type="text" v-bind="componentField" />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  </FormField>
-                  <FormField v-slot="{ componentField }" name="newPassword">
-                    <FormItem class="relative">
-                      <FormLabel>Alterar Senha</FormLabel>
-                      <FormControl>
-                        <div v-if="viewPassword" class="relative">
-                          <Input
-                            type="text"
-                            placeholder="Insira a senha"
-                            v-bind="componentField"
-                          />
-                          <EyeOff
-                            class="h-5 w-5 absolute top-[10px] right-3 cursor-pointer hover:text-zinc-700"
-                            :class="
-                              viewPassword ? 'text-zinc-700' : 'text-zinc-400'
-                            "
-                            @click.prevent="revealPassword"
-                          />
-                        </div>
-                        <div v-else class="relative">
-                          <Input
-                            type="password"
-                            placeholder="Insira a senha"
-                            v-bind="componentField"
-                          />
-                          <Eye
-                            class="h-5 w-5 absolute top-[10px] right-3 cursor-pointer hover:text-zinc-700"
-                            :class="
-                              viewPassword ? 'text-zinc-700' : 'text-zinc-400'
-                            "
-                            @click.prevent="revealPassword"
-                          />
-                        </div>
-                      </FormControl>
-                      <small>*A senha deve conter de 6 a 8 caracteres</small>
-                      <FormMessage />
-                    </FormItem>
-                  </FormField>
-                </div>
+            </div>
+
+            <div class="p-4 border border-zinc-900 rounded-md">
+              <h3 class="mb-4 text-lg font-bold">Dados do usuário</h3>
+              <div class="flex flex-col gap-4 md:max-w-[350px]">
+                <FormField v-slot="{ componentField }" name="userName">
+                  <FormItem>
+                    <FormLabel>Nome de Usuário</FormLabel>
+                    <FormControl>
+                      <Input type="text" v-bind="componentField" />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                </FormField>
+                <FormField v-slot="{ componentField }" name="userEmail">
+                  <FormItem>
+                    <FormLabel>E-mail</FormLabel>
+                    <FormControl>
+                      <Input type="text" v-bind="componentField" />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                </FormField>
+                <FormField v-slot="{ componentField }" name="userPassword">
+                  <FormItem class="relative">
+                    <FormLabel> Senha</FormLabel>
+                    <FormControl>
+                      <div v-if="viewPassword" class="relative">
+                        <Input
+                          type="text"
+                          placeholder="Insira a senha"
+                          v-bind="componentField"
+                          :disabled="false"
+                        />
+                        <EyeOff
+                          class="h-5 w-5 absolute top-[10px] right-3 cursor-pointer hover:text-zinc-700"
+                          :class="viewPassword ? 'text-zinc-700' : 'text-zinc-400'"
+                          @click.prevent="revealPassword"
+                        />
+                      </div>
+                      <div v-else class="relative">
+                        <Input
+                          type="password"
+                          placeholder="Insira a senha"
+                          v-bind="componentField"
+                          :disabled="false"
+                        />
+                        <Eye
+                          class="h-5 w-5 absolute top-[10px] right-3 cursor-pointer hover:text-zinc-700"
+                          :class="viewPassword ? 'text-zinc-700' : 'text-zinc-400'"
+                          @click.prevent="revealPassword"
+                        />
+                      </div>
+                    </FormControl>
+                    <small>*A senha deve conter de 6 a 8 caracteres</small>
+                    <FormMessage />
+                  </FormItem>
+                </FormField>
               </div>
             </div>
           </CardContent>

@@ -21,7 +21,7 @@ useHead({
 const { toast } = useToast();
 
 const accountStore = useAccountStore();
-const { registerUserAccountAction, updateUserAccountAction } = accountStore;
+const { registerUserAccountAction } = accountStore;
 const { isLoadingSend } = storeToRefs(accountStore);
 
 const contractsStore = useContractsStore();
@@ -184,7 +184,7 @@ const onSubmit = form.handleSubmit(async (values) => {
                           { label: 'Backoffice', value: 'admin' },
                           { label: 'Gestor Master', value: 'master-manager' },
                           { label: 'Gestor Filial', value: 'branch-manager' },
-                          { label: 'Administrador', value: 'platform-admin' },
+                          { label: 'Administrador Filial', value: 'platform-admin' },
                           {
                             label: 'Usuário Corporativo',
                             value: 'platform-corp-user',

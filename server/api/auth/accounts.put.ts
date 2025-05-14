@@ -10,16 +10,7 @@ export default defineEventHandler(async (event) => {
       message: 'Campos obrigatórios inválidos',
     });
   }
-  const {
-    accountId,
-    contractId,
-    username,
-    email,
-    role,
-    enabled,
-    status,
-    avatar,
-  } = body;
+  const { accountId, contract, username, email, role, enabled, status, avatar } = body;
 
   const userAccount = await prisma.accounts.findUnique({
     where: {
@@ -49,7 +40,7 @@ export default defineEventHandler(async (event) => {
         enabled,
         status,
         avatar,
-        contractId,
+        contract,
       },
     });
   } catch (error: any) {
