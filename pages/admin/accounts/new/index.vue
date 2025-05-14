@@ -7,6 +7,7 @@ import { useAccountStore } from '@/stores/admin/account.store';
 import { useContractsStore } from '@/stores/admin/contracts.store';
 import { toTypedSchema } from '@vee-validate/zod';
 import { Eye, EyeOff, LoaderCircle, UserPen } from 'lucide-vue-next';
+import { vMaska } from 'maska/vue';
 import { useForm } from 'vee-validate';
 import * as z from 'zod';
 
@@ -64,6 +65,9 @@ const formSchema = toTypedSchema(
       .min(6, 'Mínimo de 6 caracteres')
       .max(8, 'Máximo de 8 caracteres'),
     role: z.string({ message: 'Selecione o tipo de acesso' }).min(2).max(50),
+    phone: z.string().optional(),
+    position: z.string().optional(),
+    department: z.string().optional(),
     contract: z.string().optional(),
     branch: z.string().optional(),
     area: z.string().optional(),
@@ -128,6 +132,9 @@ const onSubmit = form.handleSubmit(async (values) => {
     role: values.role,
     enabled: true,
     status: 'pending',
+    phone: values.phone,
+    position: values.position,
+    department: values.department,
     contract: {
       contractId: values.contract || '-',
       name: contractName.value || '-',
@@ -305,10 +312,41 @@ const onSubmit = form.handleSubmit(async (values) => {
               class="p-4 border border-zinc-900 rounded-md"
             >
               <h3 class="mb-4 text-lg font-bold">Dados do usuário</h3>
-              <div class="flex flex-col gap-4 md:max-w-[350px]">
+              <div class="md:grid md:grid-cols-4 gap-6">
                 <FormField v-slot="{ componentField }" name="userName">
                   <FormItem>
-                    <FormLabel>Nome de Usuário</FormLabel>
+                    <FormLabel>Nome Completo</FormLabel>
+                    <FormControl>
+                      <Input type="text" v-bind="componentField" />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                </FormField>
+                <FormField v-slot="{ componentField }" name="phone">
+                  <FormItem>
+                    <FormLabel>Celular</FormLabel>
+                    <FormControl>
+                      <Input
+                        type="text"
+                        v-bind="componentField"
+                        v-maska="'(##) # ####-####'"
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                </FormField>
+                <FormField v-slot="{ componentField }" name="position">
+                  <FormItem>
+                    <FormLabel>Cargo</FormLabel>
+                    <FormControl>
+                      <Input type="text" v-bind="componentField" />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                </FormField>
+                <FormField v-slot="{ componentField }" name="department">
+                  <FormItem>
+                    <FormLabel>Departamento</FormLabel>
                     <FormControl>
                       <Input type="text" v-bind="componentField" />
                     </FormControl>

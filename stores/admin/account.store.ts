@@ -32,6 +32,9 @@ export const useAccountStore = defineStore('accounts', {
         username: '',
         email: '',
         role: '',
+        phone: '',
+        position: '',
+        department: '',
         contract: {
           contractId: '',
           branchId: '',

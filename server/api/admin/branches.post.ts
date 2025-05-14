@@ -72,10 +72,20 @@ export default defineEventHandler(async (event) => {
       password: password,
       email: branchManagerEmail,
       role: 'branch-manager',
-      contractId: contract,
+      contract: {
+        contractId: contract,
+        branchId: newBranch.id,
+        area: '-',
+      },
+      phone: branchManagerPhone,
+      position: branchManagerPosition,
+      department: branchManagerDepartment,
       status: 'pending',
       enabled: true,
-      avatar: {},
+      avatar: {
+        name: '',
+        url: '',
+      },
     };
 
     const newAccount = await createUserAccountService(branchManagerData);

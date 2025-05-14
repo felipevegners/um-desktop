@@ -10,13 +10,7 @@ import { useToast } from '@/components/ui/toast/use-toast';
 import { findAddressByZipcode } from '@/server/services/FindAddress';
 import { useContractsStore } from '@/stores/admin/contracts.store';
 import { toTypedSchema } from '@vee-validate/zod';
-import {
-  CircleX,
-  FileText,
-  LoaderCircle,
-  Paperclip,
-  Trash,
-} from 'lucide-vue-next';
+import { CircleX, FileText, LoaderCircle, Paperclip, Trash } from 'lucide-vue-next';
 import { storeToRefs } from 'pinia';
 import { useForm } from 'vee-validate';
 import { ref } from 'vue';
@@ -309,10 +303,7 @@ const findAddress = async (code: string) => {
       </div>
     </section>
     <Card class="py-6 bg-zinc-200">
-      <section
-        v-if="isLoading"
-        class="min-h-[300px] flex items-center justify-center"
-      >
+      <section v-if="isLoading" class="min-h-[300px] flex items-center justify-center">
         <LoaderCircle class="w-10 h-10 animate-spin" />
       </section>
       <section v-else>
@@ -336,8 +327,7 @@ const findAddress = async (code: string) => {
                       content: {
                         allowedContent({ ready, fileTypes, isUploading }) {
                           if (ready) return '';
-                          if (isUploading)
-                            return 'Enviando seu arquivo, aguarde...';
+                          if (isUploading) return 'Enviando seu arquivo, aguarde...';
                         },
                       },
                       endpoint: 'customerLogo',
@@ -355,10 +345,7 @@ const findAddress = async (code: string) => {
                     }"
                   />
                 </div>
-                <div
-                  v-if="customerLogo?.name !== ''"
-                  class="flex gap-2 items-center"
-                >
+                <div v-if="customerLogo?.name !== ''" class="flex gap-2 items-center">
                   <Paperclip class="w-4 h-4 text-zinc-500" />
                   <div
                     class="px-4 py-2 border border-dashed border-zinc-500 rounded-md bg-white"
@@ -372,10 +359,7 @@ const findAddress = async (code: string) => {
                       {{ customerLogo?.name || 'Nenhum arquivo anexo' }}
                     </a>
                   </div>
-                  <LoaderCircle
-                    v-if="loadingFileData"
-                    class="w-4 h-4 animate-spin"
-                  />
+                  <LoaderCircle v-if="loadingFileData" class="w-4 h-4 animate-spin" />
                   <CircleX
                     v-else
                     class="w-4 h-4 text-zinc-500 hover:text-red-500 cursor-pointer"
@@ -417,15 +401,10 @@ const findAddress = async (code: string) => {
           </div>
           <div class="mb-10">
             <h2 class="px-6 mb-4 text-2xl font-bold">2. Gestor Master</h2>
-            <MasterManagerForm
-              :editMode="true"
-              :editId="contract?.manager.id"
-            />
+            <MasterManagerForm :editMode="true" :editId="contract?.manager?.id" />
           </div>
           <div class="mb-10">
-            <h2 class="px-6 mb-4 text-2xl font-bold">
-              3. Condições Comerciais
-            </h2>
+            <h2 class="px-6 mb-4 text-2xl font-bold">3. Condições Comerciais</h2>
             <ComercialConditionsForm />
           </div>
           <div class="mb-10">
@@ -437,9 +416,7 @@ const findAddress = async (code: string) => {
             />
           </div>
           <div class="mb-10">
-            <h2 class="px-6 mb-4 text-2xl font-bold">
-              5. Informações Adicionais
-            </h2>
+            <h2 class="px-6 mb-4 text-2xl font-bold">5. Informações Adicionais</h2>
             <AdditionalInfoForm />
           </div>
           <div class="px-6 flex gap-6">

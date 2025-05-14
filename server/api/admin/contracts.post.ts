@@ -92,7 +92,14 @@ export default defineEventHandler(async (event) => {
       role: 'master-manager',
       status: 'pending',
       enabled: true,
-      contractId: newContract.id,
+      contract: {
+        contractId: newContract.id,
+        branchId: '-',
+        area: '-',
+      },
+      phone: managerCellPhone,
+      position: position,
+      department: department,
     };
     const newAccount = await createUserAccountService(newAccountData);
     await prisma.contracts.update({

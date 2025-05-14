@@ -20,7 +20,7 @@ definePageMeta({
             >
           </div>
           <FormControl>
-            <CurrencyInput v-bind="componentField" />
+            <CurrencyInput :componentField="componentField" label="Budget do Contrato" />
           </FormControl>
           <FormMessage class="absolute" />
         </FormItem>

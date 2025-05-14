@@ -11,20 +11,23 @@ datasource db {
 }
 
 model Accounts {
-  id        String      @id @default(auto()) @map("_id") @db.ObjectId
-  username  String
-  password  String
-  email     String      @unique
-  role      String
-  avatar    Json?
-  contract  Json?
-  history   Json?
-  status    String?
-  enabled   Boolean
-  createdAt DateTime?   @default(now())
-  updatedAt DateTime?   @updatedAt()
-  Branches  Branches[]
-  Contracts Contracts[]
+  id         String      @id @default(auto()) @map("_id") @db.ObjectId
+  username   String
+  password   String
+  email      String      @unique
+  role       String
+  avatar     Json?
+  contract   Json?
+  phone      String?
+  position   String?
+  department String?
+  history    Json?
+  status     String?
+  enabled    Boolean
+  createdAt  DateTime?   @default(now())
+  updatedAt  DateTime?   @updatedAt()
+  Branches   Branches[]
+  Contracts  Contracts[]
 
   @@unique([id, username])
 }

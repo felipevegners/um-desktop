@@ -13,7 +13,18 @@ export default defineEventHandler(async (event) => {
   const salt = await bcrypt.genSalt(10);
   const hashedPassword = await bcrypt.hash(body.password, salt);
 
-  const { contract, username, email, role, enabled, status, avatar } = body;
+  const {
+    contract,
+    username,
+    email,
+    role,
+    enabled,
+    status,
+    avatar,
+    phone,
+    position,
+    department,
+  } = body;
 
   try {
     const newAccount = await prisma.accounts.create({
@@ -26,6 +37,9 @@ export default defineEventHandler(async (event) => {
         enabled,
         status,
         avatar,
+        phone,
+        position,
+        department,
       },
     });
     return newAccount;

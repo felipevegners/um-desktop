@@ -147,6 +147,9 @@ const formSchema = toTypedSchema(
       .optional(),
     role: z.string().min(2).max(20),
     status: z.string(),
+    phone: z.string(),
+    position: z.string(),
+    department: z.string(),
     contract: z.any().optional(),
     branch: z.any().optional(),
     area: z.any().optional(),
@@ -159,6 +162,9 @@ const form = useForm({
     userName: account?.value.username,
     userEmail: account?.value.email,
     role: account?.value.role,
+    phone: account?.value.phone,
+    position: account?.value.position,
+    department: account?.value.department,
     contract: account?.value.contract?.contractId || '-',
     branch: account?.value.contract?.branchId || '-',
     area: account?.value.contract?.area || '-',
@@ -175,6 +181,9 @@ const onSubmit = form.handleSubmit(async (values) => {
     role: values.role,
     enabled: accountSituation.value,
     status: values.status,
+    phone: values.phone,
+    position: values.position,
+    department: values.department,
     contract: {
       contractId: values.contract || '-',
       name: contractName.value || '-',
@@ -331,6 +340,37 @@ const onSubmit = form.handleSubmit(async (values) => {
                 <FormField v-slot="{ componentField }" name="userName">
                   <FormItem>
                     <FormLabel>Nome de Usuário</FormLabel>
+                    <FormControl>
+                      <Input type="text" v-bind="componentField" />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                </FormField>
+                <FormField v-slot="{ componentField }" name="phone">
+                  <FormItem>
+                    <FormLabel>Celular</FormLabel>
+                    <FormControl>
+                      <Input
+                        type="text"
+                        v-bind="componentField"
+                        v-maska="'(##) # ####-####'"
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                </FormField>
+                <FormField v-slot="{ componentField }" name="position">
+                  <FormItem>
+                    <FormLabel>Cargo</FormLabel>
+                    <FormControl>
+                      <Input type="text" v-bind="componentField" />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                </FormField>
+                <FormField v-slot="{ componentField }" name="department">
+                  <FormItem>
+                    <FormLabel>Departamento</FormLabel>
                     <FormControl>
                       <Input type="text" v-bind="componentField" />
                     </FormControl>

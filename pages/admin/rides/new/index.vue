@@ -29,8 +29,8 @@ useHead({
 const contractsStore = useContractsStore();
 const branchesStore = useBranchesStore();
 const accountStore = useAccountStore();
-const { getContractsAction, getContractByIdAction } = contractsStore;
-const { contracts, contract, isLoading } = storeToRefs(contractsStore);
+const { getContractByIdAction } = contractsStore;
+const { contract, isLoading } = storeToRefs(contractsStore);
 const { getBranchByIdAction } = branchesStore;
 const { branch } = storeToRefs(branchesStore);
 const { getUsersAccountsAction } = accountStore;
@@ -86,84 +86,38 @@ const markers = ref<any>([]);
 const showRenderedMap = ref<boolean>(false);
 
 onBeforeMount(async () => {
-  await getContractsAction();
-});
-
-const sanitizeContracts = computed(() => {
-  //@ts-ignore
-  return contracts?.value.map((contract: any) => {
+  await getUsersAccountsAction();
+  const filteredUsers = accounts.value.filter(
+    (user: any) => user.enabled === true && user.role !== 'admin',
+  );
+  availableUsers.value = filteredUsers.map((user: any) => {
     return {
-      label: contract.customerName,
-      value: contract.id,
+      label: user.username,
+      value: user.id,
     };
   });
 });
-
-const getBranchesAndUsers = async (contractId: string) => {
-  loadingBraches.value = true;
-  try {
-    await getContractByIdAction(contractId);
-    setTimeout(() => {
-      loadingBraches.value = false;
-    }, 1000);
-    selectedBranches.value = contract?.value.branches.map((branch: any) => {
-      return {
-        label: `${branch.branchCode} - ${branch.name}`,
-        value: branch?.id,
-      };
-    });
-    await getUsersAccountsAction();
-    const filteredUsers = accounts?.value.filter(
-      (account: any) => account?.contractId === contractId,
-    );
-    availableUsers.value = filteredUsers.map((user: any) => {
-      return {
-        label: user.username,
-        value: user.id,
-      };
-    });
-  } catch (error) {
-    console.error('Error -> ', error);
-  }
-};
-
-const getAreas = async (branchId: string) => {
-  loadingAreas.value = true;
-  try {
-    await getBranchByIdAction(branchId);
-    setTimeout(() => {
-      loadingAreas.value = false;
-    }, 1000);
-    selectedAreas.value = branch.value.areas.map((area: any) => {
-      return {
-        label: `${area.areaCode} - ${area.areaName}`,
-        value: area.areaCode,
-      };
-    });
-  } catch (error) {
-    console.error('Error -> ', error);
-  }
-};
-
-const getProducts = async () => {
-  showAvailableProducts.value = true;
-  loadingProducts.value = true;
-  try {
-    availableProducts.value = await contract?.value.products;
-    setTimeout(() => {
-      loadingProducts.value = false;
-    }, 1000);
-  } catch (error) {
-    console.error('Error -> ', error);
-  }
-};
 
 const setSelectedProduct = (value: any) => {
   selectedProduct.value = value;
 };
 
-const setSelectedUser = (value: string) => {
-  selectedUser.value = value;
+const setSelectedUser = async (value: string) => {
+  const userContractData: any = accounts?.value.find(
+    (account: any) => account.id === value,
+  );
+  selectedUser.value = userContractData?.contract;
+
+  try {
+    showAvailableProducts.value = true;
+    loadingProducts.value = true;
+    await getContractByIdAction(selectedUser.value.contractId);
+    console.log(contract?.value);
+    availableProducts.value = contract?.value.products;
+    loadingProducts.value = false;
+  } catch (error) {
+    console.error('error -> ', error);
+  }
 };
 const useBrachAddressOnOrigin = (value: any) => {
   const { address } = branch?.value;
@@ -280,52 +234,29 @@ const setDestinationPlace = (place: any) => {
               <!-- COLUNA DE DADOS -->
               <div class="flex flex-col gap-6">
                 <!-- <LoaderCircle v-if="isLoading" class="animate-spin" /> -->
-                <FormField v-slot="{ componentField }" name="contract">
+                <FormField v-slot="{ componentField }" name="user">
                   <FormItem>
-                    <FormLabel>1. Selecione o Contrato</FormLabel>
+                    <FormLabel>Selecione o Usuário</FormLabel>
                     <FormControl>
                       <FormSelect
                         v-bind="componentField"
-                        :items="sanitizeContracts"
+                        :items="availableUsers"
                         :label="'Selecione'"
-                        @on-select="getBranchesAndUsers"
+                        @on-select="setSelectedUser"
                       />
                     </FormControl>
                   </FormItem>
                 </FormField>
-                <div v-if="selectedBranches.length">
-                  <LoaderCircle v-if="loadingBraches" class="animate-spin" />
-                  <FormField v-else v-slot="{ componentField }" name="branch">
-                    <FormItem>
-                      <FormLabel>2. Selecione a Filial</FormLabel>
-                      <FormControl>
-                        <FormSelect
-                          v-bind="componentField"
-                          :items="selectedBranches"
-                          :label="'Selecione'"
-                          @on-select="getAreas"
-                        />
-                      </FormControl>
-                    </FormItem>
-                  </FormField>
-                </div>
-                <div v-if="selectedAreas.length">
-                  <LoaderCircle v-if="loadingAreas" class="animate-spin" />
-                  <FormField v-else v-slot="{ componentField }" name="area">
-                    <FormItem>
-                      <FormLabel>3. Selecione o Centro de Custo</FormLabel>
-                      <FormControl>
-                        <FormSelect
-                          v-bind="componentField"
-                          :items="selectedAreas"
-                          :label="'Selecione'"
-                          @on-select="getProducts"
-                        />
-                      </FormControl>
-                    </FormItem>
-                  </FormField>
-                </div>
-                <div v-if="showAvailableProducts">
+                <pre>{{ selectedUser }}</pre>
+                <FormField v-slot="{ componentField }" name="reason">
+                  <FormItem>
+                    <FormLabel>Motivo da viagem</FormLabel>
+                    <FormControl>
+                      <Input type="text" v-bind="componentField" />
+                    </FormControl>
+                  </FormItem>
+                </FormField>
+                <div v-if="true">
                   <LoaderCircle v-if="loadingProducts" class="animate-spin" />
                   <div v-else>
                     <label class="text-sm font-medium">4. Selecione o Produto</label>
@@ -362,35 +293,13 @@ const setDestinationPlace = (place: any) => {
                     </ul>
                   </div>
                 </div>
+                <!-- v-if="selectedProduct" -->
                 <div
-                  v-if="selectedProduct"
                   class="p-6 flex flex-col items-start gap-6 border border-zinc-900 rounded-md"
                 >
                   <h3 class="font-bold">Dados da Viagem</h3>
                   <div class="flex flex-col gap-6 w-full">
-                    <div class="md:grid md:grid-cols-2 gap-6">
-                      <FormField v-slot="{ componentField }" name="user">
-                        <FormItem>
-                          <FormLabel>Selecione o Usuário</FormLabel>
-                          <FormControl>
-                            <FormSelect
-                              v-bind="componentField"
-                              :items="availableUsers"
-                              :label="'Selecione'"
-                              @on-select="setSelectedUser"
-                            />
-                          </FormControl>
-                        </FormItem>
-                      </FormField>
-                      <FormField v-slot="{ componentField }" name="reason">
-                        <FormItem>
-                          <FormLabel>Motivo da viagem</FormLabel>
-                          <FormControl>
-                            <Input type="text" v-bind="componentField" />
-                          </FormControl>
-                        </FormItem>
-                      </FormField>
-                    </div>
+                    <div class="md:grid md:grid-cols-2 gap-6"></div>
                     <div class="flex items-center gap-6">
                       <div class="flex flex-col">
                         <label class="mb-2 text-sm font-medium">Data</label>
