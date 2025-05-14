@@ -4,6 +4,15 @@ import { ArrowUpDown } from 'lucide-vue-next';
 
 const columnHelper = createColumnHelper<any>();
 
+const Roles = {
+  admin: 'Backoffice',
+  'master-manager': 'Gestor Master',
+  'branch-manager': 'Gestor Filial',
+  'platform-admin': 'Administrador de Filial',
+  'platform-corp-user': 'Usuário Corporativo',
+  'platform-user': 'Usuário UM',
+};
+
 export const columns = [
   columnHelper.accessor('username', {
     enablePinning: true,
@@ -37,7 +46,8 @@ export const columns = [
   columnHelper.accessor('role', {
     header: () => h('div', { class: 'text-left' }, 'Nível de Permissão'),
     cell: ({ row }) => {
-      return h('div', { class: 'text-left font-medium' }, row.getValue('role'));
+      //@ts-ignore
+      return h('div', { class: 'text-left font-medium' }, Roles[row.getValue('role')]);
     },
   }),
   columnHelper.accessor('status', {
