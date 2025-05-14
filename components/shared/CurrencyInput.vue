@@ -9,6 +9,11 @@ defineProps<{
   label: string;
   componentField: any;
 }>();
+
+// const maskedValue = ref('');
+// const unmaskedValue = ref('');
+
+// defineExpose({ unmaskedValue });
 </script>
 <template>
   <FormItem class="relative">
@@ -17,7 +22,7 @@ defineProps<{
       <Input
         type="text"
         v-bind="componentField"
-        v-maska="'9##.99#,##'"
+        v-maska:unmaskedValue.unmasked="'9##.99#,##'"
         data-maska-tokens="9:[0-9]:repeated"
         data-maska-reversed
         class="relative pl-9"
@@ -30,8 +35,6 @@ defineProps<{
       <FormMessage />
     </FormControl>
   </FormItem>
-  <!-- <div class="relative w-full max-w-sm items-center">
-  </div> -->
 </template>
 
 <style lang="scss" scoped></style>

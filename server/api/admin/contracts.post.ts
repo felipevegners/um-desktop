@@ -94,6 +94,7 @@ export default defineEventHandler(async (event) => {
       enabled: true,
       contract: {
         contractId: newContract.id,
+        name: newContract.customerName,
         branchId: '-',
         area: '-',
       },

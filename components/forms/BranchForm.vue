@@ -63,8 +63,8 @@ const removeRow = (index: any) => {
 };
 
 const calculateBudgetRest = (value: any) => {
-  const result = contractRemainBudget.value - parseFloat(value);
-  calculatedBudget.value = result + 1000;
+  const increment = parseFloat(value) + 1000;
+  calculatedBudget.value = contractRemainBudget.value - increment;
 };
 
 const compileBudget = (value: string) => {

@@ -145,7 +145,7 @@ const onSubmit = form.handleSubmit(async (values) => {
         phoneExtension: values.phoneExtension || '-',
         products: selectedProducts,
         //@ts-ignore
-        mainBudget: values?.mainBudget || '',
+        mainBudget: parseFloat(values.mainBudget?.replace(/,/g, '') * 1000).toString(),
       };
       await createContractAction(newContractData);
       isLoadingSend.value = false;

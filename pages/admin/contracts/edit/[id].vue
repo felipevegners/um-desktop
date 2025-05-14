@@ -87,7 +87,7 @@ const schema = toTypedSchema(
     position: z.string().min(1).max(50),
     department: z.string().min(1).max(50),
     managerEmail: z.string().email().min(1).max(100),
-    mainBudget: z.string().optional(),
+    mainBudget: z.any().optional(),
     paymentTerm: z.string().min(1).max(10),
     paymentDueDate: z.number().min(0),
     additionalInfo: z.string().min(0).max(200).optional(),
@@ -117,7 +117,7 @@ const form = useForm({
     position: contract?.value?.managerInfo?.position,
     department: contract?.value?.managerInfo?.department,
     managerEmail: contract?.value?.manager?.email,
-    mainBudget: contract?.value.mainBudget,
+    mainBudget: Number(contract?.value.mainBudget) * 100,
     paymentTerm: contract?.value?.comercialConditions?.paymentTerm,
     paymentDueDate: contract?.value?.comercialConditions?.paymentDueDate,
     additionalInfo: contract?.value?.additionalInfo,
@@ -162,7 +162,8 @@ const onSubmit = form.handleSubmit(async (values) => {
         department: values.department,
       },
       customerName: values.fantasyName,
-      mainBudget: values.mainBudget,
+      //@ts-ignore
+      mainBudget: parseFloat(values?.mainBudget?.replace(/,/g, '') * 1000).toString(),
       comercialConditions: {
         paymentTerm: values.paymentTerm,
         paymentDueDate: values.paymentDueDate,

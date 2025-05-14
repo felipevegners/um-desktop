@@ -60,7 +60,7 @@ const formSchema = toTypedSchema(
       z
         .number()
         .min(0)
-        .max(Number(contract?.value.mainBudget) / 100)
+        .max(Number(contract?.value.mainBudget) * 100)
         .optional(),
     ),
     status: z.string().optional(),
