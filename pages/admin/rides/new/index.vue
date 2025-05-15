@@ -119,7 +119,6 @@ const setSelectedUser = async (value: string) => {
       class: 'bg-red-500 border-0 text-white text-2xl',
       description: `O usuário selecionado não possui uma filial cadastrada`,
     });
-    console.log('USUÁRIO SEM FILIAL');
     noBranchAlert.value = true;
   }
 
@@ -127,7 +126,6 @@ const setSelectedUser = async (value: string) => {
     showAvailableProducts.value = true;
     loadingProducts.value = true;
     await getContractByIdAction(selectedUser.value.contractId);
-    console.log(contract?.value);
     availableProducts.value = contract?.value.products;
     loadingProducts.value = false;
   } catch (error) {
@@ -167,9 +165,10 @@ const decodePolyline = (polyline: string) => {
 
   // Find the center of ride path to center the map
   const centerCoord = coords.length > 2 ? coords.length / 2 : coords.length;
+  const parseCenterCoord = parseInt(centerCoord, 10) + 10; // parseInt if centerCoord is not divisivle by 2
   center.value = {
-    lat: coords[centerCoord].lat,
-    lng: coords[centerCoord].lng,
+    lat: coords[parseCenterCoord].lat,
+    lng: coords[parseCenterCoord].lng,
   };
 
   // Set the markers on the map
@@ -475,7 +474,7 @@ const setDestinationPlace = (place: any) => {
                       :api-key="API_KEY"
                       style="width: 100%; height: 600px"
                       :center="center"
-                      :zoom="13"
+                      :zoom="11"
                     >
                       <Marker
                         v-for="marker in markers"
