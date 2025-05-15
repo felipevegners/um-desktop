@@ -11,12 +11,13 @@ import {
   LoaderCircle,
   SquareDot,
   SquareSquare,
+  Users,
   Waypoints,
 } from 'lucide-vue-next';
 import { storeToRefs } from 'pinia';
 import { useForm } from 'vee-validate';
 import { GoogleMap, Marker, Polyline } from 'vue3-google-map';
-import { polyLineCodec } from '~/lib/utils';
+import { currencyFormat, polyLineCodec } from '~/lib/utils';
 
 definePageMeta({
   layout: 'admin',
@@ -54,6 +55,7 @@ const selectedProduct = ref<any>();
 const travelDate = ref<any>();
 const availableUsers = ref<any>([]);
 const selectedUser = ref<any>();
+const noBranchAlert = ref<boolean>(false);
 
 const originCoords = ref<any>({
   lat: '',
@@ -71,7 +73,7 @@ const destinationLocationDetails = ref<any>({
   address: '',
   url: '',
 });
-const calculatedTravel = ref();
+
 const routePolyLine = ref();
 const loadingRoute = ref<boolean>(false);
 const center = ref<any>({ lat: -23.0397942, lng: -47.0004508 });
@@ -103,10 +105,23 @@ const setSelectedProduct = (value: any) => {
 };
 
 const setSelectedUser = async (value: string) => {
+  noBranchAlert.value = false;
   const userContractData: any = accounts?.value.find(
     (account: any) => account.id === value,
   );
   selectedUser.value = userContractData?.contract;
+
+  if (userContractData?.contract.branchId !== '-') {
+    await getBranchByIdAction(userContractData?.contract?.branchId);
+  } else {
+    toast({
+      title: 'Opss!',
+      class: 'bg-red-500 border-0 text-white text-2xl',
+      description: `O usuário selecionado não possui uma filial cadastrada`,
+    });
+    console.log('USUÁRIO SEM FILIAL');
+    noBranchAlert.value = true;
+  }
 
   try {
     showAvailableProducts.value = true;
@@ -123,7 +138,9 @@ const useBrachAddressOnOrigin = (value: any) => {
   const { address } = branch?.value;
   if (value === true) {
     originLocationDetails.value.address = `${address.streetName}, ${address.streetNumber} - ${address.neighborhood}, ${address.city}`;
-    document.getElementById('originField')?.focus();
+    const field = window.document.getElementById('originField');
+    field?.focus();
+
     form.setValues({
       origin: `${address.streetName}, ${address.streetNumber} - ${address.neighborhood}, ${address.city}`,
     });
@@ -170,6 +187,13 @@ const decodePolyline = (polyline: string) => {
   ];
 };
 
+const calculatedTravel = ref({
+  travelDistance: '',
+  travelTime: '',
+  travelPrice: '',
+  arrivalTime: '',
+});
+
 const getRideCalculation = async () => {
   const rideData = {
     origins: originLocationDetails.value.address,
@@ -178,7 +202,16 @@ const getRideCalculation = async () => {
   try {
     loadingRoute.value = true;
     const travelCalculation = await getRideCalculationService(rideData);
-    calculatedTravel.value = travelCalculation;
+
+    const distance = travelCalculation?.rows[0]?.elements[0]?.distance.value / 1000;
+    const ridePrice = distance * parseFloat(selectedProduct?.value?.basePrice);
+
+    calculatedTravel.value.travelDistance =
+      travelCalculation?.rows[0]?.elements[0]?.distance.text;
+    calculatedTravel.value.travelTime =
+      travelCalculation?.rows[0]?.elements[0]?.duration.text;
+    calculatedTravel.value.travelPrice = ridePrice.toString();
+
     const routeCalculation: any = await getRideRoutesService(rideData);
     routePolyLine.value = routeCalculation[0]?.polyline?.encodedPolyline;
   } catch (error) {
@@ -233,33 +266,25 @@ const setDestinationPlace = (place: any) => {
             <div class="md:grid md:grid-cols-2 gap-6">
               <!-- COLUNA DE DADOS -->
               <div class="flex flex-col gap-6">
-                <!-- <LoaderCircle v-if="isLoading" class="animate-spin" /> -->
-                <FormField v-slot="{ componentField }" name="user">
-                  <FormItem>
-                    <FormLabel>Selecione o Usuário</FormLabel>
-                    <FormControl>
-                      <FormSelect
-                        v-bind="componentField"
-                        :items="availableUsers"
-                        :label="'Selecione'"
-                        @on-select="setSelectedUser"
-                      />
-                    </FormControl>
-                  </FormItem>
-                </FormField>
-                <pre>{{ selectedUser }}</pre>
-                <FormField v-slot="{ componentField }" name="reason">
-                  <FormItem>
-                    <FormLabel>Motivo da viagem</FormLabel>
-                    <FormControl>
-                      <Input type="text" v-bind="componentField" />
-                    </FormControl>
-                  </FormItem>
-                </FormField>
-                <div v-if="true">
+                <div class="md:grid md:grid-cols-2 gap-6">
+                  <FormField v-slot="{ componentField }" name="user">
+                    <FormItem>
+                      <FormLabel>Selecione o Usuário*</FormLabel>
+                      <FormControl>
+                        <FormSelect
+                          v-bind="componentField"
+                          :items="availableUsers"
+                          :label="'Selecione'"
+                          @on-select="setSelectedUser"
+                        />
+                      </FormControl>
+                    </FormItem>
+                  </FormField>
+                </div>
+                <div v-if="showAvailableProducts">
                   <LoaderCircle v-if="loadingProducts" class="animate-spin" />
                   <div v-else>
-                    <label class="text-sm font-medium">4. Selecione o Produto</label>
+                    <label class="text-sm font-medium">Selecione o Produto*</label>
                     <ul class="mt-2 flex justify-evenly gap-4">
                       <li
                         class="w-full"
@@ -287,25 +312,56 @@ const setDestinationPlace = (place: any) => {
                               {{ product.code }}
                             </small>
                             <small>{{ product.name }}</small>
+                            <div class="flex items-center justify-start">
+                              <Users :size="14" />
+                              <small class="ml-1 font-bold">{{ product.capacity }}</small>
+                            </div>
                           </div>
                         </article>
                       </li>
                     </ul>
                   </div>
                 </div>
-                <!-- v-if="selectedProduct" -->
+                <!-- <pre>{{ selectedProduct }}</pre> -->
                 <div
+                  v-if="selectedProduct"
                   class="p-6 flex flex-col items-start gap-6 border border-zinc-900 rounded-md"
                 >
-                  <h3 class="font-bold">Dados da Viagem</h3>
+                  <CardTitle>Dados da Viagem</CardTitle>
                   <div class="flex flex-col gap-6 w-full">
-                    <div class="md:grid md:grid-cols-2 gap-6"></div>
+                    <div class="md:grid md:grid-cols-2 gap-6">
+                      <FormField v-slot="{ componentField }" name="reason">
+                        <FormItem>
+                          <FormLabel>Motivo / Justificativa</FormLabel>
+                          <FormControl>
+                            <Input type="text" v-bind="componentField" />
+                          </FormControl>
+                        </FormItem>
+                      </FormField>
+                      <FormField v-slot="{ componentField }" name="passengers">
+                        <FormItem>
+                          <FormLabel>Nº Passageiros*</FormLabel>
+                          <!-- <div class="flex flex-col items-start">
+                            <small class="text-muted-foreground"
+                              >Baseado na capacidade do serviço</small
+                            >
+                          </div> -->
+                          <FormControl>
+                            <Input
+                              type="number"
+                              v-bind="componentField"
+                              :max="selectedProduct.capacity"
+                            />
+                          </FormControl>
+                        </FormItem>
+                      </FormField>
+                    </div>
                     <div class="flex items-center gap-6">
                       <div class="flex flex-col">
-                        <label class="mb-2 text-sm font-medium">Data</label>
+                        <label class="mb-2 text-sm font-medium">Data*</label>
                         <DatePicker v-model="travelDate" />
                       </div>
-                      <div class="flex flex-col">
+                      <div class="flex items-end gap-4">
                         <FormField v-slot="{ componentField }" name="departTime">
                           <FormItem class="md:min-w-[200px]">
                             <FormLabel>Hora da Partida</FormLabel>
@@ -344,11 +400,15 @@ const setDestinationPlace = (place: any) => {
                             </FormControl>
                           </FormItem>
                         </FormField>
+                        <div class="mb-2 flex items-center justify-center gap-2">
+                          <Checkbox @update:checked="" />
+                          <small>Sem horário definido</small>
+                        </div>
                       </div>
                     </div>
                     <FormField v-slot="{ componentField, value }" name="origin">
                       <FormItem>
-                        <FormLabel>Origem</FormLabel>
+                        <FormLabel>Origem*</FormLabel>
                         <FormControl>
                           <div class="flex flex-col items-start gap-2">
                             <div class="flex items-center w-full gap-2">
@@ -362,7 +422,10 @@ const setDestinationPlace = (place: any) => {
                                 class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                               />
                             </div>
-                            <div v-if="true" class="ml-8 flex items-center gap-2">
+                            <div
+                              v-if="!noBranchAlert"
+                              class="ml-8 flex items-center gap-2"
+                            >
                               <Checkbox @update:checked="useBrachAddressOnOrigin" />
                               <small>Usar endereço da filial</small>
                             </div>
@@ -373,7 +436,7 @@ const setDestinationPlace = (place: any) => {
                     </FormField>
                     <FormField v-slot="{ componentField }" name="destination">
                       <FormItem>
-                        <FormLabel>Destino</FormLabel>
+                        <FormLabel>Destino*</FormLabel>
                         <FormControl>
                           <div class="flex items-center gap-2">
                             <SquareSquare />
@@ -407,12 +470,12 @@ const setDestinationPlace = (place: any) => {
                 </div>
                 <div v-else class="flex flex-col items-start justify-start w-full">
                   <div v-if="showRenderedMap" class="w-full">
-                    <h2 class="mb-4 font-bold text-xl">Rota e Dados do Atendimento</h2>
+                    <CardTitle>Rota e Dados do Atendimento</CardTitle>
                     <GoogleMap
                       :api-key="API_KEY"
-                      style="width: 100%; height: 500px"
+                      style="width: 100%; height: 600px"
                       :center="center"
-                      :zoom="15"
+                      :zoom="13"
                     >
                       <Marker
                         v-for="marker in markers"
@@ -430,13 +493,13 @@ const setDestinationPlace = (place: any) => {
                       <Polyline :options="ridePath" />
                     </GoogleMap>
                   </div>
-                  <div v-if="calculatedTravel?.rows" class="mt-6 flex gap-4">
+                  <div v-if="showRenderedMap" class="mt-6 flex gap-4">
                     <div
                       class="p-6 flex flex-col items-start justify-center bg-white rounded-md"
                     >
                       <small>Distância Total</small>
                       <p class="font-bold">
-                        {{ calculatedTravel?.rows[0]?.elements[0]?.distance.text }}
+                        {{ calculatedTravel?.travelDistance }}
                       </p>
                     </div>
                     <div
@@ -444,7 +507,15 @@ const setDestinationPlace = (place: any) => {
                     >
                       <small>Tempo Total</small>
                       <p class="font-bold">
-                        {{ calculatedTravel?.rows[0]?.elements[0]?.duration.text }}
+                        {{ calculatedTravel?.travelTime }}
+                      </p>
+                    </div>
+                    <div
+                      class="p-6 flex-col items-start justify-center bg-white rounded-md"
+                    >
+                      <small>Preço Estimado*</small>
+                      <p class="font-bold">
+                        {{ currencyFormat(calculatedTravel?.travelPrice) }}
                       </p>
                     </div>
                   </div>
