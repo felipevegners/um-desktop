@@ -1,4 +1,4 @@
-import { createRideService, getRidesService } from '@/server/services/admin/rides';
+import { createRideService, getRidesService } from '@/server/services/rides';
 import { defineStore } from 'pinia';
 
 export interface IRidesState {
@@ -19,8 +19,8 @@ export const useRidesStore = defineStore('rides', {
     async getRidesAction() {
       this.loadingData = true;
       try {
-        const response = await getRidesService('');
-        this.rides = response;
+        const response: any = await getRidesService('');
+        this.rides = response.filter((ride: any) => ride.status === 'created');
         this.loadingData = false;
       } catch (error) {
         throw error;

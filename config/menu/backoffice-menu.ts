@@ -18,7 +18,7 @@ const { data } = useAuth();
 //@ts-ignore
 const { user } = data.value;
 
-export const backofficeMenuData = {
+export const backofficeMenu = {
   title: 'Painel Backoffice',
   user: {
     name: user.username,
@@ -119,7 +119,7 @@ export const backofficeMenuData = {
       items: [
         {
           title: 'Abertos',
-          url: '/admin/rides/active',
+          url: '/admin/rides/open',
         },
         {
           title: 'Realizados',

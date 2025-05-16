@@ -3,6 +3,7 @@ import BackLink from '@/components/shared/BackLink.vue';
 import FormSelect from '@/components/shared/FormSelect.vue';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/components/ui/toast/use-toast';
+import { rolesList } from '@/config/roles';
 import { useAccountStore } from '@/stores/admin/account.store';
 import { useContractsStore } from '@/stores/admin/contracts.store';
 import { toTypedSchema } from '@vee-validate/zod';
@@ -187,17 +188,7 @@ const onSubmit = form.handleSubmit(async (values) => {
                     <FormControl>
                       <FormSelect
                         v-bind="componentField"
-                        :items="[
-                          { label: 'Backoffice', value: 'admin' },
-                          { label: 'Gestor Master', value: 'master-manager' },
-                          { label: 'Gestor Filial', value: 'branch-manager' },
-                          { label: 'Administrador Filial', value: 'platform-admin' },
-                          {
-                            label: 'Usuário Corporativo',
-                            value: 'platform-corp-user',
-                          },
-                          { label: 'Usuário UM', value: 'platform-user' },
-                        ]"
+                        :items="rolesList"
                         :label="'Selecione'"
                         @on-select="resetFormState"
                       />

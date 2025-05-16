@@ -3,6 +3,7 @@ import BackLink from '@/components/shared/BackLink.vue';
 import FormSelect from '@/components/shared/FormSelect.vue';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/components/ui/toast';
+import { rolesList } from '@/config/roles';
 import { useAccountStore } from '@/stores/admin/account.store';
 import { useContractsStore } from '@/stores/admin/contracts.store';
 import { toTypedSchema } from '@vee-validate/zod';
@@ -270,17 +271,7 @@ const onSubmit = form.handleSubmit(async (values) => {
                   <FormControl>
                     <FormSelect
                       v-bind="componentField"
-                      :items="[
-                        { label: 'Backoffice', value: 'admin' },
-                        { label: 'Gestor Master', value: 'master-manager' },
-                        { label: 'Gestor Filial', value: 'branch-manager' },
-                        { label: 'Administrador', value: 'platform-admin' },
-                        {
-                          label: 'Usuário Corporativo',
-                          value: 'platform-corp-user',
-                        },
-                        { label: 'Usuário UM', value: 'platform-user' },
-                      ]"
+                      :items="rolesList"
                       :label="'Selecione'"
                     />
                   </FormControl>
@@ -336,10 +327,10 @@ const onSubmit = form.handleSubmit(async (values) => {
 
             <div class="p-4 border border-zinc-900 rounded-md">
               <h3 class="mb-4 text-lg font-bold">Dados do usuário</h3>
-              <div class="flex flex-col gap-4 md:max-w-[350px]">
+              <div class="md:grid md:grid-cols-4 gap-6">
                 <FormField v-slot="{ componentField }" name="userName">
                   <FormItem>
-                    <FormLabel>Nome de Usuário</FormLabel>
+                    <FormLabel>Nome Completo</FormLabel>
                     <FormControl>
                       <Input type="text" v-bind="componentField" />
                     </FormControl>
@@ -395,7 +386,7 @@ const onSubmit = form.handleSubmit(async (values) => {
                           type="text"
                           placeholder="Insira a senha"
                           v-bind="componentField"
-                          :disabled="false"
+                          :disabled="isLoadingSend"
                         />
                         <EyeOff
                           class="h-5 w-5 absolute top-[10px] right-3 cursor-pointer hover:text-zinc-700"
@@ -408,7 +399,7 @@ const onSubmit = form.handleSubmit(async (values) => {
                           type="password"
                           placeholder="Insira a senha"
                           v-bind="componentField"
-                          :disabled="false"
+                          :disabled="isLoadingSend"
                         />
                         <Eye
                           class="h-5 w-5 absolute top-[10px] right-3 cursor-pointer hover:text-zinc-700"

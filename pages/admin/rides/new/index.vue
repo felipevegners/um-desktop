@@ -6,7 +6,8 @@ import { getRideCalculationService, getRideRoutesService } from '@/server/servic
 import { useAccountStore } from '@/stores/admin/account.store';
 import { useBranchesStore } from '@/stores/admin/branches.store';
 import { useContractsStore } from '@/stores/admin/contracts.store';
-import { DateFormatter, type DateValue, getLocalTimeZone } from '@internationalized/date';
+import { useRidesStore } from '@/stores/admin/rides.store';
+import { DateFormatter, getLocalTimeZone } from '@internationalized/date';
 import {
   CalendarDays,
   LoaderCircle,
@@ -18,7 +19,6 @@ import {
 import { vMaska } from 'maska/vue';
 import { storeToRefs } from 'pinia';
 import { useForm } from 'vee-validate';
-import { h } from 'vue';
 import { GoogleMap, Marker, Polyline } from 'vue3-google-map';
 import { currencyFormat, polyLineCodec } from '~/lib/utils';
 
@@ -33,12 +33,14 @@ useHead({
 const contractsStore = useContractsStore();
 const branchesStore = useBranchesStore();
 const accountStore = useAccountStore();
+const ridesStore = useRidesStore();
 const { getContractByIdAction } = contractsStore;
-const { contract, isLoading } = storeToRefs(contractsStore);
+const { contract } = storeToRefs(contractsStore);
 const { getBranchByIdAction } = branchesStore;
 const { branch } = storeToRefs(branchesStore);
 const { getUsersAccountsAction } = accountStore;
 const { accounts } = storeToRefs(accountStore);
+const { createRideAction, loadingData } = ridesStore;
 
 const API_KEY = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
 const customIconStart = `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="#FFFFFF" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-square-dot-icon lucide-square-dot"><rect width="18" height="18" x="3" y="3" rx="2"/><circle cx="12" cy="12" r="1"/></svg>`;
@@ -221,7 +223,7 @@ const getRideCalculation = async () => {
       travelCalculation?.rows[0]?.elements[0]?.distance.text;
     calculatedTravel.value.travelTime =
       travelCalculation?.rows[0]?.elements[0]?.duration.text;
-    calculatedTravel.value.travelPrice = ridePrice.toString();
+    calculatedTravel.value.travelPrice = ridePrice.toFixed(2).toString();
 
     const routeCalculation: any = await getRideRoutesService(rideData);
     routePolyLine.value = routeCalculation[0]?.polyline?.encodedPolyline;
@@ -303,9 +305,11 @@ const onSubmit = form.handleSubmit(async (values) => {
       },
       distance: calculatedTravel.value.travelDistance,
       duration: calculatedTravel.value.travelTime,
-      price: parseFloat(calculatedTravel.value.travelPrice).toString(),
       polyLineCoors: routePolyLine.value,
     },
+    status: 'created',
+    accepted: false,
+    price: calculatedTravel.value.travelPrice,
     driver: {},
     dispatcher: {
       user: data?.value?.user?.name,
@@ -313,15 +317,22 @@ const onSubmit = form.handleSubmit(async (values) => {
       dispatchDate: new Date().toLocaleDateString('pt-BR').padStart(10, '0'),
     },
   };
-  console.log('-> ', ridePayload);
-  // try {
-  // } catch (error) {
-  //   toast({
-  //     title: 'Oops!',
-  //     variant: 'destructive',
-  //     description: `Ocorreu um erro ao criar o agendamento. Tente novamente.`,
-  //   });
-  // }
+  try {
+    await createRideAction(ridePayload);
+  } catch (error) {
+    toast({
+      title: 'Oops!',
+      variant: 'destructive',
+      description: `Ocorreu um erro ao criar o agendamento. Tente novamente.`,
+    });
+  } finally {
+    toast({
+      title: 'Tudo pronto!',
+      class: 'bg-green-600 border-0 text-white text-2xl',
+      description: `Agendamento cadastrado com sucesso!`,
+    });
+    navigateTo('/admin/rides/active');
+  }
 });
 </script>
 <template>
@@ -569,14 +580,10 @@ const onSubmit = form.handleSubmit(async (values) => {
         </Card>
         <div v-if="showGenerateRide" class="mt-6 flex gap-4">
           <Button type="submit">
-            <LoaderCircle v-if="false" class="w-5 h-5 animate-spin" />
+            <LoaderCircle v-if="loadingData" class="w-5 h-5 animate-spin" />
             Gerar Atendimento
           </Button>
-          <Button
-            type="button"
-            variant="ghost"
-            @click="navigateTo('/admin/rides/active')"
-          >
+          <Button type="button" variant="ghost" @click="navigateTo('/admin/rides/open')">
             Cancelar
           </Button>
         </div>
