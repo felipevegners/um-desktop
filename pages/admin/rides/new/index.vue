@@ -6,6 +6,7 @@ import { getRideCalculationService, getRideRoutesService } from '@/server/servic
 import { useAccountStore } from '@/stores/admin/account.store';
 import { useBranchesStore } from '@/stores/admin/branches.store';
 import { useContractsStore } from '@/stores/admin/contracts.store';
+import { DateFormatter, type DateValue, getLocalTimeZone } from '@internationalized/date';
 import {
   CalendarDays,
   LoaderCircle,
@@ -14,8 +15,10 @@ import {
   Users,
   Waypoints,
 } from 'lucide-vue-next';
+import { vMaska } from 'maska/vue';
 import { storeToRefs } from 'pinia';
 import { useForm } from 'vee-validate';
+import { h } from 'vue';
 import { GoogleMap, Marker, Polyline } from 'vue3-google-map';
 import { currencyFormat, polyLineCodec } from '~/lib/utils';
 
@@ -43,11 +46,11 @@ const customIconEnd = `<svg xmlns="http://www.w3.org/2000/svg" width="24" height
 
 const form = useForm();
 const { toast } = useToast();
+const { data } = useAuth();
+const df = new DateFormatter('pt-BR', {
+  dateStyle: 'short',
+});
 
-const selectedBranches = ref<any>([]);
-const selectedAreas = ref<any>([]);
-const loadingBraches = ref<boolean>(false);
-const loadingAreas = ref<boolean>(false);
 const loadingProducts = ref<boolean>(false);
 const showAvailableProducts = ref<boolean>(false);
 const availableProducts = ref<any>([]);
@@ -56,6 +59,7 @@ const travelDate = ref<any>();
 const availableUsers = ref<any>([]);
 const selectedUser = ref<any>();
 const noBranchAlert = ref<boolean>(false);
+const showGenerateRide = ref<boolean>(false);
 
 const originCoords = ref<any>({
   lat: '',
@@ -106,18 +110,21 @@ const setSelectedProduct = (value: any) => {
 
 const setSelectedUser = async (value: string) => {
   noBranchAlert.value = false;
-  const userContractData: any = accounts?.value.find(
-    (account: any) => account.id === value,
-  );
-  selectedUser.value = userContractData?.contract;
+  const userData: any = accounts?.value.find((account: any) => account.id === value);
+  selectedUser.value = {
+    ...userData?.contract,
+    name: userData.username,
+    email: userData.email,
+    phone: userData.phone,
+  };
 
-  if (userContractData?.contract.branchId !== '-') {
-    await getBranchByIdAction(userContractData?.contract?.branchId);
+  if (userData?.contract.branchId !== '-') {
+    await getBranchByIdAction(userData?.contract?.branchId);
   } else {
     toast({
       title: 'Opss!',
       class: 'bg-red-500 border-0 text-white text-2xl',
-      description: `O usuário selecionado não possui uma filial cadastrada`,
+      description: `O usuário selecionado não possui uma filial cadastrada.`,
     });
     noBranchAlert.value = true;
   }
@@ -129,6 +136,11 @@ const setSelectedUser = async (value: string) => {
     availableProducts.value = contract?.value.products;
     loadingProducts.value = false;
   } catch (error) {
+    toast({
+      title: 'Opss!',
+      class: 'bg-red-500 border-0 text-white text-2xl',
+      description: `Erro ao buscar os produtos do contrato. Tente novamente.`,
+    });
     console.error('error -> ', error);
   }
 };
@@ -224,6 +236,7 @@ const getRideCalculation = async () => {
     decodePolyline(routePolyLine.value);
     loadingRoute.value = false;
     showRenderedMap.value = true;
+    showGenerateRide.value = true;
   }
 };
 
@@ -234,6 +247,9 @@ const setOriginPlace = (place: any) => {
   // Update the location details
   originLocationDetails.value.address = place.formatted_address;
   originLocationDetails.value.url = place.url;
+  form.setValues({
+    origin: place.formatted_address,
+  });
 };
 // // Set the location based on the place selected
 const setDestinationPlace = (place: any) => {
@@ -242,7 +258,71 @@ const setDestinationPlace = (place: any) => {
   // Update the location details
   destinationLocationDetails.value.address = place.formatted_address;
   destinationLocationDetails.value.url = place.url;
+  form.setValues({
+    destination: place.formatted_address,
+  });
 };
+
+const onSubmit = form.handleSubmit(async (values) => {
+  const ridePayload = {
+    billing: {
+      contractId: selectedUser.value.contractId,
+      area: selectedUser.value.area,
+      branchId: selectedUser.value.branchId,
+    },
+    user: {
+      id: values.user,
+      name: selectedUser.value.name,
+      email: selectedUser.value.email,
+      phone: selectedUser.value.phone,
+      companyName: selectedUser.value.name,
+    },
+    product: {
+      id: selectedProduct.value.id,
+      code: selectedProduct.value.code,
+      name: selectedProduct.value.name,
+      basePrice: selectedProduct.value.basePrice,
+      kmPrice: selectedProduct.value.kmPrice,
+      minutePrice: selectedProduct.value.minutePrice,
+    },
+    reason: values.reason,
+    travel: {
+      passengers: values.passengers,
+      //@ts-ignore
+      date: df.format(travelDate?.value?.toDate(getLocalTimeZone())) || '',
+      departTime: values.departTime,
+      originAddress: values.origin,
+      origin: {
+        lat: originCoords.value.lat,
+        lng: originCoords.value.lng,
+      },
+      destinationAddress: values.destination,
+      destination: {
+        lat: destinationCoords.value.lat,
+        lng: destinationCoords.value.lng,
+      },
+      distance: calculatedTravel.value.travelDistance,
+      duration: calculatedTravel.value.travelTime,
+      price: parseFloat(calculatedTravel.value.travelPrice).toString(),
+      polyLineCoors: routePolyLine.value,
+    },
+    driver: {},
+    dispatcher: {
+      user: data?.value?.user?.name,
+      email: data?.value?.user?.email,
+      dispatchDate: new Date().toLocaleDateString('pt-BR').padStart(10, '0'),
+    },
+  };
+  console.log('-> ', ridePayload);
+  // try {
+  // } catch (error) {
+  //   toast({
+  //     title: 'Oops!',
+  //     variant: 'destructive',
+  //     description: `Ocorreu um erro ao criar o agendamento. Tente novamente.`,
+  //   });
+  // }
+});
 </script>
 <template>
   <main class="p-6">
@@ -256,7 +336,7 @@ const setDestinationPlace = (place: any) => {
       </h1>
     </section>
     <section>
-      <form @submit.prevent="" @keydown.enter.prevent="true">
+      <form @submit.prevent="onSubmit" @keydown.enter.prevent="true">
         <Card class="bg-zinc-300">
           <CardHeader>
             <CardTitle>Dados do Atendimento</CardTitle>
@@ -321,7 +401,6 @@ const setDestinationPlace = (place: any) => {
                     </ul>
                   </div>
                 </div>
-                <!-- <pre>{{ selectedProduct }}</pre> -->
                 <div
                   v-if="selectedProduct"
                   class="p-6 flex flex-col items-start gap-6 border border-zinc-900 rounded-md"
@@ -340,11 +419,6 @@ const setDestinationPlace = (place: any) => {
                       <FormField v-slot="{ componentField }" name="passengers">
                         <FormItem>
                           <FormLabel>Nº Passageiros*</FormLabel>
-                          <!-- <div class="flex flex-col items-start">
-                            <small class="text-muted-foreground"
-                              >Baseado na capacidade do serviço</small
-                            >
-                          </div> -->
                           <FormControl>
                             <Input
                               type="number"
@@ -365,44 +439,14 @@ const setDestinationPlace = (place: any) => {
                           <FormItem class="md:min-w-[200px]">
                             <FormLabel>Hora da Partida</FormLabel>
                             <FormControl>
-                              <FormSelect
+                              <Input
+                                type="text"
                                 v-bind="componentField"
-                                :items="[
-                                  {
-                                    label: '08:00',
-                                    value: '08:00',
-                                  },
-                                  {
-                                    label: '08:10',
-                                    value: '08:10',
-                                  },
-                                  {
-                                    label: '08:15',
-                                    value: '08:15',
-                                  },
-                                  {
-                                    label: '08:20',
-                                    value: '08:20',
-                                  },
-                                  {
-                                    label: '08:25',
-                                    value: '08:25',
-                                  },
-                                  {
-                                    label: '08:30',
-                                    value: '08:30',
-                                  },
-                                ]"
-                                :label="'Selecione'"
-                                @on-select=""
+                                v-maska="'##:##'"
                               />
                             </FormControl>
                           </FormItem>
                         </FormField>
-                        <div class="mb-2 flex items-center justify-center gap-2">
-                          <Checkbox @update:checked="" />
-                          <small>Sem horário definido</small>
-                        </div>
                       </div>
                     </div>
                     <FormField v-slot="{ componentField, value }" name="origin">
@@ -523,8 +567,8 @@ const setDestinationPlace = (place: any) => {
             </div>
           </CardContent>
         </Card>
-        <div v-if="calculatedTravel" class="mt-6 flex gap-4">
-          <Button type="submit" form="form">
+        <div v-if="showGenerateRide" class="mt-6 flex gap-4">
+          <Button type="submit">
             <LoaderCircle v-if="false" class="w-5 h-5 animate-spin" />
             Gerar Atendimento
           </Button>
