@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { SharedBackLink } from '#components';
-import AddCarsForm from '@/components/admin/drivers/AddCarsForm.vue';
+import AddCarsForm from '@/components/forms/AddCarsForm.vue';
 import AddressForm from '@/components/forms/AddressForm.vue';
 import AvatarEdit from '@/components/shared/AvatarEdit.vue';
 import FormSelect from '@/components/shared/FormSelect.vue';

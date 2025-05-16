@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { SharedBackLink } from '#components';
+import AddCarsForm from '@/components/forms/AddCarsForm.vue';
 import AddressForm from '@/components/forms/AddressForm.vue';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/components/ui/toast/use-toast';
@@ -11,7 +12,6 @@ import { TooltipArrow } from 'radix-vue';
 import { useForm } from 'vee-validate';
 import { ref } from 'vue';
 import * as z from 'zod';
-import AddCarsForm from '~/components/forms/AddCarsForm.vue';
 
 const { toast } = useToast();
 
