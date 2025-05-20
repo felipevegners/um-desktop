@@ -23,6 +23,7 @@ const { deleteFileAction } = filesStore;
 
 definePageMeta({
   layout: 'admin',
+  middleware: 'sidebase-auth',
 });
 useHead({
   title: 'Backoffice - Editar Contrato | Urban Mobi',

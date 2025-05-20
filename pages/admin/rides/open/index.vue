@@ -2,7 +2,7 @@
 import { Button } from '@/components/ui/button';
 import { useRidesStore } from '@/stores/admin/rides.store';
 import { createColumnHelper } from '@tanstack/vue-table';
-import { LoaderCircle, Plus } from 'lucide-vue-next';
+import { CalendarDays, LoaderCircle, Plus } from 'lucide-vue-next';
 import { storeToRefs } from 'pinia';
 import { onMounted } from 'vue';
 import DataTable from '~/components/shared/DataTable.vue';
@@ -27,6 +27,13 @@ onMounted(async () => {
   await getRidesAction();
 });
 
+const editRide = (rideId: string) => {
+  navigateTo({
+    name: 'admin-rides-edit-id',
+    params: { id: rideId },
+  });
+};
+
 const finalColumns = [
   ...columns,
   columnHelper.display({
@@ -43,7 +50,7 @@ const finalColumns = [
           options: ['preview', 'edit', 'delete'],
           loading: false,
           onView: () => {},
-          onEdit: () => {},
+          onEdit: editRide,
           onDelete: () => {},
         }),
       );
@@ -54,7 +61,10 @@ const finalColumns = [
 <template>
   <main class="p-6">
     <section class="mb-6 flex items-center justify-between gap-6">
-      <h1 class="font-bold text-black text-3xl">Atendimentos Abertos</h1>
+      <h1 class="flex items-center gap-2 text-2xl font-bold">
+        <CalendarDays />
+        Atendimentos Abertos
+      </h1>
       <Button @click="navigateTo('/admin/rides/new')">
         <Plus class="w-4 h-4" /> Criar novo atendimento
       </Button>

@@ -27,7 +27,7 @@ definePageMeta({
   middleware: 'sidebase-auth',
 });
 useHead({
-  title: 'Novo Atendimento | Urban Mobi',
+  title: 'Backoffice - Novo Atendimento | Urban Mobi',
 });
 
 const contractsStore = useContractsStore();
