@@ -21,35 +21,31 @@ export const platformUserMenu = {
       items: [
         {
           title: 'Abertos',
-          url: '/admin/rides/active',
+          url: '/personal/rides/open',
         },
         {
           title: 'Realizados',
-          url: '/admin/rides/completed',
+          url: '/personal/rides/completed',
         },
         {
           title: 'Cancelados',
-          url: '/admin/rides/canceled',
+          url: '/personal/rides/canceled',
         },
         {
           title: '+ Novo agendamento',
-          url: '/admin/rides/new',
+          url: '/personal/rides/new',
         },
       ],
     },
     {
-      title: 'Financeiro',
+      title: 'Pagamentos',
       url: '#',
       icon: HandCoins,
       isActive: false,
       items: [
         {
-          title: 'Faturas em aberto',
-          url: '/admin/invoices/active',
-        },
-        {
-          title: 'Faturas canceladas',
-          url: '/admin/invoices/canceled',
+          title: 'Histórico de Pagamentos',
+          url: '/personal/invoices/active',
         },
       ],
     },
@@ -57,7 +53,7 @@ export const platformUserMenu = {
   settings: [
     {
       name: 'Minha conta',
-      url: '/admin/account',
+      url: '/personal/account',
       icon: UserCog,
     },
   ],

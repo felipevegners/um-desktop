@@ -10,6 +10,7 @@ export default NuxtAuthHandler({
   secret: useRuntimeConfig().authSecret,
   pages: {
     signIn: '/login',
+    error: '/error',
   },
   providers: [
     //@ts-expect-error
@@ -28,10 +29,7 @@ export default NuxtAuthHandler({
           throw new Error('Conta não existente!');
         }
 
-        const isValid = await bcrypt.compare(
-          credentials.password,
-          account.password,
-        );
+        const isValid = await bcrypt.compare(credentials.password, account.password);
 
         if (!isValid) {
           throw createError({

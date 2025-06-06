@@ -22,6 +22,8 @@ export default defineEventHandler(async (event) => {
     phone,
     position,
     department,
+    document,
+    birthDate,
   } = body;
 
   const userAccount = await prisma.accounts.findUnique({
@@ -56,6 +58,8 @@ export default defineEventHandler(async (event) => {
         phone,
         position,
         department,
+        document,
+        birthDate,
       },
     });
   } catch (error: any) {

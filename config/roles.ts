@@ -8,4 +8,5 @@ export const rolesList = [
     value: 'platform-corp-user',
   },
   { label: 'Usuário UM', value: 'platform-user' },
+  { label: 'Motorista UM', value: 'platform-driver' },
 ];

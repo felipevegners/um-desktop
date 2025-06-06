@@ -24,6 +24,8 @@ export default defineEventHandler(async (event) => {
     phone,
     position,
     department,
+    document,
+    birthDate,
   } = body;
 
   try {
@@ -40,6 +42,8 @@ export default defineEventHandler(async (event) => {
         phone,
         position,
         department,
+        document,
+        birthDate,
       },
     });
     return newAccount;

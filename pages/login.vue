@@ -12,6 +12,8 @@ definePageMeta({
   },
 });
 
+const route = useRoute();
+
 const formSchema = toTypedSchema(
   z.object({
     email: z.string().email(),

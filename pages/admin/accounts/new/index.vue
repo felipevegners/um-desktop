@@ -57,16 +57,18 @@ const sanitizeContracts = computed(() => {
 const formSchema = toTypedSchema(
   z.object({
     userName: z
-      .string({ message: 'Obrigatório' })
+      .string({ message: 'Obrigatório!' })
       .min(2, 'Mínimo 2 caracteres')
       .max(40, 'Máximo 40 caracteres'),
     userEmail: z.string().min(2, 'Insira um e-mail válido').max(100).email(),
     userPassword: z
-      .string()
+      .string({ message: 'Obrigatório!' })
       .min(6, 'Mínimo de 6 caracteres')
       .max(8, 'Máximo de 8 caracteres'),
     role: z.string({ message: 'Selecione o tipo de acesso' }).min(2).max(50),
-    phone: z.string().optional(),
+    phone: z.string({ message: 'Obrigatório!' }).min(2),
+    document: z.string({ message: 'Obrigatório!' }).min(2).max(18),
+    birthDate: z.string().optional(),
     position: z.string().optional(),
     department: z.string().optional(),
     contract: z.string().optional(),
@@ -130,6 +132,7 @@ const onSubmit = form.handleSubmit(async (values) => {
     username: values.userName,
     password: values.userPassword,
     email: values.userEmail,
+    document: values.document || '',
     role: values.role,
     enabled: true,
     status: 'pending',
@@ -182,7 +185,7 @@ const onSubmit = form.handleSubmit(async (values) => {
           <CardHeader>
             <CardTitle class="mb-4">
               <div class="md:max-w-[350px]">
-                <h3 class="mb-4 text-lg font-bold">Tipo de Usuário</h3>
+                <h3 class="mb-4 text-lg font-bold">Tipo de Usuário*</h3>
                 <FormField v-slot="{ componentField }" name="role">
                   <FormItem>
                     <FormControl>
@@ -193,7 +196,7 @@ const onSubmit = form.handleSubmit(async (values) => {
                         @on-select="resetFormState"
                       />
                     </FormControl>
-                    <FormMessage />
+                    <FormMessage class="text-xs" />
                   </FormItem>
                 </FormField>
               </div>
@@ -221,7 +224,7 @@ const onSubmit = form.handleSubmit(async (values) => {
                         @on-select="getContractData"
                       />
                     </FormControl>
-                    <FormMessage />
+                    <FormMessage class="text-xs" />
                   </FormItem>
                 </FormField>
               </div>
@@ -255,7 +258,7 @@ const onSubmit = form.handleSubmit(async (values) => {
                         @on-select="getBranchAreas"
                       />
                     </FormControl>
-                    <FormMessage />
+                    <FormMessage class="text-xs" />
                   </FormItem>
                 </FormField>
               </div>
@@ -265,7 +268,7 @@ const onSubmit = form.handleSubmit(async (values) => {
                   form.values.role === 'platform-admin' ||
                   form.values.role === 'platform-corp-user'
                 "
-                class="md:max-w-[350px]"
+                class="md:max-w-[550px]"
               >
                 <h3 class="mb-4 text-lg font-bold">Selecione o CC</h3>
                 <div v-if="loadingAreas" class="p-2 bg-white rounded-md">
@@ -293,7 +296,7 @@ const onSubmit = form.handleSubmit(async (values) => {
                         "
                       />
                     </FormControl>
-                    <FormMessage />
+                    <FormMessage class="text-xs" />
                   </FormItem>
                 </FormField>
               </div>
@@ -306,16 +309,16 @@ const onSubmit = form.handleSubmit(async (values) => {
               <div class="md:grid md:grid-cols-4 gap-6">
                 <FormField v-slot="{ componentField }" name="userName">
                   <FormItem>
-                    <FormLabel>Nome Completo</FormLabel>
+                    <FormLabel>Nome Completo*</FormLabel>
                     <FormControl>
                       <Input type="text" v-bind="componentField" />
                     </FormControl>
-                    <FormMessage />
+                    <FormMessage class="text-xs" />
                   </FormItem>
                 </FormField>
                 <FormField v-slot="{ componentField }" name="phone">
                   <FormItem>
-                    <FormLabel>Celular</FormLabel>
+                    <FormLabel>Celular*</FormLabel>
                     <FormControl>
                       <Input
                         type="text"
@@ -323,7 +326,7 @@ const onSubmit = form.handleSubmit(async (values) => {
                         v-maska="'(##) # ####-####'"
                       />
                     </FormControl>
-                    <FormMessage />
+                    <FormMessage class="text-xs" />
                   </FormItem>
                 </FormField>
                 <FormField v-slot="{ componentField }" name="position">
@@ -332,7 +335,7 @@ const onSubmit = form.handleSubmit(async (values) => {
                     <FormControl>
                       <Input type="text" v-bind="componentField" />
                     </FormControl>
-                    <FormMessage />
+                    <FormMessage class="text-xs" />
                   </FormItem>
                 </FormField>
                 <FormField v-slot="{ componentField }" name="department">
@@ -341,21 +344,21 @@ const onSubmit = form.handleSubmit(async (values) => {
                     <FormControl>
                       <Input type="text" v-bind="componentField" />
                     </FormControl>
-                    <FormMessage />
+                    <FormMessage class="text-xs" />
                   </FormItem>
                 </FormField>
                 <FormField v-slot="{ componentField }" name="userEmail">
                   <FormItem>
-                    <FormLabel>E-mail</FormLabel>
+                    <FormLabel>E-mail*</FormLabel>
                     <FormControl>
                       <Input type="text" v-bind="componentField" />
                     </FormControl>
-                    <FormMessage />
+                    <FormMessage class="text-xs" />
                   </FormItem>
                 </FormField>
                 <FormField v-slot="{ componentField }" name="userPassword">
                   <FormItem class="relative">
-                    <FormLabel> Senha</FormLabel>
+                    <FormLabel>Senha*</FormLabel>
                     <FormControl>
                       <div v-if="viewPassword" class="relative">
                         <Input
@@ -384,34 +387,79 @@ const onSubmit = form.handleSubmit(async (values) => {
                         />
                       </div>
                     </FormControl>
-                    <small>*A senha deve conter de 6 a 8 caracteres</small>
-                    <FormMessage />
+                    <small class="text-muted-foreground"
+                      >*A senha deve conter de 6 a 8 caracteres</small
+                    >
+                    <FormMessage class="text-xs" />
                   </FormItem>
                 </FormField>
               </div>
             </div>
             <div
-              v-if="form.values.role === 'admin' || form.values.role === 'platform-user'"
+              v-if="
+                form.values.role === 'admin' ||
+                form.values.role === 'platform-user' ||
+                form.values.role === 'platform-driver'
+              "
               class="p-4 border border-zinc-900 rounded-md"
             >
               <h3 class="mb-4 text-lg font-bold">Dados do usuário</h3>
-              <div class="flex flex-col gap-4 md:max-w-[350px]">
+              <div class="flex flex-col gap-4 lg:grid lg:grid-cols-2 lg:gap-6">
                 <FormField v-slot="{ componentField }" name="userName">
                   <FormItem>
-                    <FormLabel>Nome de Usuário</FormLabel>
+                    <FormLabel>Nome completo*</FormLabel>
                     <FormControl>
                       <Input type="text" v-bind="componentField" />
                     </FormControl>
-                    <FormMessage />
+                    <FormMessage class="text-xs" />
                   </FormItem>
                 </FormField>
+                <FormField v-slot="{ componentField }" name="phone">
+                  <FormItem>
+                    <FormLabel>Celular*</FormLabel>
+                    <FormControl>
+                      <Input
+                        type="text"
+                        v-bind="componentField"
+                        v-maska="'(##) ####-####'"
+                      />
+                    </FormControl>
+                    <FormMessage class="text-xs" />
+                  </FormItem>
+                </FormField>
+                <FormField v-slot="{ componentField }" name="phone">
+                  <FormItem>
+                    <FormLabel>CPF*</FormLabel>
+                    <FormControl>
+                      <Input
+                        type="text"
+                        v-bind="componentField"
+                        v-maska="'###.###.###-##'"
+                      />
+                    </FormControl>
+                    <FormMessage class="text-xs" />
+                  </FormItem>
+                </FormField>
+                <FormField v-slot="{ componentField }" name="birthDate">
+                  <FormItem>
+                    <FormLabel>Data Nascimento</FormLabel>
+                    <FormControl>
+                      <Input type="text" v-bind="componentField" />
+                    </FormControl>
+                    <FormMessage class="text-xs" />
+                  </FormItem>
+                </FormField>
+              </div>
+              <Separator class="my-6 bg-zinc-300" />
+              <h3 class="mb-4 text-lg font-bold">Dados de Acesso</h3>
+              <div class="md:max-w-[450px] flex flex-col gap-6">
                 <FormField v-slot="{ componentField }" name="userEmail">
                   <FormItem>
                     <FormLabel>E-mail</FormLabel>
                     <FormControl>
                       <Input type="text" v-bind="componentField" />
                     </FormControl>
-                    <FormMessage />
+                    <FormMessage class="text-xs" />
                   </FormItem>
                 </FormField>
                 <FormField v-slot="{ componentField }" name="userPassword">
@@ -445,8 +493,10 @@ const onSubmit = form.handleSubmit(async (values) => {
                         />
                       </div>
                     </FormControl>
-                    <small>*A senha deve conter de 6 a 8 caracteres</small>
-                    <FormMessage />
+                    <small class="text-muted-foreground">
+                      *A senha deve conter de 6 a 8 caracteres
+                    </small>
+                    <FormMessage class="text-xs" />
                   </FormItem>
                 </FormField>
               </div>

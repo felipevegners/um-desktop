@@ -13,6 +13,7 @@ datasource db {
 model Accounts {
   id         String      @id @default(auto()) @map("_id") @db.ObjectId
   username   String
+  document   String?
   password   String
   email      String      @unique
   role       String
@@ -21,6 +22,7 @@ model Accounts {
   phone      String?
   position   String?
   department String?
+  birthDate  String?
   history    Json?
   status     String?
   enabled    Boolean
