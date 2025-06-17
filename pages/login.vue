@@ -47,9 +47,11 @@ const onSubmit = form.handleSubmit(async (values) => {
 </script>
 
 <template>
-  <div class="w-full h-screen flex flex-col justify-center items-center bg-black">
+  <div
+    class="w-full h-screen flex flex-col justify-center items-center bg-black bg-[url('/images/background.webp')] bg-cover bg-center bg-no-repeat"
+  >
     <img class="mb-12 h-10" src="/images/logo_horizontal_white.svg" alt="" />
-    <Card class="p-8 w-[380px]">
+    <Card class="p-8 w-full max-w-sm">
       <form @submit="onSubmit">
         <h1 class="mb-8 font-bold text-2xl text-center">Acessar Plataforma</h1>
         <div class="flex flex-col gap-6">
@@ -108,19 +110,14 @@ const onSubmit = form.handleSubmit(async (values) => {
           <Button v-else class="p-0 mt-4 w-full h-[48px]" type="submit"> Acessar </Button>
         </div>
       </form>
+      <div class="mt-6 flex items-center justify-center gap-6 text-zinc-300 text-xs">
+        <NuxtLink class="hover:text-zinc-900" :href="'/resetpassword'">
+          Lembrar senha
+        </NuxtLink>
+        <small>|</small>
+        <NuxtLink class="hover:text-zinc-900" :href="'/register'"> Criar conta </NuxtLink>
+      </div>
     </Card>
-    <div class="my-4 flex gap-8">
-      <NuxtLink
-        class="text-sm text-zinc-600 hover:text-um-primary"
-        :href="'/resetpassword'"
-      >
-        Lembrar senha
-      </NuxtLink>
-      <small class="text-zinc-600">|</small>
-      <NuxtLink class="text-sm text-zinc-600 hover:text-um-primary" :href="'/register'">
-        Novo cadastro
-      </NuxtLink>
-    </div>
   </div>
 </template>
 

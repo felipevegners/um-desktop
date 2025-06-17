@@ -26,7 +26,7 @@ export default NuxtAuthHandler({
         });
 
         if (!account) {
-          throw new Error('Conta não existente!');
+          throw new Error('Conta não encontrada!');
         }
 
         const isValid = await bcrypt.compare(credentials.password, account.password);

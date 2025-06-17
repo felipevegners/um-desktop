@@ -2,7 +2,7 @@
 import { useToast } from '@/components/ui/toast';
 import { useAccountStore } from '@/stores/admin/account.store';
 import { toTypedSchema } from '@vee-validate/zod';
-import { Eye, EyeOff, LoaderCircle } from 'lucide-vue-next';
+import { Eye, EyeOff, Info, LoaderCircle } from 'lucide-vue-next';
 import { vMaska } from 'maska/vue';
 import { useForm } from 'vee-validate';
 import * as z from 'zod';
@@ -46,17 +46,14 @@ const newAccountType = computed(() => {
 
 const formSchema = toTypedSchema(
   z.object({
-    name: z.string({ message: 'Obrigatório!' }).min(2, 'Mínimo 2 caracteres'),
+    name: z.string({ message: 'Campo obrigatório' }).min(2, 'Mínimo 2 caracteres'),
     email: z.string().min(2, 'Insira um e-mail válido').email(),
-    document: z
-      .string({ message: 'Obrigatório!' })
-      .min(2, 'Insira um documento válido')
-      .max(18),
+    document: z.string().min(2, 'Insira um documento válido').max(18).optional(),
     password: z
       .string()
       .min(6, 'Mínimo de 6 caracteres')
       .max(8, 'Máximo de 8 caracteres'),
-    phone: z.string({ message: 'Obrigatório!' }),
+    phone: z.string({ message: 'Campo obrigatório' }),
     position: z.string().optional(),
     department: z.string().optional(),
   }),
@@ -114,53 +111,37 @@ const onSubmit = form.handleSubmit(async (values) => {
   <main class="h-screen">
     <section class="mx-auto lg:grid lg:grid-cols-2 lg:gap-6 h-full">
       <div
-        class="py-12 px-10 bg-black flex flex-col items-center lg:items-end justify-center"
+        class="p-10 lg:p-20 bg-black flex flex-col items-center lg:items-end justify-center bg-[url('/images/background.webp')] bg-cover bg-center bg-no-repeat"
       >
-        <img class="mb-12 h-8 lg:h-10" src="/images/logo_horizontal_white.svg" alt="" />
-
-        <h2 class="mb-3 py-2 px-3 bg-um-primary text-black text-xl font-bold rounded-md">
-          Olá!
-        </h2>
-        <h1 class="text-white text-xl lg:text-3xl font-bold text-center lg:text-right">
-          Seja bem-vindo a Urban Mobi.
-        </h1>
-        <p class="text-sm lg:text-base text-zinc-600 text-wrap text-center lg:text-right">
-          Crie sua conta e acesse todas as vantagens de nossa plataforma.
-        </p>
+        <img class="h-8 lg:h-10" src="/images/logo_horizontal_white.svg" alt="" />
       </div>
-      <div class="p-10 flex items-center">
-        <form @submit.prevent="onSubmit" @keydown.enter.prevent="true" class="w-full">
-          <div class="flex flex-col gap-4">
-            <h2 class="text-zinc-950 text-3xl font-extrabold">Dados pessoais</h2>
-            <FormField v-slot="{ componentField }" name="name">
-              <FormItem>
-                <FormLabel>Nome Completo*</FormLabel>
-                <FormControl>
-                  <Input type="text" v-bind="componentField" />
-                </FormControl>
-                <FormMessage class="text-xs" />
-              </FormItem>
-            </FormField>
-            <FormField
-              v-if="userType === 'corporative'"
-              v-slot="{ componentField }"
-              name="document"
-            >
-              <FormItem>
-                <FormLabel>CNPJ*</FormLabel>
-                <FormControl>
-                  <Input
-                    type="text"
-                    v-bind="componentField"
-                    v-maska="'##.###.###/####-##'"
-                  />
-                </FormControl>
-                <FormMessage class="text-xs" />
-              </FormItem>
-            </FormField>
-            <div class="lg:grid lg:grid-cols-3 lg:gap-6">
+      <div class="p-10 lg:p-20 flex items-center max-w-xl mx-auto">
+        <form
+          @submit.prevent="onSubmit"
+          @keydown.enter.prevent="true"
+          class="mx-auto w-full"
+          :validation-schema="formSchema"
+        >
+          <div class="flex flex-col gap-6">
+            <h1 class="text-4xl font-bold text-zinc-900 tracking-tight">
+              Vamos criar sua conta na Urban Mobi?
+            </h1>
+            <p class="text-muted-foreground text-sm">
+              Para realizarmos seu atendimento, preencha seus dados abaixo. Você receberá
+              um e-mail para confirmarmos seus dados. Leva apenas 2 minutos.
+            </p>
+            <div class="flex flex-col gap-6">
+              <FormField v-slot="{ componentField, errorMessage }" name="name">
+                <FormItem class="relative">
+                  <FormLabel>Nome Completo*</FormLabel>
+                  <FormControl>
+                    <Input type="text" v-bind="componentField" />
+                  </FormControl>
+                  <!-- <FormMessage class="absolute left-0 text-xs" /> -->
+                </FormItem>
+              </FormField>
               <FormField v-slot="{ componentField }" name="phone">
-                <FormItem>
+                <FormItem class="relative">
                   <FormLabel>Celular*</FormLabel>
                   <FormControl>
                     <Input
@@ -169,81 +150,51 @@ const onSubmit = form.handleSubmit(async (values) => {
                       v-maska="'(##) ####-####'"
                     />
                   </FormControl>
-                  <FormMessage class="text-xs" />
+                  <!-- <FormMessage class="absolute right-0 text-xs" /> -->
                 </FormItem>
               </FormField>
               <FormField
-                v-if="userType !== 'corporative'"
+                v-if="userType === 'corporative'"
                 v-slot="{ componentField }"
                 name="document"
               >
-                <FormItem>
-                  <FormLabel>CPF*</FormLabel>
+                <FormItem class="relative">
+                  <FormLabel>CNPJ*</FormLabel>
                   <FormControl>
                     <Input
                       type="text"
                       v-bind="componentField"
-                      v-maska="'###.###.###-##'"
+                      v-maska="'##.###.###/####-##'"
                     />
                   </FormControl>
-                  <FormMessage class="text-xs" />
+                  <FormMessage class="absolute right-0 text-xs" />
                 </FormItem>
               </FormField>
-              <FormField
-                v-if="userType === 'corporative'"
-                v-slot="{ componentField }"
-                name="position"
-              >
-                <FormItem>
-                  <FormLabel>Cargo</FormLabel>
-                  <FormControl>
-                    <Input type="text" v-bind="componentField" />
-                  </FormControl>
-                </FormItem>
-              </FormField>
-              <FormField
-                v-if="userType === 'corporative'"
-                v-slot="{ componentField }"
-                name="department"
-              >
-                <FormItem>
-                  <FormLabel>Departamento</FormLabel>
-                  <FormControl>
-                    <Input type="text" v-bind="componentField" />
-                  </FormControl>
-                </FormItem>
-              </FormField>
-              <FormField
-                v-if="userType !== 'corporative'"
-                v-slot="{ componentField }"
-                name="birtDate"
-              >
-                <FormItem>
-                  <FormLabel>Data de Nascimento</FormLabel>
-                  <FormControl>
-                    <Input type="text" v-bind="componentField" v-maska="'##/##/####'" />
-                  </FormControl>
-                </FormItem>
-              </FormField>
-            </div>
-            <Separator class="my-10" />
-            <h1 class="text-zinc-950 text-3xl font-extrabold">Dados de acesso</h1>
-            <small class="text-muted-foreground"
-              >Você receberá um e-mail para confirmar seu acesso.</small
-            >
-            <div class="lg:max-w-[350px]">
               <FormField v-slot="{ componentField }" name="email">
-                <FormItem>
+                <FormItem class="relative">
                   <FormLabel>E-mail*</FormLabel>
                   <FormControl>
                     <Input type="text" v-bind="componentField" />
                   </FormControl>
-                  <FormMessage class="text-xs" />
+                  <FormMessage class="absolute right-0 text-xs" />
                 </FormItem>
               </FormField>
               <FormField v-slot="{ componentField }" name="password">
                 <FormItem class="relative">
-                  <FormLabel>Senha*</FormLabel>
+                  <div class="flex items-center gap-2">
+                    <FormLabel>Senha*</FormLabel>
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger as-child>
+                          <Info class="w-4 h-4 text-zinc-400" />
+                        </TooltipTrigger>
+                        <TooltipContent class="bg-zinc-700 text-white">
+                          <TooltipArrow />
+                          <p>A senha deve conter de 6 a 8 caracteres alfanuméricos</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+                  </div>
                   <FormControl>
                     <div v-if="viewPassword" class="relative">
                       <Input
@@ -261,7 +212,7 @@ const onSubmit = form.handleSubmit(async (values) => {
                     <div v-else class="relative">
                       <Input
                         type="password"
-                        placeholder="Insira a senha"
+                        placeholder="Insira a sua senha"
                         v-bind="componentField"
                         :disabled="isLoading"
                       />
@@ -272,18 +223,15 @@ const onSubmit = form.handleSubmit(async (values) => {
                       />
                     </div>
                   </FormControl>
-                  <small class="text-muted-foreground"
-                    >*A senha deve conter de 6 a 8 caracteres</small
-                  >
-                  <FormMessage class="text-xs" />
+                  <FormMessage class="absolute right-0 text-xs" />
                 </FormItem>
               </FormField>
-              <Button class="mt-4 w-full h-[48px]" type="submit">
-                <LoaderCircle v-if="isLoadingSend" class="w-6 h-6 animate-spin" />
-                Criar conta
-              </Button>
             </div>
-            <div class="flex items-center gap-1 text-muted-foreground">
+            <Button class="mt-4 w-full h-[48px]" type="submit">
+              <LoaderCircle v-if="isLoadingSend" class="w-6 h-6 animate-spin" />
+              Criar conta
+            </Button>
+            <div class="flex items-center justify-center gap-1 text-muted-foreground">
               <small>Já possui uma conta?</small>
               <NuxtLink
                 class="text-xs hover:text-zinc-500 hover:underline"
