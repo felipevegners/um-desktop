@@ -423,11 +423,12 @@ const onSubmit = form.handleSubmit(async (values) => {
                         v-bind="componentField"
                         v-maska="'(##) ####-####'"
                       />
+                      <!--  -->
                     </FormControl>
                     <FormMessage class="text-xs" />
                   </FormItem>
                 </FormField>
-                <FormField v-slot="{ componentField }" name="phone">
+                <FormField v-slot="{ componentField }" name="document">
                   <FormItem>
                     <FormLabel>CPF*</FormLabel>
                     <FormControl>
@@ -444,7 +445,7 @@ const onSubmit = form.handleSubmit(async (values) => {
                   <FormItem>
                     <FormLabel>Data Nascimento</FormLabel>
                     <FormControl>
-                      <Input type="text" v-bind="componentField" />
+                      <Input type="text" v-bind="componentField" v-maska="'##/##/####'" />
                     </FormControl>
                     <FormMessage class="text-xs" />
                   </FormItem>

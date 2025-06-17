@@ -1,5 +1,7 @@
 import { Prisma, prisma } from '@/utils/prisma';
 import bcrypt from 'bcrypt';
+import { mailer } from '~/server/providers/Mailer';
+import { tokenGenerator } from '~/server/providers/TokenGenerator';
 
 export default defineEventHandler(async (event) => {
   const body = await readBody(event);
@@ -46,6 +48,27 @@ export default defineEventHandler(async (event) => {
         birthDate,
       },
     });
+
+    // Getting request object
+    const req = event.node.req;
+
+    // Get the host URL
+    const protocol = req.headers['x-forwarded-proto'] || 'http';
+    const host = req.headers.host;
+    const url = `${protocol}://${host}/validateaccount`;
+
+    // Generating token
+    const token = await tokenGenerator.generate(
+      newAccount as any,
+      process.env.JWT_SECRET as string,
+      {
+        expiresIn: '1d',
+      },
+    );
+
+    // Sending email verification
+    await mailer.sendEmail(email, `${url}?token=${token}`);
+
     return newAccount;
   } catch (error: any) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {

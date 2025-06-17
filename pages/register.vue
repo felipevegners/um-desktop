@@ -2,7 +2,7 @@
 import { useToast } from '@/components/ui/toast';
 import { useAccountStore } from '@/stores/admin/account.store';
 import { toTypedSchema } from '@vee-validate/zod';
-import { Eye, EyeOff, Info, LoaderCircle } from 'lucide-vue-next';
+import { Eye, EyeOff, Info, LoaderCircle, UserPlus } from 'lucide-vue-next';
 import { vMaska } from 'maska/vue';
 import { useForm } from 'vee-validate';
 import * as z from 'zod';
@@ -103,12 +103,12 @@ const onSubmit = form.handleSubmit(async (values) => {
       description:
         'Conta de Usuário cadastrado com sucesso. Acesse seu e-mail para prosseguir!',
     });
-    navigateTo('/login');
+    navigateTo('/registersuccess');
   }
 });
 </script>
 <template>
-  <main class="h-screen">
+  <main class="bg-black min-h-screen">
     <section class="mx-auto lg:grid lg:grid-cols-2 lg:gap-6 h-full">
       <div
         class="p-10 lg:p-20 bg-black flex flex-col items-center lg:items-end justify-center bg-[url('/images/background.webp')] bg-cover bg-center bg-no-repeat"
@@ -122,22 +122,25 @@ const onSubmit = form.handleSubmit(async (values) => {
           class="mx-auto w-full"
           :validation-schema="formSchema"
         >
-          <div class="flex flex-col gap-6">
-            <h1 class="text-4xl font-bold text-zinc-900 tracking-tight">
-              Vamos criar sua conta na Urban Mobi?
-            </h1>
-            <p class="text-muted-foreground text-sm">
-              Para realizarmos seu atendimento, preencha seus dados abaixo. Você receberá
-              um e-mail para confirmarmos seus dados. Leva apenas 2 minutos.
-            </p>
-            <div class="flex flex-col gap-6">
+          <div class="flex flex-col gap-8 dark">
+            <div class="space-y-4">
+              <UserPlus class="text-um-primary" :size="32" />
+              <h2 class="text-2xl md:text-3xl font-bold text-um-primary tracking-tight">
+                Criar conta UM
+              </h2>
+              <p class="text-muted-foreground text-sm">
+                Para realizarmos seu atendimento, insira seus dados abaixo. Você receberá
+                um e-mail de confirmação. Leva apenas 2 minutos.
+              </p>
+            </div>
+            <div class="flex flex-col gap-6 dark:text-white">
               <FormField v-slot="{ componentField, errorMessage }" name="name">
                 <FormItem class="relative">
                   <FormLabel>Nome Completo*</FormLabel>
                   <FormControl>
                     <Input type="text" v-bind="componentField" />
                   </FormControl>
-                  <!-- <FormMessage class="absolute left-0 text-xs" /> -->
+                  <!-- <FormMessage class="absolute left-0 text-xs text-red-200" /> -->
                 </FormItem>
               </FormField>
               <FormField v-slot="{ componentField }" name="phone">
@@ -147,7 +150,7 @@ const onSubmit = form.handleSubmit(async (values) => {
                     <Input
                       type="text"
                       v-bind="componentField"
-                      v-maska="'(##) ####-####'"
+                      v-maska="'(##) # ####-####'"
                     />
                   </FormControl>
                   <!-- <FormMessage class="absolute right-0 text-xs" /> -->
@@ -171,7 +174,7 @@ const onSubmit = form.handleSubmit(async (values) => {
                 </FormItem>
               </FormField>
               <FormField v-slot="{ componentField }" name="email">
-                <FormItem class="relative">
+                <FormItem class="relative dark">
                   <FormLabel>E-mail*</FormLabel>
                   <FormControl>
                     <Input type="text" v-bind="componentField" />
@@ -181,20 +184,7 @@ const onSubmit = form.handleSubmit(async (values) => {
               </FormField>
               <FormField v-slot="{ componentField }" name="password">
                 <FormItem class="relative">
-                  <div class="flex items-center gap-2">
-                    <FormLabel>Senha*</FormLabel>
-                    <TooltipProvider>
-                      <Tooltip>
-                        <TooltipTrigger as-child>
-                          <Info class="w-4 h-4 text-zinc-400" />
-                        </TooltipTrigger>
-                        <TooltipContent class="bg-zinc-700 text-white">
-                          <TooltipArrow />
-                          <p>A senha deve conter de 6 a 8 caracteres alfanuméricos</p>
-                        </TooltipContent>
-                      </Tooltip>
-                    </TooltipProvider>
-                  </div>
+                  <FormLabel>Senha*</FormLabel>
                   <FormControl>
                     <div v-if="viewPassword" class="relative">
                       <Input
@@ -224,17 +214,24 @@ const onSubmit = form.handleSubmit(async (values) => {
                     </div>
                   </FormControl>
                   <FormMessage class="absolute right-0 text-xs" />
+                  <small class="text-xs text-muted-foreground flex items-center gap-2">
+                    <Info :size="14" />
+                    A senha deve conter de 6 a 8 caracteres
+                  </small>
                 </FormItem>
               </FormField>
             </div>
-            <Button class="mt-4 w-full h-[48px]" type="submit">
-              <LoaderCircle v-if="isLoadingSend" class="w-6 h-6 animate-spin" />
-              Criar conta
+            <Button
+              class="mt-4 w-full h-[48px] bg-um-primary hover:bg-gradient-to-t from-um-primary to-black/20 text-black uppercase font-bold"
+              type="submit"
+            >
+              <LoaderCircle v-if="isLoadingSend" class="animate-spin" :size="24" />
+              Enviar
             </Button>
             <div class="flex items-center justify-center gap-1 text-muted-foreground">
               <small>Já possui uma conta?</small>
               <NuxtLink
-                class="text-xs hover:text-zinc-500 hover:underline"
+                class="text-xs hover:text-um-primary hover:underline"
                 :href="'/login'"
               >
                 Acesse aqui.
