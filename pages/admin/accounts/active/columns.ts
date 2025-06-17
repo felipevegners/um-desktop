@@ -1,6 +1,7 @@
 import { Button } from '@/components/ui/button';
 import { createColumnHelper } from '@tanstack/vue-table';
 import { ArrowUpDown } from 'lucide-vue-next';
+import { dateFormat } from '~/lib/utils';
 
 const columnHelper = createColumnHelper<any>();
 
@@ -48,6 +49,17 @@ export const columns = [
     cell: ({ row }) => {
       //@ts-ignore
       return h('div', { class: 'text-left font-medium' }, Roles[row.getValue('role')]);
+    },
+  }),
+  columnHelper.accessor('createdAt', {
+    header: () => h('div', { class: 'text-left' }, 'Data Cadastro'),
+    cell: ({ row }) => {
+      //@ts-ignore
+      return h(
+        'div',
+        { class: 'text-left font-medium' },
+        dateFormat(row.getValue('createdAt')),
+      );
     },
   }),
   columnHelper.accessor('status', {
