@@ -41,7 +41,7 @@ onMounted(async () => {
       >
         <div
           v-if="status === 'success'"
-          class="flex flex-col gap-4 grow items-center justify-center relative"
+          class="flex flex-col gap-20 grow items-start justify-center relative"
         >
           <div class="space-y-4 text-start">
             <UserCheck class="text-um-primary" :size="32" />
@@ -54,7 +54,7 @@ onMounted(async () => {
           </div>
           <NuxtLink
             to="/login"
-            class="py-1.5 px-2.5 flex items-center gap-4 text-um-primary text-sm border border-um-primary rounded-md uppercase"
+            class="py-1.5 px-2.5 flex items-start gap-4 text-um-primary text-sm border border-um-primary rounded-md uppercase"
           >
             Login
             <ArrowRight :size="16" />

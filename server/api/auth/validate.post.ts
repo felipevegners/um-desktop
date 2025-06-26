@@ -29,14 +29,14 @@ export default defineEventHandler(async (event) => {
     if (!user) {
       return {
         status: 400,
-        body: { message: 'Conta não encontrada.' },
+        body: { message: 'Desculpe, não encontramos sua conta.' },
       };
     }
 
     if (user && user.emailConfirmed) {
       return {
         status: 400,
-        body: { message: 'Conta já verificada!' },
+        body: { message: 'Sua conta já foi verificada!' },
       };
     }
 
@@ -49,12 +49,14 @@ export default defineEventHandler(async (event) => {
 
     return {
       status: 200,
-      body: { message: 'Contra verificada', email: result.email },
+      body: { message: 'Contra verificada com sucesso!', email: result.email },
     };
   } catch (e) {
     return {
       status: 400,
-      body: { message: 'Token inválido' },
+      body: {
+        message: 'Desculpe, o código de verificação é inválido.',
+      },
     };
   }
 });

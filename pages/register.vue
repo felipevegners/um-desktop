@@ -226,7 +226,7 @@ const onSubmit = form.handleSubmit(async (values) => {
               type="submit"
             >
               <LoaderCircle v-if="isLoadingSend" class="animate-spin" :size="24" />
-              Enviar
+              Criar conta
             </Button>
             <div class="flex items-center justify-center gap-1 text-muted-foreground">
               <small>Já possui uma conta?</small>
