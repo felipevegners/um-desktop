@@ -40,7 +40,7 @@ export const columns = [
       return h(
         'div',
         {
-          class: `px-2 flex items-center justify-center h-6 rounded-full text-white text-xs max-w-[80px] ${
+          class: `px-2 flex items-center justify-center h-6 rounded-full text-white text-xs w-fit ${
             status === true ? 'bg-green-600' : 'bg-red-600'
           }`,
         },
@@ -55,8 +55,8 @@ export const columns = [
       return h(
         'div',
         {
-          class: `px-2 flex items-center justify-center h-6 rounded-full text-white text-xs max-w-[80px] ${
-            status === 'validated' ? 'bg-green-600' : 'bg-yellow-500'
+          class: `px-2 flex items-center justify-center h-6 rounded-full text-white text-xs w-fit ${
+            status === 'validated' ? 'bg-green-600' : 'bg-amber-500'
           }`,
         },
         status === 'validated' ? 'Validado' : 'Pendente',

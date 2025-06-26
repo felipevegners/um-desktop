@@ -29,6 +29,15 @@ export default NuxtAuthHandler({
           throw new Error('Conta não encontrada!');
         }
 
+        if (!account.emailConfirmed) {
+          throw createError({
+            statusCode: 401,
+            message:
+              'Sua conta ainda não foi verificada!, Acesse seu e-mail e confirme seu cadastro para prosseguir com o acesso.',
+            cause: 'Barretos',
+          });
+        }
+
         const isValid = await bcrypt.compare(credentials.password, account.password);
 
         if (!isValid) {

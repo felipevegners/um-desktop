@@ -1,5 +1,6 @@
 <script setup lang="ts">
-import { XCircleIcon } from 'lucide-vue-next';
+import { ArrowLeft, ArrowRight, XCircleIcon } from 'lucide-vue-next';
+import { EMAIL_FROM } from '~/server/providers/ config';
 
 definePageMeta({
   layout: 'login',
@@ -9,20 +10,55 @@ definePageMeta({
 });
 
 const route = useRoute();
+const error = route.query.error as string;
+const formatedError = ref<any>('');
+
+onBeforeMount(() => {
+  const errorStr = error?.includes(',') ? error?.split(',') : error;
+  formatedError.value = errorStr;
+});
 </script>
 <template>
-  <section
-    class="w-full h-screen flex flex-col gap-6 items-center justify-center bg-black"
-  >
-    <div class="p-6 border border-um-primary rounded-md flex flex-col items-center gap-3">
-      <XCircleIcon :size="48" class="text-um-primary" />
-      <h3 class="font-bold text-xl text-um-primary">
-        {{ route.query.error }}
-      </h3>
+  <section class="mx-auto lg:grid lg:grid-cols-2 h-screen">
+    <div
+      class="p-10 lg:p-20 bg-black flex flex-col items-center lg:items-end justify-center bg-[url('/images/background.webp')] bg-cover bg-center bg-no-repeat"
+    >
+      <img class="h-8 lg:h-10" src="/images/logo_horizontal_white.svg" alt="" />
     </div>
-    <NuxtLink class="text-xs text-white hover:underline" :href="'/login'">
-      Acesse novamente
-    </NuxtLink>
+    <div>
+      <div
+        class="relative w-full p-6 md:p-12 md:pb-4 flex h-[100%] items-center justify-center flex-col text-center bg-black"
+      >
+        <div class="flex flex-col gap-20 grow items-start justify-center">
+          <div class="space-y-4 text-start">
+            <XCircleIcon :size="32" class="text-um-primary" />
+            <h2 class="text-xl md:text-2xl font-bold text-um-primary">Ooops!</h2>
+            <h2 class="text-xl md:text-2xl font-bold text-um-primary">
+              {{ formatedError[0] }}
+            </h2>
+            <p
+              v-if="formatedError.length > 0"
+              class="text-base md:text-md text-muted-foreground"
+            >
+              {{ formatedError[1] }}
+            </p>
+          </div>
+          <NuxtLink
+            to="/login"
+            class="py-1.5 px-2.5 flex items-center gap-4 text-um-primary text-sm border border-um-primary rounded-md uppercase"
+          >
+            <ArrowLeft :size="16" />
+            Voltar
+          </NuxtLink>
+        </div>
+        <p class="grow-0 text-[12px] mb-4 relative z-2 text-muted-foreground self-left">
+          Precisa de ajuda?
+          <NuxtLink :to="`mailto:${EMAIL_FROM}`" class="hover:text-um-primary">
+            help@urbanmobi.com.br
+          </NuxtLink>
+        </p>
+      </div>
+    </div>
   </section>
 </template>
 

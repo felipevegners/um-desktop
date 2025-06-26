@@ -38,7 +38,10 @@ export const columns = [
         },
         [
           row.getValue('phone'),
-          h(MessageCircleMore, { class: 'text-green-500', size: 18 }),
+          h('img', {
+            class: 'h-4',
+            src: 'https://cdn.simpleicons.org/whatsapp',
+          }),
         ] as any,
       );
     },
@@ -56,8 +59,8 @@ export const columns = [
       return h(
         'div',
         {
-          class: `px-2 flex items-center justify-center h-6 rounded-full text-white text-xs max-w-[80px] ${
-            status === 'validated' ? 'bg-green-600' : 'bg-yellow-500'
+          class: `px-2 flex items-center justify-center h-6 rounded-full text-white text-xs w-fit ${
+            status === 'validated' ? 'bg-green-600' : 'bg-amber-500'
           }`,
         },
         status === 'validated' ? 'Validado' : 'Pendente',

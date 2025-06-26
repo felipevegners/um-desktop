@@ -117,7 +117,7 @@ export const columns: any = [
       return h(
         'div',
         {
-          class: `px-2 flex items-center justify-center h-6 rounded-lg text-white text-xs max-w-[80px] 
+          class: `px-2 flex items-center justify-center h-6 rounded-lg text-white text-xs w-fit 
           ${status === 'created' ? 'bg-blue-600' : 'bg-green-600'}`,
         },
         status === 'created' ? 'Agendado' : 'Aguardando',

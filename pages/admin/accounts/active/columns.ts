@@ -1,7 +1,8 @@
 import { Button } from '@/components/ui/button';
 import { createColumnHelper } from '@tanstack/vue-table';
-import { ArrowUpDown } from 'lucide-vue-next';
-import { dateFormat } from '~/lib/utils';
+import { ArrowUpDown, MessageCircleMore } from 'lucide-vue-next';
+import { WPP_API } from '~/config/paths';
+import { dateFormat, sanitizePhone } from '~/lib/utils';
 
 const columnHelper = createColumnHelper<any>();
 
@@ -22,6 +23,7 @@ export const columns = [
         Button,
         {
           variant: 'ghost',
+          class: 'p-0',
           onClick: () => column.toggleSorting(column.getIsSorted() === 'asc'),
         },
         () => ['Nome de Usuário', h(ArrowUpDown, { class: 'ml-2 h-4 w-4' })],
@@ -32,6 +34,27 @@ export const columns = [
   columnHelper.accessor('email', {
     header: () => h('div', { class: 'text-left' }, 'E-mail'),
     cell: ({ row }) => h('div', { class: 'lowecase' }, row.getValue('email')),
+  }),
+  columnHelper.accessor('phone', {
+    header: () => h('div', { class: 'text-left' }, 'Celular'),
+    cell: ({ row }) => {
+      const phone = row.getValue('phone');
+      return h(
+        'a',
+        {
+          href: WPP_API.replace('[[phone]]', sanitizePhone(phone as string)),
+          target: '_blank',
+          class: 'flex items-center gap-2',
+        },
+        [
+          row.getValue('phone'),
+          h('img', {
+            class: 'h-4',
+            src: 'https://cdn.simpleicons.org/whatsapp',
+          }),
+        ] as any,
+      );
+    },
   }),
   columnHelper.accessor('contract', {
     header: () => h('div', { class: 'text-left' }, 'Empresa'),
@@ -45,10 +68,10 @@ export const columns = [
     },
   }),
   columnHelper.accessor('role', {
-    header: () => h('div', { class: 'text-left' }, 'Nível de Permissão'),
+    header: () => h('div', { class: 'text-center' }, 'Nível de Permissão'),
     cell: ({ row }) => {
       //@ts-ignore
-      return h('div', { class: 'text-left font-medium' }, Roles[row.getValue('role')]);
+      return h('div', { class: 'text-center font-medium' }, Roles[row.getValue('role')]);
     },
   }),
   columnHelper.accessor('createdAt', {
@@ -69,11 +92,26 @@ export const columns = [
       return h(
         'div',
         {
-          class: `px-2 flex items-center justify-center h-6 rounded-full text-white text-xs max-w-[80px] ${
-            status === 'validated' ? 'bg-green-600' : 'bg-yellow-500'
+          class: `mx-auto px-2 flex items-center justify-center h-6 rounded-full text-white text-xs w-fit ${
+            status === 'validated' ? 'bg-green-600' : 'bg-amber-500'
           }`,
         },
         status === 'validated' ? 'Validado' : 'Pendente',
+      );
+    },
+  }),
+  columnHelper.accessor('emailConfirmed', {
+    header: () => h('div', { class: 'text-left' }, 'E-mail Confirmado'),
+    cell: ({ row }) => {
+      const status = row.getValue('emailConfirmed');
+      return h(
+        'div',
+        {
+          class: `mx-auto px-2 flex items-center justify-center h-6 rounded-full text-white text-xs w-fit ${
+            status === true ? 'bg-green-600' : 'bg-red-500'
+          }`,
+        },
+        status === true ? 'Sim' : 'Não',
       );
     },
   }),

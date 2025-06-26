@@ -19,8 +19,7 @@ export const columns = [
         () => ['Código', h(ArrowUpDown, { class: 'ml-2 h-4 w-4' })],
       );
     },
-    cell: ({ row }) =>
-      h('div', { class: 'uppercase' }, row.getValue('branchCode')),
+    cell: ({ row }) => h('div', { class: 'uppercase' }, row.getValue('branchCode')),
   }),
   columnHelper.accessor('fantasyName', {
     enablePinning: true,
@@ -35,8 +34,7 @@ export const columns = [
         () => ['Nome', h(ArrowUpDown, { class: 'ml-2 h-4 w-4' })],
       );
     },
-    cell: ({ row }) =>
-      h('div', { class: 'capitalize' }, row.getValue('fantasyName')),
+    cell: ({ row }) => h('div', { class: 'capitalize' }, row.getValue('fantasyName')),
   }),
   columnHelper.accessor('document', {
     header: () => h('div', { class: 'text-left' }, 'CNPJ'),
@@ -81,8 +79,8 @@ export const columns = [
       return h(
         'div',
         {
-          class: `px-2 flex items-center justify-center h-6 rounded-full text-white text-xs max-w-[80px] ${
-            status === 'validated' ? 'bg-green-600' : 'bg-yellow-500'
+          class: `px-2 flex items-center justify-center h-6 rounded-full text-white text-xs w-fit ${
+            status === 'validated' ? 'bg-green-600' : 'bg-amber-500'
           }`,
         },
         status === 'validated' ? 'Validado' : 'Pendente',
