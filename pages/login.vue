@@ -123,7 +123,7 @@ const onSubmit = form.handleSubmit(async (values) => {
           >
             <NuxtLink to="#" class="hover:text-um-primary"> Lembrar senha </NuxtLink>
             <small>|</small>
-            <NuxtLink to="/register" class="hover:text-um-primary">
+            <NuxtLink to="/register?type=personal" class="hover:text-um-primary">
               Criar conta
             </NuxtLink>
           </div>
