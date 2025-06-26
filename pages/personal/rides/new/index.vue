@@ -346,54 +346,54 @@ const onSubmit = form.handleSubmit(async (values) => {
                           </ul>
                         </div>
                       </div>
-                      <div class="md:grid md:grid-cols-3 gap-6">
-                        <FormField v-slot="{ componentField }" name="departTime">
-                          <FormItem>
-                            <FormLabel>Hora da Partida*</FormLabel>
-                            <FormControl>
-                              <Input
-                                type="text"
-                                v-bind="componentField"
-                                v-maska="'##:##'"
-                              />
-                            </FormControl>
-                          </FormItem>
-                        </FormField>
-                        <div v-if="selectedProduct">
-                          <label class="text-sm font-medium leading-none">
-                            Passageiros*
-                          </label>
-                          <div class="mt-2 flex items-center justify-start gap-3">
-                            <Button type="button" @click="removePassengers">
-                              <Minus :size="20" />
-                            </Button>
-                            <span
-                              class="py-1.5 px-2 bg-white border border-zinc-950 rounded-md w-20 text-center"
-                            >
-                              {{ ridePassengers }}
-                            </span>
-                            <Button
-                              v-if="
-                                selectedProduct.capacity &&
-                                ridePassengers !== selectedProduct.capacity
-                              "
-                              type="button"
-                              @click="addPassengers"
-                            >
-                              <Plus :size="20" />
-                            </Button>
+                      <div v-if="selectedProduct" class="flex flex-col gap-6 items-start">
+                        <div class="md:grid md:grid-cols-3 gap-6">
+                          <FormField v-slot="{ componentField }" name="departTime">
+                            <FormItem>
+                              <FormLabel>Hora da Partida*</FormLabel>
+                              <FormControl>
+                                <Input
+                                  type="text"
+                                  v-bind="componentField"
+                                  v-maska="'##:##'"
+                                />
+                              </FormControl>
+                            </FormItem>
+                          </FormField>
+                          <div v-if="selectedProduct">
+                            <label class="text-sm font-medium leading-none">
+                              Passageiros*
+                            </label>
+                            <div class="mt-2 flex items-center justify-start gap-3">
+                              <Button type="button" @click="removePassengers">
+                                <Minus :size="20" />
+                              </Button>
+                              <span
+                                class="py-1.5 px-2 bg-white border border-zinc-950 rounded-md w-20 text-center"
+                              >
+                                {{ ridePassengers }}
+                              </span>
+                              <Button
+                                v-if="
+                                  selectedProduct.capacity &&
+                                  ridePassengers !== selectedProduct.capacity
+                                "
+                                type="button"
+                                @click="addPassengers"
+                              >
+                                <Plus :size="20" />
+                              </Button>
+                            </div>
                           </div>
                         </div>
-                      </div>
-                      <div class="flex flex-col">
-                        <label class="mb-2 text-sm font-medium">Data*</label>
-                        <DatePicker v-model="travelDate" />
-                      </div>
-                      <FormField v-slot="{ componentField, value }" name="origin">
-                        <FormItem>
-                          <FormLabel>Origem*</FormLabel>
-                          <FormControl>
-                            <div class="flex flex-col items-start gap-2">
+                        <div class="flex flex-col">
+                          <label class="mb-2 text-sm font-medium">Data*</label>
+                          <DatePicker v-model="travelDate" />
+                        </div>
+                        <FormField v-slot="{ componentField, value }" name="origin">
+                          <FormItem class="w-full">
+                            <FormLabel>Origem*</FormLabel>
+                            <FormControl>
                               <div class="flex items-center w-full gap-2">
                                 <SquareDot />
                                 <GMapAutocomplete
@@ -405,34 +405,39 @@ const onSubmit = form.handleSubmit(async (values) => {
                                   class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                                 />
                               </div>
-                            </div>
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      </FormField>
-                      <FormField v-slot="{ componentField }" name="destination">
-                        <FormItem>
-                          <FormLabel>Destino*</FormLabel>
-                          <FormControl>
-                            <div class="flex items-center gap-2">
-                              <SquareSquare />
-                              <GMapAutocomplete
-                                placeholder="Insira o Destino"
-                                @place_changed="setDestinationPlace"
-                                v-bind="componentField"
-                                class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                              />
-                            </div>
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      </FormField>
+                              <div class="flex flex-col items-start gap-2"></div>
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        </FormField>
+                        <FormField v-slot="{ componentField }" name="destination">
+                          <FormItem class="w-full">
+                            <FormLabel>Destino*</FormLabel>
+                            <FormControl>
+                              <div class="flex items-center gap-2">
+                                <SquareSquare />
+                                <GMapAutocomplete
+                                  placeholder="Insira o Destino"
+                                  @place_changed="setDestinationPlace"
+                                  v-bind="componentField"
+                                  class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                                />
+                              </div>
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        </FormField>
+                        <Button
+                          type="button"
+                          @click.prevent="getRideCalculation"
+                          :disabled="!selectedProduct"
+                        >
+                          <LoaderCircle v-if="loadingRoute" class="animate-spin" />
+                          <Waypoints v-else />
+                          Calcular Rota
+                        </Button>
+                      </div>
                     </div>
-                    <Button type="button" @click.prevent="getRideCalculation">
-                      <LoaderCircle v-if="loadingRoute" class="animate-spin" />
-                      <Waypoints v-else />
-                      Calcular Rota
-                    </Button>
                   </div>
                   <div class="md:grid md:grid-cols-2 gap-6"></div>
                 </div>

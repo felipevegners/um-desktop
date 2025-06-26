@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ArrowLeft, LoaderCircle, UserCheck } from 'lucide-vue-next';
+import { ArrowLeft, ArrowRight, LoaderCircle, UserCheck } from 'lucide-vue-next';
 import useVerifyEmail from '~/composables/auth/useVerifyEmail';
 
 const { verifyEmail, error, status } = useVerifyEmail();
@@ -56,8 +56,8 @@ onMounted(async () => {
             to="/login"
             class="py-1.5 px-2.5 flex items-center gap-4 text-um-primary text-sm border border-um-primary rounded-md uppercase"
           >
-            <ArrowLeft :size="16" />
             Login
+            <ArrowRight :size="16" />
           </NuxtLink>
         </div>
         <div
@@ -81,10 +81,10 @@ onMounted(async () => {
           </div>
           <NuxtLink
             to="/login"
-            class="py-1.5 px-2.5 flex items-center gap-4 text-um-primary text-sm border border-um-primary rounded-md uppercase"
+            class="py-1.5 px-2.5 flex items-start gap-4 text-um-primary text-sm border border-um-primary rounded-md uppercase"
           >
-            <ArrowLeft :size="16" />
             Login
+            <ArrowRight :size="16" />
           </NuxtLink>
         </div>
         <p class="grow-0 text-xs mt-4 relative text-muted-foreground">

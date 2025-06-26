@@ -1,10 +1,12 @@
 import type { MailDataRequired } from '@sendgrid/helpers/classes/mail';
 import sgMail from '@sendgrid/mail';
 
+import { EMAIL_FROM } from './ config';
+
 class Mailer {
   defaults = {
-    from: 'felipevegners@gmail.com', // 1
-    subject: 'Saas - Email Verification',
+    from: EMAIL_FROM,
+    subject: 'Urban Mobi - Validação de Conta',
   };
 
   sender: typeof sgMail;
@@ -19,12 +21,13 @@ class Mailer {
       ...this.defaults,
       to,
       html: `
-        <div>
-          <h3>Verify your email</h3>
-          <p>
-            Hello ${to} Please click the link below to verify your email.
+        <div style="padding: 24px; background-color: #000000; text-align: center">
+        <img src="http://cdn.mcauto-images-production.sendgrid.net/bcf3e99e4ff99531/e21f26b7-b20c-4a9d-bae2-cf01db7f035a/711x717.png" style="max-width: 48px; margin: 0 auto;"/>
+          <h3 style="color: white; font-weight: bold">Verifique seu e-mail cadastrado</h3>
+          <p style="color: white;">
+            Olá ${to}, clique no link abaixo para validar sua conta Urban Mobi.
           </p>
-          <a href="${link}">Verify Email</a>
+          <a href="${link}" style="padding: 8px;border: 1px solid red">Validar E-mail</a>
         </div>
       `,
     };

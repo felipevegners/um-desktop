@@ -9,6 +9,7 @@ import { useContractsStore } from '@/stores/admin/contracts.store';
 import { toTypedSchema } from '@vee-validate/zod';
 import { Trash, UserPen } from 'lucide-vue-next';
 import { Eye, EyeOff, LoaderCircle } from 'lucide-vue-next';
+import { vMaska } from 'maska/vue';
 import { storeToRefs } from 'pinia';
 import { useForm } from 'vee-validate';
 import { onBeforeMount } from 'vue';
