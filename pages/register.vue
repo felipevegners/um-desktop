@@ -90,6 +90,7 @@ const onSubmit = form.handleSubmit(async (values) => {
     position: values.position || '',
     department: values.department || '',
     acceptTerms: values.acceptTerms,
+    emailConfirmed: false,
     avatar: {
       name: '',
       url: '',
@@ -102,26 +103,24 @@ const onSubmit = form.handleSubmit(async (values) => {
     },
   };
 
-  console.log('--> ', accountData);
-
-  // try {
-  //   await registerUserAccountAction(accountData);
-  // } catch (error) {
-  //   toast({
-  //     title: 'Opss!',
-  //     class: 'bg-red-500 border-0 text-white text-2xl',
-  //     description: `Ocorreu um erro ao criar a sua conta. Tente novamente.`,
-  //   });
-  //   throw error;
-  // } finally {
-  //   toast({
-  //     title: 'Tudo pronto!',
-  //     class: 'bg-green-600 border-0 text-white text-2xl',
-  //     description:
-  //       'Conta de Usuário cadastrado com sucesso. Acesse seu e-mail para prosseguir!',
-  //   });
-  //   navigateTo('/registersuccess');
-  // }
+  try {
+    await registerUserAccountAction(accountData);
+  } catch (error) {
+    toast({
+      title: 'Opss!',
+      class: 'bg-red-500 border-0 text-white text-2xl',
+      description: `Ocorreu um erro ao criar a sua conta. Tente novamente.`,
+    });
+    throw error;
+  } finally {
+    toast({
+      title: 'Tudo pronto!',
+      class: 'bg-green-600 border-0 text-white text-2xl',
+      description:
+        'Conta de Usuário cadastrado com sucesso. Acesse seu e-mail para prosseguir!',
+    });
+    navigateTo('/registersuccess');
+  }
 });
 </script>
 <template>
