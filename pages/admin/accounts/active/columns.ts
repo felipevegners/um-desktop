@@ -10,9 +10,10 @@ const Roles = {
   admin: 'Backoffice',
   'master-manager': 'Gestor Master',
   'branch-manager': 'Gestor Filial',
-  'platform-admin': 'Administrador de Filial',
+  'platform-admin': 'Admin. Filial',
   'platform-corp-user': 'Usuário Corporativo',
   'platform-user': 'Usuário UM',
+  'platform-driver': 'Morotista Parceiro',
 };
 
 export const columns = [

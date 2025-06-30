@@ -3,13 +3,12 @@ import AddressForm from '@/components/forms/AddressForm.vue';
 import BranchForm from '@/components/forms/BranchForm.vue';
 import BackLink from '@/components/shared/BackLink.vue';
 import { useToast } from '@/components/ui/toast/use-toast';
-import { findAddressByZipcode } from '@/server/services/FindAddress';
-import { useBranchesStore } from '@/stores/admin/branches.store';
 import { toTypedSchema } from '@vee-validate/zod';
 import { Building2, LoaderCircle } from 'lucide-vue-next';
 import { storeToRefs } from 'pinia';
 import { useForm } from 'vee-validate';
 import * as z from 'zod';
+import { useBranchesStore } from '~/stores/branches.store';
 
 const store = useBranchesStore();
 const { createBranchAction } = store;
@@ -48,10 +47,7 @@ const formSchema = toTypedSchema(
     branchManagerDepartment: z.string().min(2).max(50),
     branchManagerEmail: z.string().min(2).max(50),
     branchBudget: z.array(z.number().min(0).max(190000)).optional(),
-    password: z
-      .string()
-      .min(6, 'A senha deve conter no mínimo 6 caracteres')
-      .max(8),
+    password: z.string().min(6, 'A senha deve conter no mínimo 6 caracteres').max(8),
   }),
 );
 

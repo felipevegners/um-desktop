@@ -5,7 +5,7 @@ import {
   getDriver,
   getDrivers,
   updateDriver,
-} from '~/server/services/admin/drivers';
+} from '~/server/services/drivers';
 import type { Driver } from '~/types/drivers/driver-types';
 
 interface IDriversState {
@@ -16,7 +16,7 @@ interface IDriversState {
   loadingSend: boolean;
 }
 
-export const userDriverStore = defineStore('driver', {
+export const useDriverStore = defineStore('driver', {
   state: (): IDriversState => {
     return {
       drivers: [],

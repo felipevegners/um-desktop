@@ -2,10 +2,10 @@
 import DataTable from '@/components/shared/DataTable.vue';
 import TableActions from '@/components/shared/TableActions.vue';
 import { useToast } from '@/components/ui/toast';
-import { useContractsStore } from '@/stores/admin/contracts.store';
 import { createColumnHelper } from '@tanstack/vue-table';
 import { FileText, LoaderCircle, Plus } from 'lucide-vue-next';
 import { storeToRefs } from 'pinia';
+import { useContractsStore } from '~/stores/contracts.store';
 
 import { columns } from './columns';
 
@@ -99,18 +99,13 @@ const finalColumns = [
     <section class="mb-6 flex items-center justify-between">
       <div class="flex items-center gap-4">
         <FileText :size="32" />
-        <h1 class="font-bold text-black text-3xl">
-          Gerenciar Contratos Ativos
-        </h1>
+        <h1 class="font-bold text-black text-3xl">Gerenciar Contratos Ativos</h1>
       </div>
       <Button @click="navigateTo('/admin/contracts/new')">
         <Plus class="w-4 h-4" /> Novo Contrato
       </Button>
     </section>
-    <section
-      v-if="isLoading"
-      class="min-h-[300px] flex items-center justify-center"
-    >
+    <section v-if="isLoading" class="min-h-[300px] flex items-center justify-center">
       <LoaderCircle class="w-10 h-10 animate-spin" />
     </section>
     <section v-else>

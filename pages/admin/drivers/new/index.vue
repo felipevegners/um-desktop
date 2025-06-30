@@ -4,7 +4,6 @@ import AddCarsForm from '@/components/forms/AddCarsForm.vue';
 import AddressForm from '@/components/forms/AddressForm.vue';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/components/ui/toast/use-toast';
-import { userDriverStore } from '@/stores/admin/drivers.store';
 import { toTypedSchema } from '@vee-validate/zod';
 import { Car, Info, LoaderCircle } from 'lucide-vue-next';
 import { vMaska } from 'maska/vue';
@@ -12,10 +11,11 @@ import { TooltipArrow } from 'radix-vue';
 import { useForm } from 'vee-validate';
 import { ref } from 'vue';
 import * as z from 'zod';
+import { useDriverStore } from '~/stores/drivers.store';
 
 const { toast } = useToast();
 
-const driverStore = userDriverStore();
+const driverStore = useDriverStore();
 const { createNewDriverAction } = driverStore;
 
 definePageMeta({

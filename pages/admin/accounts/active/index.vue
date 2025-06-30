@@ -3,9 +3,9 @@ import DataTable from '@/components/shared/DataTable.vue';
 import TableActions from '@/components/shared/TableActions.vue';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/components/ui/toast';
-import { useAccountStore } from '@/stores/admin/account.store';
 import { createColumnHelper } from '@tanstack/vue-table';
 import { LoaderCircle, Plus, UserPen, X } from 'lucide-vue-next';
+import { useAccountStore } from '~/stores/account.store';
 
 import { columns } from './columns';
 
@@ -97,10 +97,7 @@ const finalColumns = [
         <Plus class="w-4 h-4" /> Criar Usuário
       </Button>
     </section>
-    <section
-      v-if="isLoading"
-      class="min-h-[300px] flex items-center justify-center"
-    >
+    <section v-if="isLoading" class="min-h-[300px] flex items-center justify-center">
       <LoaderCircle class="w-10 h-10 animate-spin" />
     </section>
     <section v-else>

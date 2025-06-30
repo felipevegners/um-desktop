@@ -1,9 +1,9 @@
 <script setup lang="ts">
 import BackLink from '@/components/shared/BackLink.vue';
-import { useBranchesStore } from '@/stores/admin/branches.store';
 import { Edit, FileText, LoaderCircle } from 'lucide-vue-next';
 import { storeToRefs } from 'pinia';
 import { currencyFormat, dateFormat } from '~/lib/utils';
+import { useBranchesStore } from '~/stores/branches.store';
 
 definePageMeta({
   layout: 'admin',
@@ -45,10 +45,7 @@ await getBranchByIdAction(route?.params?.id as string);
         Editar Filial
       </Button>
     </section>
-    <section
-      v-if="isLoadingData"
-      class="min-h-[300px] flex items-center justify-center"
-    >
+    <section v-if="isLoadingData" class="min-h-[300px] flex items-center justify-center">
       <LoaderCircle class="w-10 h-10 animate-spin" />
     </section>
     <section v-else class="mt-6">
@@ -112,14 +109,12 @@ await getBranchByIdAction(route?.params?.id as string);
                 {{ branch?.address?.streetName }},
                 {{ branch?.address?.streetNumber }}
                 {{
-                  branch?.address?.complement !== '-'
-                    ? branch?.address?.complement
-                    : ''
+                  branch?.address?.complement !== '-' ? branch?.address?.complement : ''
                 }}
               </p>
               <p>
-                {{ branch?.address?.neighborhood }},
-                {{ branch?.address?.city }}, {{ branch?.address?.state }},
+                {{ branch?.address?.neighborhood }}, {{ branch?.address?.city }},
+                {{ branch?.address?.state }},
                 {{ branch?.address?.zipcode }}
               </p>
             </div>
@@ -132,9 +127,7 @@ await getBranchByIdAction(route?.params?.id as string);
           <div class="p-6 bg-white rounded-md">
             <p class="text-sm text-zinc-600">Budget Mensal</p>
             <p class="mb-4 text-2xl font-bold">
-              {{
-                branch?.budget ? currencyFormat(branch.budget) : 'Não informado'
-              }}
+              {{ branch?.budget ? currencyFormat(branch.budget) : 'Não informado' }}
             </p>
           </div>
           <div class="p-6 bg-white rounded-md">
@@ -156,9 +149,7 @@ await getBranchByIdAction(route?.params?.id as string);
               {{ branch?.managerInfo?.position }} -
               {{ branch?.managerInfo?.department }}
             </p>
-            <p>
-              {{ branch?.manager?.email }} - {{ branch?.managerInfo?.phone }}
-            </p>
+            <p>{{ branch?.manager?.email }} - {{ branch?.managerInfo?.phone }}</p>
           </div>
         </div>
       </Card>

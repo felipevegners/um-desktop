@@ -51,7 +51,7 @@ const onSubmit = form.handleSubmit(async (values) => {
     class="dark w-full h-screen flex flex-col justify-center items-center bg-black bg-[url('/images/background.webp')] bg-cover bg-center bg-no-repeat"
   >
     <img class="mb-12 h-10" src="/images/logo_horizontal_white.svg" alt="" />
-    <Card class="p-8 w-full max-w-sm border-none bg-black shadow-lg">
+    <Card class="p-8 w-full max-w-sm md:max-w-md border-none bg-black shadow-lg">
       <form @submit="onSubmit">
         <div class="space-y-8">
           <h1 class="font-bold text-2xl text-um-primary text-center">
@@ -119,13 +119,24 @@ const onSubmit = form.handleSubmit(async (values) => {
             </Button>
           </div>
           <div
-            class="mt-6 flex items-center justify-center gap-6 text-muted-foreground text-xs"
+            class="mt-6 flex flex-col items-center justify-center gap-6 text-muted-foreground text-xs"
           >
-            <NuxtLink to="#" class="hover:text-um-primary"> Lembrar senha </NuxtLink>
-            <small>|</small>
-            <NuxtLink to="/register?type=personal" class="hover:text-um-primary">
-              Criar conta
-            </NuxtLink>
+            <div>
+              <NuxtLink to="#" class="hover:text-um-primary"> Lembrar senha </NuxtLink>
+            </div>
+            <div class="flex items-start gap-4">
+              <NuxtLink to="/register?type=personal" class="hover:text-um-primary">
+                Conta Pessoal
+              </NuxtLink>
+              <small>|</small>
+              <NuxtLink to="/register?type=driver" class="hover:text-um-primary">
+                Seja um Motorista
+              </NuxtLink>
+              <small>|</small>
+              <NuxtLink to="/register?type=corporative" class="hover:text-um-primary">
+                Conta Corporativa
+              </NuxtLink>
+            </div>
           </div>
         </div>
       </form>

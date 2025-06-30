@@ -4,13 +4,13 @@ import FormSelect from '@/components/shared/FormSelect.vue';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/components/ui/toast/use-toast';
 import { rolesList } from '@/config/roles';
-import { useAccountStore } from '@/stores/admin/account.store';
-import { useContractsStore } from '@/stores/admin/contracts.store';
+import { useContractsStore } from '@/stores/contracts.store';
 import { toTypedSchema } from '@vee-validate/zod';
 import { Eye, EyeOff, LoaderCircle, UserPen } from 'lucide-vue-next';
 import { vMaska } from 'maska/vue';
 import { useForm } from 'vee-validate';
 import * as z from 'zod';
+import { useAccountStore } from '~/stores/account.store';
 
 definePageMeta({
   layout: 'admin',

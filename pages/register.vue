@@ -1,12 +1,12 @@
 <script setup lang="ts">
 import { Checkbox } from '@/components/ui/checkbox';
 import { useToast } from '@/components/ui/toast';
-import { useAccountStore } from '@/stores/admin/account.store';
 import { toTypedSchema } from '@vee-validate/zod';
 import { Eye, EyeOff, Info, LoaderCircle, UserPlus } from 'lucide-vue-next';
 import { vMaska } from 'maska/vue';
 import { useForm } from 'vee-validate';
 import * as z from 'zod';
+import { useAccountStore } from '~/stores/account.store';
 
 definePageMeta({
   layout: 'login',
@@ -24,6 +24,9 @@ const { toast } = useToast();
 const accountStore = useAccountStore();
 const { registerUserAccountAction } = accountStore;
 const { isLoadingSend } = storeToRefs(accountStore);
+
+const driverStore = useDriverStore();
+const { createNewDriverAction } = driverStore;
 
 const route = useRoute();
 const viewPassword = ref<boolean>(false);
@@ -104,7 +107,67 @@ const onSubmit = form.handleSubmit(async (values) => {
   };
 
   try {
-    await registerUserAccountAction(accountData);
+    const newAccount: any = await registerUserAccountAction(accountData);
+
+    const driverData = {
+      id: newAccount.id,
+      name: newAccount.username,
+      email: newAccount.email,
+      phone: newAccount.phone,
+      document: '',
+      driverLicense: '',
+      licenseExpiration: '',
+      licenseCategory: '',
+      driverFiles: {
+        picture: {
+          name: '',
+          url: '',
+        },
+        cnhCopy: {
+          name: '',
+          url: '',
+        },
+        addressCopy: {
+          name: '',
+          url: '',
+        },
+        bankCopy: {
+          name: '',
+          url: '',
+        },
+      },
+      address: {
+        zipcode: '',
+        streetName: '',
+        streetNumber: '',
+        complement: '-',
+        neighborhood: '',
+        city: '',
+        state: '',
+      },
+      actuationArea: '',
+      driverCars: [
+        {
+          carModel: '',
+          carColor: '',
+          carPlate: '',
+          carYear: '',
+          carDocumentFile: {
+            name: '',
+            url: '',
+          },
+        },
+      ],
+      rating: [],
+      history: [],
+      outsideActuation: true,
+      scheduleOpen: true,
+      status: 'pending',
+      enabled: true,
+    };
+    if (newAccountType.value === 'platform-driver') {
+      await createNewDriverAction(driverData);
+    }
   } catch (error) {
     toast({
       title: 'Opss!',

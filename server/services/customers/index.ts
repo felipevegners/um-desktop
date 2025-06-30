@@ -1,8 +1,8 @@
-import { Customer } from '~/types/customer/customer-types';
+import { type Customer } from '~/types/customer/customer-types';
 
 export const createCustomer = async (customerData: Customer) => {
   try {
-    return await $fetch('/api/admin/customers', {
+    return await $fetch('/api/customers', {
       method: 'POST',
       body: customerData,
     });
@@ -15,10 +15,10 @@ export const createCustomer = async (customerData: Customer) => {
 export const getCustomers = async (userId: string) => {
   try {
     if (userId) {
-      return await $fetch(`/api/admin/customers?id=${userId}`);
+      return await $fetch(`/api/customers?id=${userId}`);
     }
 
-    return await $fetch('/api/admin/customers');
+    return await $fetch('/api/customers');
   } catch (error) {
     console.log('Error -> ', error);
     throw error;
@@ -27,7 +27,7 @@ export const getCustomers = async (userId: string) => {
 
 export const updateCustomer = async (customerData: Customer) => {
   try {
-    await $fetch('/api/admin/customers', {
+    await $fetch('/api/customers', {
       method: 'PUT',
       body: customerData,
     });
@@ -39,7 +39,7 @@ export const updateCustomer = async (customerData: Customer) => {
 
 export const deleteCustomer = async (id: string) => {
   try {
-    await $fetch('/api/admin/customers', {
+    await $fetch('/api/customers', {
       method: 'DELETE',
       body: { id },
     });

@@ -1,12 +1,12 @@
 <script setup lang="ts">
 import { Button } from '@/components/ui/button';
-import { useRidesStore } from '@/stores/admin/rides.store';
 import { createColumnHelper } from '@tanstack/vue-table';
 import { CalendarDays, LoaderCircle, Plus } from 'lucide-vue-next';
 import { storeToRefs } from 'pinia';
 import { onMounted } from 'vue';
 import DataTable from '~/components/shared/DataTable.vue';
 import TableActions from '~/components/shared/TableActions.vue';
+import { useRidesStore } from '~/stores/rides.store';
 
 import { columns } from './columns';
 

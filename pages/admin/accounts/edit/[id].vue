@@ -4,8 +4,7 @@ import FormSelect from '@/components/shared/FormSelect.vue';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/components/ui/toast';
 import { rolesList } from '@/config/roles';
-import { useAccountStore } from '@/stores/admin/account.store';
-import { useContractsStore } from '@/stores/admin/contracts.store';
+import { useContractsStore } from '@/stores/contracts.store';
 import { toTypedSchema } from '@vee-validate/zod';
 import { Trash, UserPen } from 'lucide-vue-next';
 import { Eye, EyeOff, LoaderCircle } from 'lucide-vue-next';
@@ -14,6 +13,7 @@ import { storeToRefs } from 'pinia';
 import { useForm } from 'vee-validate';
 import { onBeforeMount } from 'vue';
 import * as z from 'zod';
+import { useAccountStore } from '~/stores/account.store';
 
 const contractsStore = useContractsStore();
 const { getContractsAction, getContractByIdAction } = contractsStore;

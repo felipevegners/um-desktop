@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import { useToast } from '@/components/ui/toast/use-toast';
-import { useFilesStore } from '@/stores/admin/files.store';
 import { CircleX, LoaderCircle, Paperclip } from 'lucide-vue-next';
 import { ref } from 'vue';
+import { useFilesStore } from '~/stores/files.store';
 
 const filesStore = useFilesStore();
 const { deleteFileAction } = filesStore;
@@ -27,13 +27,13 @@ const deleteFile = async (url: string) => {
     toast({
       title: 'Oops!',
       class: 'bg-red-500 border-0 text-white text-2xl',
-      description: `Arquivo do logotipo não pode ser removido. Tente novamente.`,
+      description: `Arquivo não pode ser removido. Tente novamente.`,
     });
   } finally {
     toast({
       title: 'Feito!',
       class: 'bg-green-500 border-0 text-white text-2xl',
-      description: `Arquivo do logotipo foi removido com sucesso!`,
+      description: `Arquivo foi removido com sucesso!`,
     });
     avatarFile.value.name = '';
     avatarFile.value.url = '';
@@ -52,17 +52,14 @@ const deleteFile = async (url: string) => {
       :custom="true"
     >
       <img v-if="isLoaded" v-bind="imgAttrs" :src="src" />
-      <div
-        v-else
-        class="w-[200px] h-[240px] rounded-md bg-white flex items-center justify-center"
-      >
-        <LoaderCircle :size="32" class="animate-spin" />
+      <div v-else class="rounded-md flex items-center justify-center">
+        <img v-bind="imgAttrs" src="/images/no-avatar.png" />
       </div>
     </NuxtImg>
     <div class="flex items-end justify-between gap-4">
-      <div v-if="avatarFile?.name === ''" class="relative">
+      <div v-if="avatarFile?.name === ''" class="relative w-full">
         <UploadButton
-          class="ut-button:w-full ut-button:bg-zinc-900 ut-button:hover:bg-zinc-700 ut-button:ut-uploading:after:bg-green-500 ut-button:ut-uploading:cursor-not-allowed ut-button:ut-readying:bg-red-500"
+          class="ut-button:w-full ut-button:bg-zinc-900 ut-button:hover:bg-zinc-700 ut-button:ut-uploading:after:bg-green-500 ut-button:ut-uploading:cursor-not-allowed ut-button:ut-readying:bg-red-500 ut-button:text-sm"
           :config="{
             appearance: {
               container: '!items-start',

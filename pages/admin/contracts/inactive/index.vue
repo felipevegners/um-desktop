@@ -1,10 +1,10 @@
 <script setup lang="ts">
 import DataTable from '@/components/shared/DataTable.vue';
 import TableActions from '@/components/shared/TableActions.vue';
-import { useContractsStore } from '@/stores/admin/contracts.store';
 import { createColumnHelper } from '@tanstack/vue-table';
 import { FileText, LoaderCircle } from 'lucide-vue-next';
 import { storeToRefs } from 'pinia';
+import { useContractsStore } from '~/stores/contracts.store';
 
 import { columns } from './columns';
 
@@ -91,10 +91,7 @@ const finalColumns = [
         Contratos Inativos
       </h1>
     </section>
-    <section
-      v-if="isLoading"
-      class="min-h-[300px] flex items-center justify-center"
-    >
+    <section v-if="isLoading" class="min-h-[300px] flex items-center justify-center">
       <LoaderCircle class="w-10 h-10 animate-spin" />
     </section>
     <section v-else>

@@ -1,17 +1,17 @@
 export const getProductsService = async (productId: string) => {
   try {
     if (productId) {
-      return await $fetch(`/api/admin/products?id=${productId}`);
+      return await $fetch(`/api/products?id=${productId}`);
     }
 
-    return await $fetch('/api/admin/products');
+    return await $fetch('/api/products');
   } catch (error) {
     throw error;
   }
 };
 export const createProductService = async (productData: any) => {
   try {
-    return await $fetch('/api/admin/products', {
+    return await $fetch('/api/products', {
       method: 'POST',
       body: productData,
     });
@@ -21,7 +21,7 @@ export const createProductService = async (productData: any) => {
 };
 export const updtateProductService = async (productData: any) => {
   try {
-    return await $fetch('/api/admin/products', {
+    return await $fetch('/api/products', {
       method: 'PUT',
       body: productData,
     });
@@ -31,7 +31,7 @@ export const updtateProductService = async (productData: any) => {
 };
 export const deleteProductService = async (productId: any) => {
   try {
-    return await $fetch('/api/admin/products', {
+    return await $fetch('/api/products', {
       method: 'DELETE',
       body: { id: productId },
     });

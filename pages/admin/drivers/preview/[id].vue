@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import BackLink from '@/components/shared/BackLink.vue';
 import { WPP_API } from '@/config/paths';
-import { userDriverStore } from '@/stores/admin/drivers.store';
 import {
   Car,
   Check,
@@ -14,6 +13,7 @@ import {
   MessageCircleMore,
 } from 'lucide-vue-next';
 import { dateFormat, sanitizePhone } from '~/lib/utils';
+import { useDriverStore } from '~/stores/drivers.store';
 
 definePageMeta({
   layout: 'admin',
@@ -24,7 +24,7 @@ useHead({
   title: `Backoffice - Visualizar Motorista | Urban Mobi`,
 });
 
-const driverStore = userDriverStore();
+const driverStore = useDriverStore();
 const { getDriverByIdAction } = driverStore;
 const { loadingData, driver } = storeToRefs(driverStore);
 

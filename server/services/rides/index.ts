@@ -30,9 +30,9 @@ export const getRideRoutesService = async (rideData: any) => {
 export const getRidesService = async (rideId: string) => {
   try {
     if (rideId) {
-      return await $fetch(`/api/admin/rides?id=${rideId}`);
+      return await $fetch(`/api/rides?id=${rideId}`);
     }
-    return await $fetch('/api/admin/rides');
+    return await $fetch('/api/rides');
   } catch (error) {
     console.log('Error during service GET -> ', error);
     throw error;
@@ -41,7 +41,7 @@ export const getRidesService = async (rideId: string) => {
 
 export const createRideService = async (rideData: any) => {
   try {
-    return await $fetch('/api/admin/rides', {
+    return await $fetch('/api/rides', {
       method: 'POST',
       body: rideData,
     });
@@ -53,7 +53,7 @@ export const createRideService = async (rideData: any) => {
 
 export const updateRideService = async (rideData: any) => {
   try {
-    await $fetch('/api/admin/rides', {
+    await $fetch('/api/rides', {
       method: 'PUT',
       body: rideData,
     });
@@ -64,7 +64,7 @@ export const updateRideService = async (rideData: any) => {
 };
 export const deleteRideService = async (id: string) => {
   try {
-    await $fetch('/api/admin/rides', {
+    await $fetch('/api/rides', {
       method: 'DELETE',
       body: { id },
     });

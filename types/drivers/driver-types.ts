@@ -1,18 +1,18 @@
 export interface Driver {
   id?: string;
-  name: string;
-  email: string;
-  phone: string;
-  document: string;
-  driverLicense: string;
-  licenseCategory: string;
-  licenseExpiration: string;
-  driverFiles: DriverFiles;
-  driverCars: DriverCar[];
-  address: Record<string, string>;
-  actuationArea: string;
-  rating: Array<any>;
-  history: Array<any>;
+  name?: string;
+  email?: string;
+  phone?: string;
+  document?: string;
+  driverLicense?: string;
+  licenseCategory?: string;
+  licenseExpiration?: string;
+  driverFiles?: DriverFiles;
+  driverCars?: DriverCar[];
+  address?: Record<string, string>;
+  actuationArea?: string;
+  rating?: Array<any>;
+  history?: Array<any>;
   status: string;
   enabled: boolean;
 }

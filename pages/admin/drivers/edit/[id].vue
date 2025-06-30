@@ -5,7 +5,6 @@ import AddressForm from '@/components/forms/AddressForm.vue';
 import AvatarEdit from '@/components/shared/AvatarEdit.vue';
 import FormSelect from '@/components/shared/FormSelect.vue';
 import { useToast } from '@/components/ui/toast/use-toast';
-import { userDriverStore } from '@/stores/admin/drivers.store';
 import { toTypedSchema } from '@vee-validate/zod';
 import {
   Calendar,
@@ -24,6 +23,7 @@ import { storeToRefs } from 'pinia';
 import { useForm } from 'vee-validate';
 import * as z from 'zod';
 import { dateFormat } from '~/lib/utils';
+import { useDriverStore } from '~/stores/drivers.store';
 
 definePageMeta({
   layout: 'admin',
@@ -36,7 +36,7 @@ useHead({
 
 const { toast } = useToast();
 
-const driverStore = userDriverStore();
+const driverStore = useDriverStore();
 const { getDriverByIdAction, updateDriverAction } = driverStore;
 const { loadingData, loadingSend, driver } = storeToRefs(driverStore);
 
@@ -50,13 +50,13 @@ const driverSituation = ref<boolean>(false);
 const driverCars = ref<any>();
 const driverFiles = ref<any>();
 
-driverCars.value = driver?.value.driverCars;
-driverFiles.value = driver?.value.driverFiles;
+driverCars.value = driver?.value.driverCars || [];
+driverFiles.value = driver?.value.driverFiles || {};
 driverSituation.value = driver?.value.enabled;
 
 const driverProfilePicture = reactive({
-  name: driver?.value.driverFiles.picture.name,
-  url: driver?.value.driverFiles.picture.url,
+  name: driver?.value.driverFiles?.picture?.name || '',
+  url: driver?.value.driverFiles?.picture?.url || '',
 });
 
 const driverSchema = toTypedSchema(
@@ -87,15 +87,15 @@ const driversForm = useForm({
   validationSchema: driverSchema,
   initialValues: {
     ...driver?.value,
-    zipcode: driver?.value.address.zipcode,
-    streetName: driver?.value.address.streetName,
-    streetNumber: driver?.value.address.streetNumber,
-    complement: driver?.value.address.complement,
-    neighborhood: driver?.value.address.neighborhood,
-    city: driver?.value.address.city,
-    state: driver?.value.address.state,
-    scheduleOpen: driver?.value.scheduleOpen,
-    outsideActuation: driver?.value.outsideActuation,
+    zipcode: driver?.value.address?.zipcode || '',
+    streetName: driver?.value.address?.streetName || '',
+    streetNumber: driver?.value.address?.streetNumber || '',
+    complement: driver?.value.address?.complement || '',
+    neighborhood: driver?.value.address?.neighborhood || '',
+    city: driver?.value.address?.city || '',
+    state: driver?.value.address?.state || '',
+    scheduleOpen: driver?.value.scheduleOpen || '',
+    outsideActuation: driver?.value.outsideActuation || '',
     status: driver?.value.status,
   },
 });
@@ -146,7 +146,7 @@ const onSubmit = driversForm.handleSubmit(async (values) => {
     toast({
       title: 'Sucesso!',
       class: 'bg-green-600 border-0 text-white text-2xl',
-      description: `O motorista ${values.name} foi cadastrado com sucesso!`,
+      description: `O motorista ${values?.name} foi cadastrado com sucesso!`,
     });
     driversForm.values = newDriverData;
     navigateTo('/admin/drivers/active');
@@ -198,7 +198,7 @@ const onSubmit = driversForm.handleSubmit(async (values) => {
                 <AvatarEdit v-model="driverProfilePicture" uploadUrl="driverFiles" />
                 <div class="flex flex-col">
                   <h1 class="mb-2 text-2xl font-bold">
-                    {{ driversForm.values.name }}
+                    {{ driversForm?.values?.name }}
                   </h1>
                   <div class="flex flex-col items-start">
                     <Button type="button" class="mb-4 cursor-not-allowed">

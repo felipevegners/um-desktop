@@ -1,12 +1,12 @@
-import { getBranchesService } from '@/server/services/admin/branches';
+import type { Contract } from '@/types/contracts/types';
+import { defineStore } from 'pinia';
+import { getBranchesService } from '~/server/services/branches';
 import {
   createContractService,
   deleteContractService,
   getContractsService,
   updateContractService,
-} from '@/server/services/admin/contracts';
-import type { Contract } from '@/types/contracts/types';
-import { defineStore } from 'pinia';
+} from '~/server/services/contracts';
 
 interface IContractsState {
   contracts?: any;

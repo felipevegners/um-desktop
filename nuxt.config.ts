@@ -23,7 +23,7 @@ export default defineNuxtConfig({
         {
           rel: 'icon',
           type: 'image/svg',
-          href: 'images/um_symbol_negative.svg',
+          href: '/images/um_symbol_negative.svg',
         },
       ],
       charset: 'utf-16',

@@ -3,12 +3,12 @@ import BackLink from '@/components/shared/BackLink.vue';
 import CurrencyInput from '@/components/shared/CurrencyInput.vue';
 import FormSelect from '@/components/shared/FormSelect.vue';
 import { useToast } from '@/components/ui/toast';
-import { useFilesStore } from '@/stores/admin/files.store';
 import { toTypedSchema } from '@vee-validate/zod';
 import { Box, CircleX, LoaderCircle, Paperclip, Trash } from 'lucide-vue-next';
 import { useForm } from 'vee-validate';
 import * as z from 'zod';
 import { getProductsService } from '~/server/services/products';
+import { useFilesStore } from '~/stores/files.store';
 
 const filesStore = useFilesStore();
 const { deleteFileAction } = filesStore;
@@ -95,7 +95,7 @@ const form = useForm({
 const onSubmit = form.handleSubmit(async (values) => {
   isLoadingSend.value = true;
   try {
-    await $fetch('/api/admin/products', {
+    await $fetch('/api/products', {
       method: 'PUT',
       body: {
         image: {

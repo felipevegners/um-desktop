@@ -1,6 +1,5 @@
 <script lang="ts" setup>
 import FormSelect from '@/components/shared/FormSelect.vue';
-import { useContractsStore } from '@/stores/admin/contracts.store';
 import {
   Info,
   Plus,
@@ -12,6 +11,7 @@ import {
 import { vMaska } from 'maska/vue';
 import { storeToRefs } from 'pinia';
 import { currencyFormat } from '~/lib/utils';
+import { useContractsStore } from '~/stores/contracts.store';
 
 const contractsStore = useContractsStore();
 const { getContractsAction, getContractByIdAction } = contractsStore;

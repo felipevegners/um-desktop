@@ -2,18 +2,17 @@
 import DataTable from '@/components/shared/DataTable.vue';
 import TableActions from '@/components/shared/TableActions.vue';
 import { Button } from '@/components/ui/button';
-import { useToast } from '@/components/ui/toast/use-toast';
 import { createColumnHelper } from '@tanstack/vue-table';
 import { Car, LoaderCircle, Plus } from 'lucide-vue-next';
 import { storeToRefs } from 'pinia';
 import { onMounted, ref } from 'vue';
-import { userDriverStore } from '~/stores/admin/drivers.store';
+import { useDriverStore } from '~/stores/drivers.store';
 
 import { columns } from './columns';
 
 const columnHelper = createColumnHelper<any>();
 
-const driverStore = userDriverStore();
+const driverStore = useDriverStore();
 const { loadingData, drivers } = storeToRefs(driverStore);
 const { getDriversAction, deleteDriverAction } = driverStore;
 definePageMeta({

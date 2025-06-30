@@ -1,10 +1,10 @@
 <script setup lang="ts">
 import { Button } from '@/components/ui/button';
-import { useProductsStore } from '@/stores/admin/products.store';
 import { Plus } from 'lucide-vue-next';
 import { vMaska } from 'maska/vue';
 import { storeToRefs } from 'pinia';
 import { computed, onBeforeMount, ref } from 'vue';
+import { useProductsStore } from '~/stores/products.store';
 
 defineOptions({
   name: 'ProductsForm',

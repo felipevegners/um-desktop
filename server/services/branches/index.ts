@@ -1,9 +1,9 @@
 export const getBranchesService = async (branchId?: string) => {
   try {
     if (branchId) {
-      return await $fetch(`/api/admin/branches?id=${branchId}`);
+      return await $fetch(`/api/branches?id=${branchId}`);
     }
-    return await $fetch('/api/admin/branches');
+    return await $fetch('/api/branches');
   } catch (error) {
     console.log('Error during service GET -> ', error);
     return error;
@@ -12,7 +12,7 @@ export const getBranchesService = async (branchId?: string) => {
 
 export const createBranchService = async (branchData?: any) => {
   try {
-    return await $fetch('/api/admin/branches', {
+    return await $fetch('/api/branches', {
       method: 'POST',
       body: branchData,
     });
@@ -24,7 +24,7 @@ export const createBranchService = async (branchData?: any) => {
 
 export const updateBranchService = async (branchData?: any) => {
   try {
-    await $fetch('/api/admin/branches', {
+    await $fetch('/api/branches', {
       method: 'PUT',
       body: branchData,
     });
@@ -36,7 +36,7 @@ export const updateBranchService = async (branchData?: any) => {
 
 export const deleteBranchService = async (id: string) => {
   try {
-    await $fetch('/api/admin/branches', {
+    await $fetch('/api/branches', {
       method: 'DELETE',
       body: { id },
     });

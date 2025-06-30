@@ -3,9 +3,8 @@ import BackLink from '@/components/shared/BackLink.vue';
 import DatePicker from '@/components/shared/DatePicker.vue';
 import FormSelect from '@/components/shared/FormSelect.vue';
 import { useToast } from '@/components/ui/toast/use-toast';
-import { useAccountStore } from '@/stores/admin/account.store';
-import { useContractsStore } from '@/stores/admin/contracts.store';
-import { useRidesStore } from '@/stores/admin/rides.store';
+import { useContractsStore } from '@/stores/contracts.store';
+import { useRidesStore } from '@/stores/rides.store';
 import {
   CalendarDate,
   DateFormatter,
@@ -16,6 +15,7 @@ import { CalendarDays, Waypoints, X } from 'lucide-vue-next';
 import { storeToRefs } from 'pinia';
 import { useForm } from 'vee-validate';
 import { GoogleMap, Marker, Polyline } from 'vue3-google-map';
+import { useAccountStore } from '~/stores/account.store';
 
 definePageMeta({
   layout: 'admin',

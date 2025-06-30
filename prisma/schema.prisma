@@ -99,14 +99,14 @@ model Customers {
 }
 
 model Drivers {
-  id                String    @id @default(auto()) @map("_id") @db.ObjectId
+  id                String    @id @map("_id")
   name              String
-  email             String    @unique
+  email             String
   phone             String
-  document          String
-  driverLicense     String
-  licenseExpiration String
-  licenseCategory   String
+  document          String?
+  driverLicense     String?
+  licenseExpiration String?
+  licenseCategory   String?
   driverFiles       Json?
   address           Json?
   actuationArea     String?

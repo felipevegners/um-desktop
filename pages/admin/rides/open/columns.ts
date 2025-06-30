@@ -87,15 +87,15 @@ export const columns: any = [
       return h('div', { class: 'capitalize' }, data.travel.distance);
     },
   }),
-  columnHelper.display({
-    id: 'travelDuration',
-    enableHiding: true,
-    header: () => h('div', { class: 'text-left' }, 'Duração'),
-    cell: ({ row }) => {
-      const data = row.original;
-      return h('div', { class: 'capitalize' }, data.travel.duration);
-    },
-  }),
+  // columnHelper.display({
+  //   id: 'travelDuration',
+  //   enableHiding: true,
+  //   header: () => h('div', { class: 'text-left' }, 'Duração'),
+  //   cell: ({ row }) => {
+  //     const data = row.original;
+  //     return h('div', { class: 'capitalize' }, data.travel.duration);
+  //   },
+  // }),
   columnHelper.accessor('price', {
     header: () => h('div', { class: 'text-left' }, 'Valor'),
     cell: ({ row }) =>

@@ -33,15 +33,17 @@ onBeforeMount(() => {
           <div class="space-y-4 text-start">
             <XCircleIcon :size="32" class="text-um-primary" />
             <h2 class="text-xl md:text-2xl font-bold text-um-primary">Ooops!</h2>
-            <h2 class="text-xl md:text-2xl font-bold text-um-primary">
-              {{ formatedError[0] }}
+            <div v-if="Array.isArray(formatedError)">
+              <h2 class="text-xl md:text-2xl font-bold text-um-primary">
+                {{ formatedError[0] }}
+              </h2>
+              <p class="text-base md:text-md text-muted-foreground">
+                {{ formatedError[1] }}
+              </p>
+            </div>
+            <h2 v-else class="text-xl md:text-2xl font-bold text-um-primary">
+              {{ error }}
             </h2>
-            <p
-              v-if="formatedError.length > 0"
-              class="text-base md:text-md text-muted-foreground"
-            >
-              {{ formatedError[1] }}
-            </p>
           </div>
           <NuxtLink
             to="/login"

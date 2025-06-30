@@ -83,7 +83,7 @@ const form = useForm({
 const onSubmit = form.handleSubmit(async (values) => {
   isLoadingSend.value = true;
   try {
-    await $fetch('/api/admin/products', {
+    await $fetch('/api/products', {
       method: 'POST',
       body: {
         code: values.code,

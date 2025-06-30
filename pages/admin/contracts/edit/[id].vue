@@ -8,7 +8,6 @@ import FormSelect from '@/components/shared/FormSelect.vue';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/components/ui/toast/use-toast';
 import { findAddressByZipcode } from '@/server/services/FindAddress';
-import { useContractsStore } from '@/stores/admin/contracts.store';
 import { toTypedSchema } from '@vee-validate/zod';
 import { CircleX, FileText, LoaderCircle, Paperclip, Trash } from 'lucide-vue-next';
 import { storeToRefs } from 'pinia';
@@ -16,7 +15,8 @@ import { useForm } from 'vee-validate';
 import { ref } from 'vue';
 import * as z from 'zod';
 import ProductsForm from '~/components/forms/ProductsForm.vue';
-import { useFilesStore } from '~/stores/admin/files.store';
+import { useContractsStore } from '~/stores/contracts.store';
+import { useFilesStore } from '~/stores/files.store';
 
 const filesStore = useFilesStore();
 const { deleteFileAction } = filesStore;
@@ -55,7 +55,7 @@ selectedProducts.value = contract?.value.products;
 const fetchProducts = async () => {
   isLoadingProducts.value = true;
   try {
-    return await $fetch('/api/admin/products');
+    return await $fetch('/api/products');
   } catch (error) {
     toast({
       title: 'Opss!',

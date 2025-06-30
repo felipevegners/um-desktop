@@ -2,8 +2,6 @@
 import DatePicker from '@/components/shared/DatePicker.vue';
 import { useToast } from '@/components/ui/toast/use-toast';
 import { getRideCalculationService, getRideRoutesService } from '@/server/services/rides';
-import { useProductsStore } from '@/stores/admin/products.store';
-import { useRidesStore } from '@/stores/admin/rides.store';
 import { DateFormatter, getLocalTimeZone } from '@internationalized/date';
 import {
   CalendarDays,
@@ -23,6 +21,8 @@ import { storeToRefs } from 'pinia';
 import { useForm } from 'vee-validate';
 import { GoogleMap, Marker, Polyline } from 'vue3-google-map';
 import { currencyFormat, polyLineCodec } from '~/lib/utils';
+import { useProductsStore } from '~/stores/products.store';
+import { useRidesStore } from '~/stores/rides.store';
 
 definePageMeta({
   layout: 'admin',

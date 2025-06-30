@@ -28,6 +28,8 @@ export default defineEventHandler(async (event) => {
     department,
     document,
     birthDate,
+    acceptTerms,
+    emailConfirmed,
   } = body;
 
   try {
@@ -46,6 +48,8 @@ export default defineEventHandler(async (event) => {
         department,
         document,
         birthDate,
+        acceptTerms,
+        emailConfirmed,
       },
     });
 

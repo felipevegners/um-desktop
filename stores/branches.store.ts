@@ -1,10 +1,10 @@
+import { defineStore } from 'pinia';
 import {
   createBranchService,
   deleteBranchService,
   getBranchesService,
   updateBranchService,
-} from '@/server/services/admin/branches';
-import { defineStore } from 'pinia';
+} from '~/server/services/branches';
 
 export interface IBranchState {
   branches: any[];
@@ -28,9 +28,7 @@ export const useBranchesStore = defineStore('braches', {
       try {
         const data: any = await getBranchesService();
         this.branches = data.filter((branch: any) => branch.enabled === true);
-        this.inactiveBranches = data.filter(
-          (branch: any) => branch.enabled === false,
-        );
+        this.inactiveBranches = data.filter((branch: any) => branch.enabled === false);
       } catch (error) {
         console.error('Erro from GET store --> ', error);
         throw error;

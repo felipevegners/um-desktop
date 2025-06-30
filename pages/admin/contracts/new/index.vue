@@ -18,7 +18,7 @@ import { useForm } from 'vee-validate';
 import { computed, ref } from 'vue';
 import * as z from 'zod';
 import ProductsForm from '~/components/forms/ProductsForm.vue';
-import { useContractsStore } from '~/stores/admin/contracts.store';
+import { useContractsStore } from '~/stores/contracts.store';
 
 const { createContractAction } = useContractsStore();
 
@@ -40,7 +40,7 @@ const { toast } = useToast();
 const fetchProducts = async () => {
   isLoadingProducts.value = true;
   try {
-    return await $fetch('/api/admin/products');
+    return await $fetch('/api/products');
   } catch (error) {
     toast({
       title: 'Opss!',

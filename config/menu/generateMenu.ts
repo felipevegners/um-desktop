@@ -3,6 +3,7 @@ import { branchManagerMenu } from './branch-manager-menu';
 import { masterManagerMenu } from './master-manager-menu';
 import { platformAdminMenu } from './platform-admin-menu';
 import { platformCorpUserMenu } from './platform-corp-user-menu';
+import { platformDriverMenu } from './platform-driver-menu';
 import { platformUserMenu } from './platform-user-menu';
 
 export const generateMenu = (role: string) => {
@@ -24,6 +25,9 @@ export const generateMenu = (role: string) => {
       break;
     case 'platform-user':
       return platformUserMenu;
+      break;
+    case 'platform-driver':
+      return platformDriverMenu;
       break;
     default:
       return backofficeMenu;

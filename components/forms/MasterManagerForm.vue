@@ -2,7 +2,7 @@
 import { Info, Lock, User, WandSparkles } from 'lucide-vue-next';
 import { vMaska } from 'maska/vue';
 import { storeToRefs } from 'pinia';
-import { useContractsStore } from '~/stores/admin/contracts.store';
+import { useContractsStore } from '~/stores/contracts.store';
 
 const store = useContractsStore();
 const { contractId } = storeToRefs(store);
@@ -31,11 +31,7 @@ defineProps<{
         <FormItem>
           <FormLabel>Celular</FormLabel>
           <FormControl>
-            <Input
-              type="text"
-              v-bind="componentField"
-              v-maska="'(##) # ####-####'"
-            />
+            <Input type="text" v-bind="componentField" v-maska="'(##) # ####-####'" />
           </FormControl>
         </FormItem>
       </FormField>
@@ -59,8 +55,8 @@ defineProps<{
         <p class="font-bold">Dados de Acesso</p>
         <div v-if="editMode">
           <p class="text-muted-foreground text-sm">
-            Para editar os dados de acesso (Nome, Email e Senha) do Gestor
-            Master clique no botão abaixo
+            Para editar os dados de acesso (Nome, Email e Senha) do Gestor Master clique
+            no botão abaixo
           </p>
           <Button
             type="button"

@@ -1,10 +1,10 @@
 <script setup lang="ts">
 import BackLink from '@/components/shared/BackLink.vue';
-import { useAccountStore } from '@/stores/admin/account.store';
 import { Edit, FileText, LoaderCircle, User } from 'lucide-vue-next';
 import { storeToRefs } from 'pinia';
 import { currencyFormat, dateFormat } from '~/lib/utils';
-import { useContractsStore } from '~/stores/admin/contracts.store';
+import { useAccountStore } from '~/stores/account.store';
+import { useContractsStore } from '~/stores/contracts.store';
 
 definePageMeta({
   layout: 'admin',

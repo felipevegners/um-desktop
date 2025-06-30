@@ -3,9 +3,9 @@ import DataTable from '@/components/shared/DataTable.vue';
 import TableActions from '@/components/shared/TableActions.vue';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/components/ui/toast';
-import { useAccountStore } from '@/stores/admin/account.store';
 import { createColumnHelper } from '@tanstack/vue-table';
 import { LoaderCircle, Plus, UserPen, X } from 'lucide-vue-next';
+import { useAccountStore } from '~/stores/account.store';
 
 import { columns } from './columns';
 

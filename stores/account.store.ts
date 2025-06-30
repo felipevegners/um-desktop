@@ -80,7 +80,8 @@ export const useAccountStore = defineStore('accounts', {
     async registerUserAccountAction(accountData: any) {
       this.isLoadingSend = true;
       try {
-        await createUserAccountService(accountData);
+        const newAccount = await createUserAccountService(accountData);
+        return newAccount;
       } catch (error) {
         console.log('Error durging user register -> ', error);
         throw error;

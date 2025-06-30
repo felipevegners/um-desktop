@@ -3,7 +3,7 @@ import { useToast } from '@/components/ui/toast/use-toast';
 import { CircleX, Eye, LoaderCircle, Paperclip, Plus, Trash } from 'lucide-vue-next';
 import { vMaska } from 'maska/vue';
 import { storeToRefs } from 'pinia';
-import { useFilesStore } from '~/stores/admin/files.store';
+import { useFilesStore } from '~/stores/files.store';
 
 const { toast } = useToast();
 
@@ -103,7 +103,7 @@ const removeRow = (index: any) => {
               <div class="flex gap-4">
                 <div v-if="props.modelValue[index].carDocumentFile.name === ''">
                   <UploadButton
-                    class="relative ut-button:bg-zinc-900 ut-button:hover:bg-zinc-700 ut-button:ut-uploading:after:bg-green-500 ut-button:ut-uploading:cursor-not-allowed ut-button:ut-readying:bg-red-500"
+                    class="relative ut-button:bg-zinc-900 ut-button:hover:bg-zinc-700 ut-button:ut-uploading:after:bg-green-500 ut-button:ut-uploading:cursor-not-allowed ut-button:ut-readying:bg-red-500 ut-button:text-sm"
                     :config="{
                       appearance: {
                         container: '!items-start',

@@ -2,14 +2,14 @@
 import BranchForm from '@/components/forms/BranchForm.vue';
 import BackLink from '@/components/shared/BackLink.vue';
 import { useToast } from '@/components/ui/toast';
-import { useBranchesStore } from '@/stores/admin/branches.store';
 import { toTypedSchema } from '@vee-validate/zod';
 import { FileText, LoaderCircle, Trash } from 'lucide-vue-next';
 import { storeToRefs } from 'pinia';
 import { useForm } from 'vee-validate';
 import * as z from 'zod';
 import AddressForm from '~/components/forms/AddressForm.vue';
-import { useContractsStore } from '~/stores/admin/contracts.store';
+import { useBranchesStore } from '~/stores/branches.store';
+import { useContractsStore } from '~/stores/contracts.store';
 
 definePageMeta({
   layout: 'admin',
