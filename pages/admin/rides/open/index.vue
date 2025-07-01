@@ -66,6 +66,7 @@ const finalColumns = [
         { class: 'relative' },
         h(FormSelect, {
           items: sanitizeDrivers.value,
+          label: 'Selecione',
           'onOn-select': setDriver,
         }),
       );

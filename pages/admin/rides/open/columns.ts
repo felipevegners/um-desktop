@@ -96,20 +96,20 @@ export const columns: any = [
   //     return h('div', { class: 'capitalize' }, data.travel.duration);
   //   },
   // }),
-  columnHelper.accessor('price', {
-    header: () => h('div', { class: 'text-left' }, 'Valor'),
-    cell: ({ row }) =>
-      h('div', { class: 'capitalize' }, currencyFormat(row.getValue('price'))),
-  }),
-  columnHelper.display({
-    id: 'dispatcher',
-    enableHiding: true,
-    header: () => h('div', { class: 'text-left' }, 'Despachante'),
-    cell: ({ row }) => {
-      const data = row.original;
-      return h('div', { class: 'capitalize' }, data.dispatcher.user);
-    },
-  }),
+  // columnHelper.accessor('price', {
+  //   header: () => h('div', { class: 'text-left' }, 'Valor'),
+  //   cell: ({ row }) =>
+  //     h('div', { class: 'capitalize' }, currencyFormat(row.getValue('price'))),
+  // }),
+  // columnHelper.display({
+  //   id: 'dispatcher',
+  //   enableHiding: true,
+  //   header: () => h('div', { class: 'text-left' }, 'Despachante'),
+  //   cell: ({ row }) => {
+  //     const data = row.original;
+  //     return h('div', { class: 'capitalize' }, data.dispatcher.user);
+  //   },
+  // }),
   columnHelper.accessor('status', {
     header: () => h('div', { class: 'text-left' }, 'Status'),
     cell: ({ row }) => {

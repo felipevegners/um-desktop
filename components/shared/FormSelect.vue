@@ -26,25 +26,25 @@ const selected = (value: any) => {
     <SelectTrigger>
       <SelectValue :placeholder="label" />
     </SelectTrigger>
-    <SelectContent v-if="items?.length">
+    <SelectContent>
       <SelectGroup>
         <SelectItem
           v-for="item in items"
           :value="item.value"
           :key="item.value"
           :id="item.value"
-          class="hover:bg-zinc-500 hover:text-red-500"
+          class="hover:bg-zinc-500"
         >
           {{ item.label }}
         </SelectItem>
       </SelectGroup>
     </SelectContent>
-    <SelectContent v-else>
+    <!-- <SelectContent v-else>
       <SelectGroup>
         <SelectItem :value="'-'">
           {{ label }}
         </SelectItem>
       </SelectGroup>
-    </SelectContent>
+    </SelectContent> -->
   </Select>
 </template>
