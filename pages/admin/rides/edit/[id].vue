@@ -11,11 +11,22 @@ import {
   type DateValue,
   getLocalTimeZone,
 } from '@internationalized/date';
-import { CalendarDays, Mail, Phone, Waypoints, X } from 'lucide-vue-next';
+import {
+  CalendarDays,
+  ConciergeBell,
+  FastForward,
+  Mail,
+  Megaphone,
+  OctagonX,
+  Phone,
+  Waypoints,
+  X,
+} from 'lucide-vue-next';
 import { storeToRefs } from 'pinia';
 import { useForm } from 'vee-validate';
 import { GoogleMap, Marker, Polyline } from 'vue3-google-map';
 import { map } from 'zod';
+import FormButtons from '~/components/forms/FormButtons.vue';
 import { currencyFormat, polyLineCodec } from '~/lib/utils';
 import { useAccountStore } from '~/stores/account.store';
 
@@ -51,6 +62,7 @@ const { drivers } = storeToRefs(driversStore);
 
 await getRideByIdAction(route?.params?.id as string);
 
+const loadingSend = ref<boolean>(false);
 const loadingProducts = ref<boolean>(false);
 const loadingRoute = ref<boolean>(false);
 const availableUsers = ref();
@@ -211,8 +223,9 @@ const form = useForm({
         Editar Atendimento
       </h1>
       <div class="flex gap-10 items-center">
-        <Button variant="destructive" @click="" class="uppercase">
-          <X /> Cancelar Atendimento
+        <Button variant="destructive" @click="">
+          <OctagonX />
+          Cancelar Atendimento
         </Button>
       </div>
     </section>
@@ -239,9 +252,15 @@ const form = useForm({
                   <span class="text-muted-foreground text-sm">Data</span>
                   <h3 class="text-lg font-bold">{{ ride?.dispatcher.dispatchDate }}</h3>
                 </div>
-                <div class="p-4">
-                  <span class="text-muted-foreground text-sm">Motorista</span>
-                  <FormSelect :items="sanitizeDrivers" label="Selecione" />
+                <div class="p-4 space-y-4">
+                  <div>
+                    <span class="text-muted-foreground text-sm">Motorista</span>
+                    <FormSelect :items="sanitizeDrivers" label="Selecione" />
+                  </div>
+                  <Button class="w-full">
+                    <ConciergeBell class="w-5 h-5 mr-2" />
+                    Acionar Motorista
+                  </Button>
                 </div>
                 <div class="col-span-2 grid grid-cols-3 gap-3">
                   <div class="p-3 border border-zinc-400 bg-white rounded-md">
@@ -460,6 +479,12 @@ const form = useForm({
           </div>
         </CardContent>
       </Card>
+      <FormButtons
+        :cancel="'/admin/rides/open'"
+        :loading="loadingSend"
+        sbm-label="Salvar Atendimento"
+        cnc-label="Cancelar"
+      />
     </form>
   </main>
 </template>

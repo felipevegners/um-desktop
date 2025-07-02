@@ -2,6 +2,7 @@
 import { SharedBackLink } from '#components';
 import AddCarsForm from '@/components/forms/AddCarsForm.vue';
 import AddressForm from '@/components/forms/AddressForm.vue';
+import FormButtons from '@/components/forms/FormButtons.vue';
 import AvatarEdit from '@/components/shared/AvatarEdit.vue';
 import { useToast } from '@/components/ui/toast/use-toast';
 import { toTypedSchema } from '@vee-validate/zod';
@@ -725,19 +726,12 @@ const onSubmit = driversForm.handleSubmit(async (values) => {
             </section>
           </CardContent>
         </Card>
-        <section class="pt-8">
-          <Button type="submit">
-            <LoaderCircle v-if="loadingSend" class="w-10 h-10 animate-spin" />
-            Salvar alterações
-          </Button>
-          <Button
-            variant="ghost"
-            class="ml-4"
-            @click.prevent="navigateTo('/admin/drivers/active')"
-          >
-            Cancelar
-          </Button>
-        </section>
+        <FormButtons
+          :cancel="'/driver'"
+          :loading="loadingSend"
+          sbm-label="Salvar Dados"
+          cnc-label="Cancelar"
+        />
       </form>
     </section>
   </main>
