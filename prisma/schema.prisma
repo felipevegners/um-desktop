@@ -126,7 +126,8 @@ model Products {
   image         Json?
   code          String
   name          String
-  type          String
+  type          String?
+  category      String?
   capacity      Int?
   basePrice     String?
   includedHours String?

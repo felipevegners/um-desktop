@@ -4,7 +4,7 @@ import CurrencyInput from '@/components/shared/CurrencyInput.vue';
 import FormSelect from '@/components/shared/FormSelect.vue';
 import { useToast } from '@/components/ui/toast';
 import { toTypedSchema } from '@vee-validate/zod';
-import { Box, CircleX, LoaderCircle, Paperclip, Trash } from 'lucide-vue-next';
+import { Box, LoaderCircle, Trash, X } from 'lucide-vue-next';
 import { useForm } from 'vee-validate';
 import * as z from 'zod';
 import { getProductsService } from '~/server/services/products';
@@ -70,6 +70,7 @@ const formSchema = toTypedSchema(
       .min(2, 'Insira um nome com mais de 2 caracteres')
       .max(50, 'O nome deve conter no máximo 50 caracteres'),
     capacity: z.number({ message: '*Obrigatório' }).min(0),
+    category: z.string({ message: '*Obrigatório' }).min(1),
     description: z.string().optional(),
     type: z.string({ message: '*Obrigatório' }),
     basePrice: z.string({ message: '*Obrigatório' }).min(0),
@@ -106,6 +107,7 @@ const onSubmit = form.handleSubmit(async (values) => {
         code: values.code,
         name: values.name,
         capacity: values.capacity,
+        category: values.category,
         description: values.description,
         type: values.type,
         basePrice: values.basePrice?.replace(',', '.'),
@@ -161,8 +163,8 @@ const deleteFile = async (url: string) => {
       <BackLink />
     </header>
     <section class="mb-6 flex items-center justify-between">
-      <h1 class="flex items-center gap-4 text-2xl font-bold">
-        <Box />
+      <h1 class="flex items-center gap-4 text-3xl font-bold">
+        <Box :size="32" />
         Editar Produto
       </h1>
       <div class="flex gap-10 items-center">
@@ -201,15 +203,29 @@ const deleteFile = async (url: string) => {
             <div class="mb-6 flex flex-col gap-4 items-start justify-start">
               <div class="relative">
                 <p class="mb-2 font-bold">Imagem</p>
-                <div
-                  class="peer p-2 w-[200px] h-[200px] rounded-md bg-white bg-cover bg-no-repeat bg-center relative flex items-center justify-center"
+                <NuxtImg
+                  :src="productImage?.url"
+                  loading="lazy"
+                  placeholder="/images/no-image.png"
+                  class="w-[200px] h-[240px] rounded-md object-contain bg-white"
+                  v-slot="{ src, isLoaded, imgAttrs }"
+                  preload
+                  :custom="true"
+                >
+                  <img v-if="isLoaded" v-bind="imgAttrs" :src="src" />
+                  <div v-else class="rounded-md flex items-center justify-center">
+                    <img v-bind="imgAttrs" src="/images/no-image.png" />
+                  </div>
+                </NuxtImg>
+                <!-- <div
+                  class="peer p-2 w-[200px] h-[200px] rounded-md bg-white bg-contain bg-no-repeat bg-center relative flex items-center justify-center"
                   :style="{
                     backgroundImage: `url(${productImage?.url ? productImage?.url : '/images/no-image.png'})`,
                   }"
-                />
+                /> -->
               </div>
               <div class="flex flex-col items-center border w-[200px]">
-                <div class="flex" v-if="productImage?.name === ''">
+                <div class="flex" v-if="!productImage?.name">
                   <UploadButton
                     class="relative ut-button:bg-zinc-900 ut-button:hover:bg-zinc-700 ut-button:ut-uploading:after:bg-green-500 ut-button:ut-uploading:cursor-not-allowed ut-button:ut-readying:bg-red-500"
                     :config="{
@@ -225,8 +241,8 @@ const deleteFile = async (url: string) => {
                       },
                       endpoint: 'productImage',
                       onClientUploadComplete: (file) => {
-                        productImage.name = file[0].name;
-                        productImage.url = file[0].ufsUrl;
+                        productImage.name = file[0]?.name;
+                        productImage.url = file[0]?.ufsUrl;
                       },
                       onUploadError: (error) => {
                         toast({
@@ -238,29 +254,15 @@ const deleteFile = async (url: string) => {
                     }"
                   />
                 </div>
-                <small v-if="productImage?.name !== ''" class="mb-2 text-muted-foreground"
-                  >Alterar Imagem</small
-                >
-                <div v-if="productImage?.name !== ''" class="flex items-center gap-2">
-                  <Paperclip class="w-4 h-4 text-green-600" />
-                  <div
-                    class="px-4 py-2 border border-dashed border-zinc-500 rounded-md bg-white"
-                  >
-                    <a
-                      class="underline"
-                      :href="productImage?.url"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                    >
-                      {{ productImage?.name || 'Nenhum arquivo anexo' }}
-                    </a>
-                  </div>
-                  <LoaderCircle v-if="loadingFileData" class="w-4 h-4 animate-spin" />
-                  <CircleX
-                    v-else
-                    class="w-4 h-4 text-zinc-500 hover:text-red-500 cursor-pointer"
+                <div>
+                  <Button
+                    type="button"
+                    variant="ghost"
                     @click.prevent="deleteFile(productImage?.url)"
-                  />
+                  >
+                    <X />
+                    Remover Imagem
+                  </Button>
                 </div>
               </div>
             </div>
@@ -289,6 +291,15 @@ const deleteFile = async (url: string) => {
                   <FormLabel>Capacidade</FormLabel>
                   <FormControl>
                     <Input type="number" v-bind="componentField" />
+                    <FormMessage />
+                  </FormControl>
+                </FormItem>
+              </FormField>
+              <FormField v-slot="{ componentField }" name="category">
+                <FormItem>
+                  <FormLabel> Categoria </FormLabel>
+                  <FormControl>
+                    <Input type="text" v-bind="componentField" />
                     <FormMessage />
                   </FormControl>
                 </FormItem>

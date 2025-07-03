@@ -25,7 +25,7 @@ defineOptions({
 });
 
 useHead({
-  title: 'Backoffice - Gerenciar Produtos Produtos | Urban Mobi',
+  title: 'Backoffice - Gerenciar Produtos e Serviços | Urban Mobi',
 });
 
 const isLoading = ref<boolean>(false);
@@ -33,6 +33,7 @@ const isLoadingSend = ref<boolean>(false);
 const showAddForm = ref<boolean>(false);
 const productsList = ref<any>([]);
 const productType = ref<string>('');
+const columnHelper = createColumnHelper<any>();
 
 const fetchData = async (productId: string) => {
   try {
@@ -66,6 +67,7 @@ const formSchema = toTypedSchema(
       .min(2, 'Insira um nome com mais de 2 caracteres')
       .max(50, 'O nome deve conter no máximo 50 caracteres'),
     capacity: z.number({ message: '*Obrigatório' }).min(1),
+    category: z.string({ message: '*Obrigatório' }).min(1),
     description: z.string().optional(),
     type: z.string({ message: '*Obrigatório' }),
     basePrice: z.string({ message: '*Obrigatório' }).min(1).optional(),
@@ -86,9 +88,14 @@ const onSubmit = form.handleSubmit(async (values) => {
     await $fetch('/api/products', {
       method: 'POST',
       body: {
+        image: {
+          name: '',
+          url: '',
+        },
         code: values.code,
         name: values.name,
         capacity: values.capacity,
+        category: values.category,
         description: values.description,
         type: productType.value,
         basePrice: values.basePrice?.replace(',', '.'),
@@ -143,8 +150,6 @@ const toggleShowAddForm = () => {
   productType.value = '';
 };
 
-const columnHelper = createColumnHelper<any>();
-
 const editProduct = (value: string) => {
   navigateTo({
     name: 'admin-configurations-products-edit-id',
@@ -178,9 +183,9 @@ const finalColumns = [
 <template>
   <main class="p-6">
     <section class="mb-6 flex items-center justify-between">
-      <h1 class="flex items-center gap-4 text-2xl font-bold">
-        <Box />
-        Produtos Cadastrados
+      <h1 class="flex items-center gap-4 text-3xl font-bold">
+        <Box :size="32" />
+        Produtos / Serviços Cadastrados
       </h1>
       <Button @click="toggleShowAddForm"> <Plus class="w-4 h-4" /> Novo Produto </Button>
     </section>
@@ -192,15 +197,6 @@ const finalColumns = [
         <CardContent>
           <form @submit.prevent="onSubmit" @keydown.enter.prevent="true">
             <div class="mb-4 md:grid md:grid-cols-4 md:gap-6">
-              <FormField v-slot="{ componentField }" name="image">
-                <FormItem>
-                  <FormLabel>Imagem</FormLabel>
-                  <FormControl>
-                    <Input type="file" v-bind="componentField" />
-                    <FormMessage />
-                  </FormControl>
-                </FormItem>
-              </FormField>
               <FormField v-slot="{ componentField }" name="code">
                 <FormItem>
                   <FormLabel>Código</FormLabel>
@@ -224,6 +220,15 @@ const finalColumns = [
                   <FormLabel>Capacidade</FormLabel>
                   <FormControl>
                     <Input type="number" v-bind="componentField" />
+                    <FormMessage />
+                  </FormControl>
+                </FormItem>
+              </FormField>
+              <FormField v-slot="{ componentField }" name="category">
+                <FormItem>
+                  <FormLabel>Categoria</FormLabel>
+                  <FormControl>
+                    <Input type="text" v-bind="componentField" />
                     <FormMessage />
                   </FormControl>
                 </FormItem>
