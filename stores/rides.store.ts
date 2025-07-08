@@ -51,6 +51,17 @@ export const useRidesStore = defineStore('rides', {
         this.loadingData = false;
       }
     },
+
+    async updateRideAction(rideData: any) {
+      this.loadingData = true;
+      try {
+        return await updateRideService(rideData);
+      } catch (error) {
+        throw error;
+      } finally {
+        this.loadingData = false;
+      }
+    },
     async setRideDriverAction(rideId: any, driverData: any) {
       this.loadingData = true;
       try {

@@ -76,8 +76,18 @@ const setDriver = (driverId: string, rideId: string) => {
 const contactDriver = async (driver: any) => {
   const findRide = rides?.value.find((ride: any) => ride.id === selectedRide.value);
   await setRideDriverAction(selectedRide?.value, selectedDriver.value);
-  // const url = WPP_API.replace('[[phone]]', sanitizePhone(driver.phone as string));
-  // navigateTo(url, { external: true, open: { target: '_blank' } });
+  const message = `*Novo Atendimento - UM250703*%0A
+  %0A*Passageiro*: ${findRide?.user.name}
+  %0A*Celular*: ${findRide?.user.phone}
+  %0A*Data/Hora*: ${findRide?.travel.date} / ${findRide?.travel.departTime}
+  %0A%0A*Origem*: ${findRide?.travel.originAddress}
+  %0A*Destino*: ${findRide?.travel.destinationAddress}
+  %0A%0A*Despachado por*: ${findRide?.dispatcher.user} - ${findRide?.dispatcher.email}`;
+  const url =
+    WPP_API.replace('[[phone]]', sanitizePhone(driver.phone as string)) +
+    '&text=' +
+    message;
+  navigateTo(url, { external: true, open: { target: '_blank' } });
 };
 
 const finalColumns = [
@@ -159,7 +169,6 @@ const finalColumns = [
               <p class="text-muted-foreground">
                 Esta ação vai atribuir este agendamento ao motorista selecionado.
               </p>
-              <pre>{{ selectedRide }}</pre>
             </div>
           </DialogDescription>
         </DialogHeader>

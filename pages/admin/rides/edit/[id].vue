@@ -19,6 +19,7 @@ import {
   Megaphone,
   OctagonX,
   Phone,
+  UserPen,
   Waypoints,
   X,
 } from 'lucide-vue-next';
@@ -43,9 +44,15 @@ useHead({
   title: 'Backoffice - Editar Atendimento | Urban Mobi',
 });
 
+const { toast } = useToast();
+const { data } = useAuth();
+const df = new DateFormatter('pt-BR', {
+  dateStyle: 'short',
+});
+
 const route = useRoute();
 const ridesStore = useRidesStore();
-const { getRideByIdAction } = ridesStore;
+const { getRideByIdAction, updateRideAction } = ridesStore;
 const { ride } = storeToRefs(ridesStore);
 
 const accountStore = useAccountStore();
@@ -62,6 +69,10 @@ const { drivers } = storeToRefs(driversStore);
 
 await getRideByIdAction(route?.params?.id as string);
 
+const editDriver = ref<boolean>(false);
+const selectedDriver = ref<any>();
+const selectedUser = ref<any>();
+selectedUser.value = ride?.value.user;
 const loadingSend = ref<boolean>(false);
 const loadingProducts = ref<boolean>(false);
 const loadingRoute = ref<boolean>(false);
@@ -144,7 +155,8 @@ onMounted(() => {
 onBeforeMount(async () => {
   await getUsersAccountsAction();
   const filteredUsers = accounts.value.filter(
-    (user: any) => user.enabled === true && user.role !== 'admin',
+    (user: any) =>
+      user.enabled === true && user.role !== 'admin' && user.role !== 'platform-driver',
   );
   availableUsers.value = filteredUsers.map((user: any) => {
     return {
@@ -199,6 +211,16 @@ const setDestinationPlace = (place: any) => {
   });
 };
 
+const setNewDriver = (driverId: string) => {
+  const findDriver = drivers.value.find((driver) => driver.id === driverId);
+  selectedDriver.value = findDriver;
+};
+
+const setNewUser = (userId: string) => {
+  const newUser = accounts.value.find((user: any) => user.id === userId);
+  selectedUser.value = newUser;
+};
+
 const form = useForm({
   validationSchema: '',
   keepValuesOnUnmount: true,
@@ -211,6 +233,77 @@ const form = useForm({
     destination: ride?.value.travel.destinationAddress,
     driver: ride?.value.driver.id,
   },
+});
+
+const onSubmit = form.handleSubmit(async (values) => {
+  const ridePayload = {
+    billing: {
+      contractId: selectedUser.value.contractId,
+      area: selectedUser.value.area,
+      branchId: selectedUser.value.branchId,
+    },
+    user: {
+      id: values.user,
+      name: selectedUser.value.name,
+      email: selectedUser.value.email,
+      phone: selectedUser.value.phone,
+      companyName: selectedUser.value.name,
+    },
+    product: {
+      id: selectedProduct.value.id,
+      code: selectedProduct.value.code,
+      name: selectedProduct.value.name,
+      basePrice: selectedProduct.value.basePrice,
+      kmPrice: selectedProduct.value.kmPrice,
+      minutePrice: selectedProduct.value.minutePrice,
+    },
+    reason: values.reason,
+    travel: {
+      passengers: values.passengers,
+      //@ts-ignore
+      date: df.format(travelDate?.value?.toDate(getLocalTimeZone())) || '',
+      departTime: values.departTime,
+      originAddress: values.origin,
+      origin: {
+        lat: originCoords.value.lat,
+        lng: originCoords.value.lng,
+      },
+      destinationAddress: values.destination,
+      destination: {
+        lat: destinationCoords.value.lat,
+        lng: destinationCoords.value.lng,
+      },
+      // distance: calculatedTravel.value.travelDistance,
+      // duration: calculatedTravel.value.travelTime,
+      polyLineCoors: routePolyLine.value,
+    },
+    status: 'created',
+    accepted: false,
+    // price: calculatedTravel.value.travelPrice,
+    driver: {},
+    dispatcher: {
+      user: data?.value?.user?.name,
+      email: data?.value?.user?.email,
+      dispatchDate: new Date().toLocaleDateString('pt-BR').padStart(10, '0'),
+    },
+  };
+  console.log(ridePayload);
+  // try {
+  //   await updateRideAction(ridePayload);
+  // } catch (error) {
+  //   toast({
+  //     title: 'Oops!',
+  //     variant: 'destructive',
+  //     description: `Ocorreu um erro ao criar o agendamento. Tente novamente.`,
+  //   });
+  // } finally {
+  //   toast({
+  //     title: 'Tudo pronto!',
+  //     class: 'bg-green-600 border-0 text-white text-2xl',
+  //     description: `Agendamento cadastrado com sucesso!`,
+  //   });
+  //   navigateTo('/admin/rides/active');
+  // }
 });
 </script>
 <template>
@@ -230,7 +323,7 @@ const form = useForm({
         </Button>
       </div>
     </section>
-    <form @submit.prevent="" @keydown.enter.prevent="true">
+    <form @submit.prevent="onSubmit" @keydown.enter.prevent="true">
       <Card class="py-6 bg-zinc-200">
         <CardHeader>
           <CardTitle> Dados do Atendimento </CardTitle>
@@ -263,17 +356,31 @@ const form = useForm({
                   <div>
                     <FormField v-slot="{ componentField, value }" name="driver">
                       <FormItem>
-                        <FormLabel>Alterar Motorista</FormLabel>
+                        <FormLabel>Motorista Acionado</FormLabel>
                         <FormControl>
                           <FormSelect
                             v-bind="componentField"
                             :items="sanitizeDrivers"
                             :label="'Selecione'"
+                            @on-select="setNewDriver"
+                            :disabled="!editDriver"
                           />
                         </FormControl>
                       </FormItem>
                     </FormField>
-                    <Button v-if="!form.values.driver" class="mt-3 w-full">
+                    <Button
+                      v-if="!editDriver"
+                      class="mt-3 w-full"
+                      variant="outline"
+                      @click="editDriver = true"
+                    >
+                      <UserPen class="mr-2" />
+                      Alterar Motorista
+                    </Button>
+                    <Button
+                      v-if="editDriver"
+                      class="mt-3 w-full bg-green-600 hover:bg-green-700"
+                    >
                       <ConciergeBell class="w-5 h-5 mr-2" />
                       Acionar Motorista
                     </Button>
@@ -308,7 +415,7 @@ const form = useForm({
                           v-bind="componentField"
                           :items="availableUsers"
                           :label="'Selecione'"
-                          @on-select=""
+                          @on-select="setNewUser"
                         />
                       </FormControl>
                     </FormItem>

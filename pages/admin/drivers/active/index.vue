@@ -100,7 +100,6 @@ const finalColumns = [
         filterBy="nome do motorista"
       />
     </section>
-    <!-- <pre>{{ drivers }}</pre> -->
   </main>
 </template>
 
