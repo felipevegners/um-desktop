@@ -1,5 +1,10 @@
-import { createRideService, getRidesService } from '@/server/services/rides';
+import {
+  createRideService,
+  getRidesService,
+  updateRideService,
+} from '@/server/services/rides';
 import { defineStore } from 'pinia';
+import { sanitizePhone } from '~/lib/utils';
 
 export interface IRidesState {
   rides?: any;
@@ -20,7 +25,7 @@ export const useRidesStore = defineStore('rides', {
       this.loadingData = true;
       try {
         const response: any = await getRidesService('');
-        this.rides = response.filter((ride: any) => ride.status === 'created');
+        this.rides = response.filter((ride: any) => ride.status !== 'canceled');
         this.loadingData = false;
       } catch (error) {
         throw error;
@@ -40,6 +45,27 @@ export const useRidesStore = defineStore('rides', {
       this.loadingData = true;
       try {
         return await createRideService(rideData);
+      } catch (error) {
+        throw error;
+      } finally {
+        this.loadingData = false;
+      }
+    },
+    async setRideDriverAction(rideId: any, driverData: any) {
+      this.loadingData = true;
+      try {
+        const newRideData = {
+          id: rideId,
+          status: 'accepted',
+          accepted: true,
+          driver: {
+            id: driverData.id,
+            name: driverData.name,
+            phone: sanitizePhone(driverData.phone),
+            email: driverData.email,
+          },
+        };
+        return await updateRideService(newRideData);
       } catch (error) {
         throw error;
       } finally {

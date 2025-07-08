@@ -2,14 +2,35 @@ import { Prisma, prisma } from '~/utils/prisma';
 
 export default defineEventHandler(async (event) => {
   const payload = await readBody(event);
-  const { id, billing, user, product, reason, travel, dispatcher } = payload;
+  const {
+    id,
+    billing,
+    user,
+    product,
+    reason,
+    travel,
+    dispatcher,
+    driver,
+    accepted,
+    status,
+  } = payload;
 
   try {
     const updatedRide = await prisma.rides.update({
       where: {
         id,
       },
-      data: { billing, user, product, reason, travel, dispatcher },
+      data: {
+        billing,
+        user,
+        product,
+        reason,
+        travel,
+        dispatcher,
+        driver,
+        accepted,
+        status,
+      },
     });
     return updatedRide;
   } catch (error) {

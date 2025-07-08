@@ -120,7 +120,7 @@ export const columns: any = [
           class: `px-2 flex items-center justify-center h-6 rounded-lg text-white text-xs w-fit 
           ${status === 'created' ? 'bg-blue-600' : 'bg-green-600'}`,
         },
-        status === 'created' ? 'Agendado' : 'Aguardando',
+        status === 'created' ? 'Agendado' : status === 'accepted' ? 'Aceito' : 'Unknow',
       );
     },
   }),

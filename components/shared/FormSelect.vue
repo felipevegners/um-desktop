@@ -9,15 +9,16 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 
-defineProps<{
+const props = defineProps<{
   items?: any[];
   label?: string;
+  tableId?: string;
 }>();
 
 const emit = defineEmits(['on-select']);
 
 const selected = (value: any) => {
-  emit('on-select', value);
+  emit('on-select', value, props.tableId);
 };
 </script>
 

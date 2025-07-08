@@ -209,6 +209,7 @@ const form = useForm({
     departTime: ride?.value.travel.departTime,
     origin: ride?.value.travel.originAddress,
     destination: ride?.value.travel.destinationAddress,
+    driver: ride?.value.driver.id,
   },
 });
 </script>
@@ -241,7 +242,13 @@ const form = useForm({
               <span
                 :class="`p-2 flex items-center justify-center rounded-md text-white text-sm uppercase w-fit  ${ride?.status === 'created' ? 'bg-blue-600' : 'bg-green-600'}`"
               >
-                {{ ride?.status === 'created' ? 'Agendado' : 'Aguardando' }}
+                {{
+                  ride?.status === 'created'
+                    ? 'Agendado'
+                    : ride?.status === 'accepted'
+                      ? 'Aceito'
+                      : 'Unknown'
+                }}
               </span>
               <div
                 class="p-6 grid grid-cols-2 gap-6 items-start border border-zinc-900 rounded-md"
@@ -254,13 +261,23 @@ const form = useForm({
                 </div>
                 <div class="p-4 space-y-4">
                   <div>
-                    <span class="text-muted-foreground text-sm">Motorista</span>
-                    <FormSelect :items="sanitizeDrivers" label="Selecione" />
+                    <FormField v-slot="{ componentField, value }" name="driver">
+                      <FormItem>
+                        <FormLabel>Alterar Motorista</FormLabel>
+                        <FormControl>
+                          <FormSelect
+                            v-bind="componentField"
+                            :items="sanitizeDrivers"
+                            :label="'Selecione'"
+                          />
+                        </FormControl>
+                      </FormItem>
+                    </FormField>
+                    <Button v-if="!form.values.driver" class="mt-3 w-full">
+                      <ConciergeBell class="w-5 h-5 mr-2" />
+                      Acionar Motorista
+                    </Button>
                   </div>
-                  <Button class="w-full">
-                    <ConciergeBell class="w-5 h-5 mr-2" />
-                    Acionar Motorista
-                  </Button>
                 </div>
                 <div class="col-span-2 grid grid-cols-3 gap-3">
                   <div class="p-3 border border-zinc-400 bg-white rounded-md">
