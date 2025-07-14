@@ -43,7 +43,7 @@ const deleteFile = async (url: string) => {
 <template>
   <div class="p-2 pb-4 flex flex-col gap-2 border border-zinc-300 rounded-md bg-white">
     <NuxtImg
-      :src="avatarFile.url"
+      :src="avatarFile?.url"
       loading="lazy"
       placeholder="/images/no-avatar.png"
       class="w-[200px] h-[240px] rounded-md object-cover bg-white"

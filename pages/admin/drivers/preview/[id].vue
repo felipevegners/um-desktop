@@ -81,7 +81,7 @@ await getDriverByIdAction(route.params.id as string);
                   {{ driver?.status === 'validated' ? 'Validado' : 'Pendente' }}
                 </p>
                 <p
-                  v-if="driver?.status === 'pending'"
+                  v-if="driver?.acceptedTerms === false"
                   class="flex items-center gap-2 text-red-800"
                 >
                   <Info :size="18" />
@@ -111,11 +111,8 @@ await getDriverByIdAction(route.params.id as string);
                   :custom="true"
                 >
                   <img v-if="isLoaded" v-bind="imgAttrs" :src="src" />
-                  <div
-                    v-else
-                    class="w-[200px] h-[240px] rounded-md bg-white flex items-center justify-center"
-                  >
-                    <LoaderCircle :size="32" class="animate-spin" />
+                  <div v-else class="rounded-md flex items-center justify-center">
+                    <img v-bind="imgAttrs" src="/images/no-avatar.png" />
                   </div>
                 </NuxtImg>
                 <div class="flex flex-col items-start gap-4">
