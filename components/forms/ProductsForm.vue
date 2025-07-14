@@ -117,7 +117,7 @@ const checkAdded = (id: string) => {
         />
         <div class="font-normal uppercase flex items-center gap-4">
           <div
-            class="mb-4 w-[80px] h-[80px] rounded-md bg-zinc-200 bg-contain bg-no-repeat bg-center relative flex items-center justify-center"
+            class="mb-4 w-[80px] h-[80px] rounded-md bg-zinc-200 bg-cover bg-no-repeat bg-center relative flex items-center justify-center"
             :style="{ backgroundImage: `url(${product.image?.url})` }"
           />
           <p>

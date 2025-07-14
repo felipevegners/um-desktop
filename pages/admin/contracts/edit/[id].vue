@@ -91,7 +91,7 @@ const schema = toTypedSchema(
     mainBudget: z.any().optional(),
     paymentTerm: z.string().min(1).max(10),
     paymentDueDate: z.number().min(0),
-    additionalInfo: z.string().min(0).max(200).optional(),
+    additionalInfo: z.any().optional(),
     status: z.string().optional(),
   }),
 );
@@ -421,6 +421,7 @@ const findAddress = async (code: string) => {
             <h2 class="px-6 mb-4 text-2xl font-bold">5. Informações Adicionais</h2>
             <AdditionalInfoForm />
           </div>
+          {{ form.errors }}
           <div class="px-6 flex gap-6">
             <Button type="submit">
               <LoaderCircle v-if="isLoadingSend" class="w-5 h-5 animate-spin" />

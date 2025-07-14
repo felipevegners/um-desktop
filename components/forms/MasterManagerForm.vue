@@ -23,7 +23,15 @@ defineProps<{
         <FormItem>
           <FormLabel>Nome</FormLabel>
           <FormControl>
-            <Input type="text" v-bind="componentField" :disabled="editMode" />
+            <Input type="text" v-bind="componentField" />
+          </FormControl>
+        </FormItem>
+      </FormField>
+      <FormField v-slot="{ componentField }" name="managerEmail">
+        <FormItem>
+          <FormLabel>E-mail</FormLabel>
+          <FormControl>
+            <Input type="text" v-bind="componentField" />
           </FormControl>
         </FormItem>
       </FormField>
