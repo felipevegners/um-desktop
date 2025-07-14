@@ -67,7 +67,7 @@ const formSchema = toTypedSchema(
       .min(2, 'Insira um nome com mais de 2 caracteres')
       .max(50, 'O nome deve conter no máximo 50 caracteres'),
     capacity: z.number({ message: '*Obrigatório' }).min(1),
-    category: z.string({ message: '*Obrigatório' }).min(1),
+    category: z.any().optional(),
     description: z.string().optional(),
     type: z.string({ message: '*Obrigatório' }),
     basePrice: z.string({ message: '*Obrigatório' }).min(1).optional(),
@@ -98,7 +98,7 @@ const onSubmit = form.handleSubmit(async (values) => {
         category: values.category,
         description: values.description,
         type: productType.value,
-        basePrice: values.basePrice?.replace(',', '.'),
+        basePrice: values.basePrice?.replace('.', '').replace(',', '.'),
         includedHours: values.includedHours || '0',
         includedKms: values.includedKms || 0,
         kmPrice: values.kmPrice.replace(',', '.'),

@@ -13,6 +13,8 @@ export default defineEventHandler(async (event) => {
     driver,
     accepted,
     status,
+    code,
+    observations,
   } = payload;
 
   try {
@@ -30,6 +32,8 @@ export default defineEventHandler(async (event) => {
         driver,
         accepted,
         status,
+        code,
+        observations,
       },
     });
     return updatedRide;

@@ -141,17 +141,19 @@ model Products {
 }
 
 model Rides {
-  id         String    @id @default(auto()) @map("_id") @db.ObjectId
-  billing    Json?
-  user       Json?
-  product    Json?
-  reason     Json?
-  travel     Json?
-  status     String?
-  accepted   Boolean?
-  price      String?
-  driver     Json?
-  dispatcher Json?
-  createdAt  DateTime? @default(now())
-  updatedAt  DateTime? @updatedAt()
+  id           String    @id @default(auto()) @map("_id") @db.ObjectId
+  code         String?
+  billing      Json?
+  user         Json?
+  product      Json?
+  reason       Json?
+  travel       Json?
+  status       String?
+  accepted     Boolean?
+  price        String?
+  driver       Json?
+  dispatcher   Json?
+  observations String?
+  createdAt    DateTime? @default(now())
+  updatedAt    DateTime? @updatedAt()
 }

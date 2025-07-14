@@ -76,7 +76,7 @@ const setDriver = (driverId: string, rideId: string) => {
 const contactDriver = async (driver: any) => {
   const findRide = rides?.value.find((ride: any) => ride.id === selectedRide.value);
   await setRideDriverAction(selectedRide?.value, selectedDriver.value);
-  const message = `*Novo Atendimento - UM250703*%0A
+  const message = `*Novo Atendimento - #${findRide?.code}
   %0A*Passageiro*: ${findRide?.user.name}
   %0A*Celular*: ${findRide?.user.phone}
   %0A*Data/Hora*: ${findRide?.travel.date} / ${findRide?.travel.departTime}
@@ -100,7 +100,7 @@ const finalColumns = [
       const { id } = row.original;
       return h(
         'div',
-        { class: 'relative' },
+        { class: 'relative text-xs' },
         row.original.accepted === false
           ? h(FormSelect, {
               items: sanitizeDrivers.value,
@@ -153,7 +153,7 @@ const finalColumns = [
         :columns="finalColumns"
         :data="rides"
         sortby="user"
-        :columnPin="['user']"
+        :columnPin="['code']"
         :filterBy="'nome do Usuário'"
       />
     </section>

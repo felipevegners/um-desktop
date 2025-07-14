@@ -7,6 +7,10 @@ import { currencyFormat, sanitizePhone } from '~/lib/utils';
 const columnHelper = createColumnHelper<any>();
 
 export const columns: any = [
+  columnHelper.accessor('code', {
+    header: () => h('div', { class: 'text-left' }, 'Código'),
+    cell: ({ row }) => h('div', { class: 'capitalize text-xs' }, row.getValue('code')),
+  }),
   columnHelper.accessor('user', {
     enablePinning: true,
     header: ({ column }) => {
@@ -20,7 +24,8 @@ export const columns: any = [
         () => ['Usuário', h(ArrowUpDown, { class: 'ml-2 h-4 w-4' })],
       );
     },
-    cell: ({ row }: any) => h('div', { class: 'capitalize' }, row.getValue('user').name),
+    cell: ({ row }: any) =>
+      h('div', { class: 'capitalize text-xs' }, row.getValue('user').name),
   }),
   columnHelper.accessor('phone', {
     header: () => h('div', { class: 'text-left' }, 'Contato'),
@@ -31,11 +36,11 @@ export const columns: any = [
         {
           href: WPP_API.replace('[[phone]]', sanitizePhone(data.user.phone as string)),
           target: '_blank',
-          class: 'flex items-center gap-2',
+          class: 'flex items-center gap-2 text-xs',
         },
         [
           data.user.phone,
-          h(MessageCircleMore, { class: 'text-green-500', size: 18 }),
+          h(MessageCircleMore, { class: 'text-green-500 text-xs', size: 18 }),
         ] as any,
       );
     },
@@ -47,7 +52,7 @@ export const columns: any = [
     cell: ({ row }) => {
       const data = row.original;
       const normalize = data.travel.originAddress.split('-').slice(0, 1).pop();
-      return h('div', { class: 'capitalize' }, normalize);
+      return h('div', { class: 'capitalize text-xs' }, normalize);
     },
   }),
   columnHelper.display({
@@ -57,7 +62,7 @@ export const columns: any = [
     cell: ({ row }) => {
       const data = row.original;
       const normalize = data.travel.destinationAddress.split('-').slice(0, 1).pop();
-      return h('div', { class: 'capitalize' }, normalize);
+      return h('div', { class: 'capitalize text-xs' }, normalize);
     },
   }),
   columnHelper.display({
@@ -68,7 +73,7 @@ export const columns: any = [
       const data = row.original;
       return h(
         'div',
-        { class: 'capitalize' },
+        { class: 'capitalize text-xs' },
         `${data.travel.date} - ${data.travel.departTime}`,
       );
     },
@@ -84,7 +89,7 @@ export const columns: any = [
     header: () => h('div', { class: 'text-left' }, 'Distância'),
     cell: ({ row }) => {
       const data = row.original;
-      return h('div', { class: 'capitalize' }, data.travel.distance);
+      return h('div', { class: 'capitalize text-xs' }, data.travel.distance);
     },
   }),
   // columnHelper.display({

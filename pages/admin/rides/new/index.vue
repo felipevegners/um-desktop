@@ -3,7 +3,10 @@ import DatePicker from '@/components/shared/DatePicker.vue';
 import FormSelect from '@/components/shared/FormSelect.vue';
 import { useToast } from '@/components/ui/toast/use-toast';
 import { getRideCalculationService, getRideRoutesService } from '@/server/services/rides';
+import { useAccountStore } from '@/stores/account.store';
+import { useBranchesStore } from '@/stores/branches.store';
 import { useContractsStore } from '@/stores/contracts.store';
+import { useProductsStore } from '@/stores/products.store';
 import { useRidesStore } from '@/stores/rides.store';
 import { DateFormatter, getLocalTimeZone } from '@internationalized/date';
 import {
@@ -18,9 +21,7 @@ import { vMaska } from 'maska/vue';
 import { storeToRefs } from 'pinia';
 import { useForm } from 'vee-validate';
 import { GoogleMap, Marker, Polyline } from 'vue3-google-map';
-import { currencyFormat, polyLineCodec } from '~/lib/utils';
-import { useAccountStore } from '~/stores/account.store';
-import { useBranchesStore } from '~/stores/branches.store';
+import { currencyFormat, getDate, polyLineCodec } from '~/lib/utils';
 
 definePageMeta({
   layout: 'admin',
@@ -34,13 +35,17 @@ const contractsStore = useContractsStore();
 const branchesStore = useBranchesStore();
 const accountStore = useAccountStore();
 const ridesStore = useRidesStore();
+const productsStore = useProductsStore();
 const { getContractByIdAction } = contractsStore;
 const { contract } = storeToRefs(contractsStore);
 const { getBranchByIdAction } = branchesStore;
 const { branch } = storeToRefs(branchesStore);
 const { getUsersAccountsAction } = accountStore;
 const { accounts } = storeToRefs(accountStore);
-const { createRideAction, loadingData } = ridesStore;
+const { createRideAction, getRidesAction, loadingData } = ridesStore;
+const { rides } = storeToRefs(ridesStore);
+const { getProductsAction } = productsStore;
+const { products } = storeToRefs(productsStore);
 
 const API_KEY = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
 const customIconStart = `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="#FFFFFF" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-square-dot-icon lucide-square-dot"><rect width="18" height="18" x="3" y="3" rx="2"/><circle cx="12" cy="12" r="1"/></svg>`;
@@ -119,23 +124,27 @@ const setSelectedUser = async (value: string) => {
     email: userData.email,
     phone: userData.phone,
   };
-
   if (userData?.contract.branchId !== '-') {
     await getBranchByIdAction(userData?.contract?.branchId);
   } else {
-    toast({
-      title: 'Opss!',
-      class: 'bg-red-500 border-0 text-white text-2xl',
-      description: `O usuário selecionado não possui uma filial cadastrada.`,
-    });
+    // toast({
+    //   title: 'Opss!',
+    //   class: 'bg-red-500 border-0 text-white text-2xl',
+    //   description: `O usuário selecionado não possui uma filial cadastrada.`,
+    // });
     noBranchAlert.value = true;
   }
 
   try {
     showAvailableProducts.value = true;
     loadingProducts.value = true;
-    await getContractByIdAction(selectedUser.value.contractId);
-    availableProducts.value = contract?.value.products;
+    if (userData?.contract?.contractId !== '-') {
+      await getContractByIdAction(selectedUser.value.contractId);
+      availableProducts.value = contract?.value.products;
+    } else {
+      await getProductsAction();
+      availableProducts.value = products.value;
+    }
     loadingProducts.value = false;
   } catch (error) {
     toast({
@@ -146,6 +155,7 @@ const setSelectedUser = async (value: string) => {
     console.error('error -> ', error);
   }
 };
+
 const useBrachAddressOnOrigin = (value: any) => {
   const { address } = branch?.value;
   if (value === true) {
@@ -216,8 +226,15 @@ const getRideCalculation = async () => {
     loadingRoute.value = true;
     const travelCalculation = await getRideCalculationService(rideData);
 
+    //Ride Price Calculation
+    const duration = travelCalculation?.rows[0]?.elements[0]?.duration.value / 60;
+    const basePrice = parseFloat(selectedProduct?.value.basePrice);
     const distance = travelCalculation?.rows[0]?.elements[0]?.distance.value / 1000;
-    const ridePrice = distance * parseFloat(selectedProduct?.value?.basePrice);
+
+    const ridePrice =
+      basePrice +
+      parseFloat(distance.toFixed(2)) * parseFloat(selectedProduct?.value.kmPrice) +
+      duration * parseFloat(selectedProduct?.value.minutePrice);
 
     calculatedTravel.value.travelDistance =
       travelCalculation?.rows[0]?.elements[0]?.distance.text;
@@ -265,8 +282,21 @@ const setDestinationPlace = (place: any) => {
   });
 };
 
+const generateRideCode = async () => {
+  await getRidesAction();
+  const ridesLength = rides?.value.length;
+  const today = new Date();
+
+  const day = String(today.getDate()).padStart(2, '0');
+  const month = String(today.getMonth() + 1).padStart(2, '0'); // Months are 0-indexed
+  const year = String(today.getFullYear()).slice(-2); // Get the last two digits of the year
+
+  return `UM-${day}${month}${year}${ridesLength + 1}`;
+};
+
 const onSubmit = form.handleSubmit(async (values) => {
   const ridePayload = {
+    code: await generateRideCode(),
     billing: {
       contractId: selectedUser.value.contractId,
       area: selectedUser.value.area,
@@ -311,12 +341,14 @@ const onSubmit = form.handleSubmit(async (values) => {
     accepted: false,
     price: calculatedTravel.value.travelPrice,
     driver: {},
+    observations: values.observations,
     dispatcher: {
       user: data?.value?.user?.name,
       email: data?.value?.user?.email,
       dispatchDate: new Date().toLocaleDateString('pt-BR').padStart(10, '0'),
     },
   };
+
   try {
     await createRideAction(ridePayload);
   } catch (error) {
@@ -331,7 +363,7 @@ const onSubmit = form.handleSubmit(async (values) => {
       class: 'bg-green-600 border-0 text-white text-2xl',
       description: `Agendamento cadastrado com sucesso!`,
     });
-    navigateTo('/admin/rides/active');
+    navigateTo('/admin/rides/open');
   }
 });
 </script>
@@ -345,6 +377,7 @@ const onSubmit = form.handleSubmit(async (values) => {
         <CalendarDays />
         Gerar Novo Atendimento
       </h1>
+      <Button @click="generateRideCode">Gerar codigo</Button>
     </section>
     <section>
       <form @submit.prevent="onSubmit" @keydown.enter.prevent="true">
@@ -375,9 +408,9 @@ const onSubmit = form.handleSubmit(async (values) => {
                   <LoaderCircle v-if="loadingProducts" class="animate-spin" />
                   <div v-else>
                     <label class="text-sm font-medium">Selecione o Produto*</label>
-                    <ul class="mt-2 flex justify-evenly gap-4">
+                    <ul class="mt-2 flex gap-4 flex-wrap">
                       <li
-                        class="w-full"
+                        class="flex-1"
                         v-for="product in availableProducts"
                         :key="product.id"
                       >
@@ -392,7 +425,7 @@ const onSubmit = form.handleSubmit(async (values) => {
                             class="font-normal uppercase flex items-center justify-start gap-2"
                           >
                             <div
-                              class="w-[50px] h-[50px] rounded-md bg-zinc-200 bg-contain bg-no-repeat bg-center relative flex items-center justify-center"
+                              class="w-[50px] h-[50px] rounded-md bg-zinc-200 bg-cover bg-no-repeat bg-center relative flex items-center justify-center"
                               :style="{ backgroundImage: `url(${product.image?.url})` }"
                             />
                             <small
@@ -511,6 +544,16 @@ const onSubmit = form.handleSubmit(async (values) => {
                     <Waypoints v-else />
                     Calcular Rota
                   </Button>
+                </div>
+                <div v-if="selectedProduct" class="p-6 border border-zinc-900 rounded-md">
+                  <FormField v-slot="{ componentField }" name="observations">
+                    <FormItem>
+                      <FormLabel>Instruções / Observações para o Motorista:</FormLabel>
+                      <FormControl>
+                        <Textarea class="resize-none bg-white" v-bind="componentField" />
+                      </FormControl>
+                    </FormItem>
+                  </FormField>
                 </div>
               </div>
               <!-- COLUNA MAPA E ROTA -->
