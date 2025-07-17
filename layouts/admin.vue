@@ -30,11 +30,14 @@ const userNameInitials = computed(() => {
       <SidebarHeader class="sidebar">
         <SidebarMenu>
           <SidebarMenuItem>
-            <div class="px-2 py-4 flex items-center">
+            <div class="py-2 flex items-center justify-center">
               <img
-                class="my-6 h-9 group-data-[collapsible=icon]:hidden"
+                class="mt-4 mb-6 h-9 group-data-[collapsible=icon]:hidden"
                 src="/images/logo_horizontal_white.svg"
-                alt=""
+              />
+              <img
+                class="hidden text-um-primary group-data-[collapsible=icon]:block"
+                src="/images/um_symbol_negative.svg"
               />
             </div>
           </SidebarMenuItem>
@@ -49,10 +52,10 @@ const userNameInitials = computed(() => {
             <SidebarMenuItem class="my-4">
               <SidebarMenuButton tooltip="Dashboard">
                 <component :is="LayoutDashboard" class="text-[#33ffcc]" />
-                <a class="text-[#33ffcc] text-md" href="/">Dashboard</a>
+                <a class="text-[#33ffcc] text-base" href="/">Dashboard</a>
               </SidebarMenuButton>
             </SidebarMenuItem>
-            <SidebarSeparator class="mb-4 border-b border-zinc-800" />
+            <SidebarSeparator class="mb-4 border-b border-zinc-700" />
             <Collapsible
               v-for="item in menuData.navMain"
               :key="item.title"
@@ -69,8 +72,10 @@ const userNameInitials = computed(() => {
                     />
                     <span
                       :class="`${item.isActive ? 'text-um-primary' : 'text-white'}`"
-                      >{{ item.title }}</span
+                      class="text-base"
                     >
+                      {{ item.title }}
+                    </span>
                     <ChevronRight
                       class="ml-auto transition-transform duration-200 group-data-[state=open]/collapsible:rotate-90"
                     />
@@ -97,28 +102,28 @@ const userNameInitials = computed(() => {
             </Collapsible>
           </SidebarMenu>
         </SidebarGroup>
-        <SidebarSeparator class="border-b border-zinc-800" />
-        <SidebarGroup class="group-data-[collapsible=icon]:hidden">
-          <SidebarGroupLabel class="text-[#33ffcc] text-md"
-            >Configurações</SidebarGroupLabel
-          >
+        <SidebarSeparator class="border-b border-zinc-700" />
+        <SidebarGroup>
+          <SidebarGroupLabel class="text-[#33ffcc] text-md">
+            Configurações
+          </SidebarGroupLabel>
           <SidebarMenu>
             <SidebarMenuItem v-for="item in menuData.settings" :key="item.name">
               <SidebarMenuButton as-child>
                 <!-- @vue-skip -->
-                <a
-                  :href="item.url"
+                <NuxtLink
+                  :to="item.url"
                   :class="`${item?.active ? 'text-um-primary' : 'text-white'}`"
                 >
                   <component :is="item.icon" />
                   <span>{{ item.name }}</span>
-                </a>
+                </NuxtLink>
               </SidebarMenuButton>
             </SidebarMenuItem>
           </SidebarMenu>
         </SidebarGroup>
       </SidebarContent>
-      <SidebarFooter class="sidebar-footer">
+      <!-- <SidebarFooter class="sidebar-footer">
         <SidebarMenu>
           <SidebarMenuItem>
             <DropdownMenu>
@@ -210,7 +215,7 @@ const userNameInitials = computed(() => {
             </DropdownMenu>
           </SidebarMenuItem>
         </SidebarMenu>
-      </SidebarFooter>
+      </SidebarFooter> -->
       <SidebarRail />
     </Sidebar>
     <SidebarInset>

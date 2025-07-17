@@ -101,7 +101,8 @@ const showRenderedMap = ref<boolean>(false);
 onBeforeMount(async () => {
   await getUsersAccountsAction();
   const filteredUsers = accounts.value.filter(
-    (user: any) => user.enabled === true && user.role !== 'admin',
+    (user: any) =>
+      user.enabled === true && user.role !== 'admin' && user.role !== 'platform-driver',
   );
   availableUsers.value = filteredUsers.map((user: any) => {
     return {

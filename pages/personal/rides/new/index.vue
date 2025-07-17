@@ -8,9 +8,7 @@ import {
   CreditCard,
   LoaderCircle,
   Minus,
-  MinusCircle,
   Plus,
-  PlusCircle,
   SquareDot,
   SquareSquare,
   Users,
@@ -58,6 +56,7 @@ const selectedProduct = ref<any>();
 const travelDate = ref<any>();
 const selectedUser = ref<any>();
 const showGenerateRide = ref<boolean>(false);
+const enableRouteCalculation = ref<boolean>(true);
 const ridePassengers = ref(1);
 
 const addPassengers = () => {
@@ -205,6 +204,8 @@ const setDestinationPlace = (place: any) => {
   form.setValues({
     destination: place.formatted_address,
   });
+
+  enableRouteCalculation.value = false;
 };
 
 const onSubmit = form.handleSubmit(async (values) => {
@@ -304,7 +305,9 @@ const onSubmit = form.handleSubmit(async (values) => {
                       <div>
                         <LoaderCircle v-if="isLoading" class="animate-spin" />
                         <div v-else>
-                          <label class="text-sm font-medium">Selecione o Produto*</label>
+                          <label class="text-sm font-medium"
+                            >Selecione o Serviço UM*</label
+                          >
                           <ul class="mt-2 flex justify-evenly gap-4 flex-wrap">
                             <li
                               class="w-full"
@@ -312,17 +315,17 @@ const onSubmit = form.handleSubmit(async (values) => {
                               :key="product.id"
                             >
                               <article
-                                class="p-4 flex items-center justify-start gap-4 bg-white rounded-md border border-zinc-900"
+                                class="p-4 flex items-center justify-between gap-4 bg-white rounded-md border border-zinc-900"
                               >
-                                <Checkbox
-                                  @update:checked="setSelectedProduct(product)"
-                                  :checked="selectedProduct?.id === product.id"
-                                />
                                 <div
                                   class="font-normal uppercase flex items-center justify-start gap-2"
                                 >
+                                  <Checkbox
+                                    @update:checked="setSelectedProduct(product)"
+                                    :checked="selectedProduct?.id === product.id"
+                                  />
                                   <div
-                                    class="w-[50px] h-[50px] rounded-md bg-zinc-200 bg-contain bg-no-repeat bg-center relative flex items-center justify-center"
+                                    class="w-[50px] h-[50px] rounded-md bg-zinc-200 bg-cover bg-no-repeat bg-center relative flex items-center justify-center"
                                     :style="{
                                       backgroundImage: `url(${product.image?.url})`,
                                     }"
@@ -341,12 +344,41 @@ const onSubmit = form.handleSubmit(async (values) => {
                                     </small>
                                   </div>
                                 </div>
+                                <TooltipProvider>
+                                  <Tooltip>
+                                    <TooltipTrigger as-child class="hover:cursor-pointer">
+                                      <svg
+                                        xmlns="http://www.w3.org/2000/svg"
+                                        width="24"
+                                        height="24"
+                                        viewBox="0 0 24 24"
+                                        fill="none"
+                                        stroke="currentColor"
+                                        stroke-width="2"
+                                        stroke-linecap="round"
+                                        stroke-linejoin="round"
+                                        class="text-zinc-700 lucide lucide-circle-question-mark-icon lucide-circle-question-mark"
+                                      >
+                                        <circle cx="12" cy="12" r="10" />
+                                        <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3" />
+                                        <path d="M12 17h.01" />
+                                      </svg>
+                                    </TooltipTrigger>
+                                    <TooltipContent class="bg-zinc-700 text-white">
+                                      <p>{{ product.description }}</p>
+                                    </TooltipContent>
+                                  </Tooltip>
+                                </TooltipProvider>
                               </article>
                             </li>
                           </ul>
                         </div>
                       </div>
                       <div v-if="selectedProduct" class="flex flex-col gap-6 items-start">
+                        <div class="flex flex-col">
+                          <label class="mb-2 text-sm font-medium">Data*</label>
+                          <DatePicker v-model="travelDate" />
+                        </div>
                         <div class="md:grid md:grid-cols-3 gap-6">
                           <FormField v-slot="{ componentField }" name="departTime">
                             <FormItem>
@@ -386,10 +418,6 @@ const onSubmit = form.handleSubmit(async (values) => {
                             </div>
                           </div>
                         </div>
-                        <div class="flex flex-col">
-                          <label class="mb-2 text-sm font-medium">Data*</label>
-                          <DatePicker v-model="travelDate" />
-                        </div>
                         <FormField v-slot="{ componentField, value }" name="origin">
                           <FormItem class="w-full">
                             <FormLabel>Origem*</FormLabel>
@@ -410,7 +438,7 @@ const onSubmit = form.handleSubmit(async (values) => {
                             <FormMessage />
                           </FormItem>
                         </FormField>
-                        <FormField v-slot="{ componentField }" name="destination">
+                        <FormField v-slot="{ componentField, value }" name="destination">
                           <FormItem class="w-full">
                             <FormLabel>Destino*</FormLabel>
                             <FormControl>
@@ -430,11 +458,11 @@ const onSubmit = form.handleSubmit(async (values) => {
                         <Button
                           type="button"
                           @click.prevent="getRideCalculation"
-                          :disabled="!selectedProduct"
+                          :disabled="enableRouteCalculation"
                         >
                           <LoaderCircle v-if="loadingRoute" class="animate-spin" />
                           <Waypoints v-else />
-                          Calcular Rota
+                          Calcular Meu Trajeto
                         </Button>
                       </div>
                     </div>
@@ -478,36 +506,36 @@ const onSubmit = form.handleSubmit(async (values) => {
                       </div>
                     </div>
 
-                    <div v-if="showRenderedMap" class="mt-6 flex gap-4">
+                    <div v-if="showRenderedMap" class="mt-6 flex gap-4 w-full">
                       <div
-                        class="p-6 flex flex-col items-start justify-center bg-white rounded-md shadow-md"
+                        class="p-6 flex-grow flex flex-col items-start justify-center text-center bg-white rounded-md shadow-md"
                       >
                         <small>Distância Total</small>
-                        <p class="font-bold">
+                        <p class="font-bold text-lg">
                           {{ calculatedTravel?.travelDistance }}
                         </p>
                       </div>
                       <div
-                        class="p-6 flex-col items-start justify-center bg-white rounded-md shadow-md"
+                        class="p-6 flex-grow flex flex-col items-start justify-center text-center bg-white rounded-md shadow-md"
                       >
                         <small>Tempo Total</small>
-                        <p class="font-bold">
+                        <p class="font-bold text-lg">
                           {{ calculatedTravel?.travelTime }}
                         </p>
                       </div>
                       <div
-                        class="p-6 flex-col items-start justify-center bg-white rounded-md shadow-md"
+                        class="p-6 flex-grow flex-col items-start justify-center text-center bg-white rounded-md shadow-md"
                       >
                         <small>Preço Estimado*</small>
-                        <p class="font-bold">
+                        <p class="font-bold text-lg">
                           {{ currencyFormat(calculatedTravel?.travelPrice) }}
                         </p>
                       </div>
                       <div
-                        class="p-6 flex-col items-start justify-center bg-white rounded-md shadow-md"
+                        class="p-6 flex-grow flex-col items-start justify-center text-center bg-white rounded-md shadow-md"
                       >
                         <small>Passageiros</small>
-                        <p class="font-bold">
+                        <p class="font-bold text-lg">
                           {{ ridePassengers }}
                         </p>
                       </div>
@@ -522,46 +550,68 @@ const onSubmit = form.handleSubmit(async (values) => {
               <CardTitle>Pagamento</CardTitle>
             </CardHeader>
             <CardContent>
-              <div class="flex flex-col gap-6">
-                <h4 class="text-sm font-medium">Selecione a forma de pagamento*</h4>
-                <ul class="space-y-2">
-                  <li
-                    class="py-4 px-3 bg-white rounded-md shadow-md flex items-center gap-4 w-[300px]"
-                  >
-                    <Checkbox />
-                    <img
-                      src="../../../../public/images/logos/logo_pix.svg"
-                      alt=""
-                      class="w-20"
-                    />
-                  </li>
-                  <li
-                    class="py-4 px-3 bg-white rounded-md shadow-md flex items-center gap-3 w-[300px]"
-                  >
-                    <Checkbox />
-                    <CreditCard :size="24" />
-                    <img
-                      src="../../../../public/images/logos/mastercard.svg"
-                      alt=""
-                      class="w-10"
-                    />
-                    <img
-                      src="../../../../public/images/logos/visa.svg"
-                      alt=""
-                      class="w-10"
-                    />
-                    <img
-                      src="../../../../public/images/logos/elo.svg"
-                      alt=""
-                      class="w-10"
-                    />
-                    <img
-                      src="../../../../public/images/logos/hypercard.svg"
-                      alt=""
-                      class="w-10"
-                    />
-                  </li>
-                </ul>
+              <div class="lg:grid lg:grid-cols-2 gap-6">
+                <div>
+                  <h2 class="mb-6 text-lg font-medium">
+                    Como deseja pagar seu agendamento?
+                  </h2>
+                  <ul class="space-y-2">
+                    <li
+                      class="py-4 px-3 bg-white rounded-md shadow-md flex items-center gap-4 w-full"
+                    >
+                      <Checkbox />
+                      <img src="/images/logos/logo_pix.svg" alt="" class="w-20" />
+                      <small>À vista (PIX)</small>
+                    </li>
+                    <li
+                      class="py-4 px-3 bg-white rounded-md shadow-md flex items-center gap-3 w-full"
+                    >
+                      <Checkbox />
+                      <CreditCard :size="24" />
+                      <small>Cartão de Crédito</small>
+                      <img src="/images/logos/mastercard.svg" alt="" class="w-10" />
+                      <img src="/images/logos/visa.svg" alt="" class="w-10" />
+                      <img src="/images/logos/elo.svg" alt="" class="w-10" />
+                      <img src="/images/logos/hypercard.svg" alt="" class="w-10" />
+                    </li>
+                  </ul>
+                </div>
+                <div>
+                  <h2 class="mb-6 text-lg font-medium">Resumo</h2>
+                  <div class="p-6 bg-white rounded-md space-y-6">
+                    <div>
+                      <small class="font-bold">Data e Hora</small>
+                      <h2 class="font-bold text-2xl">
+                        {{ df.format(travelDate?.toDate(getLocalTimeZone())) }}
+                        -
+                        {{ form.values.departTime }}
+                      </h2>
+                    </div>
+                    <div>
+                      <small class="font-bold">Origem</small>
+                      <p>{{ originLocationDetails.address }}</p>
+                    </div>
+                    <div>
+                      <small class="font-bold">Destino</small>
+                      <p>{{ destinationLocationDetails.address }}</p>
+                    </div>
+                    <div>
+                      <small class="font-bold">Serviço selecionado</small>
+                      <p
+                        class="px-2 py-1 uppercase text-white text-center rounded-md w-fit"
+                        :class="`${selectedProduct?.type === 'contract' ? 'bg-zinc-800' : selectedProduct?.type === 'free-km' ? 'bg-orange-400' : 'bg-purple-400'}`"
+                      >
+                        {{ selectedProduct?.name }}
+                      </p>
+                    </div>
+                    <div class="border-t border-zinc-900">
+                      <small class="font-bold">Total</small>
+                      <p class="font-bold text-2xl">
+                        {{ currencyFormat(calculatedTravel?.travelPrice) }}
+                      </p>
+                    </div>
+                  </div>
+                </div>
               </div>
             </CardContent>
           </Card>

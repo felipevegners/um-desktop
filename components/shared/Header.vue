@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { LogOut } from 'lucide-vue-next';
+import { CircleUser, LogOut } from 'lucide-vue-next';
 
 import Notification from './Notification.vue';
 import ThemeSelector from './ThemeSelector.vue';
@@ -27,17 +27,18 @@ const route = useRoute();
       </Breadcrumb> -->
     </div>
     <div class="flex items-center justify-between gap-6">
-      <Notification />
+      <!-- <Notification /> -->
       <!-- <ThemeSelector /> -->
       <!-- @vue-skip -->
-      <div class="flex items-center">
-        <h3 class="text-md" v-if="data">
-          Olá, <span class="font-bold">{{ data?.user?.name }} </span>
+      <div class="flex items-center gap-6">
+        <h3 class="text-md flex items-center gap-2" v-if="data">
+          <CircleUser />
+          <span class="font-bold">{{ data?.user?.name }} </span>
         </h3>
         <h3 class="text-md" v-else>Sua sessão expirou, faça novamente o login.</h3>
-        <Button class="mr-4" variant="ghost" @click="signOut">
+        <Button class="mr-4" variant="outline" @click="signOut">
           <LogOut class="w-5 h-5" />
-          Logout
+          Sair
         </Button>
       </div>
     </div>

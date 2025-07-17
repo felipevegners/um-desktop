@@ -15,7 +15,7 @@ export const platformUserMenu = {
   navMain: [
     {
       title: 'Atendimentos',
-      url: '',
+      url: '/personal/rides/open',
       icon: CalendarDays,
       isActive: true,
       items: [
@@ -32,7 +32,7 @@ export const platformUserMenu = {
           url: '/personal/rides/canceled',
         },
         {
-          title: '+ Novo agendamento',
+          title: '+ Novo Atendimento',
           url: '/personal/rides/new',
         },
       ],
