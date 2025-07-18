@@ -4,6 +4,8 @@ import { useToast } from '@/components/ui/toast/use-toast';
 import { getRideCalculationService, getRideRoutesService } from '@/server/services/rides';
 import { DateFormatter, getLocalTimeZone } from '@internationalized/date';
 import {
+  ArrowRight,
+  Building,
   CalendarDays,
   CreditCard,
   LoaderCircle,
@@ -18,6 +20,7 @@ import { vMaska } from 'maska/vue';
 import { storeToRefs } from 'pinia';
 import { useForm } from 'vee-validate';
 import { GoogleMap, Marker, Polyline } from 'vue3-google-map';
+import FormSelect from '~/components/shared/FormSelect.vue';
 import { currencyFormat, polyLineCodec } from '~/lib/utils';
 import { useProductsStore } from '~/stores/products.store';
 import { useRidesStore } from '~/stores/rides.store';
@@ -58,6 +61,13 @@ const selectedUser = ref<any>();
 const showGenerateRide = ref<boolean>(false);
 const enableRouteCalculation = ref<boolean>(true);
 const ridePassengers = ref(1);
+const enablePayment = ref<boolean>(false);
+const viewCorpPaymentForm = ref<boolean>(false);
+
+const showCorpPaymentForm = (value: any) => {
+  console.log('-> ', value);
+  viewCorpPaymentForm.value = !viewCorpPaymentForm.value;
+};
 
 const addPassengers = () => {
   ridePassengers.value++;
@@ -305,9 +315,9 @@ const onSubmit = form.handleSubmit(async (values) => {
                       <div>
                         <LoaderCircle v-if="isLoading" class="animate-spin" />
                         <div v-else>
-                          <label class="text-sm font-medium"
-                            >Selecione o Serviço UM*</label
-                          >
+                          <label class="text-sm font-medium">
+                            Selecione o Serviço UM*
+                          </label>
                           <ul class="mt-2 flex justify-evenly gap-4 flex-wrap">
                             <li
                               class="w-full"
@@ -459,6 +469,7 @@ const onSubmit = form.handleSubmit(async (values) => {
                           type="button"
                           @click.prevent="getRideCalculation"
                           :disabled="enableRouteCalculation"
+                          class="mt-4 p-6"
                         >
                           <LoaderCircle v-if="loadingRoute" class="animate-spin" />
                           <Waypoints v-else />
@@ -512,7 +523,7 @@ const onSubmit = form.handleSubmit(async (values) => {
                       >
                         <small>Distância Total</small>
                         <p class="font-bold text-lg">
-                          {{ calculatedTravel?.travelDistance }}
+                          {{ calculatedTravel?.travelDistance || '0' }}
                         </p>
                       </div>
                       <div
@@ -520,7 +531,7 @@ const onSubmit = form.handleSubmit(async (values) => {
                       >
                         <small>Tempo Total</small>
                         <p class="font-bold text-lg">
-                          {{ calculatedTravel?.travelTime }}
+                          {{ calculatedTravel?.travelTime || '0' }}
                         </p>
                       </div>
                       <div
@@ -528,7 +539,7 @@ const onSubmit = form.handleSubmit(async (values) => {
                       >
                         <small>Preço Estimado*</small>
                         <p class="font-bold text-lg">
-                          {{ currencyFormat(calculatedTravel?.travelPrice) }}
+                          {{ currencyFormat(calculatedTravel?.travelPrice || '0,00') }}
                         </p>
                       </div>
                       <div
@@ -540,12 +551,27 @@ const onSubmit = form.handleSubmit(async (values) => {
                         </p>
                       </div>
                     </div>
+                    <div v-if="showRenderedMap" class="py-10">
+                      <Button
+                        type="button"
+                        @click.prevent="
+                          {
+                            enablePayment = !enablePayment;
+                            navigateTo('#payment');
+                          }
+                        "
+                        class="p-6"
+                      >
+                        Realizar Pagamento
+                        <ArrowRight />
+                      </Button>
+                    </div>
                   </div>
                 </div>
               </div>
             </CardContent>
           </Card>
-          <Card v-if="showRenderedMap" class="mb-6 bg-zinc-300">
+          <Card id="payment" v-if="!enablePayment" class="mb-6 bg-zinc-300">
             <CardHeader>
               <CardTitle>Pagamento</CardTitle>
             </CardHeader>
@@ -559,20 +585,134 @@ const onSubmit = form.handleSubmit(async (values) => {
                     <li
                       class="py-4 px-3 bg-white rounded-md shadow-md flex items-center gap-4 w-full"
                     >
-                      <Checkbox />
-                      <img src="/images/logos/logo_pix.svg" alt="" class="w-20" />
-                      <small>À vista (PIX)</small>
+                      <FormField
+                        v-slot="{ value, handleChange }"
+                        type="checkbox"
+                        name="pix"
+                      >
+                        <FormItem
+                          class="flex flex-row items-center justify-center gap-x-3"
+                        >
+                          <FormControl>
+                            <Checkbox
+                              :model-value="value"
+                              @update:model-value="handleChange"
+                            />
+                          </FormControl>
+                          <FormLabel class="!mt-0 flex items-center gap-x-3">
+                            À vista (PIX)
+                            <img
+                              src="/images/logos/logo_pix.svg"
+                              alt=""
+                              class="!mt-0 w-20"
+                            />
+                          </FormLabel>
+                        </FormItem>
+                      </FormField>
                     </li>
                     <li
                       class="py-4 px-3 bg-white rounded-md shadow-md flex items-center gap-3 w-full"
                     >
-                      <Checkbox />
-                      <CreditCard :size="24" />
-                      <small>Cartão de Crédito</small>
-                      <img src="/images/logos/mastercard.svg" alt="" class="w-10" />
-                      <img src="/images/logos/visa.svg" alt="" class="w-10" />
-                      <img src="/images/logos/elo.svg" alt="" class="w-10" />
-                      <img src="/images/logos/hypercard.svg" alt="" class="w-10" />
+                      <FormField
+                        v-slot="{ value, handleChange }"
+                        type="checkbox"
+                        name="creditcard"
+                      >
+                        <FormItem class="flex flex-row items-center gap-x-3">
+                          <FormControl>
+                            <Checkbox
+                              :model-value="value"
+                              @update:model-value="handleChange"
+                            />
+                          </FormControl>
+                          <FormLabel class="!mt-0 flex items-center gap-x-3">
+                            <CreditCard :size="24" />
+                            Cartão de Crédito
+                            <img
+                              src="/images/logos/mastercard.svg"
+                              alt="mastercard"
+                              class="w-10"
+                            />
+                            <img src="/images/logos/visa.svg" alt="visa" class="w-10" />
+                            <img src="/images/logos/elo.svg" alt="elo" class="w-10" />
+                            <img
+                              src="/images/logos/hypercard.svg"
+                              alt="hipercard"
+                              class="w-10"
+                            />
+                          </FormLabel>
+                        </FormItem>
+                      </FormField>
+                    </li>
+                    <li
+                      class="py-4 px-3 bg-white rounded-md shadow-md flex flex-col gap-3 w-full"
+                    >
+                      <FormField
+                        v-slot="{ value, handleChange }"
+                        type="checkbox"
+                        name="creditcard"
+                      >
+                        <FormItem class="flex flex-row items-center gap-x-3">
+                          <FormControl>
+                            <Checkbox
+                              :model-value="value"
+                              @update:model-value="handleChange"
+                              @update:checked="showCorpPaymentForm"
+                            />
+                          </FormControl>
+                          <FormLabel class="!mt-0 flex items-center gap-x-3">
+                            <Building :size="24" />
+                            Pagamento Corporativo
+                          </FormLabel>
+                        </FormItem>
+                      </FormField>
+                      <div
+                        v-show="viewCorpPaymentForm"
+                        class="md:grid md:grid-cols-3 gap-6"
+                      >
+                        <FormField v-slot="{ componentField }" name="contract">
+                          <FormItem>
+                            <FormLabel>Empresa*</FormLabel>
+                            <FormControl>
+                              <FormSelect
+                                v-bind="componentField"
+                                :items="[]"
+                                :label="'Selecione'"
+                                @on-select="() => {}"
+                              />
+                            </FormControl>
+                            <FormMessage class="text-xs" />
+                          </FormItem>
+                        </FormField>
+                        <FormField v-slot="{ componentField }" name="branch">
+                          <FormItem>
+                            <FormLabel>Filial*</FormLabel>
+                            <FormControl>
+                              <FormSelect
+                                v-bind="componentField"
+                                :items="[]"
+                                :label="'Selecione'"
+                                @on-select="() => {}"
+                              />
+                            </FormControl>
+                            <FormMessage class="text-xs" />
+                          </FormItem>
+                        </FormField>
+                        <FormField v-slot="{ componentField }" name="area">
+                          <FormItem>
+                            <FormLabel>Centro de Custo*</FormLabel>
+                            <FormControl>
+                              <FormSelect
+                                v-bind="componentField"
+                                :items="[]"
+                                :label="'Selecione'"
+                                @on-select="() => {}"
+                              />
+                            </FormControl>
+                            <FormMessage class="text-xs" />
+                          </FormItem>
+                        </FormField>
+                      </div>
                     </li>
                   </ul>
                 </div>
@@ -617,11 +757,16 @@ const onSubmit = form.handleSubmit(async (values) => {
           </Card>
         </div>
         <div v-if="showGenerateRide" class="mt-6 flex gap-4">
-          <Button type="submit">
+          <Button type="submit" class="p-6">
             <LoaderCircle v-if="loadingData" class="w-5 h-5 animate-spin" />
-            Gerar Atendimento
+            Solicitar Atendimento
           </Button>
-          <Button type="button" variant="ghost" @click="navigateTo('/admin/rides/open')">
+          <Button
+            type="button"
+            variant="ghost"
+            class="p-6"
+            @click="navigateTo('/admin/rides/open')"
+          >
             Cancelar
           </Button>
         </div>
