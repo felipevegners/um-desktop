@@ -169,12 +169,12 @@ const onSubmit = usersForm.handleSubmit(async (values) => {
 </script>
 
 <template>
-  <header>
-    <div class="flex items-center">
-      <SharedBackLink />
-    </div>
-  </header>
-  <main class="px-6">
+  <main class="p-6">
+    <header>
+      <div class="flex items-center">
+        <SharedBackLink />
+      </div>
+    </header>
     <section
       v-if="isLoading"
       class="p-10 h-40 flex items-center justify-center bg-zinc-200 rounded-md"

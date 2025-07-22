@@ -10,7 +10,7 @@ import { useRidesStore } from '@/stores/rides.store';
 import { DateFormatter, getLocalTimeZone } from '@internationalized/date';
 import {
   ArrowRight,
-  CalendarDays,
+  CalendarPlus,
   LoaderCircle,
   Minus,
   Plus,
@@ -402,7 +402,7 @@ const onSubmit = form.handleSubmit(async (values) => {
     </header>
     <section class="mb-6 flex items-center gap-6">
       <h1 class="flex items-center gap-2 font-bold text-black text-2xl">
-        <CalendarDays />
+        <CalendarPlus :size="24" />
         Gerar Novo Atendimento
       </h1>
     </section>
@@ -619,15 +619,16 @@ const onSubmit = form.handleSubmit(async (values) => {
                 <div class="flex items-start justify-start" id="map">
                   <div
                     v-if="loadingRoute"
-                    class="flex flex-col gap-6 items-center justify-center w-full"
+                    class="flex flex-col gap-6 items-center justify-center w-full h-full"
                   >
                     <LoaderCircle :size="60" class="animate-spin" />
-                    <small>Calculando rota...</small>
+                    <small class="text-muted-foreground uppercase">Calculando rota</small>
                   </div>
                   <div v-else class="flex flex-col items-start justify-start w-full">
-                    <div class="w-full">
-                      <CardTitle class="my-6">Rota e Dados do Atendimento</CardTitle>
-                      <!-- v-if="showRenderedMap" -->
+                    <div class="w-full py-6">
+                      <CardTitle v-if="showRenderedMap" class="mb-6">
+                        Rota Calculada e Valores
+                      </CardTitle>
                       <div class="p-6 bg-white rounded-md overflow-hidden">
                         <GoogleMap
                           :api-key="API_KEY"

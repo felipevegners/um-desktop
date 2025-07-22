@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { Button } from '@/components/ui/button';
-import { CalendarDays, LoaderCircle, Plus } from 'lucide-vue-next';
+import { CalendarX2, LoaderCircle, Plus } from 'lucide-vue-next';
 import { storeToRefs } from 'pinia';
 import { onMounted } from 'vue';
 import DataTable from '~/components/shared/DataTable.vue';
@@ -35,9 +35,12 @@ onMounted(async () => {
 </script>
 <template>
   <main class="p-6">
+    <header>
+      <SharedBackLink />
+    </header>
     <section class="mb-6 flex items-center gap-6">
       <h1 class="flex items-center gap-2 text-2xl font-bold">
-        <CalendarDays />
+        <CalendarX2 :size="24" />
         Atendimentos Cancelados
       </h1>
       <Button @click="navigateTo('/personal/rides/new')">

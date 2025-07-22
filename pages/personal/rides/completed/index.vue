@@ -1,11 +1,9 @@
 <script setup lang="ts">
 import { Button } from '@/components/ui/button';
-import { createColumnHelper } from '@tanstack/vue-table';
-import { CalendarDays, LoaderCircle, Plus } from 'lucide-vue-next';
+import { CalendarCheck2, LoaderCircle, Plus } from 'lucide-vue-next';
 import { storeToRefs } from 'pinia';
 import { onMounted } from 'vue';
 import DataTable from '~/components/shared/DataTable.vue';
-import TableActions from '~/components/shared/TableActions.vue';
 import { useRidesStore } from '~/stores/rides.store';
 
 import { columns } from './columns';
@@ -13,7 +11,6 @@ import { columns } from './columns';
 const ridesStore = useRidesStore();
 const { getRidesAction } = ridesStore;
 const { loadingData, rides } = storeToRefs(ridesStore);
-const columnHelper = createColumnHelper<any>();
 const userRidesList = ref([]);
 
 const { data } = useAuth();
@@ -38,9 +35,12 @@ onMounted(async () => {
 </script>
 <template>
   <main class="p-6">
+    <header>
+      <SharedBackLink />
+    </header>
     <section class="mb-6 flex items-center gap-6">
       <h1 class="flex items-center gap-2 text-2xl font-bold">
-        <CalendarDays />
+        <CalendarCheck2 :size="24" />
         Atendimentos Realizados
       </h1>
       <Button @click="navigateTo('/personal/rides/new')">
