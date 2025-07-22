@@ -25,9 +25,9 @@ export const columns: any = [
       h('div', { class: 'capitalize font-bold' }, row.getValue('code')),
   }),
   columnHelper.display({
-    id: 'originAddress',
+    id: 'ride',
     enableHiding: false,
-    header: () => h('div', { class: 'text-left' }, 'Origem'),
+    header: () => h('div', { class: 'text-left' }, 'Atendimento'),
     cell: ({ row }) => {
       const data = row.original;
       const normalize = data.travel.originAddress.split('-').slice(0, 1).pop();
@@ -35,26 +35,13 @@ export const columns: any = [
     },
   }),
   columnHelper.display({
-    id: 'destinationAddress',
-    enableHiding: false,
-    header: () => h('div', { class: 'text-left' }, 'Destino'),
-    cell: ({ row }) => {
-      const data = row.original;
-      const normalize = data.travel.destinationAddress.split('-').slice(0, 1).pop();
-      return h('div', { class: 'capitalize' }, normalize);
-    },
-  }),
-  columnHelper.display({
-    id: 'travelDate',
+    id: 'rideDate',
     enableHiding: false,
     header: () => h('div', { class: 'text-left' }, 'Data e Hora'),
     cell: ({ row }) => {
       const data = row.original;
-      return h(
-        'div',
-        { class: 'capitalize' },
-        `${data.travel.date} - ${data.travel.departTime}`,
-      );
+      const normalize = data.travel.destinationAddress.split('-').slice(0, 1).pop();
+      return h('div', { class: 'capitalize' }, normalize);
     },
   }),
   columnHelper.accessor('price', {
@@ -62,13 +49,9 @@ export const columns: any = [
     cell: ({ row }) =>
       h('div', { class: 'capitalize' }, currencyFormat(row.getValue('price'))),
   }),
-  columnHelper.accessor('status', {
-    header: () => h('div', { class: 'text-left' }, 'Status'),
-    cell: ({ row }) => {
-      const status = row.getValue('status');
-      return h(RideStatusFlag, {
-        rideStatus: status,
-      });
-    },
+  columnHelper.accessor('paymentMethod', {
+    header: () => h('div', { class: 'text-left' }, 'Forma de Pagamento'),
+    cell: ({ row }) =>
+      h('div', { class: 'capitalize' }, currencyFormat(row.getValue('paymentMethod'))),
   }),
 ];

@@ -31,7 +31,7 @@ definePageMeta({
   middleware: 'sidebase-auth',
 });
 useHead({
-  title: 'Backoffice - Novo Atendimento | Urban Mobi',
+  title: 'Novo Atendimento | Urban Mobi',
 });
 
 const ridesStore = useRidesStore();
@@ -382,14 +382,14 @@ const onSubmit = form.handleSubmit(async (values) => {
   } catch (error) {
     toast({
       title: 'Oops!',
+      description: `Ocorreu um erro ao criar o atendimento. Tente novamente.`,
       variant: 'destructive',
-      description: `Ocorreu um erro ao criar o agendamento. Tente novamente.`,
     });
   } finally {
     toast({
       title: 'Tudo pronto!',
       class: 'bg-green-600 border-0 text-white text-2xl',
-      description: `Agendamento cadastrado com sucesso!`,
+      description: `Atendimento cadastrado com sucesso!`,
     });
     navigateTo('/personal/rides/open');
   }
@@ -712,7 +712,7 @@ const onSubmit = form.handleSubmit(async (values) => {
                 <div class="lg:grid lg:grid-cols-2 gap-6">
                   <div>
                     <h2 class="mb-6 text-lg font-medium">
-                      Como deseja pagar seu agendamento?
+                      Como deseja pagar seu atendimento?
                     </h2>
                     <ul class="space-y-2">
                       <li

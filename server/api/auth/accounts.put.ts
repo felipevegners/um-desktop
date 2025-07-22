@@ -3,6 +3,9 @@ import bcrypt from 'bcrypt';
 
 export default defineEventHandler(async (event) => {
   const body = await readBody(event);
+
+  console.log('BODY --> ', body);
+
   if (!body.username || !body.email || !body.role) {
     throw createError({
       statusCode: 400,
@@ -24,6 +27,7 @@ export default defineEventHandler(async (event) => {
     department,
     document,
     birthDate,
+    address,
   } = body;
 
   const userAccount = await prisma.accounts.findUnique({
@@ -60,6 +64,7 @@ export default defineEventHandler(async (event) => {
         department,
         document,
         birthDate,
+        address,
       },
     });
   } catch (error: any) {

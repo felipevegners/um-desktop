@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { SharedBackLink } from '#components';
-import { CalendarDays, X } from 'lucide-vue-next';
+import { useToast } from '@/components/ui/toast/use-toast';
+import { CalendarDays, LoaderCircle, X } from 'lucide-vue-next';
 import { currencyFormat } from '~/lib/utils';
 
 definePageMeta({
@@ -12,10 +13,40 @@ useHead({
   title: 'Visualizar Atendimento | Urban Mobi',
 });
 
+const { toast } = useToast();
 const route = useRoute();
 const ridesStore = useRidesStore();
-const { getRideByIdAction } = ridesStore;
+const { getRideByIdAction, updateRideAction } = ridesStore;
 const { ride, loadingData } = storeToRefs(ridesStore);
+
+const showCancelationModal = ref<boolean>(false);
+
+const toggleCancelationModal = () => {
+  showCancelationModal.value = !showCancelationModal.value;
+};
+
+const cancelRide = async () => {
+  const payload = {
+    ...ride?.value,
+    status: 'cancelled',
+  };
+  try {
+    await updateRideAction(payload);
+  } catch (error) {
+    toast({
+      title: 'Oops!',
+      description: `Ocorreu um erro ao cancelar o atendimento. Tente novamente.`,
+      variant: 'destructive',
+    });
+  } finally {
+    toast({
+      title: 'Tudo pronto!',
+      class: 'bg-green-600 border-0 text-white text-2xl',
+      description: `Atendimento cancelado com sucesso!`,
+    });
+    navigateTo('/personal/rides/open');
+  }
+};
 
 onBeforeMount(async () => {
   await getRideByIdAction(route.params.id as string);
@@ -31,13 +62,37 @@ onBeforeMount(async () => {
         <CalendarDays :size="24" />
         Detalhes do Atendimento - #{{ ride?.code }}
       </h1>
-      <Button @click="">
+
+      <AlertDialog :open="showCancelationModal">
+        <AlertDialogContent class="flex flex-col">
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              Deseja cancelar o atendimento {{ ride?.code }}?
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              <strong>AVISO:</strong> O estorno do pagamento será processado em até 3 dias
+              úteis.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter class="mt-10">
+            <AlertDialogCancel @click="toggleCancelationModal">
+              Voltar
+            </AlertDialogCancel>
+            <AlertDialogAction class="bg-red-500 hover:bg-red-600" @click="cancelRide">
+              <LoaderCircle v-if="loadingData" class="animate-spin" />
+              Cancelar Atendimento
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <Button @click="toggleCancelationModal" type="button" variant="destructive">
         <X :size="18" />
         Cancelar Atendimento
       </Button>
     </section>
     <section v-if="loadingData" class="min-h-[300px] flex items-center justify-center">
-      <LoaderCircle class="w-10 h-10 animate-spin" />
+      <LoaderCircle class="animate-spin" />
     </section>
     <section v-else class="mt-6">
       <Card class="p-6 bg-zinc-200">
@@ -123,15 +178,46 @@ onBeforeMount(async () => {
           <div class="md:grid md:grid-cols-4 md:gap-6">
             <div class="p-6 bg-white rounded-md col-span-2">
               <p class="text-sm text-zinc-600">Nome</p>
-              <p class="text-xl font-bold">{{ ride?.driver.name || '-' }}</p>
+              <p class="text-xl font-bold">
+                {{ ride?.driver.name || 'Sem motorista' }}
+              </p>
             </div>
             <div class="p-6 bg-white rounded-md">
               <p class="text-sm text-zinc-600">Celular</p>
-              <p class="text-xl font-bold">{{ ride?.driver.phone }}</p>
+              <p class="text-xl font-bold">{{ ride?.driver.phone || '-' }}</p>
+            </div>
+            <div class="p-6 bg-white rounded-md">
+              <p class="text-sm text-zinc-600">Veículo</p>
+              <p class="text-xl font-bold">{{ ride?.driver?.car?.model || '-' }}</p>
+            </div>
+            <div class="p-6 bg-white rounded-md col-span-4">
+              <p class="text-sm text-zinc-600">Observações ao Motorista</p>
+              <p class="text-xl font-bold">{{ ride?.observations || '-' }}</p>
+            </div>
+          </div>
+        </section>
+        <Separator class="my-6 border-b border-zinc-300" />
+        <section>
+          <h2 class="mb-4 text-2xl font-bold">Agendado por</h2>
+          <div class="md:grid md:grid-cols-3 md:gap-6">
+            <div class="p-6 bg-white rounded-md">
+              <p class="text-sm text-zinc-600">Nome</p>
+              <p class="text-xl font-bold">
+                {{ ride?.dispatcher.user || '-' }}
+              </p>
+            </div>
+            <div class="p-6 bg-white rounded-md">
+              <p class="text-sm text-zinc-600">E-mail</p>
+              <p class="text-xl font-bold">{{ ride?.dispatcher.email || '-' }}</p>
+            </div>
+            <div class="p-6 bg-white rounded-md">
+              <p class="text-sm text-zinc-600">Data</p>
+              <p class="text-xl font-bold">{{ ride?.dispatcher.dispatchDate || '-' }}</p>
             </div>
           </div>
         </section>
       </Card>
+      <!-- <pre>{{ ride }}</pre> -->
     </section>
   </main>
 </template>

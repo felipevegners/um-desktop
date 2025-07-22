@@ -19,6 +19,7 @@ model Accounts {
   role           String
   avatar         Json?
   contract       Json?
+  address        Json?
   phone          String?
   position       String?
   department     String?

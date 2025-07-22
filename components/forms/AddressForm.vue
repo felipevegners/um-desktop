@@ -11,7 +11,6 @@ defineOptions({
 });
 
 const { toast } = useToast();
-// const form = useForm();
 
 const props = defineProps<{
   editMode?: boolean;
@@ -100,10 +99,7 @@ const findAddress = async (code: string) => {
               type="button"
             >
               <Search v-if="!isLoadingAddress" class="w-10 h-10" />
-              <LoaderCircle
-                v-if="isLoadingAddress"
-                class="w-10 h-10 animate-spin"
-              />
+              <LoaderCircle v-if="isLoadingAddress" class="w-10 h-10 animate-spin" />
             </Button>
           </div>
         </FormControl>

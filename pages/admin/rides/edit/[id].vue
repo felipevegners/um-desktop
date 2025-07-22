@@ -384,8 +384,8 @@ const onSubmit = form.handleSubmit(async (values) => {
   } catch (error) {
     toast({
       title: 'Oops!',
-      variant: 'destructive',
       description: `Ocorreu um erro ao criar o agendamento. Tente novamente.`,
+      variant: 'destructive',
     });
   } finally {
     toast({

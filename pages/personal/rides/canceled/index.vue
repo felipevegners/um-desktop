@@ -30,7 +30,7 @@ onMounted(async () => {
       //@ts-ignore
       (ride: any) => ride.user.id === data.value?.user?.id,
     )
-    .filter((ride: any) => ride.status === 'canceled');
+    .filter((ride: any) => ride.status === 'cancelled');
 });
 </script>
 <template>

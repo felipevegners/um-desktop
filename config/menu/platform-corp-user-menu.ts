@@ -44,8 +44,8 @@ export const platformCorpUserMenu = {
       isActive: false,
       items: [
         {
-          title: 'Minhas Faturas',
-          url: '/personal/invoices/all',
+          title: 'Meus Recibos',
+          url: '/personal/invoices/',
         },
       ],
     },

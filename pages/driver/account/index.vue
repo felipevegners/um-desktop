@@ -165,8 +165,8 @@ const onSubmit = driversForm.handleSubmit(async (values) => {
   } catch (error) {
     toast({
       title: 'Oops!',
-      class: 'bg-red-600 border-0 text-white text-2xl',
       description: `Ocorreu um erro ${error} ao adicionar o motorista.`,
+      variant: 'destructive',
     });
   } finally {
     toast({
@@ -412,8 +412,8 @@ const onSubmit = driversForm.handleSubmit(async (values) => {
                               onUploadError: (error) => {
                                 toast({
                                   title: 'Oops!',
-                                  class: 'bg-red-500 border-0 text-white text-2xl',
                                   description: `Ocorreu um erro no upload do arquivo. Tente novamente - ${error.cause}`,
+                                  variant: 'destructive',
                                 });
                               },
                             }"
@@ -505,8 +505,8 @@ const onSubmit = driversForm.handleSubmit(async (values) => {
                               onUploadError: (error) => {
                                 toast({
                                   title: 'Oops!',
-                                  class: 'bg-red-500 border-0 text-white text-2xl',
                                   description: `Ocorreu um erro no upload do arquivo. Tente novamente - ${error.cause}`,
+                                  variant: 'destructive',
                                 });
                               },
                             }"
@@ -598,8 +598,8 @@ const onSubmit = driversForm.handleSubmit(async (values) => {
                               onUploadError: (error) => {
                                 toast({
                                   title: 'Oops!',
-                                  class: 'bg-red-500 border-0 text-white text-2xl',
                                   description: `Ocorreu um erro no upload do arquivo. Tente novamente - ${error.cause}`,
+                                  variant: 'destructive',
                                 });
                               },
                             }"

@@ -115,7 +115,7 @@ const onSubmit = form.handleSubmit(async (values) => {
               class="mt-4 w-full h-[48px] bg-um-primary hover:bg-gradient-to-t from-um-primary to-black/30 text-black uppercase font-bold"
               type="submit"
             >
-              Login
+              Acessar
             </Button>
           </div>
           <div

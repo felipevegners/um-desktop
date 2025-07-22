@@ -176,8 +176,8 @@ const onSubmit = driversForm.handleSubmit(async (values) => {
   } catch (error) {
     toast({
       title: 'Oops!',
-      class: 'bg-red-600 border-0 text-white text-2xl',
       description: `Ocorreu um erro ${error} ao adicionar o motorista.`,
+      variant: 'destructive',
     });
   } finally {
     isLoadingSend.value = false;

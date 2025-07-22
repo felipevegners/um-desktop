@@ -2,6 +2,7 @@ import { Button } from '@/components/ui/button';
 import { WPP_API } from '@/config/paths';
 import { createColumnHelper } from '@tanstack/vue-table';
 import { ArrowUpDown, MessageCircleMore } from 'lucide-vue-next';
+import RideStatusFlag from '~/components/shared/RideStatusFlag.vue';
 import { currencyFormat, sanitizePhone } from '~/lib/utils';
 
 const columnHelper = createColumnHelper<any>();
@@ -119,14 +120,9 @@ export const columns: any = [
     header: () => h('div', { class: 'text-left' }, 'Status'),
     cell: ({ row }) => {
       const status = row.getValue('status');
-      return h(
-        'div',
-        {
-          class: `px-2 flex items-center justify-center h-6 rounded-lg text-white text-xs w-fit 
-          ${status === 'created' ? 'bg-blue-600' : 'bg-green-600'}`,
-        },
-        status === 'created' ? 'Agendado' : status === 'accepted' ? 'Aceito' : 'Unknow',
-      );
+      return h(RideStatusFlag, {
+        rideStatus: status,
+      });
     },
   }),
 ];

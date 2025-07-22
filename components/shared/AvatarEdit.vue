@@ -26,8 +26,8 @@ const deleteFile = async (url: string) => {
   } catch (error) {
     toast({
       title: 'Oops!',
-      class: 'bg-red-500 border-0 text-white text-2xl',
       description: `Arquivo não pode ser removido. Tente novamente.`,
+      variant: 'destructive',
     });
   } finally {
     toast({

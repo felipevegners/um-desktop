@@ -12,14 +12,7 @@ export interface IAccountsState {
   isLoading: boolean;
   isLoggedIn: boolean;
   accounts: Account[];
-  account: {
-    username: string;
-    email: string;
-    role: string;
-    contractId: string;
-    status: string;
-    enabled: boolean;
-  };
+  account: any;
 }
 
 export const useAccountStore = defineStore('accounts', {
@@ -31,6 +24,7 @@ export const useAccountStore = defineStore('accounts', {
         id: '',
         username: '',
         email: '',
+        birthDate: '',
         role: '',
         phone: '',
         position: '',
@@ -40,6 +34,15 @@ export const useAccountStore = defineStore('accounts', {
           branchId: '',
           area: '',
           name: '',
+        },
+        address: {
+          zipcode: '',
+          streetName: '',
+          streetNumber: '',
+          complement: '',
+          neighborhood: '',
+          city: '',
+          state: '',
         },
         status: '',
         enabled: true,

@@ -38,14 +38,14 @@ export const platformUserMenu = {
       ],
     },
     {
-      title: 'Pagamentos',
+      title: 'Financeiro',
       url: '#',
       icon: HandCoins,
       isActive: false,
       items: [
         {
-          title: 'Histórico de Pagamentos',
-          url: '/personal/invoices/active',
+          title: 'Meus Recibos',
+          url: '/personal/invoices/',
         },
       ],
     },

@@ -2,6 +2,7 @@ import { Button } from '@/components/ui/button';
 import { WPP_API } from '@/config/paths';
 import { createColumnHelper } from '@tanstack/vue-table';
 import { ArrowUpDown, MessageCircleMore } from 'lucide-vue-next';
+import RideStatusFlag from '~/components/shared/RideStatusFlag.vue';
 import { currencyFormat, sanitizePhone } from '~/lib/utils';
 
 const columnHelper = createColumnHelper<any>();
@@ -21,7 +22,7 @@ export const columns: any = [
       );
     },
     cell: ({ row }: any) =>
-      h('div', { class: 'capitalize font-bold' }, row.getValue('code')),
+      h('div', { class: 'capitalize font-bold line-through' }, row.getValue('code')),
   }),
   columnHelper.display({
     id: 'originAddress',
@@ -30,7 +31,7 @@ export const columns: any = [
     cell: ({ row }) => {
       const data = row.original;
       const normalize = data.travel.originAddress.split('-').slice(0, 1).pop();
-      return h('div', { class: 'capitalize' }, normalize);
+      return h('div', { class: 'capitalize line-through' }, normalize);
     },
   }),
   columnHelper.display({
@@ -40,7 +41,7 @@ export const columns: any = [
     cell: ({ row }) => {
       const data = row.original;
       const normalize = data.travel.destinationAddress.split('-').slice(0, 1).pop();
-      return h('div', { class: 'capitalize' }, normalize);
+      return h('div', { class: 'capitalize line-through' }, normalize);
     },
   }),
   columnHelper.display({
@@ -51,7 +52,7 @@ export const columns: any = [
       const data = row.original;
       return h(
         'div',
-        { class: 'capitalize' },
+        { class: 'capitalize line-through' },
         `${data.travel.date} - ${data.travel.departTime}`,
       );
     },
@@ -59,7 +60,11 @@ export const columns: any = [
   columnHelper.accessor('price', {
     header: () => h('div', { class: 'text-left' }, 'Valor'),
     cell: ({ row }) =>
-      h('div', { class: 'capitalize' }, currencyFormat(row.getValue('price'))),
+      h(
+        'div',
+        { class: 'capitalize line-through' },
+        currencyFormat(row.getValue('price')),
+      ),
   }),
   columnHelper.display({
     id: 'driver',
@@ -67,21 +72,20 @@ export const columns: any = [
     header: () => h('div', { class: 'text-left' }, 'Motorista'),
     cell: ({ row }) => {
       const data = row.original;
-      return h('div', { class: 'capitalize' }, data.driver.name ? data.driver.name : '-');
+      return h(
+        'div',
+        { class: 'capitalize line-through' },
+        data.driver.name ? data.driver.name : '-',
+      );
     },
   }),
   columnHelper.accessor('status', {
     header: () => h('div', { class: 'text-left' }, 'Status'),
     cell: ({ row }) => {
       const status = row.getValue('status');
-      return h(
-        'div',
-        {
-          class: `px-2 flex items-center justify-center h-6 rounded-lg text-white text-xs w-fit 
-          ${status === 'created' ? 'bg-blue-600' : 'bg-green-600'}`,
-        },
-        status === 'created' ? 'Agendado' : 'Aguardando',
-      );
+      return h(RideStatusFlag, {
+        rideStatus: status,
+      });
     },
   }),
 ];
