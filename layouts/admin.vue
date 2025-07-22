@@ -1,15 +1,5 @@
 <script setup lang="ts">
-import {
-  BadgeCheck,
-  Bell,
-  ChevronRight,
-  ChevronsUpDown,
-  CreditCard,
-  LayoutDashboard,
-  LogOut,
-  Sparkles,
-} from 'lucide-vue-next';
-import { computed } from 'vue';
+import { ChevronRight, LayoutDashboard, LogOut, User } from 'lucide-vue-next';
 import Header from '~/components/shared/Header.vue';
 import { generateMenu } from '~/config/menu/generateMenu';
 
@@ -18,10 +8,10 @@ const { data, signOut } = useAuth();
 const { user } = data.value;
 const menuData = generateMenu(user.role);
 
-const userNameInitials = computed(() => {
-  const splited = menuData.user.name.split(' ');
-  return splited.map((word: string) => word[0]).join('');
-});
+// const userNameInitials = computed(() => {
+//   const splited = menuData.user.name.split(' ');
+//   return splited.map((word: string) => word[0]).join('');
+// });
 </script>
 
 <template>
@@ -30,9 +20,9 @@ const userNameInitials = computed(() => {
       <SidebarHeader class="sidebar">
         <SidebarMenu>
           <SidebarMenuItem>
-            <div class="py-2 flex items-center justify-center">
+            <div class="py-2 flex items-start justify-center">
               <img
-                class="mt-4 mb-6 h-9 group-data-[collapsible=icon]:hidden"
+                class="mt-8 mb-10 h-8 group-data-[collapsible=icon]:hidden"
                 src="/images/logo_horizontal_white.svg"
               />
               <img
@@ -43,11 +33,14 @@ const userNameInitials = computed(() => {
           </SidebarMenuItem>
         </SidebarMenu>
       </SidebarHeader>
+
       <SidebarContent class="scrollbar-hidden sidebar">
         <SidebarGroup>
-          <SidebarGroupLabel class="mb-4 text-lg">
+          <SidebarGroupLabel class="mb-4 text-base">
+            <User class="mr-2" :size="18" />
             {{ menuData.title }}
           </SidebarGroupLabel>
+          <SidebarSeparator class="border-b border-zinc-700" />
           <SidebarMenu>
             <SidebarMenuItem class="my-4">
               <SidebarMenuButton tooltip="Dashboard">
@@ -123,6 +116,21 @@ const userNameInitials = computed(() => {
           </SidebarMenu>
         </SidebarGroup>
       </SidebarContent>
+      <SidebarSeparator class="border-b border-zinc-700" />
+      <SidebarGroup>
+        <SidebarMenu>
+          <SidebarMenuItem>
+            <SidebarMenuButton
+              as-child
+              @click="signOut"
+              class="cursor-pointer hover:text-um-primary"
+            >
+              <span><LogOut /> Logout</span>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+        </SidebarMenu>
+      </SidebarGroup>
+
       <!-- <SidebarFooter class="sidebar-footer">
         <SidebarMenu>
           <SidebarMenuItem>

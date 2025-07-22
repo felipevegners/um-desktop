@@ -1,13 +1,16 @@
 <script setup lang="ts">
 import DatePicker from '@/components/shared/DatePicker.vue';
+import FormSelect from '@/components/shared/FormSelect.vue';
 import { useToast } from '@/components/ui/toast/use-toast';
+import { paymentMethods } from '@/config/paymentMethods';
 import { getRideCalculationService, getRideRoutesService } from '@/server/services/rides';
+import { useContractsStore } from '@/stores/contracts.store';
+import { useProductsStore } from '@/stores/products.store';
+import { useRidesStore } from '@/stores/rides.store';
 import { DateFormatter, getLocalTimeZone } from '@internationalized/date';
 import {
   ArrowRight,
-  Building,
   CalendarDays,
-  CreditCard,
   LoaderCircle,
   Minus,
   Plus,
@@ -20,10 +23,8 @@ import { vMaska } from 'maska/vue';
 import { storeToRefs } from 'pinia';
 import { useForm } from 'vee-validate';
 import { GoogleMap, Marker, Polyline } from 'vue3-google-map';
-import FormSelect from '~/components/shared/FormSelect.vue';
+import RenderIcon from '~/components/shared/RenderIcon.vue';
 import { currencyFormat, polyLineCodec } from '~/lib/utils';
-import { useProductsStore } from '~/stores/products.store';
-import { useRidesStore } from '~/stores/rides.store';
 
 definePageMeta({
   layout: 'admin',
@@ -34,11 +35,16 @@ useHead({
 });
 
 const ridesStore = useRidesStore();
-const { createRideAction, loadingData } = ridesStore;
+const { createRideAction, getRidesAction, loadingData } = ridesStore;
+const { rides } = storeToRefs(ridesStore);
 
 const productsStore = useProductsStore();
 const { getProductsAction } = productsStore;
 const { isLoading, products } = storeToRefs(productsStore);
+
+const contractsStore = useContractsStore();
+const { getContractByIdAction } = contractsStore;
+const { contract } = storeToRefs(contractsStore);
 
 const API_KEY = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
 const customIconStart = `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="#FFFFFF" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-square-dot-icon lucide-square-dot"><rect width="18" height="18" x="3" y="3" rx="2"/><circle cx="12" cy="12" r="1"/></svg>`;
@@ -57,16 +63,63 @@ const df = new DateFormatter('pt-BR', {
 
 const selectedProduct = ref<any>();
 const travelDate = ref<any>();
-const selectedUser = ref<any>();
 const showGenerateRide = ref<boolean>(false);
 const enableRouteCalculation = ref<boolean>(true);
 const ridePassengers = ref(1);
 const enablePayment = ref<boolean>(false);
-const viewCorpPaymentForm = ref<boolean>(false);
+const contractBranches = ref<any>();
+const contractBranchAreas = ref<any>();
+const contractBranchesList = ref<any>();
+const loadingAreas = ref<boolean>(false);
+const paymentMethod = ref<any>('');
+const paymentMethodList = ref<any>();
 
-const showCorpPaymentForm = (value: any) => {
-  console.log('-> ', value);
-  viewCorpPaymentForm.value = !viewCorpPaymentForm.value;
+const isCorpAccount = computed(() => {
+  const corpRoles = [
+    'master-manager',
+    'branch-manager',
+    'platform-admin',
+    'platform-corp-user',
+  ];
+  //@ts-ignore
+  const { role } = data?.value?.user;
+  return corpRoles.includes(role);
+});
+
+onMounted(async () => {
+  if (isCorpAccount.value) {
+    //@ts-ignore
+    await getContractByIdAction(data?.value?.user?.contract?.contractId);
+    contractBranches.value = contract?.value.branches;
+    contractBranchesList.value = contract?.value.branches.map((branch: any) => {
+      return {
+        label: `${branch.branchCode} - ${branch.name}`,
+        value: branch.id,
+      };
+    });
+
+    paymentMethodList.value = paymentMethods;
+  } else {
+    paymentMethodList.value = paymentMethods.filter(
+      (method) => method.value !== 'corporative',
+    );
+  }
+});
+
+const getBranchAreas = (value: string) => {
+  loadingAreas.value = true;
+  const selectedBranch = contractBranches.value.find(
+    (branch: any) => branch.id === value,
+  );
+  contractBranchAreas.value = selectedBranch.areas.map((area: any) => {
+    return {
+      label: `${area.areaCode} - ${area.areaName}`,
+      value: area.areaCode,
+    };
+  });
+  setTimeout(() => {
+    loadingAreas.value = false;
+  }, 500);
 };
 
 const addPassengers = () => {
@@ -114,6 +167,10 @@ const setSelectedProduct = (value: any) => {
   ridePassengers.value = 1;
 };
 
+const setPaymentMethod = (value: any) => {
+  paymentMethod.value = value;
+};
+
 // Google Maps Area
 const decodePolyline = (polyline: string) => {
   const decode: any = polyLineCodec(polyline);
@@ -159,6 +216,13 @@ const calculatedTravel = ref({
 });
 
 const getRideCalculation = async () => {
+  const targetElement = document.getElementById('map');
+  if (targetElement) {
+    targetElement.scrollIntoView({
+      behavior: 'smooth',
+      block: 'start',
+    });
+  }
   const rideData = {
     origins: originLocationDetails.value.address,
     destinations: destinationLocationDetails.value.address,
@@ -167,8 +231,14 @@ const getRideCalculation = async () => {
     loadingRoute.value = true;
     const travelCalculation = await getRideCalculationService(rideData);
 
+    const duration = travelCalculation?.rows[0]?.elements[0]?.duration.value / 60;
+    const basePrice = parseFloat(selectedProduct?.value.basePrice);
     const distance = travelCalculation?.rows[0]?.elements[0]?.distance.value / 1000;
-    const ridePrice = distance * parseFloat(selectedProduct?.value?.basePrice);
+
+    const ridePrice =
+      basePrice +
+      parseFloat(distance.toFixed(2)) * parseFloat(selectedProduct?.value.kmPrice) +
+      duration * parseFloat(selectedProduct?.value.minutePrice);
 
     calculatedTravel.value.travelDistance =
       travelCalculation?.rows[0]?.elements[0]?.distance.text;
@@ -218,17 +288,55 @@ const setDestinationPlace = (place: any) => {
   enableRouteCalculation.value = false;
 };
 
+const userData = computed(() => {
+  return {
+    //@ts-ignore
+    id: data.value?.user?.id,
+    name: data.value?.user?.name,
+    email: data.value?.user?.email,
+    //@ts-ignore
+    phone: data.value?.user?.phone,
+  };
+});
+
+const generateRideCode = async () => {
+  await getRidesAction();
+  const ridesLength = rides?.value.length;
+  const today = new Date();
+
+  const day = String(today.getDate()).padStart(2, '0');
+  const month = String(today.getMonth() + 1).padStart(2, '0'); // Months are 0-indexed
+  const year = String(today.getFullYear()).slice(-2); // Get the last two digits of the year
+
+  return `UM-${day}${month}${year}${ridesLength + 1}`;
+};
+
+const showPaymentSection = () => {
+  enablePayment.value = true;
+  const targetElement = document.getElementById('payment');
+  targetElement?.scrollIntoView({
+    behavior: 'smooth',
+    block: 'start',
+  });
+};
+
 const onSubmit = form.handleSubmit(async (values) => {
   const ridePayload = {
+    code: await generateRideCode(),
     billing: {
-      paymentMethod: 'credit-card',
-      ammount: '0.00',
+      paymentMethod: paymentMethod.value,
+      paymentData: {
+        branch: values.branch || '-',
+        area: values.area || '-',
+      },
+      ammount: calculatedTravel.value.travelPrice,
+      status: 'paid',
     },
     user: {
-      id: values.user,
-      name: selectedUser.value.name,
-      email: selectedUser.value.email,
-      phone: selectedUser.value.phone,
+      id: userData.value.id,
+      name: userData.value.name,
+      email: userData.value.email,
+      phone: userData.value.phone,
     },
     product: {
       id: selectedProduct.value.id,
@@ -240,7 +348,7 @@ const onSubmit = form.handleSubmit(async (values) => {
     },
     reason: values.reason,
     travel: {
-      passengers: ridePassengers,
+      passengers: ridePassengers.value,
       //@ts-ignore
       date: df.format(travelDate?.value?.toDate(getLocalTimeZone())) || '',
       departTime: values.departTime,
@@ -262,6 +370,7 @@ const onSubmit = form.handleSubmit(async (values) => {
     accepted: false,
     price: calculatedTravel.value.travelPrice,
     driver: {},
+    observations: values.observations,
     dispatcher: {
       user: data?.value?.user?.name,
       email: data?.value?.user?.email,
@@ -282,7 +391,7 @@ const onSubmit = form.handleSubmit(async (values) => {
       class: 'bg-green-600 border-0 text-white text-2xl',
       description: `Agendamento cadastrado com sucesso!`,
     });
-    // navigateTo('/personal/rides/active');
+    navigateTo('/personal/rides/open');
   }
 });
 </script>
@@ -301,187 +410,213 @@ const onSubmit = form.handleSubmit(async (values) => {
       <form @submit.prevent="onSubmit" @keydown.enter.prevent="true">
         <div class="space-y-6">
           <Card class="mb-6 bg-zinc-300">
-            <CardHeader>
-              <CardTitle>Dados da Viagem</CardTitle>
-            </CardHeader>
             <CardContent>
               <div class="md:grid md:grid-cols-2 gap-6">
                 <!-- COLUNA DE DADOS -->
                 <div class="flex flex-col gap-6">
-                  <div
-                    class="p-6 flex flex-col items-start gap-6 border border-zinc-900 rounded-md"
-                  >
-                    <div class="flex flex-col gap-6 w-full">
-                      <div>
-                        <LoaderCircle v-if="isLoading" class="animate-spin" />
-                        <div v-else>
-                          <label class="text-sm font-medium">
-                            Selecione o Serviço UM*
-                          </label>
-                          <ul class="mt-2 flex justify-evenly gap-4 flex-wrap">
-                            <li
-                              class="w-full"
-                              v-for="product in products"
-                              :key="product.id"
+                  <CardTitle class="mt-6">Dados da Viagem</CardTitle>
+                  <div class="flex flex-col gap-6 w-full">
+                    <div>
+                      <LoaderCircle v-if="isLoading" class="animate-spin" />
+                      <div v-else>
+                        <label class="text-sm font-medium">
+                          Selecione o Serviço UM*
+                        </label>
+                        <ul class="mt-2 flex justify-evenly gap-4 flex-wrap">
+                          <li
+                            class="w-full"
+                            v-for="product in products"
+                            :key="product.id"
+                          >
+                            <article
+                              class="p-4 flex items-center justify-between gap-4 bg-white rounded-md border border-zinc-900"
                             >
-                              <article
-                                class="p-4 flex items-center justify-between gap-4 bg-white rounded-md border border-zinc-900"
+                              <div
+                                class="font-normal uppercase flex items-center justify-start gap-2"
                               >
+                                <Checkbox
+                                  @update:checked="setSelectedProduct(product)"
+                                  :checked="selectedProduct?.id === product.id"
+                                />
                                 <div
-                                  class="font-normal uppercase flex items-center justify-start gap-2"
+                                  class="w-[50px] h-[50px] rounded-md bg-zinc-200 bg-cover bg-no-repeat bg-center relative flex items-center justify-center"
+                                  :style="{
+                                    backgroundImage: `url(${product.image?.url})`,
+                                  }"
+                                />
+                                <small
+                                  class="px-2 py-1 uppercase text-white text-center rounded-md"
+                                  :class="`${product.type === 'contract' ? 'bg-zinc-800' : product.type === 'free-km' ? 'bg-orange-400' : 'bg-purple-400'}`"
                                 >
-                                  <Checkbox
-                                    @update:checked="setSelectedProduct(product)"
-                                    :checked="selectedProduct?.id === product.id"
-                                  />
-                                  <div
-                                    class="w-[50px] h-[50px] rounded-md bg-zinc-200 bg-cover bg-no-repeat bg-center relative flex items-center justify-center"
-                                    :style="{
-                                      backgroundImage: `url(${product.image?.url})`,
-                                    }"
-                                  />
-                                  <small
-                                    class="px-2 py-1 uppercase text-white text-center rounded-md"
-                                    :class="`${product.type === 'contract' ? 'bg-zinc-800' : product.type === 'free-km' ? 'bg-orange-400' : 'bg-purple-400'}`"
-                                  >
-                                    {{ product.code }}
+                                  {{ product.code }}
+                                </small>
+                                <small>{{ product.name }}</small>
+                                <div class="flex items-center justify-start">
+                                  <Users :size="14" />
+                                  <small class="ml-1 font-bold">
+                                    {{ product?.capacity }}
                                   </small>
-                                  <small>{{ product.name }}</small>
-                                  <div class="flex items-center justify-start">
-                                    <Users :size="14" />
-                                    <small class="ml-1 font-bold">
-                                      {{ product?.capacity }}
-                                    </small>
-                                  </div>
                                 </div>
-                                <TooltipProvider>
-                                  <Tooltip>
-                                    <TooltipTrigger as-child class="hover:cursor-pointer">
-                                      <svg
-                                        xmlns="http://www.w3.org/2000/svg"
-                                        width="24"
-                                        height="24"
-                                        viewBox="0 0 24 24"
-                                        fill="none"
-                                        stroke="currentColor"
-                                        stroke-width="2"
-                                        stroke-linecap="round"
-                                        stroke-linejoin="round"
-                                        class="text-zinc-700 lucide lucide-circle-question-mark-icon lucide-circle-question-mark"
-                                      >
-                                        <circle cx="12" cy="12" r="10" />
-                                        <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3" />
-                                        <path d="M12 17h.01" />
-                                      </svg>
-                                    </TooltipTrigger>
-                                    <TooltipContent class="bg-zinc-700 text-white">
-                                      <p>{{ product.description }}</p>
-                                    </TooltipContent>
-                                  </Tooltip>
-                                </TooltipProvider>
-                              </article>
-                            </li>
-                          </ul>
-                        </div>
-                      </div>
-                      <div v-if="selectedProduct" class="flex flex-col gap-6 items-start">
-                        <div class="flex flex-col">
-                          <label class="mb-2 text-sm font-medium">Data*</label>
-                          <DatePicker v-model="travelDate" />
-                        </div>
-                        <div class="md:grid md:grid-cols-3 gap-6">
-                          <FormField v-slot="{ componentField }" name="departTime">
-                            <FormItem>
-                              <FormLabel>Hora da Partida*</FormLabel>
-                              <FormControl>
-                                <Input
-                                  type="text"
-                                  v-bind="componentField"
-                                  v-maska="'##:##'"
-                                />
-                              </FormControl>
-                            </FormItem>
-                          </FormField>
-                          <div v-if="selectedProduct">
-                            <label class="text-sm font-medium leading-none">
-                              Passageiros*
-                            </label>
-                            <div class="mt-2 flex items-center justify-start gap-3">
-                              <Button type="button" @click="removePassengers">
-                                <Minus :size="20" />
-                              </Button>
-                              <span
-                                class="py-1.5 px-2 bg-white border border-zinc-950 rounded-md w-20 text-center"
-                              >
-                                {{ ridePassengers }}
-                              </span>
-                              <Button
-                                v-if="
-                                  selectedProduct.capacity &&
-                                  ridePassengers !== selectedProduct.capacity
-                                "
-                                type="button"
-                                @click="addPassengers"
-                              >
-                                <Plus :size="20" />
-                              </Button>
-                            </div>
-                          </div>
-                        </div>
-                        <FormField v-slot="{ componentField, value }" name="origin">
-                          <FormItem class="w-full">
-                            <FormLabel>Origem*</FormLabel>
-                            <FormControl>
-                              <div class="flex items-center w-full gap-2">
-                                <SquareDot />
-                                <GMapAutocomplete
-                                  placeholder="Insira a Origem"
-                                  @place_changed="setOriginPlace"
-                                  v-bind="componentField"
-                                  :value="value"
-                                  id="originField"
-                                  class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                                />
                               </div>
-                              <div class="flex flex-col items-start gap-2"></div>
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        </FormField>
-                        <FormField v-slot="{ componentField, value }" name="destination">
-                          <FormItem class="w-full">
-                            <FormLabel>Destino*</FormLabel>
-                            <FormControl>
-                              <div class="flex items-center gap-2">
-                                <SquareSquare />
-                                <GMapAutocomplete
-                                  placeholder="Insira o Destino"
-                                  @place_changed="setDestinationPlace"
-                                  v-bind="componentField"
-                                  class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                                />
-                              </div>
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        </FormField>
-                        <Button
-                          type="button"
-                          @click.prevent="getRideCalculation"
-                          :disabled="enableRouteCalculation"
-                          class="mt-4 p-6"
-                        >
-                          <LoaderCircle v-if="loadingRoute" class="animate-spin" />
-                          <Waypoints v-else />
-                          Calcular Meu Trajeto
-                        </Button>
+                              <TooltipProvider>
+                                <Tooltip>
+                                  <TooltipTrigger as-child class="hover:cursor-pointer">
+                                    <svg
+                                      xmlns="http://www.w3.org/2000/svg"
+                                      width="24"
+                                      height="24"
+                                      viewBox="0 0 24 24"
+                                      fill="none"
+                                      stroke="currentColor"
+                                      stroke-width="2"
+                                      stroke-linecap="round"
+                                      stroke-linejoin="round"
+                                      class="text-zinc-700 lucide lucide-circle-question-mark-icon lucide-circle-question-mark"
+                                    >
+                                      <circle cx="12" cy="12" r="10" />
+                                      <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3" />
+                                      <path d="M12 17h.01" />
+                                    </svg>
+                                  </TooltipTrigger>
+                                  <TooltipContent class="bg-zinc-700 text-white">
+                                    <p>{{ product.description }}</p>
+                                  </TooltipContent>
+                                </Tooltip>
+                              </TooltipProvider>
+                            </article>
+                          </li>
+                        </ul>
                       </div>
                     </div>
+                    <div v-if="selectedProduct" class="flex flex-col gap-6 items-start">
+                      <div class="flex flex-col">
+                        <label class="mb-2 text-sm font-medium">Data*</label>
+                        <DatePicker v-model="travelDate" />
+                      </div>
+                      <div class="md:grid md:grid-cols-3 gap-6">
+                        <FormField v-slot="{ componentField }" name="departTime">
+                          <FormItem>
+                            <FormLabel>Hora da Partida*</FormLabel>
+                            <FormControl>
+                              <Input
+                                type="text"
+                                v-bind="componentField"
+                                v-maska="'##:##'"
+                              />
+                            </FormControl>
+                          </FormItem>
+                        </FormField>
+                        <div v-if="selectedProduct">
+                          <label class="text-sm font-medium leading-none">
+                            Passageiros*
+                          </label>
+                          <div class="mt-2 flex items-center justify-start gap-3">
+                            <Button type="button" @click="removePassengers">
+                              <Minus :size="20" />
+                            </Button>
+                            <span
+                              class="py-1.5 px-2 bg-white border border-zinc-950 rounded-md w-20 text-center"
+                            >
+                              {{ ridePassengers }}
+                            </span>
+                            <Button
+                              v-if="
+                                selectedProduct.capacity &&
+                                ridePassengers !== selectedProduct.capacity
+                              "
+                              type="button"
+                              @click="addPassengers"
+                            >
+                              <Plus :size="20" />
+                            </Button>
+                          </div>
+                        </div>
+                      </div>
+                      <FormField
+                        v-if="isCorpAccount"
+                        v-slot="{ componentField }"
+                        name="reason"
+                      >
+                        <FormItem class="w-full">
+                          <FormLabel>Motivo / Justificativa*</FormLabel>
+                          <FormControl>
+                            <Input type="text" v-bind="componentField" />
+                          </FormControl>
+                          <FormDescription>
+                            Uso exclusivo e obrigatório para usuários corporativos
+                          </FormDescription>
+                        </FormItem>
+                      </FormField>
+                      <FormField v-slot="{ componentField, value }" name="origin">
+                        <FormItem class="w-full">
+                          <FormLabel>Origem*</FormLabel>
+                          <FormControl>
+                            <div class="flex items-center w-full gap-2">
+                              <SquareDot />
+                              <GMapAutocomplete
+                                placeholder="Insira a Origem"
+                                @place_changed="setOriginPlace"
+                                v-bind="componentField"
+                                :value="value"
+                                id="originField"
+                                class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                              />
+                            </div>
+                            <div class="flex flex-col items-start gap-2"></div>
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      </FormField>
+                      <FormField v-slot="{ componentField, value }" name="destination">
+                        <FormItem class="w-full">
+                          <FormLabel>Destino*</FormLabel>
+                          <FormControl>
+                            <div class="flex items-center gap-2">
+                              <SquareSquare />
+                              <GMapAutocomplete
+                                placeholder="Insira o Destino"
+                                @place_changed="setDestinationPlace"
+                                v-bind="componentField"
+                                class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                              />
+                            </div>
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      </FormField>
+                      <div
+                        v-if="selectedProduct"
+                        class="p-6 border border-zinc-900 rounded-md w-full"
+                      >
+                        <FormField v-slot="{ componentField }" name="observations">
+                          <FormItem>
+                            <FormLabel>
+                              Instruções / Observações para o Motorista:
+                            </FormLabel>
+                            <FormControl>
+                              <Textarea
+                                class="resize-none bg-white"
+                                v-bind="componentField"
+                              />
+                            </FormControl>
+                          </FormItem>
+                        </FormField>
+                      </div>
+                      <Button
+                        type="button"
+                        @click.prevent="getRideCalculation"
+                        :disabled="enableRouteCalculation"
+                        class="mt-4 p-6"
+                      >
+                        <LoaderCircle v-if="loadingRoute" class="animate-spin" />
+                        <Waypoints v-else />
+                        Calcular Atendimento
+                      </Button>
+                    </div>
                   </div>
-                  <div class="md:grid md:grid-cols-2 gap-6"></div>
                 </div>
                 <!-- COLUNA MAPA E ROTA -->
-                <div class="flex items-start justify-start">
+                <div class="flex items-start justify-start" id="map">
                   <div
                     v-if="loadingRoute"
                     class="flex flex-col gap-6 items-center justify-center w-full"
@@ -490,8 +625,9 @@ const onSubmit = form.handleSubmit(async (values) => {
                     <small>Calculando rota...</small>
                   </div>
                   <div v-else class="flex flex-col items-start justify-start w-full">
-                    <div v-if="showRenderedMap" class="w-full">
-                      <CardTitle class="mb-6">Rota e Dados do Atendimento</CardTitle>
+                    <div class="w-full">
+                      <CardTitle class="my-6">Rota e Dados do Atendimento</CardTitle>
+                      <!-- v-if="showRenderedMap" -->
                       <div class="p-6 bg-white rounded-md overflow-hidden">
                         <GoogleMap
                           :api-key="API_KEY"
@@ -554,12 +690,7 @@ const onSubmit = form.handleSubmit(async (values) => {
                     <div v-if="showRenderedMap" class="py-10">
                       <Button
                         type="button"
-                        @click.prevent="
-                          {
-                            enablePayment = !enablePayment;
-                            navigateTo('#payment');
-                          }
-                        "
+                        @click.prevent="showPaymentSection"
                         class="p-6"
                       >
                         Realizar Pagamento
@@ -571,190 +702,126 @@ const onSubmit = form.handleSubmit(async (values) => {
               </div>
             </CardContent>
           </Card>
-          <Card id="payment" v-if="!enablePayment" class="mb-6 bg-zinc-300">
-            <CardHeader>
-              <CardTitle>Pagamento</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div class="lg:grid lg:grid-cols-2 gap-6">
-                <div>
-                  <h2 class="mb-6 text-lg font-medium">
-                    Como deseja pagar seu agendamento?
-                  </h2>
-                  <ul class="space-y-2">
-                    <li
-                      class="py-4 px-3 bg-white rounded-md shadow-md flex items-center gap-4 w-full"
-                    >
-                      <FormField
-                        v-slot="{ value, handleChange }"
-                        type="checkbox"
-                        name="pix"
+          <!-- // PAYMENT AREA -->
+          <section id="payment">
+            <Card v-if="enablePayment" class="mb-6 bg-zinc-300">
+              <CardHeader>
+                <CardTitle>Pagamento</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div class="lg:grid lg:grid-cols-2 gap-6">
+                  <div>
+                    <h2 class="mb-6 text-lg font-medium">
+                      Como deseja pagar seu agendamento?
+                    </h2>
+                    <ul class="space-y-2">
+                      <li
+                        v-for="method in paymentMethodList"
+                        :key="method.id"
+                        class="py-4 px-3 bg-white rounded-md shadow-md flex flex-col items-start gap-4 w-full"
                       >
-                        <FormItem
-                          class="flex flex-row items-center justify-center gap-x-3"
+                        <div class="flex flex-row items-center gap-x-3">
+                          <Checkbox
+                            @update:checked="setPaymentMethod(method.value)"
+                            :checked="paymentMethod.includes(method.value)"
+                          />
+                          <RenderIcon :name="method.icon" :size="24" />
+                          <small>{{ method.label }}</small>
+                          <img
+                            v-for="logo in method.logo"
+                            :src="logo"
+                            alt=""
+                            class="!mt-0 w-8"
+                          />
+                        </div>
+                        <div
+                          v-show="
+                            method.value === 'corporative' &&
+                            paymentMethod.includes(method.value)
+                          "
+                          class="md:grid md:grid-cols-2 gap-6 w-full"
                         >
-                          <FormControl>
-                            <Checkbox
-                              :model-value="value"
-                              @update:model-value="handleChange"
-                            />
-                          </FormControl>
-                          <FormLabel class="!mt-0 flex items-center gap-x-3">
-                            À vista (PIX)
-                            <img
-                              src="/images/logos/logo_pix.svg"
-                              alt=""
-                              class="!mt-0 w-20"
-                            />
-                          </FormLabel>
-                        </FormItem>
-                      </FormField>
-                    </li>
-                    <li
-                      class="py-4 px-3 bg-white rounded-md shadow-md flex items-center gap-3 w-full"
-                    >
-                      <FormField
-                        v-slot="{ value, handleChange }"
-                        type="checkbox"
-                        name="creditcard"
-                      >
-                        <FormItem class="flex flex-row items-center gap-x-3">
-                          <FormControl>
-                            <Checkbox
-                              :model-value="value"
-                              @update:model-value="handleChange"
-                            />
-                          </FormControl>
-                          <FormLabel class="!mt-0 flex items-center gap-x-3">
-                            <CreditCard :size="24" />
-                            Cartão de Crédito
-                            <img
-                              src="/images/logos/mastercard.svg"
-                              alt="mastercard"
-                              class="w-10"
-                            />
-                            <img src="/images/logos/visa.svg" alt="visa" class="w-10" />
-                            <img src="/images/logos/elo.svg" alt="elo" class="w-10" />
-                            <img
-                              src="/images/logos/hypercard.svg"
-                              alt="hipercard"
-                              class="w-10"
-                            />
-                          </FormLabel>
-                        </FormItem>
-                      </FormField>
-                    </li>
-                    <li
-                      class="py-4 px-3 bg-white rounded-md shadow-md flex flex-col gap-3 w-full"
-                    >
-                      <FormField
-                        v-slot="{ value, handleChange }"
-                        type="checkbox"
-                        name="creditcard"
-                      >
-                        <FormItem class="flex flex-row items-center gap-x-3">
-                          <FormControl>
-                            <Checkbox
-                              :model-value="value"
-                              @update:model-value="handleChange"
-                              @update:checked="showCorpPaymentForm"
-                            />
-                          </FormControl>
-                          <FormLabel class="!mt-0 flex items-center gap-x-3">
-                            <Building :size="24" />
-                            Pagamento Corporativo
-                          </FormLabel>
-                        </FormItem>
-                      </FormField>
-                      <div
-                        v-show="viewCorpPaymentForm"
-                        class="md:grid md:grid-cols-3 gap-6"
-                      >
-                        <FormField v-slot="{ componentField }" name="contract">
-                          <FormItem>
-                            <FormLabel>Empresa*</FormLabel>
-                            <FormControl>
-                              <FormSelect
-                                v-bind="componentField"
-                                :items="[]"
-                                :label="'Selecione'"
-                                @on-select="() => {}"
-                              />
-                            </FormControl>
-                            <FormMessage class="text-xs" />
-                          </FormItem>
-                        </FormField>
-                        <FormField v-slot="{ componentField }" name="branch">
-                          <FormItem>
-                            <FormLabel>Filial*</FormLabel>
-                            <FormControl>
-                              <FormSelect
-                                v-bind="componentField"
-                                :items="[]"
-                                :label="'Selecione'"
-                                @on-select="() => {}"
-                              />
-                            </FormControl>
-                            <FormMessage class="text-xs" />
-                          </FormItem>
-                        </FormField>
-                        <FormField v-slot="{ componentField }" name="area">
-                          <FormItem>
-                            <FormLabel>Centro de Custo*</FormLabel>
-                            <FormControl>
-                              <FormSelect
-                                v-bind="componentField"
-                                :items="[]"
-                                :label="'Selecione'"
-                                @on-select="() => {}"
-                              />
-                            </FormControl>
-                            <FormMessage class="text-xs" />
-                          </FormItem>
-                        </FormField>
+                          <FormField v-slot="{ componentField }" name="branch">
+                            <FormItem>
+                              <FormLabel>Filial*</FormLabel>
+                              <FormControl>
+                                <FormSelect
+                                  v-bind="componentField"
+                                  :items="contractBranchesList"
+                                  label="Selecione"
+                                  @on-select="getBranchAreas"
+                                />
+                              </FormControl>
+                              <FormMessage class="text-xs" />
+                            </FormItem>
+                          </FormField>
+                          <div
+                            v-if="loadingAreas"
+                            class="flex items-center bg-white rounded-md"
+                          >
+                            <LoaderCircle class="animate-spin" :size="24" />
+                          </div>
+                          <FormField v-else v-slot="{ componentField }" name="area">
+                            <FormItem>
+                              <FormLabel>Centro de Custo*</FormLabel>
+                              <FormControl>
+                                <FormSelect
+                                  v-bind="componentField"
+                                  :items="contractBranchAreas"
+                                  label="Selecione"
+                                />
+                              </FormControl>
+                              <FormMessage class="text-xs" />
+                            </FormItem>
+                          </FormField>
+                        </div>
+                      </li>
+                    </ul>
+                    <Button type="button" @click.prevent="" class="my-4 p-6">
+                      Efetuar Pagamento
+                      <ArrowRight />
+                    </Button>
+                  </div>
+                  <div>
+                    <h2 class="mb-6 text-lg font-medium">Resumo</h2>
+                    <div class="p-6 bg-white rounded-md space-y-6">
+                      <div>
+                        <small class="font-bold">Data e Hora</small>
+                        <h2 class="font-bold text-2xl">
+                          {{ df.format(travelDate?.toDate(getLocalTimeZone())) }}
+                          -
+                          {{ form.values.departTime }}
+                        </h2>
                       </div>
-                    </li>
-                  </ul>
-                </div>
-                <div>
-                  <h2 class="mb-6 text-lg font-medium">Resumo</h2>
-                  <div class="p-6 bg-white rounded-md space-y-6">
-                    <div>
-                      <small class="font-bold">Data e Hora</small>
-                      <h2 class="font-bold text-2xl">
-                        {{ df.format(travelDate?.toDate(getLocalTimeZone())) }}
-                        -
-                        {{ form.values.departTime }}
-                      </h2>
-                    </div>
-                    <div>
-                      <small class="font-bold">Origem</small>
-                      <p>{{ originLocationDetails.address }}</p>
-                    </div>
-                    <div>
-                      <small class="font-bold">Destino</small>
-                      <p>{{ destinationLocationDetails.address }}</p>
-                    </div>
-                    <div>
-                      <small class="font-bold">Serviço selecionado</small>
-                      <p
-                        class="px-2 py-1 uppercase text-white text-center rounded-md w-fit"
-                        :class="`${selectedProduct?.type === 'contract' ? 'bg-zinc-800' : selectedProduct?.type === 'free-km' ? 'bg-orange-400' : 'bg-purple-400'}`"
-                      >
-                        {{ selectedProduct?.name }}
-                      </p>
-                    </div>
-                    <div class="border-t border-zinc-900">
-                      <small class="font-bold">Total</small>
-                      <p class="font-bold text-2xl">
-                        {{ currencyFormat(calculatedTravel?.travelPrice) }}
-                      </p>
+                      <div>
+                        <small class="font-bold">Origem</small>
+                        <p>{{ originLocationDetails.address }}</p>
+                      </div>
+                      <div>
+                        <small class="font-bold">Destino</small>
+                        <p>{{ destinationLocationDetails.address }}</p>
+                      </div>
+                      <div>
+                        <small class="font-bold">Serviço selecionado</small>
+                        <p
+                          class="px-2 py-1 uppercase text-white text-center rounded-md w-fit"
+                          :class="`${selectedProduct?.type === 'contract' ? 'bg-zinc-800' : selectedProduct?.type === 'free-km' ? 'bg-orange-400' : 'bg-purple-400'}`"
+                        >
+                          {{ selectedProduct?.name }}
+                        </p>
+                      </div>
+                      <div class="border-t border-zinc-900">
+                        <small class="font-bold">Total</small>
+                        <p class="font-bold text-2xl">
+                          {{ currencyFormat(calculatedTravel?.travelPrice) }}
+                        </p>
+                      </div>
                     </div>
                   </div>
                 </div>
-              </div>
-            </CardContent>
-          </Card>
+              </CardContent>
+            </Card>
+          </section>
         </div>
         <div v-if="showGenerateRide" class="mt-6 flex gap-4">
           <Button type="submit" class="p-6">

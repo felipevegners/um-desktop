@@ -23,64 +23,28 @@ definePageMeta({
   middleware: 'sidebase-auth',
 });
 useHead({
-  title: 'Atendimentos Abertos | Urban Mobi',
+  title: 'Atendimentos Realizados | Urban Mobi',
 });
 
 onMounted(async () => {
   await getRidesAction();
-  userRidesList.value = rides?.value.filter(
-    //@ts-ignore
-    (ride: any) => ride.user.id === data.value?.user?.id,
-  );
+  userRidesList.value = rides?.value
+    .filter(
+      //@ts-ignore
+      (ride: any) => ride.user.id === data.value?.user?.id,
+    )
+    .filter((ride: any) => ride.status === 'completed');
 });
-
-const viewRide = (rideId: string) => {
-  navigateTo({
-    name: 'personal-rides-preview-id',
-    params: { id: rideId },
-  });
-};
-
-const editRide = (rideId: string) => {
-  navigateTo({
-    name: 'admin-rides-edit-id',
-    params: { id: rideId },
-  });
-};
-
-const finalColumns = [
-  ...columns,
-  columnHelper.display({
-    id: 'actions',
-    enableHiding: false,
-    header: () => h('div', { class: 'text-left' }, 'Ações'),
-    cell: ({ row }) => {
-      const { id } = row.original;
-      return h(
-        'div',
-        { class: 'relative text-left' },
-        h(TableActions, {
-          dataId: id,
-          options: ['preview', 'edit', 'delete'],
-          loading: false,
-          onView: viewRide,
-          onEdit: editRide,
-          onDelete: () => {},
-        }),
-      );
-    },
-  }),
-];
 </script>
 <template>
   <main class="p-6">
     <section class="mb-6 flex items-center gap-6">
       <h1 class="flex items-center gap-2 text-2xl font-bold">
         <CalendarDays />
-        Atendimentos Agendados
+        Atendimentos Realizados
       </h1>
       <Button @click="navigateTo('/personal/rides/new')">
-        <Plus class="w-4 h-4" />Novo Atendimento
+        <Plus class="w-4 h-4" /> Novo Atendimento
       </Button>
     </section>
     <section v-if="loadingData" class="p-10 flex items-center justify-center">
@@ -88,7 +52,7 @@ const finalColumns = [
     </section>
     <section v-else>
       <DataTable
-        :columns="finalColumns"
+        :columns="columns"
         :data="userRidesList"
         sortby="code"
         :columnPin="['code']"

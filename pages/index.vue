@@ -12,7 +12,7 @@ const userRolesRedirect = {
   'master-manager': '/corporative',
   'branch-manager': '/corporative',
   'platform-admin': '/corporative',
-  'platform-corp-user': '/corporative',
+  'platform-corp-user': '/personal',
   'platform-user': '/personal',
   'platform-driver': '/driver',
 };

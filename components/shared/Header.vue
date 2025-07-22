@@ -38,7 +38,7 @@ const route = useRoute();
         <h3 class="text-md" v-else>Sua sessão expirou, faça novamente o login.</h3>
         <Button class="mr-4" variant="outline" @click="signOut">
           <LogOut class="w-5 h-5" />
-          Sair
+          Logout
         </Button>
       </div>
     </div>

@@ -61,6 +61,15 @@ export const columns: any = [
     cell: ({ row }) =>
       h('div', { class: 'capitalize' }, currencyFormat(row.getValue('price'))),
   }),
+  columnHelper.display({
+    id: 'driver',
+    enableHiding: false,
+    header: () => h('div', { class: 'text-left' }, 'Motorista'),
+    cell: ({ row }) => {
+      const data = row.original;
+      return h('div', { class: 'capitalize' }, data.driver.name ? data.driver.name : '-');
+    },
+  }),
   columnHelper.accessor('status', {
     header: () => h('div', { class: 'text-left' }, 'Status'),
     cell: ({ row }) => {

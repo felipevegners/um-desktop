@@ -5,7 +5,7 @@ const { data } = useAuth();
 const { user } = data.value;
 
 export const platformCorpUserMenu = {
-  title: 'Painel Usuário Corporativo',
+  title: 'Usuário Corporativo',
   user: {
     name: user.username,
     company: user.role, //mudar para contract company
@@ -20,20 +20,20 @@ export const platformCorpUserMenu = {
       isActive: true,
       items: [
         {
-          title: 'Abertos',
-          url: '/admin/rides/active',
+          title: 'Agendados',
+          url: '/personal/rides/open',
         },
         {
           title: 'Realizados',
-          url: '/admin/rides/completed',
+          url: '/personal/rides/completed',
         },
         {
           title: 'Cancelados',
-          url: '/admin/rides/canceled',
+          url: '/personal/rides/canceled',
         },
         {
           title: '+ Novo agendamento',
-          url: '/admin/rides/new',
+          url: '/personal/rides/new',
         },
       ],
     },
@@ -44,12 +44,8 @@ export const platformCorpUserMenu = {
       isActive: false,
       items: [
         {
-          title: 'Faturas em aberto',
-          url: '/admin/invoices/active',
-        },
-        {
-          title: 'Faturas canceladas',
-          url: '/admin/invoices/canceled',
+          title: 'Minhas Faturas',
+          url: '/personal/invoices/all',
         },
       ],
     },
@@ -57,7 +53,7 @@ export const platformCorpUserMenu = {
   settings: [
     {
       name: 'Minha conta',
-      url: '/admin/account',
+      url: '/personal/account',
       icon: UserCog,
     },
   ],
