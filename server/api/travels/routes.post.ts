@@ -1,5 +1,6 @@
 export default defineEventHandler(async (event) => {
   const query = getQuery(event);
+  const body = await readBody(event);
   const { origins, destinations } = query;
   const API_KEY = process.env.VITE_GOOGLE_MAPS_API_KEY;
   const routesUrl = 'https://routes.googleapis.com/directions/v2:computeRoutes';
@@ -20,6 +21,7 @@ export default defineEventHandler(async (event) => {
         destination: {
           address: destinations,
         },
+        intermediates: body,
         travelMode: 'DRIVE',
         routingPreference: 'TRAFFIC_AWARE',
         computeAlternativeRoutes: false,

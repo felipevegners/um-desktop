@@ -19,6 +19,7 @@ export const getRideRoutesService = async (rideData: any) => {
       params: {
         ...rideData,
       },
+      body: rideData.waypoints,
     });
     return response;
   } catch (error) {

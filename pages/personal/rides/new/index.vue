@@ -7,24 +7,33 @@ import { getRideCalculationService, getRideRoutesService } from '@/server/servic
 import { useContractsStore } from '@/stores/contracts.store';
 import { useProductsStore } from '@/stores/products.store';
 import { useRidesStore } from '@/stores/rides.store';
-import { DateFormatter, getLocalTimeZone } from '@internationalized/date';
+import { DateFormatter, getLocalTimeZone, parseDate } from '@internationalized/date';
+import { toTypedSchema } from '@vee-validate/zod';
 import {
   ArrowRight,
   CalendarPlus,
   LoaderCircle,
   Minus,
   Plus,
+  SquareCheck,
   SquareDot,
   SquareSquare,
   Users,
   Waypoints,
+  X,
 } from 'lucide-vue-next';
 import { vMaska } from 'maska/vue';
 import { storeToRefs } from 'pinia';
 import { useForm } from 'vee-validate';
 import { GoogleMap, Marker, Polyline } from 'vue3-google-map';
+import * as z from 'zod';
 import RenderIcon from '~/components/shared/RenderIcon.vue';
-import { currencyFormat, polyLineCodec } from '~/lib/utils';
+import {
+  convertMetersToDistance,
+  convertSecondsToTime,
+  currencyFormat,
+  polyLineCodec,
+} from '~/lib/utils';
 
 definePageMeta({
   layout: 'admin',
@@ -54,7 +63,6 @@ onBeforeMount(async () => {
   await getProductsAction();
 });
 
-const form = useForm();
 const { toast } = useToast();
 const { data } = useAuth();
 const df = new DateFormatter('pt-BR', {
@@ -73,6 +81,7 @@ const contractBranchesList = ref<any>();
 const loadingAreas = ref<boolean>(false);
 const paymentMethod = ref<any>('');
 const paymentMethodList = ref<any>();
+const showWaypointsForm = ref<boolean>(false);
 
 const isCorpAccount = computed(() => {
   const corpRoles = [
@@ -140,6 +149,14 @@ const originLocationDetails = ref<any>({
   address: '',
   url: '',
 });
+
+const waypointCoords = ref<any>({
+  lat: '',
+  lng: '',
+});
+
+const waypointLocationDetails = ref<any>([]);
+
 const destinationCoords = ref<any>({
   lat: '',
   lng: '',
@@ -226,28 +243,31 @@ const getRideCalculation = async () => {
   const rideData = {
     origins: originLocationDetails.value.address,
     destinations: destinationLocationDetails.value.address,
+    waypoints: [...waypointLocationDetails.value],
   };
+
   try {
     loadingRoute.value = true;
-    const travelCalculation = await getRideCalculationService(rideData);
 
-    const duration = travelCalculation?.rows[0]?.elements[0]?.duration.value / 60;
+    const routeCalculation: any = await getRideRoutesService(rideData);
+    // const {polyline, duration, distanceMeters} = routeCalculation[0]
+    routePolyLine.value = routeCalculation[0]?.polyline?.encodedPolyline;
     const basePrice = parseFloat(selectedProduct?.value.basePrice);
-    const distance = travelCalculation?.rows[0]?.elements[0]?.distance.value / 1000;
+    const sanitizeDurationResponse = routeCalculation[0].duration.replace('s', '');
+    const duration = parseInt(sanitizeDurationResponse) / 60;
+    const distance = routeCalculation[0].distanceMeters / 1000;
 
     const ridePrice =
       basePrice +
       parseFloat(distance.toFixed(2)) * parseFloat(selectedProduct?.value.kmPrice) +
       duration * parseFloat(selectedProduct?.value.minutePrice);
 
-    calculatedTravel.value.travelDistance =
-      travelCalculation?.rows[0]?.elements[0]?.distance.text;
-    calculatedTravel.value.travelTime =
-      travelCalculation?.rows[0]?.elements[0]?.duration.text;
+    calculatedTravel.value.travelDistance = convertMetersToDistance(
+      routeCalculation[0].distanceMeters,
+    );
+    //@ts-ignore
+    calculatedTravel.value.travelTime = convertSecondsToTime(duration);
     calculatedTravel.value.travelPrice = ridePrice.toFixed(2).toString();
-
-    const routeCalculation: any = await getRideRoutesService(rideData);
-    routePolyLine.value = routeCalculation[0]?.polyline?.encodedPolyline;
   } catch (error) {
     toast({
       title: 'Opss!',
@@ -274,6 +294,32 @@ const setOriginPlace = (place: any) => {
     origin: place.formatted_address,
   });
 };
+
+const routeWaypoints = ref<any>([
+  {
+    address: '',
+  },
+]);
+
+const addWaypointRow = () => {
+  routeWaypoints.value.push({
+    address: '',
+  });
+};
+
+const removeWaypointRow = (index: number) => {
+  routeWaypoints.value.splice(index, 1);
+};
+
+// // Set the waypoints of the ride
+const setWaypoints = (place: any) => {
+  waypointCoords.value.lat = place.geometry.location.lat();
+  waypointCoords.value.lng = place.geometry.location.lng();
+
+  const waypoint = { address: place.formatted_address };
+  waypointLocationDetails.value.push(waypoint);
+};
+
 // // Set the location based on the place selected
 const setDestinationPlace = (place: any) => {
   destinationCoords.value.lat = place.geometry.location.lat();
@@ -320,14 +366,44 @@ const showPaymentSection = () => {
   });
 };
 
+const dynamicSchema = computed(() => {
+  const baseSchema = z.object({
+    origin: z.string(),
+    destination: z.string(),
+    departTime: z.string(),
+    departDate: z.string().refine((v) => v, { message: 'A date of birth is required.' }),
+    observations: z.string().optional(),
+  });
+
+  if (isCorpAccount.value) {
+    return baseSchema.extend({
+      reason: z.string().min(1).max(100),
+      branch: z.string(),
+      area: z.string(),
+    });
+  } else {
+    return baseSchema.extend({
+      reason: z.string().optional(),
+      branch: z.string().optional(),
+      area: z.string().optional(),
+    });
+  }
+});
+
+const newRideSchema = toTypedSchema(dynamicSchema.value);
+
+const form = useForm({
+  validationSchema: newRideSchema,
+});
+
 const onSubmit = form.handleSubmit(async (values) => {
   const ridePayload = {
     code: await generateRideCode(),
     billing: {
       paymentMethod: paymentMethod.value,
       paymentData: {
-        branch: values.branch || '-',
-        area: values.area || '-',
+        branch: values?.branch || '-',
+        area: values?.area || '-',
       },
       ammount: calculatedTravel.value.travelPrice,
       status: 'paid',
@@ -393,6 +469,11 @@ const onSubmit = form.handleSubmit(async (values) => {
     });
     navigateTo('/personal/rides/open');
   }
+});
+
+const dateValue = computed({
+  get: () => (form.values.departDate ? parseDate(form.values.departDate) : undefined),
+  set: (val) => val,
 });
 </script>
 <template>
@@ -489,10 +570,33 @@ const onSubmit = form.handleSubmit(async (values) => {
                       </div>
                     </div>
                     <div v-if="selectedProduct" class="flex flex-col gap-6 items-start">
+                      <!-- <FormField name="departDate">
+                        <FormItem>
+                          <FormLabel>Data do Atendimento*</FormLabel>
+                          <FormControl>
+                            <DatePicker
+                              v-model="dateValue"
+                              @update:model-value="
+                                (v) => {
+                                  if (v) {
+                                    form.setFieldValue('departDate', v.toString());
+                                  } else {
+                                    form.setFieldValue('departDate', undefined);
+                                  }
+                                }
+                              "
+                            />
+                          </FormControl>
+                        </FormItem>
+                      </FormField> -->
+
                       <div class="flex flex-col">
-                        <label class="mb-2 text-sm font-medium">Data*</label>
+                        <label class="mb-2 text-sm font-medium">
+                          Data do Atendimento*
+                        </label>
                         <DatePicker v-model="travelDate" />
                       </div>
+
                       <div class="md:grid md:grid-cols-3 gap-6">
                         <FormField v-slot="{ componentField }" name="departTime">
                           <FormItem>
@@ -567,12 +671,57 @@ const onSubmit = form.handleSubmit(async (values) => {
                           <FormMessage />
                         </FormItem>
                       </FormField>
-                      <FormField v-slot="{ componentField, value }" name="destination">
+                      <Button
+                        v-if="!showWaypointsForm"
+                        type="button"
+                        @click.prevent="showWaypointsForm = true"
+                        >Adicionar Paradas
+                      </Button>
+                      <div
+                        v-if="showWaypointsForm"
+                        v-for="(waypoint, index) in routeWaypoints"
+                        :key="index"
+                        class="w-full"
+                      >
+                        <FormField name="waypoint">
+                          <FormItem class="w-full">
+                            <FormLabel>Parada {{ index + 1 }}</FormLabel>
+                            <FormControl>
+                              <div class="flex items-center gap-2">
+                                <SquareSquare />
+                                <GMapAutocomplete
+                                  placeholder="Insira a parada"
+                                  @place_changed="setWaypoints"
+                                  v-model="waypoint.address"
+                                  class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                                />
+                                <Button
+                                  type="button"
+                                  @click.prevent="removeWaypointRow(index)"
+                                  size="icon"
+                                >
+                                  <X />
+                                </Button>
+                              </div>
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        </FormField>
+                      </div>
+                      <Button
+                        type="button"
+                        v-if="showWaypointsForm"
+                        @click.prevent="addWaypointRow"
+                      >
+                        <Plus />
+                        Adicionar Parada
+                      </Button>
+                      <FormField v-slot="{ componentField }" name="destination">
                         <FormItem class="w-full">
                           <FormLabel>Destino*</FormLabel>
                           <FormControl>
                             <div class="flex items-center gap-2">
-                              <SquareSquare />
+                              <SquareCheck />
                               <GMapAutocomplete
                                 placeholder="Insira o Destino"
                                 @place_changed="setDestinationPlace"
@@ -668,7 +817,7 @@ const onSubmit = form.handleSubmit(async (values) => {
                       >
                         <small>Tempo Total</small>
                         <p class="font-bold text-lg">
-                          {{ calculatedTravel?.travelTime || '0' }}
+                          {{ calculatedTravel?.travelTime }} h
                         </p>
                       </div>
                       <div

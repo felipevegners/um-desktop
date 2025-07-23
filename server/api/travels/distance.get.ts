@@ -1,6 +1,6 @@
 export default defineEventHandler(async (event) => {
   const query = getQuery(event);
-  const { origins, destinations } = query;
+  const { origins, destinations, waypoints } = query;
   const API_KEY = process.env.VITE_GOOGLE_MAPS_API_KEY;
   const distanceUrl = 'https://maps.googleapis.com/maps/api/distancematrix/json';
 
@@ -10,6 +10,7 @@ export default defineEventHandler(async (event) => {
       params: {
         origins: origins,
         destinations: destinations,
+        waypoints: waypoints,
         mode: 'driving',
         units: 'metric',
         language: 'pt_BR',
