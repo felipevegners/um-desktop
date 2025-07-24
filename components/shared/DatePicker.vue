@@ -17,7 +17,7 @@ const travelDate = defineModel<DateValue>();
     <PopoverTrigger as-child>
       <Button
         variant="outline"
-        class="w-[280px] justify-start text-left font-normal h-10"
+        class="w-full justify-start text-left font-normal h-10"
         :class="!travelDate && 'text-muted-foreground'"
       >
         <CalendarIcon class="mr-2 h-4 w-4" />
@@ -28,7 +28,7 @@ const travelDate = defineModel<DateValue>();
         }}
       </Button>
     </PopoverTrigger>
-    <PopoverContent class="w-auto p-0">
+    <PopoverContent class="p-0">
       <Calendar v-model="travelDate" initial-focus />
     </PopoverContent>
   </Popover>

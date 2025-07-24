@@ -63,9 +63,11 @@ export default defineNuxtConfig({
     authSecret: process.env.AUTH_SECRET,
     DATABASE_URL: process.env.DATABASE_URL,
     VITE_GOOGLE_MAPS_API_KEY,
+    stripeSecretKey: process.env.VITE_STRIPE_SECRET_KEY,
     public: {
       VITE_GOOGLE_MAPS_API_KEY,
       DATABASE_URL,
+      stripePublishableKey: process.env.VITE_STRIPE_PUBLISHABLE_KEY,
     },
   },
   imports: {

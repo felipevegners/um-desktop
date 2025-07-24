@@ -21,6 +21,11 @@ module.exports = withUt({
     extend: {
       colors: {
         'um-primary': '#33FFCC',
+        'product-easy': '#FF7233',
+        'product-premium': '#2A2A2A',
+        'product-gold': '#D4AF37',
+        'product-blindado': '#B9F2FF',
+        'product-van': '#3BD084',
         border: 'hsl(var(--border))',
         input: 'hsl(var(--input))',
         ring: 'hsl(var(--ring))',
