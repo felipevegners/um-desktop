@@ -5,7 +5,7 @@ import {
   type StripePaymentElement,
   loadStripe,
 } from '@stripe/stripe-js';
-import { LoaderCircle, SquareCheck } from 'lucide-vue-next';
+import { CircleCheck, LoaderCircle, SquareCheck } from 'lucide-vue-next';
 import { currencyFormat } from '~/lib/utils';
 
 interface Props {
@@ -187,22 +187,19 @@ const resetPayment = () => {
       </Button>
     </div>
 
-    <div
-      v-else-if="paymentSuccess"
-      class="p-6 bg-green-50 border border-green-200 rounded-md text-center"
-    >
-      <div class="text-green-600 mb-4">
-        <SquareCheck :size="48" class="mx-auto mb-2" />
+    <div v-else-if="paymentSuccess" class="p-10 text-center">
+      <div class="text-green-600 mb-10">
+        <CircleCheck :size="48" class="mx-auto mb-2" />
         <h3 class="text-lg font-semibold">Pagamento Realizado!</h3>
         <p class="text-sm">Seu pagamento foi processado com sucesso.</p>
       </div>
-      <Button @click="$emit('paymentComplete', paymentResult)" class="mt-4">
+      <Button @click="$emit('paymentComplete', paymentResult)" class="p-8 mt-6 w-full">
         Continuar
       </Button>
     </div>
 
     <div v-else class="space-y-6">
-      <div class="bg-white p-6 rounded-lg border">
+      <!-- <div class="bg-white p-6 rounded-lg border">
         <h3 class="text-lg font-semibold mb-4">Detalhes do Pagamento</h3>
         <div class="space-y-2 text-sm">
           <div class="flex justify-between">
@@ -214,10 +211,10 @@ const resetPayment = () => {
             <span>{{ currencyFormat(amount.toString()) }}</span>
           </div>
         </div>
-      </div>
+      </div> -->
 
-      <div class="bg-white p-6 rounded-lg border">
-        <h3 class="text-lg font-semibold mb-4">Informações de Pagamento</h3>
+      <div>
+        <h3 class="text-lg font-semibold mb-4">Insira seus dados de pagamento</h3>
 
         <!-- Stripe Elements will be mounted here -->
         <div id="payment-element" class="mb-4"></div>

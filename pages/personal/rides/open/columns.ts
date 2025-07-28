@@ -59,8 +59,16 @@ export const columns: any = [
   }),
   columnHelper.accessor('price', {
     header: () => h('div', { class: 'text-left' }, 'Valor'),
-    cell: ({ row }) =>
-      h('div', { class: 'capitalize' }, currencyFormat(row.getValue('price'))),
+    cell: ({ row }) => {
+      const data = row.original;
+      return h(
+        'div',
+        {
+          class: `capitalize font-bold ${data?.billing?.status === 'paid' ? 'text-green-600' : data.billing.status === 'invoice' ? 'text-amber-600' : 'text-red-600'}`,
+        },
+        currencyFormat(row.getValue('price') + ' ' + data.billing.status),
+      );
+    },
   }),
   columnHelper.accessor('status', {
     header: () => h('div', { class: 'text-left' }, 'Status'),

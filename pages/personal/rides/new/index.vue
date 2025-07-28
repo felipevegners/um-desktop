@@ -1,16 +1,19 @@
 <script setup lang="ts">
-import DatePicker from '@/components/shared/DatePicker.vue';
+import StripeCheckout from '@/components/payments/StripeCheckout.vue';
 import FormSelect from '@/components/shared/FormSelect.vue';
+import NewDatePicker from '@/components/shared/NewDatePicker.vue';
+import ProductTag from '@/components/shared/ProductTag.vue';
+import RenderIcon from '@/components/shared/RenderIcon.vue';
 import { useToast } from '@/components/ui/toast/use-toast';
 import { paymentMethods } from '@/config/paymentMethods';
 import { getRideCalculationService, getRideRoutesService } from '@/server/services/rides';
 import { useContractsStore } from '@/stores/contracts.store';
 import { useProductsStore } from '@/stores/products.store';
 import { useRidesStore } from '@/stores/rides.store';
+import type { Product } from '@/types/products/types';
 import { DateFormatter, getLocalTimeZone, parseDate } from '@internationalized/date';
 import { toTypedSchema } from '@vee-validate/zod';
 import {
-  ArrowRight,
   CalendarPlus,
   LoaderCircle,
   Minus,
@@ -27,9 +30,6 @@ import { storeToRefs } from 'pinia';
 import { useForm } from 'vee-validate';
 import { GoogleMap, Marker, Polyline } from 'vue3-google-map';
 import * as z from 'zod';
-import StripeCheckout from '~/components/payments/StripeCheckout.vue';
-import ProductTag from '~/components/shared/ProductTag.vue';
-import RenderIcon from '~/components/shared/RenderIcon.vue';
 import {
   convertMetersToDistance,
   convertSecondsToTime,
@@ -42,7 +42,7 @@ definePageMeta({
   middleware: 'sidebase-auth',
 });
 useHead({
-  title: 'Novo Atendimento | Urban Mobi',
+  title: 'Solicitar Novo Atendimento | Urban Mobi',
 });
 
 const ridesStore = useRidesStore();
@@ -61,12 +61,9 @@ const API_KEY = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
 const customIconStart = `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="#FFFFFF" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-square-dot-icon lucide-square-dot"><rect width="18" height="18" x="3" y="3" rx="2"/><circle cx="12" cy="12" r="1"/></svg>`;
 const customIconEnd = `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="#FFFFFF" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-square-square-icon lucide-square-square"><rect x="3" y="3" width="18" height="18" rx="2"/><rect x="8" y="8" width="8" height="8" rx="1"/></svg>`;
 
-onBeforeMount(async () => {
-  await getProductsAction();
-});
-
 const { toast } = useToast();
 const { data } = useAuth();
+
 const df = new DateFormatter('pt-BR', {
   dateStyle: 'short',
 });
@@ -82,8 +79,19 @@ const contractBranchAreas = ref<any>();
 const contractBranchesList = ref<any>();
 const loadingAreas = ref<boolean>(false);
 const paymentMethod = ref<any>('');
+const paymentStatus = ref<string>('unpaid');
 const paymentMethodList = ref<any>();
 const showWaypointsForm = ref<boolean>(false);
+const availableProducts = ref<any>([]);
+
+onBeforeMount(async () => {
+  await getProductsAction();
+  availableProducts.value = products.value.sort(
+    (a: Product, b: Product) =>
+      ['EASY', 'PREMIUM', 'GOLD', 'BLINDADO', 'VAN'].indexOf(a.name) -
+      ['EASY', 'PREMIUM', 'GOLD', 'BLINDADO', 'VAN'].indexOf(b.name),
+  );
+});
 
 const isCorpAccount = computed(() => {
   const corpRoles = [
@@ -98,6 +106,8 @@ const isCorpAccount = computed(() => {
 });
 
 onMounted(async () => {
+  //@ts-ignore
+
   if (isCorpAccount.value) {
     //@ts-ignore
     await getContractByIdAction(data?.value?.user?.contract?.contractId);
@@ -371,21 +381,14 @@ const generateRideCode = async () => {
   return `UM-${day}${month}${year}${ridesLength + 1}`;
 };
 
-const showPaymentSection = () => {
-  enablePayment.value = true;
-  const targetElement = document.getElementById('payment');
-  targetElement?.scrollIntoView({
-    behavior: 'smooth',
-    block: 'start',
-  });
-};
-
 const dynamicSchema = computed(() => {
   const baseSchema = z.object({
     origin: z.string(),
     destination: z.string(),
     departTime: z.string(),
-    departDate: z.string().refine((v) => v, { message: 'A date of birth is required.' }),
+    departDate: z
+      .string()
+      .refine((v) => v, { message: 'A data do atendimento é obrigatória!' }),
     observations: z.string().optional(),
   });
 
@@ -410,6 +413,24 @@ const form = useForm({
   validationSchema: newRideSchema,
 });
 
+const showPaymentSection = async () => {
+  enablePayment.value = true;
+  const targetElement = document.getElementById('payment');
+  targetElement?.scrollIntoView({
+    behavior: 'smooth',
+    block: 'start',
+  });
+
+  if (paymentMethod.value === 'corporative' && form.values.area && form.values.branch) {
+    onSubmit();
+  } else {
+    form.setErrors({
+      area: 'Obrigatório!',
+      branch: 'Obrigatório!',
+    });
+  }
+};
+
 const onSubmit = form.handleSubmit(async (values) => {
   const ridePayload = {
     code: await generateRideCode(),
@@ -420,7 +441,7 @@ const onSubmit = form.handleSubmit(async (values) => {
         area: values?.area || '-',
       },
       ammount: calculatedTravel.value.travelPrice,
-      status: 'paid',
+      status: paymentMethod.value === 'corporative' ? 'invoice' : paymentStatus.value,
     },
     user: {
       id: userData.value.id,
@@ -440,7 +461,7 @@ const onSubmit = form.handleSubmit(async (values) => {
     travel: {
       passengers: ridePassengers.value,
       //@ts-ignore
-      date: df.format(travelDate?.value?.toDate(getLocalTimeZone())) || '',
+      date: values.departDate,
       departTime: values.departTime,
       originAddress: values.origin,
       origin: {
@@ -452,6 +473,7 @@ const onSubmit = form.handleSubmit(async (values) => {
         lat: destinationCoords.value.lat,
         lng: destinationCoords.value.lng,
       },
+      stops: waypointLocationDetails.value,
       distance: calculatedTravel.value.travelDistance,
       duration: calculatedTravel.value.travelTime,
       polyLineCoors: routePolyLine.value,
@@ -467,6 +489,7 @@ const onSubmit = form.handleSubmit(async (values) => {
       dispatchDate: new Date().toLocaleDateString('pt-BR').padStart(10, '0'),
     },
   };
+
   try {
     await createRideAction(ridePayload);
   } catch (error) {
@@ -485,29 +508,18 @@ const onSubmit = form.handleSubmit(async (values) => {
   }
 });
 
-const dateValue = computed({
-  get: () => (form.values.departDate ? parseDate(form.values.departDate) : undefined),
-  set: (val) => val,
-});
-
 // Stripe payment handlers
 const handlePaymentComplete = (paymentResult: any) => {
   // Update the payment method to reflect Stripe payment
   paymentMethod.value = 'creditcard';
 
-  toast({
-    title: 'Pagamento realizado!',
-    class: 'bg-green-600 border-0 text-white text-2xl',
-    description: 'Seu pagamento foi processado com sucesso via Stripe.',
-  });
-
   // Enable the ride generation
   showGenerateRide.value = true;
+  paymentStatus.value = paymentResult.status === 'succeeded' ? 'paid' : 'pending';
+  enablePayment.value = false;
 
-  // Scroll to the bottom of the page to show the submit button
-  setTimeout(() => {
-    window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
-  }, 500);
+  // Submit the form to generate new ride
+  onSubmit();
 };
 
 const handlePaymentError = (error: string) => {
@@ -546,7 +558,11 @@ const handlePaymentError = (error: string) => {
               <LoaderCircle v-if="isLoading" class="animate-spin" :size="48" />
               <div v-else>
                 <ul class="mt-2 flex justify-evenly gap-4 flex-wrap">
-                  <li class="w-full" v-for="product in products" :key="product.id">
+                  <li
+                    class="w-full"
+                    v-for="product in availableProducts"
+                    :key="product.id"
+                  >
                     <article
                       class="p-4 flex items-center justify-between gap-4 bg-white rounded-md border border-zinc-900"
                     >
@@ -558,7 +574,7 @@ const handlePaymentError = (error: string) => {
                           :checked="selectedProduct?.id === product.id"
                         />
                         <div
-                          class="w-[50px] h-[50px] rounded-md bg-zinc-200 bg-cover bg-no-repeat bg-center relative flex items-center justify-center"
+                          class="w-[50px] h-[50px] rounded-md bg-zinc-200 bg-contain bg-no-repeat bg-center relative flex items-center justify-center"
                           :style="{
                             backgroundImage: `url(${product.image?.url})`,
                           }"
@@ -618,14 +634,7 @@ const handlePaymentError = (error: string) => {
             </CardTitle>
             <div class="lg:max-w-lg">
               <div class="grid grid-cols-2 gap-6">
-                <FormField name="departDate">
-                  <FormItem>
-                    <FormLabel>Data do Atendimento*</FormLabel>
-                    <FormControl>
-                      <DatePicker v-model="travelDate" />
-                    </FormControl>
-                  </FormItem>
-                </FormField>
+                <NewDatePicker :form="form" />
                 <FormField v-slot="{ componentField }" name="departTime">
                   <FormItem>
                     <FormLabel>Hora da Partida*</FormLabel>
@@ -844,6 +853,13 @@ const handlePaymentError = (error: string) => {
                     <small class="font-bold">Origem</small>
                     <p>{{ originLocationDetails.address }}</p>
                   </div>
+                  <div
+                    v-if="waypointLocationDetails"
+                    v-for="(waypoint, index) in waypointLocationDetails"
+                  >
+                    <small class="font-bold">Parada {{ index + 1 }}</small>
+                    <p>{{ waypoint.address }}</p>
+                  </div>
                   <div>
                     <small class="font-bold">Destino</small>
                     <p>{{ destinationLocationDetails.address }}</p>
@@ -937,11 +953,16 @@ const handlePaymentError = (error: string) => {
                   </ul>
                 </div>
                 <Button
+                  v-if="paymentMethod && calculatedTravel.travelPrice"
                   type="button"
                   class="py-8 w-full uppercase"
                   @click.prevent="showPaymentSection"
                 >
-                  Efetuar Pagamento
+                  {{
+                    paymentMethod === 'corporative'
+                      ? 'Solicitar atendimento faturado'
+                      : 'Efetuar pagamento'
+                  }}
                 </Button>
               </div>
             </div>

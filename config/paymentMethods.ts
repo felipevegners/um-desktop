@@ -8,7 +8,7 @@ export const paymentMethods = [
   },
   {
     id: 'creditcard',
-    label: 'Cartão de Crédito',
+    label: 'Cartão de Crédito (À Vista)',
     icon: 'CreditCard',
     logo: [
       '/images/logos/mastercard.svg',
@@ -17,6 +17,18 @@ export const paymentMethods = [
       '/images/logos/hipercard.svg',
     ],
     value: 'creditcard',
+  },
+  {
+    id: 'card-installments',
+    label: 'Cartão de Crédito (Parcelado)',
+    icon: 'CreditCard',
+    logo: [
+      '/images/logos/mastercard.svg',
+      '/images/logos/visa.svg',
+      '/images/logos/elo.svg',
+      '/images/logos/hipercard.svg',
+    ],
+    value: 'card-installments',
   },
   {
     id: 'corporative',

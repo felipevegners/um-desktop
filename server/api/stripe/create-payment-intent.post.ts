@@ -4,20 +4,20 @@ const config = useRuntimeConfig();
 
 // Initialize Stripe with your secret key
 const stripe = new Stripe(config.stripeSecretKey, {
-  apiVersion: '2024-12-18.acacia',
+  apiVersion: '2025-06-30.basil',
 });
 
 export default defineEventHandler(async (event) => {
   try {
     const body = await readBody(event);
-    
+
     const { amount, currency = 'brl', metadata = {} } = body;
-    
+
     // Validate required fields
     if (!amount || amount <= 0) {
       throw createError({
         statusCode: 400,
-        statusMessage: 'Invalid amount provided',
+        statusMessage: 'Valor fornecido inválido',
       });
     }
 
@@ -39,11 +39,11 @@ export default defineEventHandler(async (event) => {
       paymentIntentId: paymentIntent.id,
     };
   } catch (error: any) {
-    console.error('Error creating payment intent:', error);
-    
+    console.error('Erro durante a criação do pagamento:', error);
+
     throw createError({
       statusCode: 500,
-      statusMessage: error?.message || 'Failed to create payment intent',
+      statusMessage: error?.message || 'Falha ao criar a intenção de pagamento',
     });
   }
 });
