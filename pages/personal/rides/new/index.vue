@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import CieloCheckoutUrl from '@/components/payments/CieloCheckoutUrl.vue';
 import StripeCheckout from '@/components/payments/StripeCheckout.vue';
 import FormSelect from '@/components/shared/FormSelect.vue';
 import NewDatePicker from '@/components/shared/NewDatePicker.vue';
@@ -369,7 +370,9 @@ const userData = computed(() => {
   };
 });
 
-const generateRideCode = async () => {
+const rideCode = ref('');
+
+const newRideCode = computed(async () => {
   await getRidesAction();
   const ridesLength = rides?.value.length;
   const today = new Date();
@@ -379,7 +382,9 @@ const generateRideCode = async () => {
   const year = String(today.getFullYear()).slice(-2); // Get the last two digits of the year
 
   return `UM-${day}${month}${year}${ridesLength + 1}`;
-};
+});
+
+rideCode.value = await newRideCode.value;
 
 const dynamicSchema = computed(() => {
   const baseSchema = z.object({
@@ -433,7 +438,7 @@ const showPaymentSection = async () => {
 
 const onSubmit = form.handleSubmit(async (values) => {
   const ridePayload = {
-    code: await generateRideCode(),
+    code: rideCode,
     billing: {
       paymentMethod: paymentMethod.value,
       paymentData: {
@@ -508,14 +513,25 @@ const onSubmit = form.handleSubmit(async (values) => {
   }
 });
 
-// Stripe payment handlers
+// Payment handlers for both Stripe and Cielo
 const handlePaymentComplete = (paymentResult: any) => {
-  // Update the payment method to reflect Stripe payment
-  paymentMethod.value = 'creditcard';
+  // Keep the original payment method (creditcard for Stripe, cielo for Cielo)
+  // paymentMethod.value remains as selected
 
   // Enable the ride generation
   showGenerateRide.value = true;
-  paymentStatus.value = paymentResult.status === 'succeeded' ? 'paid' : 'pending';
+
+  // Handle different payment result formats
+  if (
+    paymentResult.status === 'succeeded' ||
+    paymentResult.status === 'PaymentConfirmed' ||
+    paymentResult.status === 'Authorized'
+  ) {
+    paymentStatus.value = 'paid';
+  } else {
+    paymentStatus.value = 'pending';
+  }
+
   enablePayment.value = false;
 
   // Submit the form to generate new ride
@@ -528,6 +544,15 @@ const handlePaymentError = (error: string) => {
     description: error,
     variant: 'destructive',
   });
+};
+
+// Handler for Cielo Checkout URL creation
+const handleCieloCheckoutCreated = (result: {
+  checkoutUrl: string;
+  orderNumber: string;
+}) => {
+  // Update payment status to pending as user will be redirected to Cielo
+  paymentStatus.value = 'pending';
 };
 </script>
 <template>
@@ -974,9 +999,9 @@ const handlePaymentError = (error: string) => {
         :open="paymentMethod === 'creditcard' && enablePayment"
         @update:open="enablePayment = $event"
       >
-        <DialogContent>
+        <DialogContent class="max-w-3xl">
           <DialogHeader>
-            <DialogTitle class="mb-6">Efetuar Pagamento</DialogTitle>
+            <DialogTitle class="mb-6">Efetuar Pagamento - Crédito À Vista</DialogTitle>
           </DialogHeader>
           <StripeCheckout
             :amount="calculatedTravel?.travelPrice || 1.0"
@@ -992,6 +1017,32 @@ const handlePaymentError = (error: string) => {
               </Button>
             </DialogClose>
           </DialogFooter> -->
+        </DialogContent>
+      </Dialog>
+
+      <Dialog
+        :open="paymentMethod === 'cielo' && enablePayment"
+        @update:open="enablePayment = $event"
+      >
+        <DialogContent class="max-w-3xl">
+          <DialogHeader>
+            <DialogTitle class="mb-6">Efetuar Pagamento - Crédito Parcelado</DialogTitle>
+          </DialogHeader>
+          <CieloCheckoutUrl
+            :rideData="{
+              code: rideCode,
+              selectedProduct: selectedProduct,
+              calculatedTravel: calculatedTravel,
+              userData: userData,
+              originAddress: originLocationDetails.address,
+              destinationAddress: destinationLocationDetails.address,
+              departDate: form.values.departDate,
+              departTime: form.values.departTime,
+              passengers: ridePassengers,
+            }"
+            @checkoutCreated="handleCieloCheckoutCreated"
+            @checkoutError="handlePaymentError"
+          />
         </DialogContent>
       </Dialog>
     </form>

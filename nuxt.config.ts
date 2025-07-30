@@ -64,6 +64,9 @@ export default defineNuxtConfig({
     DATABASE_URL: process.env.DATABASE_URL,
     VITE_GOOGLE_MAPS_API_KEY,
     stripeSecretKey: process.env.VITE_STRIPE_SECRET_KEY,
+    cieloMerchantId: process.env.CIELO_MERCHANT_ID,
+    cieloMerchantKey: process.env.CIELO_MERCHANT_KEY,
+    cieloSandbox: process.env.CIELO_SANDBOX,
     public: {
       VITE_GOOGLE_MAPS_API_KEY,
       DATABASE_URL,
