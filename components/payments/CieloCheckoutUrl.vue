@@ -79,6 +79,10 @@ const openCheckout = () => {
   if (checkoutUrl.value) {
     window.open(checkoutUrl.value, '_blank', 'noopener,noreferrer');
   }
+
+  setTimeout(() => {
+    navigateTo('/personal/rides/open');
+  }, 2000);
 };
 
 /**

@@ -31,6 +31,17 @@ export const useRidesStore = defineStore('rides', {
         throw error;
       }
     },
+    async getUserRidesAction(userId: string) {
+      this.loadingData = true;
+      try {
+        const response: any = await getRidesService('');
+        const filtered = response.filter((ride: any) => ride.user.id === userId);
+        this.rides = filtered;
+        this.loadingData = false;
+      } catch (error) {
+        throw error;
+      }
+    },
     async getRideByIdAction(rideId: string) {
       this.loadingData = true;
       try {

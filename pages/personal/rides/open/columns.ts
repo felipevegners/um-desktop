@@ -1,9 +1,8 @@
 import { Button } from '@/components/ui/button';
-import { WPP_API } from '@/config/paths';
 import { createColumnHelper } from '@tanstack/vue-table';
-import { ArrowUpDown, MessageCircleMore } from 'lucide-vue-next';
+import { ArrowUpDown } from 'lucide-vue-next';
 import RideStatusFlag from '~/components/shared/RideStatusFlag.vue';
-import { currencyFormat, sanitizePhone } from '~/lib/utils';
+import { currencyFormat } from '~/lib/utils';
 
 const columnHelper = createColumnHelper<any>();
 
@@ -31,7 +30,17 @@ export const columns: any = [
     cell: ({ row }) => {
       const data = row.original;
       const normalize = data.travel.originAddress.split('-').slice(0, 1).pop();
-      return h('div', { class: 'capitalize' }, normalize);
+      return h('div', { class: 'capitalize' }, [
+        normalize,
+        h(
+          'span',
+          {
+            class:
+              'ml-1 px-2 py-0.5 text-center bg-zinc-900 text-zinc-300 text-xs w-fit rounded-md',
+          },
+          `${data?.travel.stops?.length} parada`,
+        ),
+      ] as any);
     },
   }),
   columnHelper.display({
@@ -45,6 +54,15 @@ export const columns: any = [
     },
   }),
   columnHelper.display({
+    id: 'stops',
+    enableHiding: false,
+    header: () => h('div', { class: 'text-left' }, 'Paradas'),
+    cell: ({ row }) => {
+      const data = row.original;
+      return h('div', { class: 'capitalize' }, data?.travel?.stops?.length);
+    },
+  }),
+  columnHelper.display({
     id: 'travelDate',
     enableHiding: false,
     header: () => h('div', { class: 'text-left' }, 'Data e Hora'),
@@ -53,7 +71,7 @@ export const columns: any = [
       return h(
         'div',
         { class: 'capitalize' },
-        `${data.travel.date} - ${data.travel.departTime}`,
+        `${new Date(data.travel.date as string).toLocaleDateString('pt-BR')} - ${data.travel.departTime}`,
       );
     },
   }),
@@ -67,6 +85,23 @@ export const columns: any = [
           class: `capitalize font-bold ${data?.billing?.status === 'paid' ? 'text-green-600' : data.billing.status === 'invoice' ? 'text-amber-600' : 'text-red-600'}`,
         },
         currencyFormat(row.getValue('price') + ' ' + data.billing.status),
+      );
+    },
+  }),
+  columnHelper.accessor('billing', {
+    header: () => h('div', { class: 'text-left' }, 'Pagamento'),
+    cell: ({ row }) => {
+      const data = row.original;
+      return h(
+        'div',
+        {
+          class: `capitalize font-bold ${data?.billing?.status === 'paid' ? 'text-green-600' : data.billing.status === 'invoice' ? 'text-amber-600' : 'text-red-600'}`,
+        },
+        data.billing.status === 'paid'
+          ? 'Aprovado'
+          : data.billing.status === 'invoice'
+            ? 'A Faturar'
+            : 'Pendente',
       );
     },
   }),

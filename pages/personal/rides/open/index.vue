@@ -11,12 +11,14 @@ import { useRidesStore } from '~/stores/rides.store';
 import { columns } from './columns';
 
 const ridesStore = useRidesStore();
-const { getRidesAction } = ridesStore;
+const { getUserRidesAction } = ridesStore;
 const { loadingData, rides } = storeToRefs(ridesStore);
 const columnHelper = createColumnHelper<any>();
 const userRidesList = ref([]);
 
 const { data } = useAuth();
+//@ts-ignore
+const userId = data.value?.user?.id;
 
 definePageMeta({
   layout: 'admin',
@@ -27,13 +29,10 @@ useHead({
 });
 
 onMounted(async () => {
-  await getRidesAction();
-  userRidesList.value = rides?.value
-    .filter(
-      //@ts-ignore
-      (ride: any) => ride.user.id === data.value?.user?.id,
-    )
-    .filter((ride: any) => ride.status !== 'cancelled' && ride.status !== 'completed');
+  await getUserRidesAction(userId);
+  userRidesList.value = rides?.value.filter(
+    (ride: any) => ride.status !== 'cancelled' && ride.status !== 'completed',
+  );
 });
 
 const viewRide = (rideId: string) => {
@@ -85,7 +84,7 @@ const finalColumns = [
     <section v-else>
       <DataTable
         :columns="finalColumns"
-        :data="userRidesList"
+        :data="rides"
         sortby="code"
         :columnPin="['code']"
         :filterBy="'código do atendimento'"

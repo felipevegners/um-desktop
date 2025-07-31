@@ -81,6 +81,7 @@ const contractBranchesList = ref<any>();
 const loadingAreas = ref<boolean>(false);
 const paymentMethod = ref<any>('');
 const paymentStatus = ref<string>('unpaid');
+const paymentCheckouUrl = ref<string>('');
 const paymentMethodList = ref<any>();
 const showWaypointsForm = ref<boolean>(false);
 const availableProducts = ref<any>([]);
@@ -419,34 +420,50 @@ const form = useForm({
 });
 
 const showPaymentSection = async () => {
-  enablePayment.value = true;
-  const targetElement = document.getElementById('payment');
-  targetElement?.scrollIntoView({
-    behavior: 'smooth',
-    block: 'start',
-  });
+  const validateForm = await form.validate();
+  if (validateForm.valid) {
+    enablePayment.value = true;
+    const targetElement = document.getElementById('payment');
+    targetElement?.scrollIntoView({
+      behavior: 'smooth',
+      block: 'start',
+    });
 
-  if (paymentMethod.value === 'corporative' && form.values.area && form.values.branch) {
-    onSubmit();
+    if (paymentMethod.value === 'corporative' && form.values.area && form.values.branch) {
+      onSubmit();
+    } else {
+      form.setErrors({
+        area: 'Obrigatório!',
+        branch: 'Obrigatório!',
+      });
+    }
   } else {
-    form.setErrors({
-      area: 'Obrigatório!',
-      branch: 'Obrigatório!',
+    const targetElement = document.getElementById('ride-info');
+    targetElement?.scrollIntoView({
+      behavior: 'smooth',
+      block: 'start',
+    });
+    toast({
+      title: 'Oops!',
+      description: `Preencha todos os dados do atendimento!`,
+      variant: 'destructive',
     });
   }
 };
 
 const onSubmit = form.handleSubmit(async (values) => {
   const ridePayload = {
-    code: rideCode,
+    code: rideCode.value,
     billing: {
       paymentMethod: paymentMethod.value,
+      paymentUrl: paymentCheckouUrl.value,
       paymentData: {
         branch: values?.branch || '-',
         area: values?.area || '-',
       },
       ammount: calculatedTravel.value.travelPrice,
       status: paymentMethod.value === 'corporative' ? 'invoice' : paymentStatus.value,
+      installments: 0,
     },
     user: {
       id: userData.value.id,
@@ -462,7 +479,7 @@ const onSubmit = form.handleSubmit(async (values) => {
       kmPrice: selectedProduct.value.kmPrice,
       minutePrice: selectedProduct.value.minutePrice,
     },
-    reason: values.reason,
+    reason: values.reason || '',
     travel: {
       passengers: ridePassengers.value,
       //@ts-ignore
@@ -509,7 +526,10 @@ const onSubmit = form.handleSubmit(async (values) => {
       class: 'bg-green-600 border-0 text-white text-2xl',
       description: `Atendimento cadastrado com sucesso!`,
     });
-    navigateTo('/personal/rides/open');
+
+    if (paymentMethod.value === 'corporative' || paymentStatus.value === 'paid') {
+      navigateTo('/personal/rides/open');
+    }
   }
 });
 
@@ -553,6 +573,7 @@ const handleCieloCheckoutCreated = (result: {
 }) => {
   // Update payment status to pending as user will be redirected to Cielo
   paymentStatus.value = 'pending';
+  (paymentCheckouUrl.value = result?.checkoutUrl), onSubmit();
 };
 </script>
 <template>
@@ -889,19 +910,29 @@ const handleCieloCheckoutCreated = (result: {
                     <small class="font-bold">Destino</small>
                     <p>{{ destinationLocationDetails.address }}</p>
                   </div>
-                  <div class="flex flex-col gap-2">
-                    <small class="font-bold">Serviço selecionado</small>
-                    <div v-if="selectedProduct" class="flex items-center gap-4">
-                      <div
-                        class="w-[50px] h-[50px] rounded-md bg-zinc-200 bg-cover bg-no-repeat bg-center relative flex items-center justify-center"
-                        :style="{
-                          backgroundImage: `url(${selectedProduct?.image?.url})`,
-                        }"
-                      />
-                      <ProductTag
-                        :label="selectedProduct?.name"
-                        :type="selectedProduct?.name"
-                      />
+                  <div class="flex items-center gap-6">
+                    <div>
+                      <small class="font-bold">Serviço selecionado</small>
+                      <div v-if="selectedProduct" class="flex items-center gap-4">
+                        <div
+                          class="w-[50px] h-[50px] rounded-md bg-zinc-200 bg-cover bg-no-repeat bg-center relative flex items-center justify-center"
+                          :style="{
+                            backgroundImage: `url(${selectedProduct?.image?.url})`,
+                          }"
+                        />
+                        <ProductTag
+                          :label="selectedProduct?.name"
+                          :type="selectedProduct?.name"
+                        />
+                      </div>
+                    </div>
+                    <div>
+                      <small class="font-bold">Distância</small>
+                      <p>{{ calculatedTravel.travelDistance }}</p>
+                    </div>
+                    <div>
+                      <small class="font-bold">Duração</small>
+                      <p>{{ calculatedTravel.travelTime }}</p>
                     </div>
                   </div>
                   <div class="border-t border-zinc-900">
@@ -994,58 +1025,50 @@ const handleCieloCheckoutCreated = (result: {
           </CardContent>
         </Card>
       </section>
-
-      <Dialog
-        :open="paymentMethod === 'creditcard' && enablePayment"
-        @update:open="enablePayment = $event"
-      >
-        <DialogContent class="max-w-3xl">
-          <DialogHeader>
-            <DialogTitle class="mb-6">Efetuar Pagamento - Crédito À Vista</DialogTitle>
-          </DialogHeader>
-          <StripeCheckout
-            :amount="calculatedTravel?.travelPrice || 1.0"
-            currency="brl"
-            :metadata="{ id: userData.id, name: userData.name }"
-            @paymentComplete="handlePaymentComplete"
-            @paymentError="handlePaymentError"
-          />
-          <!-- <DialogFooter>
-            <DialogClose as-child>
-              <Button variant="destructive">
-                Custom Close
-              </Button>
-            </DialogClose>
-          </DialogFooter> -->
-        </DialogContent>
-      </Dialog>
-
-      <Dialog
-        :open="paymentMethod === 'cielo' && enablePayment"
-        @update:open="enablePayment = $event"
-      >
-        <DialogContent class="max-w-3xl">
-          <DialogHeader>
-            <DialogTitle class="mb-6">Efetuar Pagamento - Crédito Parcelado</DialogTitle>
-          </DialogHeader>
-          <CieloCheckoutUrl
-            :rideData="{
-              code: rideCode,
-              selectedProduct: selectedProduct,
-              calculatedTravel: calculatedTravel,
-              userData: userData,
-              originAddress: originLocationDetails.address,
-              destinationAddress: destinationLocationDetails.address,
-              departDate: form.values.departDate,
-              departTime: form.values.departTime,
-              passengers: ridePassengers,
-            }"
-            @checkoutCreated="handleCieloCheckoutCreated"
-            @checkoutError="handlePaymentError"
-          />
-        </DialogContent>
-      </Dialog>
     </form>
   </main>
+  <Dialog
+    :open="paymentMethod === 'creditcard' && enablePayment"
+    @update:open="enablePayment = $event"
+  >
+    <DialogContent class="max-w-3xl">
+      <DialogHeader>
+        <DialogTitle class="mb-6">Efetuar Pagamento - Crédito À Vista</DialogTitle>
+      </DialogHeader>
+      <StripeCheckout
+        :amount="calculatedTravel?.travelPrice || 1.0"
+        currency="brl"
+        :metadata="{ id: userData.id, name: userData.name }"
+        @paymentComplete="handlePaymentComplete"
+        @paymentError="handlePaymentError"
+      />
+    </DialogContent>
+  </Dialog>
+
+  <Dialog
+    :open="paymentMethod === 'cielo' && enablePayment"
+    @update:open="enablePayment = $event"
+  >
+    <DialogContent class="max-w-3xl">
+      <DialogHeader>
+        <DialogTitle class="mb-6">Efetuar Pagamento - Crédito Parcelado</DialogTitle>
+      </DialogHeader>
+      <CieloCheckoutUrl
+        :rideData="{
+          code: rideCode,
+          selectedProduct: selectedProduct,
+          calculatedTravel: calculatedTravel,
+          userData: userData,
+          originAddress: originLocationDetails.address,
+          destinationAddress: destinationLocationDetails.address,
+          departDate: form.values.departDate,
+          departTime: form.values.departTime,
+          passengers: ridePassengers,
+        }"
+        @checkoutCreated="handleCieloCheckoutCreated"
+        @checkoutError="handlePaymentError"
+      />
+    </DialogContent>
+  </Dialog>
 </template>
 <style scoped></style>

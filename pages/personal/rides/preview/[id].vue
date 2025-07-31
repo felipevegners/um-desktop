@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { SharedBackLink } from '#components';
+import RideStatusFlag from '@/components/shared/RideStatusFlag.vue';
 import { useToast } from '@/components/ui/toast/use-toast';
 import { CalendarDays, LoaderCircle, X } from 'lucide-vue-next';
 import { currencyFormat } from '~/lib/utils';
@@ -86,7 +87,12 @@ onBeforeMount(async () => {
         </AlertDialogContent>
       </AlertDialog>
 
-      <Button @click="toggleCancelationModal" type="button" variant="destructive">
+      <Button
+        @click="toggleCancelationModal"
+        type="button"
+        variant="destructive"
+        class="p-6"
+      >
         <X :size="18" />
         Cancelar Atendimento
       </Button>
@@ -104,24 +110,13 @@ onBeforeMount(async () => {
             </div>
             <div class="p-6 bg-white rounded-md">
               <p class="text-sm text-zinc-600">Status</p>
-              <p
-                class="mt-3 px-2 flex items-center justify-center h-6 rounded-lg text-white text-xs uppercase w-fit"
-                :class="`${ride?.status === 'created' ? 'bg-blue-600' : ride?.status === 'accepted' ? 'bg-green-600' : ride?.status === 'completed' ? 'bg-zinc-900' : 'bg-red-600'}`"
-              >
-                {{
-                  ride?.status === 'created'
-                    ? 'Agendada'
-                    : ride?.status === 'accepted'
-                      ? 'Confirmada'
-                      : ride?.status === 'completed'
-                        ? 'Realizada'
-                        : 'Cancelada'
-                }}
-              </p>
+              <RideStatusFlag :ride-status="ride.status" />
             </div>
             <div class="p-6 bg-white rounded-md">
               <p class="text-sm text-zinc-600">Data</p>
-              <p class="text-xl font-bold">{{ ride?.travel.date }}</p>
+              <p class="text-xl font-bold">
+                {{ new Date(ride.travel.date as string).toLocaleDateString('pt-BR') }}
+              </p>
             </div>
             <div class="p-6 bg-white rounded-md">
               <p class="text-sm text-zinc-600">Hora Partida</p>
