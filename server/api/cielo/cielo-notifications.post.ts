@@ -4,6 +4,9 @@ import { prisma } from '~/utils/prisma';
 export default defineEventHandler(async (event) => {
   const body = await readBody(event);
   const { url } = body;
+
+  console.log('NOTIFICATION BODY ---> ', body);
+
   const CieloPaymentStatus = {
     1: 'pending',
     2: 'paid',
@@ -16,7 +19,7 @@ export default defineEventHandler(async (event) => {
 
   try {
     const paymentStatus = await cieloService.getCieloPaymentStatus(url);
-    const sanitizeOrderNumber = paymentStatus.order_number.replace('UM', '');
+    const sanitizeOrderNumber = paymentStatus?.order_number.replace('UM', '');
 
     const rideByCode = await prisma.rides.findFirst({
       where: {

@@ -122,12 +122,14 @@ export class CieloService {
 
   async getCieloPaymentStatus(url: string): Promise<any> {
     try {
-      const response = await $fetch(url);
-      return response;
+      if (url) {
+        const response = await $fetch(url);
+        return response;
+      }
     } catch (error: any) {
-      console.error('Failed to create Cielo checkout:', error);
+      console.error('Failed to get Cielo Transaction Data --->', error);
       console.error('Error details:', error.data || error.response);
-      throw new Error(`Cielo Checkout Error: ${error.message}`);
+      // throw new Error(`Cielo Checkout Error: ${error.message}`);
     }
   }
 }
