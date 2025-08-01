@@ -3,9 +3,7 @@ import { Prisma, prisma } from '~/utils/prisma';
 
 export default defineEventHandler(async (event) => {
   const body = await readBody(event);
-  const { url } = body;
-
-  console.log('NOTIFICATION BODY ---> ', body);
+  const { Url } = body;
 
   const CieloPaymentStatus = {
     1: 'pending',
@@ -18,7 +16,7 @@ export default defineEventHandler(async (event) => {
   };
 
   try {
-    const paymentStatus = await cieloService.getCieloPaymentStatus(url);
+    const paymentStatus = await cieloService.getCieloPaymentStatus(Url);
     const sanitizeOrderNumber = paymentStatus?.order_number.replace('UM', '');
 
     const rideByCode = await prisma.rides.findFirst({
