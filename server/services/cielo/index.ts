@@ -119,6 +119,17 @@ export class CieloService {
   clearCachedToken(): void {
     this.cachedToken = null;
   }
+
+  async getCieloPaymentStatus(url: string): Promise<any> {
+    try {
+      const response = await $fetch(url);
+      return response;
+    } catch (error: any) {
+      console.error('Failed to create Cielo checkout:', error);
+      console.error('Error details:', error.data || error.response);
+      throw new Error(`Cielo Checkout Error: ${error.message}`);
+    }
+  }
 }
 
 export const cieloService = CieloService.getInstance();

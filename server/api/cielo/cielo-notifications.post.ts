@@ -1,3 +1,4 @@
+import { cieloService } from '@/server/services/cielo';
 import { prisma } from '~/utils/prisma';
 
 export default defineEventHandler(async (event) => {
@@ -11,10 +12,15 @@ export default defineEventHandler(async (event) => {
     6: 'error',
     7: 'authorized',
   };
+
+  const { url } = body;
+
   try {
+    const paymentStatus = await cieloService.getCieloPaymentStatus(url);
+
     const rideByCode = await prisma.rides.findFirst({
       where: {
-        code: body.order_number,
+        code: paymentStatus.order_number,
       },
     });
 
@@ -29,17 +35,15 @@ export default defineEventHandler(async (event) => {
           billing: {
             ...billing,
             //@ts-ignore
-            status: CieloPaymentStatus[body.payment_status],
-            installments: body.payment_installments,
-            date: body.created_date,
+            status: CieloPaymentStatus[paymentStatus.payment_status],
+            installments: paymentStatus.payment_installments,
+            date: paymentStatus.created_date,
           },
         },
       });
-    } else {
-      console.log('caiu no else --> ', body);
     }
-    console.log('Notification Body -> ', body);
-    return JSON.stringify(body);
+
+    // return JSON.stringify(paymentStatus);
   } catch (error) {
     console.error('Cielo Notification Catch Error ->', error);
   }
