@@ -35,10 +35,12 @@ export default defineEventHandler(async (event) => {
           },
         },
       });
+    } else {
+      console.log('caiu no else --> ', body);
     }
-    // console.log('Notification Body -> ', body);
+    console.log('Notification Body -> ', body);
     return JSON.stringify(body);
   } catch (error) {
-    console.error(error);
+    console.error('Cielo Notification Catch Error ->', error);
   }
 });
