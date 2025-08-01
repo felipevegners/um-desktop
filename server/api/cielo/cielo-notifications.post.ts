@@ -3,6 +3,7 @@ import { prisma } from '~/utils/prisma';
 
 export default defineEventHandler(async (event) => {
   const body = await readBody(event);
+  const { url } = body;
   const CieloPaymentStatus = {
     1: 'pending',
     2: 'paid',
@@ -13,14 +14,13 @@ export default defineEventHandler(async (event) => {
     7: 'authorized',
   };
 
-  const { url } = body;
-
   try {
     const paymentStatus = await cieloService.getCieloPaymentStatus(url);
+    const sanitizeOrderNumber = paymentStatus.order_number.replace('UM', '');
 
     const rideByCode = await prisma.rides.findFirst({
       where: {
-        code: paymentStatus.order_number,
+        code: `UM-${sanitizeOrderNumber}`,
       },
     });
 
@@ -43,8 +43,13 @@ export default defineEventHandler(async (event) => {
       });
     }
 
-    // return JSON.stringify(paymentStatus);
+    return JSON.stringify(paymentStatus);
   } catch (error) {
+    if (error instanceof Prisma.PrismaClientKnownRequestError) {
+      console.log('Error Prisma -> ', error);
+      throw error;
+    }
     console.error('Cielo Notification Catch Error ->', error);
+    return error;
   }
 });
