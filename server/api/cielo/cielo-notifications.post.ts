@@ -1,5 +1,5 @@
 import { cieloService } from '@/server/services/cielo';
-import { prisma } from '~/utils/prisma';
+import { Prisma, prisma } from '~/utils/prisma';
 
 export default defineEventHandler(async (event) => {
   const body = await readBody(event);
