@@ -454,10 +454,12 @@ const showPaymentSection = async () => {
 const onSubmit = form.handleSubmit(async (values) => {
   const ridePayload = {
     code: rideCode.value,
+    price: calculatedTravel.value.travelPrice,
     billing: {
       paymentMethod: paymentMethod.value,
       paymentUrl: paymentCheckouUrl.value,
       paymentData: {
+        contract: isCorpAccount ? contract?.value.id : '-',
         branch: values?.branch || '-',
         area: values?.area || '-',
       },
@@ -495,14 +497,13 @@ const onSubmit = form.handleSubmit(async (values) => {
         lat: destinationCoords.value.lat,
         lng: destinationCoords.value.lng,
       },
-      stops: waypointLocationDetails.value,
+      stops: waypointLocationDetails.value || [],
       distance: calculatedTravel.value.travelDistance,
       duration: calculatedTravel.value.travelTime,
       polyLineCoors: routePolyLine.value,
     },
     status: 'created',
     accepted: false,
-    price: calculatedTravel.value.travelPrice,
     driver: {},
     observations: values.observations,
     dispatcher: {

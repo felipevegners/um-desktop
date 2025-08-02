@@ -8,11 +8,13 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { LoaderCircle } from 'lucide-vue-next';
 
 const props = defineProps<{
   items?: any[];
   label?: string;
   tableId?: string;
+  loading?: boolean;
 }>();
 
 const emit = defineEmits(['on-select']);
@@ -24,7 +26,10 @@ const selected = (value: any) => {
 
 <template>
   <Select @update:model-value="selected">
-    <SelectTrigger>
+    <SelectTrigger v-if="loading">
+      <LoaderCircle class="animate-spin" />
+    </SelectTrigger>
+    <SelectTrigger v-else>
       <SelectValue :placeholder="label" />
     </SelectTrigger>
     <SelectContent>
@@ -40,12 +45,5 @@ const selected = (value: any) => {
         </SelectItem>
       </SelectGroup>
     </SelectContent>
-    <!-- <SelectContent v-else>
-      <SelectGroup>
-        <SelectItem :value="'-'">
-          {{ label }}
-        </SelectItem>
-      </SelectGroup>
-    </SelectContent> -->
   </Select>
 </template>

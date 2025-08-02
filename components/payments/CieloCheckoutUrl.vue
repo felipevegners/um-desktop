@@ -1,9 +1,11 @@
 <script setup lang="ts">
 import { useCielo } from '@/composables/cielo/useCielo';
 import { CreditCard, ExternalLink, LoaderCircle, MapPin, Shield } from 'lucide-vue-next';
-import { currencyFormat } from '~/lib/utils';
+import { WPP_API } from '~/config/paths';
+import { currencyFormat, sanitizePhone } from '~/lib/utils';
 
 interface Props {
+  admin?: boolean;
   rideData: {
     selectedProduct: any;
     calculatedTravel: any;
@@ -14,6 +16,11 @@ interface Props {
     departTime: string | undefined;
     passengers: number;
     code: string | undefined;
+    dispatcher?: {
+      user: string;
+      email: string;
+      dispatchDate: string;
+    };
   };
 }
 
@@ -76,13 +83,36 @@ const createCheckout = async () => {
  * Opens the checkout URL in a new tab/window
  */
 const openCheckout = () => {
-  if (checkoutUrl.value) {
+  if (!props.admin && checkoutUrl.value) {
     window.open(checkoutUrl.value, '_blank', 'noopener,noreferrer');
-  }
 
-  setTimeout(() => {
-    navigateTo('/personal/rides/open');
-  }, 2000);
+    setTimeout(() => {
+      navigateTo('/personal/rides/open');
+    }, 2000);
+  } else {
+    const message = `
+    *Link de Pagamento - Atendimento Urban Mobi*
+    %0A%0AOlá ${props.rideData.userData.name}, obrigado por escolher a Urban Mobi!
+    %0A%0ASeu atendimento foi gerado com sucesso. Confira os detalhes abaixo e acesse o link de pagamento Cielo para concluir o agendamento.
+    %0A%0A*Código*: ${props?.rideData.code}
+    %0A*Data / Hora*: ${new Date(props?.rideData.departDate as string).toLocaleDateString('pt-BR')} / ${props?.rideData.departTime}HS
+    %0A*Origem*: ${props?.rideData.originAddress}
+    %0A*Destino*: ${props?.rideData.destinationAddress}
+    %0A*Agendado por*: ${props?.rideData.dispatcher?.user} - ${props.rideData.dispatcher?.email}
+    %0A%0A*Valor total*: ${currencyFormat(props?.rideData.calculatedTravel.travelPrice)}
+    %0A%0A*Link de pagamento Cielo*: ${checkoutUrl.value}
+    %0A%0AEm caso de dúvidas, entre em contato conosco.
+    %0A%0AEquipe Urban Mobi.
+    `;
+    const url =
+      WPP_API.replace(
+        '[[phone]]',
+        sanitizePhone(props?.rideData.userData.phone as string),
+      ) +
+      '&text=' +
+      message;
+    navigateTo(url, { external: true, open: { target: '_blank' } });
+  }
 };
 
 /**
@@ -194,7 +224,22 @@ onMounted(() => {
 
       <!-- Payment Action -->
       <div class="space-y-4">
-        <Button @click="openCheckout" class="w-full py-8 text-lg font-semibold" size="lg">
+        <Button
+          v-if="admin"
+          @click="openCheckout"
+          class="w-full py-8 text-lg font-semibold"
+          size="lg"
+        >
+          Enviar Link
+          <ExternalLink class="ml-2" :size="16" />
+        </Button>
+
+        <Button
+          v-else
+          @click="openCheckout"
+          class="w-full py-8 text-lg font-semibold"
+          size="lg"
+        >
           Pagar {{ currencyFormat(rideData.calculatedTravel?.travelPrice) }}
           <ExternalLink class="ml-2" :size="16" />
         </Button>
