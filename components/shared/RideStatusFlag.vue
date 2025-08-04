@@ -21,7 +21,7 @@ const renderRideStatus = computed(() => {
 </script>
 <template>
   <span
-    :class="`p-2 flex items-center justify-center rounded-md text-white text-xs font-bold uppercase w-fit  
+    :class="`py-2 px-4 h-9 flex items-center justify-center rounded-md text-white text-xs font-bold uppercase w-fit  
     ${
       rideStatus === 'created'
         ? 'bg-blue-600'

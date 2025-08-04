@@ -40,8 +40,8 @@ const value = computed({
 
 <template>
   <FormField v-slot="{ componentField }" name="departDate">
-    <FormItem>
-      <FormLabel>Data do Atendimento</FormLabel>
+    <FormItem class="flex flex-col gap-2">
+      <FormLabel>Data do Atendimento*</FormLabel>
       <Popover>
         <PopoverTrigger as-child>
           <FormControl>
@@ -49,7 +49,7 @@ const value = computed({
               variant="outline"
               :class="
                 cn(
-                  'w-[240px] ps-3 text-start font-normal',
+                  'w-[240px] mt-2 py-3 ps-3 text-start font-normal h-10',
                   !value && 'text-muted-foreground',
                 )
               "

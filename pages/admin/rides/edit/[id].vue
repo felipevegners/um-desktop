@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import BackLink from '@/components/shared/BackLink.vue';
-import DatePicker from '@/components/shared/DatePicker.vue';
 import FormSelect from '@/components/shared/FormSelect.vue';
 import { useToast } from '@/components/ui/toast/use-toast';
 import { useContractsStore } from '@/stores/contracts.store';
@@ -14,13 +13,16 @@ import {
 } from '@internationalized/date';
 import {
   CalendarDays,
+  Check,
   ConciergeBell,
-  FastForward,
   LoaderCircle,
   Mail,
-  Megaphone,
-  OctagonX,
   Phone,
+  Plus,
+  SquareCheck,
+  SquareDot,
+  SquareSquare,
+  Trash,
   UserPen,
   Users,
   Waypoints,
@@ -82,21 +84,24 @@ const editDriver = ref<boolean>(false);
 const selectedDriver = ref<any>();
 selectedDriver.value = ride?.value.driver;
 const selectedUser = ref<any>();
-selectedUser.value = ride?.value.user;
 const loadingSend = ref<boolean>(false);
 const loadingProducts = ref<boolean>(false);
 const loadingRoute = ref<boolean>(false);
 const availableUsers = ref();
 const showAvailableProducts = ref<boolean>(true);
 const availableProducts = ref<any>([]);
-const selectedProduct = ref<any>();
+const selectedProduct = ref<any>(ride?.value.product);
 const travelDate = ref<any>();
 const showRenderedMap = ref<boolean>(false);
 const showGenerateRide = ref<boolean>(false);
 const showRouteRecalculation = ref<boolean>(false);
+const showCancelationModal = ref<boolean>(false);
+const loadingCancelAndDelete = ref<boolean>(false);
+const showFinishModal = ref<boolean>(false);
+const showWaypointsForm = ref<boolean>(false);
 
-selectedProduct.value = ride?.value.product;
 availableProducts.value = products?.value;
+showWaypointsForm.value = ride?.value.travel.stops.length;
 
 const originCoords = ref<any>({
   lat: '',
@@ -114,6 +119,13 @@ const destinationLocationDetails = ref<any>({
   address: ride?.value.travel.destinationAddress,
   url: '',
 });
+
+const waypointCoords = ref<any>({
+  lat: '',
+  lng: '',
+});
+
+const waypointLocationDetails = ref<any>([]);
 
 const routePolyLine = ref();
 const markers = ref<any>([]);
@@ -182,10 +194,12 @@ onBeforeMount(async () => {
     };
   });
 
-  if (ride?.value.billing.contractId !== '-') {
-    await getContractByIdAction(ride?.value.billing.contractId);
+  selectedUser.value = filteredUsers.find((user: any) => user.id === ride?.value.user.id);
+
+  if (ride?.value.billing.paymentData.contract !== '-') {
+    await getContractByIdAction(ride?.value.billing.paymentData.contract);
     availableProducts.value = contract?.value.products;
-    selectedProduct.value = { id: ride?.value?.product?.id };
+    selectedProduct.value = ride?.value?.product;
   }
 
   const splitDate = ride?.value.travel.date.split('/').reverse();
@@ -284,6 +298,24 @@ const setDestinationPlace = (place: any) => {
   });
 };
 
+waypointLocationDetails.value = ride?.value.travel.stops || [];
+
+const addWaypointRow = () => {
+  waypointLocationDetails.value.push({
+    address: '',
+  });
+};
+
+const removeWaypointRow = (index: number) => {
+  waypointLocationDetails.value.splice(index, 1);
+};
+
+// // Set the waypoints of the ride
+const setWaypoints = (place: any, index: any) => {
+  console.log(waypointLocationDetails.value[index].address);
+  waypointLocationDetails.value[index].address = place.formatted_address;
+};
+
 const setNewDriver = (driverId: string) => {
   const findDriver = drivers.value.find((driver) => driver.id === driverId);
   selectedDriver.value = findDriver;
@@ -310,6 +342,57 @@ const contactDriver = async () => {
   navigateTo(url, { external: true, open: { target: '_blank' } });
 };
 
+const toggleCancelationModal = () => {
+  showCancelationModal.value = !showCancelationModal.value;
+};
+
+const toggleFinishModal = () => {
+  showFinishModal.value = !showFinishModal.value;
+};
+
+const handleCancelRide = async () => {
+  const payload = {
+    ...ride?.value,
+    status: 'cancelled',
+  };
+  try {
+    loadingCancelAndDelete.value = true;
+    await updateRideAction(payload);
+    setTimeout(() => {
+      loadingCancelAndDelete.value = false;
+      showCancelationModal.value = false;
+      navigateTo('/admin/rides/open');
+    }, 1500);
+  } catch (error) {
+    toast({
+      title: 'Oops!',
+      description: `Ocorreu um erro ao cancelar o atendimento. Tente novamente.`,
+      variant: 'destructive',
+    });
+  }
+};
+const handleFinishRide = async () => {
+  const payload = {
+    ...ride?.value,
+    status: 'completed',
+  };
+  try {
+    loadingCancelAndDelete.value = true;
+    await updateRideAction(payload);
+    setTimeout(() => {
+      loadingCancelAndDelete.value = false;
+      showCancelationModal.value = false;
+      navigateTo('/admin/rides/open');
+    }, 1500);
+  } catch (error) {
+    toast({
+      title: 'Oops!',
+      description: `Ocorreu um erro ao cancelar o atendimento. Tente novamente.`,
+      variant: 'destructive',
+    });
+  }
+};
+
 const form = useForm({
   validationSchema: '',
   keepValuesOnUnmount: true,
@@ -317,6 +400,7 @@ const form = useForm({
     user: ride?.value.user.id,
     reason: ride?.value.reason,
     passengers: ride?.value.travel.passengers,
+    departDate: ride?.value.travel.date,
     departTime: ride?.value.travel.departTime,
     origin: ride?.value.travel.originAddress,
     destination: ride?.value.travel.destinationAddress,
@@ -328,16 +412,22 @@ const form = useForm({
 const onSubmit = form.handleSubmit(async (values) => {
   const ridePayload = {
     billing: {
-      contractId: selectedUser.value.contractId,
-      area: selectedUser.value.area,
-      branchId: selectedUser.value.branchId,
+      paymentMethod: ride?.value.billing.paymentMethod,
+      paymentUrl: ride?.value.billing.paymentUrl,
+      paymentData: {
+        contract: selectedUser.value.contract.contractId || '-',
+        branch: selectedUser.value.contract.branchId || '-',
+        area: selectedUser.value.contract.area || '-',
+      },
+      ammount: calculatedTravel.value.travelPrice,
+      status: ride?.value.billing.status,
+      installments: ride?.value.billing.installments,
     },
     user: {
-      id: values.user,
-      name: selectedUser.value.name,
+      id: selectedUser.value.id,
+      name: selectedUser.value.username,
       email: selectedUser.value.email,
       phone: selectedUser.value.phone,
-      companyName: selectedUser.value.name,
     },
     product: {
       id: selectedProduct.value.id,
@@ -347,11 +437,11 @@ const onSubmit = form.handleSubmit(async (values) => {
       kmPrice: selectedProduct.value.kmPrice,
       minutePrice: selectedProduct.value.minutePrice,
     },
-    reason: values.reason,
+    reason: values.reason || '-',
     travel: {
       passengers: values.passengers,
       //@ts-ignore
-      date: df.format(travelDate?.value?.toDate(getLocalTimeZone())) || '',
+      date: values.departDate,
       departTime: values.departTime,
       originAddress: values.origin,
       origin: {
@@ -363,38 +453,41 @@ const onSubmit = form.handleSubmit(async (values) => {
         lat: destinationCoords.value.lat,
         lng: destinationCoords.value.lng,
       },
+      stops: waypointLocationDetails.value || [],
       distance: calculatedTravel.value.travelDistance,
       duration: calculatedTravel.value.travelTime,
       polyLineCoors: routePolyLine.value,
     },
-    status: 'changed',
+    status: ride?.value.status,
     accepted: selectedDriver.value.name ? true : false,
     price: calculatedTravel.value.travelPrice,
     driver: {
       ...selectedDriver.value,
     },
+    observations: values.observations,
     dispatcher: {
       user: data?.value?.user?.name,
       email: data?.value?.user?.email,
       dispatchDate: new Date().toLocaleDateString('pt-BR').padStart(10, '0'),
     },
   };
-  try {
-    await updateRideAction(ridePayload);
-  } catch (error) {
-    toast({
-      title: 'Oops!',
-      description: `Ocorreu um erro ao criar o agendamento. Tente novamente.`,
-      variant: 'destructive',
-    });
-  } finally {
-    toast({
-      title: 'Tudo pronto!',
-      class: 'bg-green-600 border-0 text-white text-2xl',
-      description: `Agendamento alterado com sucesso!`,
-    });
-    navigateTo('/admin/rides/open');
-  }
+  console.log('---> ', ridePayload);
+  // try {
+  //   await updateRideAction(ridePayload);
+  // } catch (error) {
+  //   toast({
+  //     title: 'Oops!',
+  //     description: `Ocorreu um erro ao criar o agendamento. Tente novamente.`,
+  //     variant: 'destructive',
+  //   });
+  // } finally {
+  //   toast({
+  //     title: 'Tudo pronto!',
+  //     class: 'bg-green-600 border-0 text-white text-2xl',
+  //     description: `Agendamento alterado com sucesso!`,
+  //   });
+  //   navigateTo('/admin/rides/open');
+  // }
 });
 </script>
 <template>
@@ -407,11 +500,19 @@ const onSubmit = form.handleSubmit(async (values) => {
         <CalendarDays class="w-6 h-6" />
         Editar Atendimento - #{{ ride?.code || '' }}
       </h1>
-      <div class="flex gap-10 items-center">
-        <Button variant="destructive" @click="">
-          <OctagonX />
+      <div class="flex gap-6 items-center">
+        <Button @click="toggleFinishModal">
+          <Check />
+          FInalizar Atendimento
+        </Button>
+        <Button @click="toggleCancelationModal" variant="destructive">
+          <X />
           Cancelar Atendimento
         </Button>
+        <!-- <Button variant="destructive" @click="">
+          <Trash />
+          Excluir Atendimento
+        </Button> -->
       </div>
     </section>
     <form @submit.prevent="onSubmit" @keydown.enter.prevent="true">
@@ -423,17 +524,10 @@ const onSubmit = form.handleSubmit(async (values) => {
           <div class="md:grid md:grid-cols-2 gap-6">
             <!-- COLUNA DE DADOS -->
             <div class="flex flex-col gap-6">
-              <span
-                :class="`p-2 flex items-center justify-center rounded-md text-white text-sm font-bold uppercase w-fit  ${ride?.status === 'created' ? 'bg-blue-600' : 'bg-green-600'}`"
-              >
-                {{
-                  ride?.status === 'created'
-                    ? 'Agendado'
-                    : ride?.status === 'accepted'
-                      ? 'Aceito'
-                      : 'Unknown'
-                }}
-              </span>
+              <div>
+                <small class="text-xs text-muted-foreground">STATUS</small>
+                <SharedRideStatusFlag :ride-status="ride?.status" />
+              </div>
               <div
                 class="p-6 grid grid-cols-2 gap-6 items-start border border-zinc-900 rounded-md"
               >
@@ -498,6 +592,35 @@ const onSubmit = form.handleSubmit(async (values) => {
                 </div>
               </div>
               <div
+                class="p-6 flex items-start justify-between bg-white border border-zinc-900 rounded-md"
+              >
+                <div class="space-y-2 text-center">
+                  <small class="text-xs text-muted-foreground">PAGAMENTO</small>
+                  <SharedPaymentStatusFlag
+                    :payment-status="ride?.billing.status"
+                    :payment-url="ride?.billing.paymentUrl"
+                  />
+                </div>
+                <div class="space-y-2 text-center">
+                  <small class="text-xs text-muted-foreground">MEIO DE PAGAMENTO</small>
+                  <p class="text-center uppercase font-bold">
+                    {{ ride?.billing.paymentMethod }}
+                  </p>
+                </div>
+                <div class="space-y-2 text-center">
+                  <small class="text-xs text-muted-foreground">DATA DO PAGAMENTO</small>
+                  <p class="text-center uppercase font-bold">
+                    {{ ride?.billing.date }}
+                  </p>
+                </div>
+                <div class="space-y-2 text-center">
+                  <small class="text-xs text-muted-foreground">PARCELAS</small>
+                  <p class="text-center uppercase font-bold">
+                    {{ ride?.billing.installments }}
+                  </p>
+                </div>
+              </div>
+              <div
                 class="p-6 border border-zinc-900 rounded-md flex justify-between gap-6 items-center"
               >
                 <div class="grow">
@@ -529,11 +652,7 @@ const onSubmit = form.handleSubmit(async (values) => {
                 <div v-else>
                   <label class="text-sm font-medium">Produto Selecionado:</label>
                   <ul class="mt-2 flex flex-wrap gap-4">
-                    <li
-                      class="flex-1"
-                      v-for="product in availableProducts"
-                      :key="product.id"
-                    >
+                    <li class="flex-1" v-for="product in products" :key="product.id">
                       <article
                         class="p-4 flex items-center justify-start gap-4 bg-white rounded-md border"
                         :class="`${selectedProduct?.id === product.id ? 'border-2 border-zinc-900 bg-zinc-100' : 'border-zinc-300'}`"
@@ -595,10 +714,7 @@ const onSubmit = form.handleSubmit(async (values) => {
                     </FormField>
                   </div>
                   <div class="flex items-center gap-6">
-                    <div class="flex flex-col">
-                      <label class="mb-2 text-sm font-medium">Data*</label>
-                      <DatePicker v-model="travelDate" />
-                    </div>
+                    <SharedNewDatePicker :form="form" />
                     <div class="flex items-end gap-4">
                       <FormField v-slot="{ componentField }" name="departTime">
                         <FormItem class="md:min-w-[200px]">
@@ -635,12 +751,55 @@ const onSubmit = form.handleSubmit(async (values) => {
                       <FormMessage />
                     </FormItem>
                   </FormField>
+                  <!-- Route Waypoints -->
+                  <div class="flex flex-col items-start gap-4">
+                    <div
+                      v-if="ride?.travel.stops"
+                      v-for="(waypoint, index) in waypointLocationDetails"
+                      :key="index"
+                      class="w-full px-4 pt-2 pb-4 border border-zinc-900 rounded-md"
+                    >
+                      <FormField name="waypoint">
+                        <FormItem class="w-full">
+                          <FormLabel class="mt-0">Parada {{ index + 1 }}</FormLabel>
+                          <FormControl>
+                            <div class="flex items-center gap-2">
+                              <SquareSquare />
+                              <GMapAutocomplete
+                                placeholder="Insira a parada"
+                                @place_changed="setWaypoints($event, index)"
+                                v-model="waypoint.address"
+                                :value="waypoint.address"
+                                class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                              />
+                              <Button
+                                type="button"
+                                @click.prevent="removeWaypointRow(index)"
+                                size="icon"
+                              >
+                                <X />
+                              </Button>
+                            </div>
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      </FormField>
+                    </div>
+                    <Button
+                      type="button"
+                      v-if="showWaypointsForm"
+                      @click.prevent="addWaypointRow"
+                    >
+                      <Plus />
+                      Adicionar Parada
+                    </Button>
+                  </div>
                   <FormField v-slot="{ componentField, value }" name="destination">
                     <FormItem>
                       <FormLabel>Destino</FormLabel>
                       <FormControl>
                         <div class="flex items-center gap-2">
-                          <SquareSquare />
+                          <SquareCheck />
                           <GMapAutocomplete
                             placeholder="Insira o Destino"
                             @place_changed="setDestinationPlace"
@@ -735,6 +894,48 @@ const onSubmit = form.handleSubmit(async (values) => {
         </DialogDescription>
       </DialogHeader>
       <DialogFooter> </DialogFooter>
+    </DialogContent>
+  </Dialog>
+  <Dialog :open="showCancelationModal" @update:open="showCancelationModal = $event">
+    <DialogContent class="space-y-4">
+      <DialogHeader>
+        <DialogTitle>Deseja Cancelar este Atendimento?</DialogTitle>
+      </DialogHeader>
+      <DialogDescription>
+        Essa ação irá cancelar o atendimento e notificar o usuário sobre o cancelamento.
+      </DialogDescription>
+      <DialogFooter>
+        <div class="flex items-start justify-center gap-4 w-full">
+          <Button type="button" variant="secondary" @click="toggleCancelationModal">
+            Voltar
+          </Button>
+          <Button type="button" variant="destructive" @click="handleCancelRide">
+            <LoaderCircle v-if="loadingCancelAndDelete" class="animate-spin" />
+            Cancelar
+          </Button>
+        </div>
+      </DialogFooter>
+    </DialogContent>
+  </Dialog>
+  <Dialog :open="showFinishModal" @update:open="showFinishModal = $event">
+    <DialogContent class="space-y-4">
+      <DialogHeader>
+        <DialogTitle>Deseja Finalizar este Atendimento?</DialogTitle>
+      </DialogHeader>
+      <DialogDescription>
+        Essa ação irá finalizar o atendimento e notificar o usuário.
+      </DialogDescription>
+      <DialogFooter>
+        <div class="flex items-start justify-center gap-4 w-full">
+          <Button type="button" variant="secondary" @click="toggleFinishModal">
+            Voltar
+          </Button>
+          <Button type="button" @click="handleFinishRide">
+            <LoaderCircle v-if="loadingCancelAndDelete" class="animate-spin" />
+            Finalizar
+          </Button>
+        </div>
+      </DialogFooter>
     </DialogContent>
   </Dialog>
 </template>

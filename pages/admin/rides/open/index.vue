@@ -41,14 +41,18 @@ const driversStore = useDriverStore();
 const { getDriversAction } = driversStore;
 const { drivers } = storeToRefs(driversStore);
 
-onMounted(async () => {
-  await getRidesAction();
-  await getDriversAction();
-});
-
 const selectedDriver = ref<any>();
 const showSetDriver = ref<boolean>(false);
 const selectedRide = ref<string>('');
+const filteredRides = ref<any>([]);
+
+onMounted(async () => {
+  await getRidesAction();
+  await getDriversAction();
+  filteredRides.value = rides?.value.filter(
+    (ride: any) => ride.status !== 'cancelled' && ride.status !== 'completed',
+  );
+});
 
 const sanitizeDrivers = computed(() => {
   return drivers?.value.map((driver) => {
@@ -138,7 +142,7 @@ const finalColumns = [
   <main class="p-6">
     <section class="mb-6 flex items-center justify-between gap-6">
       <h1 class="flex items-center gap-2 text-2xl font-bold">
-        <CalendarDays />
+        <CalendarDays :size="24" />
         Atendimentos Abertos
       </h1>
       <Button @click="navigateTo('/admin/rides/new')">
@@ -151,7 +155,7 @@ const finalColumns = [
     <section v-else>
       <DataTable
         :columns="finalColumns"
-        :data="rides"
+        :data="filteredRides"
         sortby="user"
         :columnPin="['code']"
         :filterBy="'nome do Usuário'"

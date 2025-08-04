@@ -335,6 +335,7 @@ const addWaypointRow = () => {
 
 const removeWaypointRow = (index: number) => {
   routeWaypoints.value.splice(index, 1);
+  waypointLocationDetails.value.pop(index, 1);
 };
 
 // // Set the waypoints of the ride

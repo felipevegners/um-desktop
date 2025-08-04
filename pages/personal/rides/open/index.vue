@@ -84,7 +84,7 @@ const finalColumns = [
     <section v-else>
       <DataTable
         :columns="finalColumns"
-        :data="rides"
+        :data="userRidesList"
         sortby="code"
         :columnPin="['code']"
         :filterBy="'código do atendimento'"

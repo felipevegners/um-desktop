@@ -1,6 +1,7 @@
 import { Button } from '@/components/ui/button';
 import { createColumnHelper } from '@tanstack/vue-table';
 import { ArrowUpDown } from 'lucide-vue-next';
+import PaymentStatusFlag from '~/components/shared/PaymentStatusFlag.vue';
 import RideStatusFlag from '~/components/shared/RideStatusFlag.vue';
 import { currencyFormat } from '~/lib/utils';
 
@@ -32,14 +33,16 @@ export const columns: any = [
       const normalize = data.travel.originAddress.split('-').slice(0, 1).pop();
       return h('div', { class: 'capitalize' }, [
         normalize,
-        h(
-          'span',
-          {
-            class:
-              'ml-1 px-2 py-0.5 text-center bg-zinc-900 text-zinc-300 text-xs w-fit rounded-md',
-          },
-          `${data?.travel.stops?.length} parada`,
-        ),
+        data?.travel.stops?.length > 0
+          ? h(
+              'span',
+              {
+                class:
+                  'ml-1 px-2 py-0.5 text-center bg-zinc-900 text-zinc-300 text-xs w-fit rounded-md',
+              },
+              `${data?.travel.stops?.length > 1 ? data?.travel.stops?.length + ' paradas' : data?.travel.stops?.length + ' parada'}`,
+            )
+          : '',
       ] as any);
     },
   }),
@@ -53,15 +56,15 @@ export const columns: any = [
       return h('div', { class: 'capitalize' }, normalize);
     },
   }),
-  columnHelper.display({
-    id: 'stops',
-    enableHiding: false,
-    header: () => h('div', { class: 'text-left' }, 'Paradas'),
-    cell: ({ row }) => {
-      const data = row.original;
-      return h('div', { class: 'capitalize' }, data?.travel?.stops?.length);
-    },
-  }),
+  // columnHelper.display({
+  //   id: 'stops',
+  //   enableHiding: false,
+  //   header: () => h('div', { class: 'text-left' }, 'Paradas'),
+  //   cell: ({ row }) => {
+  //     const data = row.original;
+  //     return h('div', { class: 'capitalize' }, data?.travel?.stops?.length);
+  //   },
+  // }),
   columnHelper.display({
     id: 'travelDate',
     enableHiding: false,
@@ -92,17 +95,10 @@ export const columns: any = [
     header: () => h('div', { class: 'text-left' }, 'Pagamento'),
     cell: ({ row }) => {
       const data = row.original;
-      return h(
-        'div',
-        {
-          class: `capitalize font-bold ${data?.billing?.status === 'paid' ? 'text-green-600' : data.billing.status === 'invoice' ? 'text-amber-600' : 'text-red-600'}`,
-        },
-        data.billing.status === 'paid'
-          ? 'Aprovado'
-          : data.billing.status === 'invoice'
-            ? 'A Faturar'
-            : 'Pendente',
-      );
+      return h(PaymentStatusFlag, {
+        paymentStatus: data.billing.status,
+        paymentUrl: data.billing.paymentUrl || '',
+      });
     },
   }),
   columnHelper.accessor('status', {

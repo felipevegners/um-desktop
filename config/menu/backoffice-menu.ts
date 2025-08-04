@@ -122,12 +122,12 @@ export const backofficeMenu = {
           url: '/admin/rides/open',
         },
         {
-          title: 'Realizados',
+          title: 'Finalizados',
           url: '/admin/rides/completed',
         },
         {
           title: 'Cancelados',
-          url: '/admin/rides/canceled',
+          url: '/admin/rides/cancelled',
         },
         {
           title: '+ Novo Atendimento',

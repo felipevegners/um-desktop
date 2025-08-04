@@ -87,13 +87,8 @@ onBeforeMount(async () => {
         </AlertDialogContent>
       </AlertDialog>
 
-      <Button
-        @click="toggleCancelationModal"
-        type="button"
-        variant="destructive"
-        class="p-6"
-      >
-        <X :size="18" />
+      <Button @click="toggleCancelationModal" type="button" variant="destructive">
+        <X />
         Cancelar Atendimento
       </Button>
     </section>
@@ -130,7 +125,13 @@ onBeforeMount(async () => {
               <p class="text-sm text-zinc-600">Origem</p>
               <p class="text-xl font-bold">{{ ride?.travel.originAddress }}</p>
             </div>
-
+            <div class="p-6 bg-white rounded-md col-span-5">
+              <p class="text-sm text-zinc-600">Paradas</p>
+              <div v-for="(stop, index) in ride?.travel.stops" class="mt-3">
+                <p class="font-bold">Parada {{ index + 1 }}</p>
+                <p class="text-xl">{{ stop.address }}</p>
+              </div>
+            </div>
             <div class="p-6 bg-white rounded-md col-span-5">
               <p class="text-sm text-zinc-600">Destino</p>
               <p class="text-xl font-bold">{{ ride?.travel.destinationAddress }}</p>

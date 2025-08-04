@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { createColumnHelper } from '@tanstack/vue-table';
-import { CalendarCheck2, LoaderCircle } from 'lucide-vue-next';
+import { CalendarX2, LoaderCircle } from 'lucide-vue-next';
 import { storeToRefs } from 'pinia';
 import { onMounted } from 'vue';
 import DataTable from '~/components/shared/DataTable.vue';
@@ -14,7 +14,7 @@ definePageMeta({
   middleware: 'sidebase-auth',
 });
 useHead({
-  title: 'Backoffice - Atendimentos Finalizados | Urban Mobi',
+  title: 'Backoffice - Atendimentos Cancelados | Urban Mobi',
 });
 
 const ridesStore = useRidesStore();
@@ -28,7 +28,7 @@ onMounted(async () => {
 
 const filteredRides = ref<any>([]);
 
-filteredRides.value = rides?.value.filter((ride: any) => ride.status === 'completed');
+filteredRides.value = rides?.value.filter((ride: any) => ride.status === 'cancelled');
 
 const editRide = (rideId: string) => {
   navigateTo({
@@ -64,8 +64,8 @@ const finalColumns = [
   <main class="p-6">
     <section class="mb-6 flex items-center justify-between gap-6">
       <h1 class="flex items-center gap-2 text-2xl font-bold">
-        <CalendarCheck2 :size="24" />
-        Atendimentos Finalizados
+        <CalendarX2 :size="24" />
+        Atendimentos Cancelados
       </h1>
     </section>
     <section v-if="loadingData" class="p-10 flex items-center justify-center">
