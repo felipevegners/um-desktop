@@ -323,7 +323,6 @@ const deleteFile = async (url: string) => {
                   <FormLabel>Tipo de Cobrança</FormLabel>
                   <FormControl>
                     <FormSelect
-                      disabled
                       :items="[
                         { label: 'Valor Fechado', value: 'contract' },
                         { label: 'Km e Minuto', value: 'free' },

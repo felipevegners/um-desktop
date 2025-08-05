@@ -16,6 +16,8 @@ import { DateFormatter, getLocalTimeZone, parseDate } from '@internationalized/d
 import { toTypedSchema } from '@vee-validate/zod';
 import {
   CalendarPlus,
+  Clock,
+  Gauge,
   LoaderCircle,
   Minus,
   Plus,
@@ -85,6 +87,7 @@ const paymentCheckouUrl = ref<string>('');
 const paymentMethodList = ref<any>();
 const showWaypointsForm = ref<boolean>(false);
 const availableProducts = ref<any>([]);
+const showContractProductAlert = ref<boolean>(false);
 
 onBeforeMount(async () => {
   await getProductsAction();
@@ -273,17 +276,24 @@ const getRideCalculation = async () => {
     const duration = parseInt(sanitizeDurationResponse) / 60;
     const distance = routeCalculation[0].distanceMeters / 1000;
 
-    const ridePrice =
-      basePrice +
-      parseFloat(distance.toFixed(2)) * parseFloat(selectedProduct?.value.kmPrice) +
-      duration * parseFloat(selectedProduct?.value.minutePrice);
+    if (selectedProduct.value.type === 'contract') {
+      const ridePrice = parseFloat(basePrice.toFixed(2));
+      calculatedTravel.value.travelPrice = ridePrice.toFixed(2).toString();
+      showContractProductAlert.value = true;
+      console.log('CONTRACT SERVICE', ridePrice);
+    } else {
+      const ridePrice =
+        basePrice +
+        parseFloat(distance.toFixed(2)) * parseFloat(selectedProduct?.value.kmPrice) +
+        duration * parseFloat(selectedProduct?.value.minutePrice);
+      calculatedTravel.value.travelPrice = ridePrice.toFixed(2).toString();
+    }
 
     calculatedTravel.value.travelDistance = convertMetersToDistance(
       routeCalculation[0].distanceMeters,
     );
     //@ts-ignore
     calculatedTravel.value.travelTime = convertSecondsToTime(duration);
-    calculatedTravel.value.travelPrice = ridePrice.toFixed(2).toString();
   } catch (error) {
     toast({
       title: 'Opss!',
@@ -937,11 +947,45 @@ const handleCieloCheckoutCreated = (result: {
                       <p>{{ calculatedTravel.travelTime }}</p>
                     </div>
                   </div>
-                  <div class="border-t border-zinc-900">
-                    <small class="font-bold">Total</small>
-                    <p class="font-bold text-2xl">
+                  <div
+                    v-if="showContractProductAlert"
+                    class="p-4 bg-amber-100 rounded-md border border-zinc-900"
+                  >
+                    <h3 class="mb-2 font-bold uppercase">Importante:</h3>
+                    <p>
+                      O Serviço
+                      <span class="font-bold">{{ selectedProduct.name }}</span> é
+                      oferecido no modelo <span class="font-bold">À Disposição</span>.
+                      Confira abaixo as franquias inclusas neste serviço.
+                    </p>
+                  </div>
+                  <div class="p-4 border-t border-zinc-900">
+                    <div v-if="showContractProductAlert">
+                      <p class="flex items-center gap-2 py-2 border-b border-zinc-200">
+                        <Gauge :size="18" />
+                        Franquia de KMs: ..............
+                        <span class="font-bold"
+                          >{{ selectedProduct.includedKms }} KM</span
+                        >
+                      </p>
+                      <p class="flex items-center gap-2 py-2 border-b border-zinc-200">
+                        <Clock :size="18" />
+                        Franquia de Horas: ............
+                        <span class="font-bold"
+                          >{{ selectedProduct.includedHours }} Hs</span
+                        >
+                      </p>
+                    </div>
+                    <p class="mt-4 font-bold">
+                      {{ showContractProductAlert ? 'Total Estimado' : 'Total' }}
+                    </p>
+                    <p class="font-bold text-3xl">
                       {{ currencyFormat(calculatedTravel?.travelPrice) }}
                     </p>
+                    <small v-if="showContractProductAlert" class="text-muted-foreground"
+                      >* O valor total desse serviço será definido pelo motorista ao
+                      término do atendimento.</small
+                    >
                   </div>
                 </div>
                 <div>
