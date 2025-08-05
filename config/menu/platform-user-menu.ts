@@ -1,4 +1,4 @@
-import { CalendarDays, HandCoins, UserCog } from 'lucide-vue-next';
+import { CalendarDays, HandCoins, Headset, UserCog } from 'lucide-vue-next';
 
 const { data } = useAuth();
 //@ts-ignore
@@ -55,6 +55,13 @@ export const platformUserMenu = {
       name: 'Minha conta',
       url: '/personal/account',
       icon: UserCog,
+    },
+  ],
+  sac: [
+    {
+      name: 'Fale Conosco',
+      url: '#',
+      icon: Headset,
     },
   ],
 };

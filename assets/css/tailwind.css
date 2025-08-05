@@ -23,6 +23,7 @@
 
     --primary: 240 5.9% 10%;
     --primary-foreground: 0 0% 98%;
+    --um-primary: 165 100% 60%;
 
     --secondary: 240 4.8% 95.9%;
     --secondary-foreground: 240 5.9% 10%;
@@ -46,6 +47,18 @@
     --sidebar-accent-foreground: 240 5.9% 10%;
     --sidebar-border: 220 13% 91%;
     --sidebar-ring: 217.2 91.2% 59.8%;
+
+    --vis-tooltip-background-color: none !important;
+    --vis-tooltip-border-color: none !important;
+    --vis-tooltip-text-color: none !important;
+    --vis-tooltip-shadow-color: none !important;
+    --vis-tooltip-backdrop-filter: none !important;
+    --vis-tooltip-padding: none !important;
+
+    --vis-primary-color: var(--primary);
+    /* change to any hsl value you want */
+    --vis-secondary-color: 165 100% 60%;
+    --vis-text-color: var(--muted-foreground);
   }
 
   .dark {
@@ -66,6 +79,7 @@
 
     --primary: 0 0% 98%;
     --primary-foreground: 240 5.9% 10%;
+    --um-primary: 165, 100%, 60%;
 
     --secondary: 240 3.7% 15.9%;
     --secondary-foreground: 0 0% 98%;

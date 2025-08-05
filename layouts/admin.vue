@@ -1,7 +1,7 @@
 <script setup lang="ts">
+import Header from '@/components/shared/Header.vue';
+import { generateMenu } from '@/config/menu/generateMenu';
 import { ChevronRight, LayoutDashboard, LogOut, User } from 'lucide-vue-next';
-import Header from '~/components/shared/Header.vue';
-import { generateMenu } from '~/config/menu/generateMenu';
 
 const { data, signOut } = useAuth();
 //@ts-ignore
@@ -102,6 +102,25 @@ const menuData = generateMenu(user.role);
           </SidebarGroupLabel>
           <SidebarMenu>
             <SidebarMenuItem v-for="item in menuData.settings" :key="item.name">
+              <SidebarMenuButton as-child>
+                <!-- @vue-skip -->
+                <NuxtLink
+                  :to="item.url"
+                  :class="`${item?.active ? 'text-um-primary' : 'text-white'}`"
+                >
+                  <component :is="item.icon" />
+                  <span>{{ item.name }}</span>
+                </NuxtLink>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+          </SidebarMenu>
+        </SidebarGroup>
+        <SidebarSeparator class="border-b border-zinc-700" />
+        <!-- @vue-skip -->
+        <SidebarGroup v-if="menuData.sac">
+          <SidebarGroupLabel class="text-[#33ffcc] text-md"> SAC </SidebarGroupLabel>
+          <SidebarMenu>
+            <SidebarMenuItem v-for="item in menuData.sac" :key="item.name">
               <SidebarMenuButton as-child>
                 <!-- @vue-skip -->
                 <NuxtLink

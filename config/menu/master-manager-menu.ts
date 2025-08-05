@@ -3,6 +3,7 @@ import {
   CalendarDays,
   Coins,
   HandCoins,
+  Headset,
   User,
   UserCog,
 } from 'lucide-vue-next';
@@ -107,6 +108,13 @@ export const masterManagerMenu = {
       name: 'Gerenciar Acessos',
       url: '/admin/accounts',
       icon: UserCog,
+    },
+  ],
+  sac: [
+    {
+      name: 'Fale Conosco',
+      url: '#',
+      icon: Headset,
     },
   ],
 };
