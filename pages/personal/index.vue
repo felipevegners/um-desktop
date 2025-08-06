@@ -10,6 +10,7 @@ import {
   Receipt,
 } from 'lucide-vue-next';
 import { storeToRefs } from 'pinia';
+import { sanitizeRideDate } from '~/lib/utils';
 
 const ridesStore = useRidesStore();
 const { getUserRidesAction } = ridesStore;
@@ -101,7 +102,7 @@ const userName = computed(() => {
               </Button>
             </p>
             <p>
-              {{ new Date(ride.travel.date as string).toLocaleDateString('pt-BR') }}
+              {{ sanitizeRideDate(ride.travel.date) }}
               às
               {{ ride.travel.departTime }}
             </p>

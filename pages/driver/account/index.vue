@@ -47,6 +47,20 @@ const { data } = useAuth();
 //@ts-ignore
 await getDriverByIdAction(data?.value?.user?.id as string);
 
+onMounted(() => {
+  if (driver.value.driverFiles.cnhCopy.name === '' || driver.value.status === 'pending') {
+    const targetElement = document.getElementById('files');
+    if (targetElement) {
+      setTimeout(() => {
+        targetElement.scrollIntoView({
+          behavior: 'smooth',
+          block: 'center',
+        });
+      }, 100);
+    }
+  }
+});
+
 const editDriverCnhCopy = ref(false);
 const editDriverAddressCopy = ref(false);
 const editDriverBankCopy = ref(false);
@@ -82,8 +96,8 @@ driverSituation.value = driver?.value.enabled;
 
 const hasPendingActions = computed(() => {
   return (
-    driverFiles.value.cnhCopy.name === '' &&
-    driverFiles.value.addressCopy.name === '' &&
+    driverFiles.value.cnhCopy.name === '' ||
+    driverFiles.value.addressCopy.name === '' ||
     driverFiles.value.bankCopy.name === ''
   );
 });
@@ -196,7 +210,7 @@ const onSubmit = driversForm.handleSubmit(async (values) => {
     <section v-else class="py-4">
       <h1 class="mb-6 flex items-center gap-2 text-2xl font-bold">
         <UserCog class="w-6 h-6" />
-        Meus Dados
+        Gerenciar Meus Dados
       </h1>
       <form @submit.prevent="onSubmit" @keydown.enter.prevent="true">
         <Card class="bg-zinc-200">
@@ -209,10 +223,10 @@ const onSubmit = driversForm.handleSubmit(async (values) => {
                     {{ driversForm?.values?.name }}
                   </h1>
                   <div class="flex flex-col items-start">
-                    <Button type="button" class="mb-4 cursor-not-allowed">
+                    <!-- <Button type="button" class="mb-4 cursor-not-allowed">
                       <Calendar />
                       Minha agenda
-                    </Button>
+                    </Button> -->
                     <div>
                       <small class="text-zinc-500">Cadastrado em:</small>
                       <p class="mb-2 font-bold">
@@ -331,6 +345,7 @@ const onSubmit = driversForm.handleSubmit(async (values) => {
               </div>
             </section>
             <section
+              id="files"
               class="my-10"
               :class="`${hasPendingActions ? 'p-6 rounded-md border border-red-500 bg-red-200' : ''}`"
             >

@@ -41,7 +41,7 @@ const showUrlButton = computed(() => {
 });
 </script>
 <template>
-  <div class="flex items-center gap-3">
+  <div class="flex items-center gap-1">
     <span
       :class="`py-2 px-4 h-9 flex items-center justify-center rounded-md text-white text-xs font-bold uppercase w-fit  
       ${
@@ -61,13 +61,24 @@ const showUrlButton = computed(() => {
     >
       {{ renderPaymentStatus }}
     </span>
-    <Button
-      v-if="paymentUrl && showUrlButton"
-      @click="openPaymentLink(paymentUrl)"
-      size="icon"
-    >
-      <ExternalLink />
-    </Button>
+    <TooltipProvider>
+      <Tooltip>
+        <TooltipTrigger as-child>
+          <Button
+            v-if="paymentUrl && showUrlButton"
+            @click="openPaymentLink(paymentUrl)"
+            size="icon"
+            variant="link"
+            alt="Pagar"
+          >
+            <ExternalLink />
+          </Button>
+        </TooltipTrigger>
+        <TooltipContent class="bg-zinc-700 text-white">
+          <p>Efetuar Pagamento</p>
+        </TooltipContent>
+      </Tooltip>
+    </TooltipProvider>
   </div>
 </template>
 

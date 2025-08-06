@@ -15,6 +15,26 @@ export default defineEventHandler(async (event) => {
     7: 'authorized',
   };
 
+  const CieloPaymetMethod = {
+    1: 'Cartão de Crédito',
+    2: 'Boleto Bancário',
+    4: 'Cartão de Débito',
+    5: 'QR Code Crédito',
+    6: 'Pix',
+    7: 'QR Code Débito',
+  };
+
+  const CieloPaymentMethodBrand = {
+    1: 'Visa',
+    2: 'MasterCard',
+    3: 'AmericanExpress',
+    4: 'Diners',
+    5: 'Elo',
+    6: 'Aura',
+    7: 'JCB',
+    8: 'Discover',
+  };
+
   try {
     const paymentStatus = await cieloService.getCieloPaymentStatus(Url);
     const sanitizeOrderNumber = paymentStatus?.order_number.replace('UM', '');
@@ -35,6 +55,11 @@ export default defineEventHandler(async (event) => {
         data: {
           billing: {
             ...billing,
+            //@ts-ignore
+            method: CieloPaymetMethod[paymentStatus.payment_method_type],
+            //@ts-ignore
+            cardBrand: CieloPaymentMethodBrand[paymentStatus.payment_method_brand],
+            maskedCard: paymentStatus.payment_maskedcreditcard || '-',
             //@ts-ignore
             status: CieloPaymentStatus[paymentStatus.payment_status],
             installments: paymentStatus.payment_installments,

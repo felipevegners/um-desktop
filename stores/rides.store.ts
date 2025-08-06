@@ -10,6 +10,7 @@ export interface IRidesState {
   rides?: any;
   ride?: any;
   loadingData: boolean;
+  loadingSetDriver: boolean;
 }
 
 export const useRidesStore = defineStore('rides', {
@@ -18,6 +19,7 @@ export const useRidesStore = defineStore('rides', {
       rides: [],
       ride: {},
       loadingData: false,
+      loadingSetDriver: false,
     };
   },
   actions: {
@@ -36,6 +38,17 @@ export const useRidesStore = defineStore('rides', {
       try {
         const response: any = await getRidesService('');
         const filtered = response.filter((ride: any) => ride.user.id === userId);
+        this.rides = filtered;
+        this.loadingData = false;
+      } catch (error) {
+        throw error;
+      }
+    },
+    async getDriverRidesAction(driverId: string) {
+      this.loadingData = true;
+      try {
+        const response: any = await getRidesService('');
+        const filtered = response.filter((ride: any) => ride.driver.id === driverId);
         this.rides = filtered;
         this.loadingData = false;
       } catch (error) {
@@ -74,7 +87,7 @@ export const useRidesStore = defineStore('rides', {
       }
     },
     async setRideDriverAction(rideId: any, driverData: any) {
-      this.loadingData = true;
+      this.loadingSetDriver = true;
       try {
         const newRideData = {
           id: rideId,
@@ -91,7 +104,7 @@ export const useRidesStore = defineStore('rides', {
       } catch (error) {
         throw error;
       } finally {
-        this.loadingData = false;
+        this.loadingSetDriver = false;
       }
     },
   },

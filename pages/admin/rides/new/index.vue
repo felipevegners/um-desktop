@@ -1140,6 +1140,7 @@ const onSubmit = form.handleSubmit(async (values) => {
           calculatedTravel: calculatedTravel,
           userData: selectedUser,
           originAddress: originLocationDetails.address,
+          stops: waypointLocationDetails,
           destinationAddress: destinationLocationDetails.address,
           departDate: form.values.departDate,
           departTime: form.values.departTime,

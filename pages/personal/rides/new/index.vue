@@ -1107,6 +1107,7 @@ const handleCieloCheckoutCreated = (result: {
           userData: userData,
           originAddress: originLocationDetails.address,
           destinationAddress: destinationLocationDetails.address,
+          stops: waypointLocationDetails,
           departDate: form.values.departDate,
           departTime: form.values.departTime,
           passengers: ridePassengers,

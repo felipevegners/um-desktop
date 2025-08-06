@@ -11,6 +11,7 @@ import {
   DialogTrigger,
 } from '@/components/ui/dialog';
 import { createColumnHelper } from '@tanstack/vue-table';
+import { show } from '@unovis/ts/components/tooltip/style';
 import { CalendarDays, LoaderCircle, Plus } from 'lucide-vue-next';
 import { storeToRefs } from 'pinia';
 import { onMounted } from 'vue';
@@ -34,7 +35,7 @@ useHead({
 
 const ridesStore = useRidesStore();
 const { getRidesAction, setRideDriverAction } = ridesStore;
-const { loadingData, rides } = storeToRefs(ridesStore);
+const { loadingData, loadingSetDriver, rides } = storeToRefs(ridesStore);
 const columnHelper = createColumnHelper<any>();
 
 const driversStore = useDriverStore();
@@ -77,21 +78,50 @@ const setDriver = (driverId: string, rideId: string) => {
   selectedRide.value = rideId;
 };
 
+// watch(showSetDriver, async () => {
+//   if (showSetDriver.value === false) {
+//     resetFormSelection();
+//     selectedDriver.value = {};
+//     selectedRide.value = '';
+//   }
+// });
+
 const contactDriver = async (driver: any) => {
   const findRide = rides?.value.find((ride: any) => ride.id === selectedRide.value);
   await setRideDriverAction(selectedRide?.value, selectedDriver.value);
-  const message = `*Novo Atendimento - #${findRide?.code}
+
+  const message = `
+  *Novo Atendimento - ${findRide?.code}*
   %0A*Passageiro*: ${findRide?.user.name}
   %0A*Celular*: ${findRide?.user.phone}
   %0A*Data/Hora*: ${findRide?.travel.date} / ${findRide?.travel.departTime}
+  %0A------------------------------
+  %0A*Dados da Viagem* 
   %0A%0A*Origem*: ${findRide?.travel.originAddress}
-  %0A*Destino*: ${findRide?.travel.destinationAddress}
+${
+  findRide.travel.stops.length
+    ? findRide.travel.stops.map((stop: any, index: any) => {
+        return `%0A%0A*Parada ${index + 1}*: ${stop.address}`;
+      })
+    : ''
+}
+  %0A%0A*Destino*: ${findRide?.travel.destinationAddress}
   %0A%0A*Despachado por*: ${findRide?.dispatcher.user} - ${findRide?.dispatcher.email}`;
   const url =
     WPP_API.replace('[[phone]]', sanitizePhone(driver.phone as string)) +
     '&text=' +
     message;
+
   navigateTo(url, { external: true, open: { target: '_blank' } });
+  navigateTo('/admin/rides/open');
+};
+
+const childRef = ref<any>(null);
+
+const resetFormSelection = () => {
+  if (childRef.value) {
+    childRef?.value.reset();
+  }
 };
 
 const finalColumns = [
@@ -101,18 +131,20 @@ const finalColumns = [
     enableHiding: false,
     header: () => h('div', { class: 'text-left' }, 'Motorista'),
     cell: ({ row }) => {
-      const { id } = row.original;
+      const { id, driver } = row.original;
       return h(
         'div',
         { class: 'relative text-xs' },
-        row.original.accepted === false
-          ? h(FormSelect, {
-              items: sanitizeDrivers.value,
-              label: 'Selecione',
-              'onOn-select': setDriver,
-              tableId: id,
-            })
-          : row.original.driver.name,
+        driver.name ? driver.name : 'Não acionado',
+        // row.original.accepted === false
+        //   ? h(FormSelect, {
+        //       ref: childRef,
+        //       items: sanitizeDrivers.value,
+        //       label: 'Selecione',
+        //       'onOn-select': setDriver,
+        //       tableId: id,
+        //     })
+        //   : row.original.driver.name,
       );
     },
   }),
@@ -161,13 +193,13 @@ const finalColumns = [
         :filterBy="'nome do Usuário'"
       />
     </section>
-    <Dialog :open="showSetDriver">
+    <Dialog :open="showSetDriver" @update:open="showSetDriver = $event">
       <DialogContent>
         <DialogHeader>
           <DialogTitle class="text-center">Acionar Motorista</DialogTitle>
           <DialogDescription>
-            <div class="my-4 text-center">
-              <p class="text-base">
+            <div class="my-4 text-center space-y-4">
+              <p class="text-base text-zinc-900">
                 Deseja acionar o motorista {{ selectedDriver?.name }}?
               </p>
               <p class="text-muted-foreground">
@@ -186,7 +218,7 @@ const finalColumns = [
               class="bg-green-600 hover:bg-green-700"
               @click="contactDriver(selectedDriver)"
             >
-              <LoaderCircle v-if="loadingData" class="animate-spin" />
+              <LoaderCircle v-if="loadingSetDriver" class="animate-spin" />
               Acionar via Whatsapp
             </Button>
           </div>

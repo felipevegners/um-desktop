@@ -15,17 +15,28 @@ const props = defineProps<{
   label?: string;
   tableId?: string;
   loading?: boolean;
+  disabled?: boolean;
 }>();
-
+const selectedDriver = ref('');
 const emit = defineEmits(['on-select']);
 
 const selected = (value: any) => {
   emit('on-select', value, props.tableId);
 };
+
+const reset = () => {
+  selectedDriver.value = '';
+};
+
+defineExpose({ reset });
 </script>
 
 <template>
-  <Select @update:model-value="selected">
+  <Select
+    @update:model-value="selected"
+    v-model="selectedDriver"
+    :disabled="props.disabled"
+  >
     <SelectTrigger v-if="loading">
       <LoaderCircle class="animate-spin" />
     </SelectTrigger>

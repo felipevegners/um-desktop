@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { createColumnHelper } from '@tanstack/vue-table';
-import { CalendarClock, LoaderCircle } from 'lucide-vue-next';
+import { CalendarCheck2, LoaderCircle } from 'lucide-vue-next';
 import { storeToRefs } from 'pinia';
 import { onMounted } from 'vue';
 import DataTable from '~/components/shared/DataTable.vue';
@@ -24,12 +24,14 @@ useHead({
   title: 'Meus Atendimentos Abertos | Urban Mobi',
 });
 
-const driverOpenList = ref<any>([]);
+const driverCompletedList = ref<any>([]);
 
 onMounted(async () => {
   //@ts-ignore
   await getDriverRidesAction(data?.value?.user?.id);
-  driverOpenList.value = rides?.value.filter((ride: any) => ride.status === 'accepted');
+  driverCompletedList.value = rides?.value.filter(
+    (ride: any) => ride.status === 'completed',
+  );
 });
 
 const previewRide = (rideId: string) => {
@@ -68,8 +70,8 @@ const finalColumns = [
     </header>
     <section class="mb-6 flex items-center justify-between gap-6">
       <h1 class="flex items-center gap-2 text-2xl font-bold">
-        <CalendarClock :size="24" />
-        Atendimentos Abertos
+        <CalendarCheck2 :size="24" />
+        Atendimentos Realizados
       </h1>
     </section>
     <section v-if="loadingData" class="p-10 flex items-center justify-center">
@@ -78,7 +80,7 @@ const finalColumns = [
     <section v-else>
       <DataTable
         :columns="finalColumns"
-        :data="driverOpenList"
+        :data="driverCompletedList"
         sortby="user"
         :columnPin="['code']"
         :filterBy="'código do atendimento'"

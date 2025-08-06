@@ -1,9 +1,9 @@
 import { Button } from '@/components/ui/button';
+import { WPP_API } from '@/config/paths';
 import { createColumnHelper } from '@tanstack/vue-table';
 import { ArrowUpDown } from 'lucide-vue-next';
-import PaymentStatusFlag from '~/components/shared/PaymentStatusFlag.vue';
 import RideStatusFlag from '~/components/shared/RideStatusFlag.vue';
-import { currencyFormat, sanitizeRideDate } from '~/lib/utils';
+import { sanitizePhone, sanitizeRideDate } from '~/lib/utils';
 
 const columnHelper = createColumnHelper<any>();
 
@@ -23,6 +23,40 @@ export const columns: any = [
     },
     cell: ({ row }: any) =>
       h('div', { class: 'capitalize font-bold' }, row.getValue('code')),
+  }),
+  columnHelper.display({
+    id: 'user',
+    enableHiding: false,
+    header: () => h('div', { class: 'text-left' }, 'Passageiro'),
+    cell: ({ row }) => {
+      const data = row.original;
+      return h('div', { class: 'capitalize' }, data.user.name);
+    },
+  }),
+  columnHelper.accessor('phone', {
+    header: () => h('div', { class: 'text-left' }, 'Celular'),
+    cell: ({ row }) => {
+      const data = row.original;
+      return h(
+        'a',
+        {
+          href: WPP_API.replace(
+            '[[phone]]',
+            sanitizePhone(data.user.phone as string) +
+              `&text=Olá, meu nome é ${data.driver.name}. Serei o seu motorista no atendimento ${data.code}...`,
+          ),
+          target: '_blank',
+          class: 'flex items-center gap-2',
+        },
+        [
+          data.user.phone,
+          h('img', {
+            class: 'h-4',
+            src: 'https://cdn.simpleicons.org/whatsapp',
+          }),
+        ] as any,
+      );
+    },
   }),
   columnHelper.display({
     id: 'originAddress',
@@ -65,31 +99,8 @@ export const columns: any = [
       return h(
         'div',
         { class: 'capitalize' },
-        `${sanitizeRideDate(data.travel.date)} - ${data.travel.departTime}`,
+        `${sanitizeRideDate(data.travel.date as string)} - ${data.travel.departTime} HS`,
       );
-    },
-  }),
-  columnHelper.accessor('price', {
-    header: () => h('div', { class: 'text-left' }, 'Valor'),
-    cell: ({ row }) => {
-      const data = row.original;
-      return h(
-        'div',
-        {
-          class: `capitalize font-bold ${data?.billing?.status === 'paid' ? 'text-green-600' : data.billing.status === 'invoice' ? 'text-amber-600' : 'text-red-600'}`,
-        },
-        currencyFormat(row.getValue('price') + ' ' + data.billing.status),
-      );
-    },
-  }),
-  columnHelper.accessor('billing', {
-    header: () => h('div', { class: 'text-left' }, 'Pagamento'),
-    cell: ({ row }) => {
-      const data = row.original;
-      return h(PaymentStatusFlag, {
-        paymentStatus: data.billing.status,
-        paymentUrl: data.billing.paymentUrl || '',
-      });
     },
   }),
   columnHelper.accessor('status', {

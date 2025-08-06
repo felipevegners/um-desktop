@@ -2,15 +2,18 @@
 import { SharedBackLink } from '#components';
 import RideStatusFlag from '@/components/shared/RideStatusFlag.vue';
 import { useToast } from '@/components/ui/toast/use-toast';
+import 'add-to-calendar-button';
 import {
   CalendarDays,
   LoaderCircle,
+  Octagon,
+  OctagonX,
   SquareCheck,
   SquareDot,
   SquareSquare,
   X,
 } from 'lucide-vue-next';
-import { currencyFormat } from '~/lib/utils';
+import { currencyFormat, sanitizeRideDate } from '~/lib/utils';
 
 definePageMeta({
   layout: 'admin',
@@ -59,6 +62,33 @@ const cancelRide = async () => {
 onBeforeMount(async () => {
   await getRideByIdAction(route.params.id as string);
 });
+
+const travelEndTimeCalc = (time1: any, time2: any) => {
+  const timeToMinutes = (timeString: any) => {
+    const [hours, minutes] = timeString.split(':').map(Number);
+    return hours * 60 + minutes;
+  };
+
+  // Function to convert total minutes back to "HH:MM" format
+  const minutesToTime = (totalMinutes: any) => {
+    const hours = Math.floor(totalMinutes / 60);
+    const minutes = totalMinutes % 60;
+    // Pad with leading zeros if necessary
+    const formattedHours = String(hours).padStart(2, '0');
+    const formattedMinutes = String(minutes).padStart(2, '0');
+    return `${formattedHours}:${formattedMinutes}`;
+  };
+
+  // Convert both times to minutes
+  const totalMinutes1 = timeToMinutes(time1);
+  const totalMinutes2 = timeToMinutes(time2);
+
+  // Sum the total minutes
+  const sumOfMinutes = totalMinutes1 + totalMinutes2;
+
+  // Convert the sum back to "HH:MM" format
+  return minutesToTime(sumOfMinutes);
+};
 </script>
 <template>
   <main class="p-6">
@@ -70,7 +100,17 @@ onBeforeMount(async () => {
         <CalendarDays :size="24" />
         Detalhes do Atendimento - #{{ ride?.code }}
       </h1>
-
+      <div class="flex items-center gap-6">
+        <Button
+          @click="toggleCancelationModal"
+          type="button"
+          variant="destructive"
+          class="p-6"
+        >
+          <OctagonX />
+          Cancelar Atendimento
+        </Button>
+      </div>
       <AlertDialog :open="showCancelationModal">
         <AlertDialogContent class="flex flex-col">
           <AlertDialogHeader>
@@ -93,11 +133,6 @@ onBeforeMount(async () => {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-
-      <Button @click="toggleCancelationModal" type="button" variant="destructive">
-        <X />
-        Cancelar Atendimento
-      </Button>
     </section>
     <section v-if="loadingData" class="min-h-[300px] flex items-center justify-center">
       <LoaderCircle class="animate-spin" />
@@ -114,11 +149,27 @@ onBeforeMount(async () => {
               <p class="text-sm text-zinc-600">Status</p>
               <RideStatusFlag :ride-status="ride.status" />
             </div>
-            <div class="p-6 bg-white rounded-md space-y-2">
+            <div class="p-6 flex flex-col items-start bg-white rounded-md space-y-2">
               <p class="text-sm text-zinc-600">Data</p>
-              <p class="text-xl font-bold">
-                {{ new Date(ride.travel.date as string).toLocaleDateString('pt-BR') }}
+              <p class="mb-3 inline-block text-xl font-bold">
+                {{ sanitizeRideDate(ride?.travel.date) }}
               </p>
+              <div>
+                <add-to-calendar-button
+                  styleDark="--btn-background: #09090B; --btn-shadow: 0;"
+                  :name="`Atendimento - ${ride.code}`"
+                  :location="`${ride.travel.originAddress}`"
+                  :description="`[strong]Corrida Urban Mobi - ${ride.code}[/strong][strong][p]Origem:[/strong] ${ride.travel.originAddress}][strong][/p]Destino:[/strong] ${ride.travel.destinationAddress}`"
+                  :startDate="`${ride.travel.date}`"
+                  :startTime="`${ride.travel.departTime}`"
+                  :endTime="`${travelEndTimeCalc(ride.travel.departTime, ride.travel.duration)}`"
+                  timeZone="America/Sao_Paulo"
+                  label="Adicionar ao Calendário"
+                  options="'Apple','Google','Outlook.com'"
+                  lightMode="dark"
+                  size="3"
+                ></add-to-calendar-button>
+              </div>
             </div>
             <div class="p-6 bg-white rounded-md space-y-2">
               <p class="text-sm text-zinc-600">Hora Partida</p>
@@ -182,7 +233,10 @@ onBeforeMount(async () => {
             </div>
             <div class="p-6 bg-white rounded-md space-y-2">
               <p class="text-sm text-zinc-600">Pagamento</p>
-              <SharedPaymentStatusFlag :payment-status="ride?.billing.status" />
+              <SharedPaymentStatusFlag
+                :payment-status="ride?.billing.status"
+                :payment-url="ride.billing.paymentUrl"
+              />
               <p class="text-base font-bold">
                 {{
                   ride?.billing.paymentMethod === 'creditcard'
@@ -245,7 +299,6 @@ onBeforeMount(async () => {
           </div>
         </section>
       </Card>
-      <!-- <pre>{{ ride }}</pre> -->
     </section>
   </main>
 </template>

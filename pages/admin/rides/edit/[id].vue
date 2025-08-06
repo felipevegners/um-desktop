@@ -28,10 +28,10 @@ import {
   Waypoints,
   X,
 } from 'lucide-vue-next';
+import { vMaska } from 'maska/vue';
 import { storeToRefs } from 'pinia';
 import { useForm } from 'vee-validate';
 import { GoogleMap, Marker, Polyline } from 'vue3-google-map';
-import { map } from 'zod';
 import FormButtons from '~/components/forms/FormButtons.vue';
 import { WPP_API } from '~/config/paths';
 import { currencyFormat, polyLineCodec, sanitizePhone } from '~/lib/utils';
@@ -210,7 +210,10 @@ onBeforeMount(async () => {
 });
 
 const sanitizeDrivers = computed(() => {
-  return drivers?.value.map((driver) => {
+  const availableDrivers = drivers?.value.filter(
+    (driver: any) => driver.scheduleOpen === true,
+  );
+  return availableDrivers?.map((driver) => {
     return {
       label: driver.name,
       value: driver.id,
@@ -300,15 +303,15 @@ const setDestinationPlace = (place: any) => {
 
 waypointLocationDetails.value = ride?.value.travel.stops || [];
 
-const addWaypointRow = () => {
-  waypointLocationDetails.value.push({
-    address: '',
-  });
-};
+// const addWaypointRow = () => {
+//   waypointLocationDetails.value.push({
+//     address: '',
+//   });
+// };
 
-const removeWaypointRow = (index: number) => {
-  waypointLocationDetails.value.splice(index, 1);
-};
+// const removeWaypointRow = (index: number) => {
+//   waypointLocationDetails.value.splice(index, 1);
+// };
 
 // // Set the waypoints of the ride
 const setWaypoints = (place: any, index: any) => {
@@ -327,13 +330,23 @@ const setNewUser = (userId: string) => {
 };
 
 const contactDriver = async () => {
-  await setRideDriverAction(ride?.value.id, selectedDriver.value.id);
-  const message = `*Atendimento Atualizado - # ${ride?.value.code}*%0A
+  await setRideDriverAction(ride?.value.id, selectedDriver.value);
+  const message = `
+  *Novo Atendimento - ${ride?.value?.code}*
   %0A*Passageiro*: ${ride?.value.user.name}
   %0A*Celular*: ${ride?.value.user.phone}
   %0A*Data/Hora*: ${ride?.value.travel.date} / ${ride?.value.travel.departTime}
+  %0A------------------------------
+  %0A*Dados da Viagem* 
   %0A%0A*Origem*: ${ride?.value.travel.originAddress}
-  %0A*Destino*: ${ride?.value.travel.destinationAddress}
+${
+  ride?.value.travel.stops.length
+    ? ride?.value.travel.stops.map((stop: any, index: any) => {
+        return `%0A%0A*Parada ${index + 1}*: ${stop.address}`;
+      })
+    : ''
+}
+  %0A%0A*Destino*: ${ride?.value.travel.destinationAddress}
   %0A%0A*Despachado por*: ${ride?.value.dispatcher.user} - ${ride?.value.dispatcher.email}`;
   const url =
     WPP_API.replace('[[phone]]', sanitizePhone(selectedDriver.value.phone as string)) +
@@ -411,6 +424,7 @@ const form = useForm({
 
 const onSubmit = form.handleSubmit(async (values) => {
   const ridePayload = {
+    id: ride?.value.id,
     billing: {
       paymentMethod: ride?.value.billing.paymentMethod,
       paymentUrl: ride?.value.billing.paymentUrl,
@@ -458,11 +472,16 @@ const onSubmit = form.handleSubmit(async (values) => {
       duration: calculatedTravel.value.travelTime,
       polyLineCoors: routePolyLine.value,
     },
-    status: ride?.value.status,
+    status: selectedDriver.value.name ? 'accepted' : ride?.value.status,
     accepted: selectedDriver.value.name ? true : false,
     price: calculatedTravel.value.travelPrice,
     driver: {
-      ...selectedDriver.value,
+      id: selectedDriver.value.id,
+      name: selectedDriver.value.name,
+      phone: selectedDriver.value.phone,
+      email: selectedDriver.value.email,
+      hasCarSelected: false,
+      selectedCar: {},
     },
     observations: values.observations,
     dispatcher: {
@@ -471,23 +490,22 @@ const onSubmit = form.handleSubmit(async (values) => {
       dispatchDate: new Date().toLocaleDateString('pt-BR').padStart(10, '0'),
     },
   };
-  console.log('---> ', ridePayload);
-  // try {
-  //   await updateRideAction(ridePayload);
-  // } catch (error) {
-  //   toast({
-  //     title: 'Oops!',
-  //     description: `Ocorreu um erro ao criar o agendamento. Tente novamente.`,
-  //     variant: 'destructive',
-  //   });
-  // } finally {
-  //   toast({
-  //     title: 'Tudo pronto!',
-  //     class: 'bg-green-600 border-0 text-white text-2xl',
-  //     description: `Agendamento alterado com sucesso!`,
-  //   });
-  //   navigateTo('/admin/rides/open');
-  // }
+  try {
+    await updateRideAction(ridePayload);
+  } catch (error) {
+    toast({
+      title: 'Oops!',
+      description: `Ocorreu um erro ao editar o atendimento. Tente novamente.`,
+      variant: 'destructive',
+    });
+  } finally {
+    toast({
+      title: 'Tudo pronto!',
+      class: 'bg-green-600 border-0 text-white text-2xl hover:text-white',
+      description: `Atendimento alterado com sucesso!`,
+    });
+    navigateTo('/admin/rides/open');
+  }
 });
 </script>
 <template>
@@ -633,6 +651,7 @@ const onSubmit = form.handleSubmit(async (values) => {
                           :items="availableUsers"
                           :label="'Selecione'"
                           @on-select="setNewUser"
+                          :disabled="true"
                         />
                       </FormControl>
                     </FormItem>
@@ -660,6 +679,7 @@ const onSubmit = form.handleSubmit(async (values) => {
                         <Checkbox
                           @update:checked="setSelectedProduct(product)"
                           :checked="selectedProduct?.id === product.id"
+                          disabled
                         />
                         <div
                           class="font-normal uppercase flex items-center justify-start gap-2"
@@ -743,6 +763,7 @@ const onSubmit = form.handleSubmit(async (values) => {
                               v-bind="componentField"
                               :value="value"
                               id="originField"
+                              :disabled="true"
                               class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                             />
                           </div>
@@ -770,29 +791,30 @@ const onSubmit = form.handleSubmit(async (values) => {
                                 @place_changed="setWaypoints($event, index)"
                                 v-model="waypoint.address"
                                 :value="waypoint.address"
+                                :disabled="true"
                                 class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                               />
-                              <Button
+                              <!-- <Button
                                 type="button"
                                 @click.prevent="removeWaypointRow(index)"
                                 size="icon"
                               >
                                 <X />
-                              </Button>
+                              </Button> -->
                             </div>
                           </FormControl>
                           <FormMessage />
                         </FormItem>
                       </FormField>
                     </div>
-                    <Button
+                    <!-- <Button
                       type="button"
                       v-if="showWaypointsForm"
                       @click.prevent="addWaypointRow"
                     >
                       <Plus />
                       Adicionar Parada
-                    </Button>
+                    </Button> -->
                   </div>
                   <FormField v-slot="{ componentField, value }" name="destination">
                     <FormItem>
@@ -809,15 +831,13 @@ const onSubmit = form.handleSubmit(async (values) => {
                             class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                           />
                         </div>
-                        <small>
-                          *Não é permitido alterar o destino para este atendimento
-                        </small>
                       </FormControl>
                       <FormMessage />
                     </FormItem>
                   </FormField>
+                  <small> *Não é permitido alterar as rotas para este atendimento </small>
                 </div>
-                <Button
+                <!-- <Button
                   type="button"
                   @click.prevent="getRideCalculation"
                   :disabled="form.values.origin === ride?.travel.originAddress"
@@ -829,7 +849,7 @@ const onSubmit = form.handleSubmit(async (values) => {
                       ? 'Recalcular Rota'
                       : 'Calcular Rota'
                   }}
-                </Button>
+                </Button> -->
               </div>
               <div v-if="selectedProduct" class="p-6 border border-zinc-900 rounded-md">
                 <FormField v-slot="{ componentField }" name="observations">

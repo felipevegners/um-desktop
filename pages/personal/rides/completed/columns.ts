@@ -3,7 +3,7 @@ import { WPP_API } from '@/config/paths';
 import { createColumnHelper } from '@tanstack/vue-table';
 import { ArrowUpDown, MessageCircleMore } from 'lucide-vue-next';
 import RideStatusFlag from '~/components/shared/RideStatusFlag.vue';
-import { currencyFormat, sanitizePhone } from '~/lib/utils';
+import { currencyFormat, sanitizePhone, sanitizeRideDate } from '~/lib/utils';
 
 const columnHelper = createColumnHelper<any>();
 
@@ -53,7 +53,7 @@ export const columns: any = [
       return h(
         'div',
         { class: 'capitalize' },
-        `${data.travel.date} - ${data.travel.departTime}`,
+        `${sanitizeRideDate(data.travel.date)} - ${data.travel.departTime}`,
       );
     },
   }),

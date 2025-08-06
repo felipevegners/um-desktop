@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { WPP_API } from '@/config/paths';
 import { createColumnHelper } from '@tanstack/vue-table';
 import { ArrowUpDown, MessageCircleMore } from 'lucide-vue-next';
-import { currencyFormat, sanitizePhone } from '~/lib/utils';
+import { currencyFormat, sanitizePhone, sanitizeRideDate } from '~/lib/utils';
 
 const columnHelper = createColumnHelper<any>();
 
@@ -58,7 +58,7 @@ export const columns: any = [
         .split('-')
         .slice(0, 1)
         .pop();
-      const travelDateTime = `${new Date(data.travel.date as string).toLocaleDateString('pt-BR')} - ${data.travel.departTime}`;
+      const travelDateTime = `${sanitizeRideDate(data.travel.date as string)} - ${data.travel.departTime}`;
       return h('div', { class: 'capitalize text-xs' }, [
         `${normalizeOrigin} → ${normalizeDestination} | ${travelDateTime}`,
         data?.travel.stops?.length > 0
@@ -74,66 +74,6 @@ export const columns: any = [
       ]);
     },
   }),
-  // columnHelper.display({
-  //   id: 'destinationAddress',
-  //   enableHiding: false,
-  //   header: () => h('div', { class: 'text-left' }, 'Destino'),
-  //   cell: ({ row }) => {
-  //     const data = row.original;
-  //     const normalize = data.travel.destinationAddress.split('-').slice(0, 1).pop();
-  //     return h('div', { class: 'capitalize text-xs' }, normalize);
-  //   },
-  // }),
-  // columnHelper.display({
-  //   id: 'travelDate',
-  //   enableHiding: false,
-  //   header: () => h('div', { class: 'text-left' }, 'Data e Hora'),
-  //   cell: ({ row }) => {
-  //     const data = row.original;
-  //     return h(
-  //       'div',
-  //       { class: 'capitalize text-xs' },
-  //       `${data.travel.date} - ${data.travel.departTime}`,
-  //     );
-  //   },
-  // }),
-  // columnHelper.accessor('product', {
-  //   header: () => h('div', { class: 'text-left' }, 'Produto'),
-  //   cell: ({ row }: any) =>
-  //     h('div', { class: 'capitalize' }, row.getValue('product').name),
-  // }),
-  // columnHelper.display({
-  //   id: 'distance',
-  //   enableHiding: true,
-  //   header: () => h('div', { class: 'text-left' }, 'Distância'),
-  //   cell: ({ row }) => {
-  //     const data = row.original;
-  //     return h('div', { class: 'capitalize text-xs' }, data.travel.distance);
-  //   },
-  // }),
-  // columnHelper.display({
-  //   id: 'travelDuration',
-  //   enableHiding: true,
-  //   header: () => h('div', { class: 'text-left' }, 'Duração'),
-  //   cell: ({ row }) => {
-  //     const data = row.original;
-  //     return h('div', { class: 'capitalize' }, data.travel.duration);
-  //   },
-  // }),
-  // columnHelper.accessor('price', {
-  //   header: () => h('div', { class: 'text-left' }, 'Valor'),
-  //   cell: ({ row }) =>
-  //     h('div', { class: 'capitalize' }, currencyFormat(row.getValue('price'))),
-  // }),
-  // columnHelper.display({
-  //   id: 'dispatcher',
-  //   enableHiding: true,
-  //   header: () => h('div', { class: 'text-left' }, 'Despachante'),
-  //   cell: ({ row }) => {
-  //     const data = row.original;
-  //     return h('div', { class: 'capitalize' }, data.dispatcher.user);
-  //   },
-  // }),
   columnHelper.accessor('billing', {
     header: () => h('div', { class: 'text-left' }, 'Pagamento'),
     cell: ({ row }) => {

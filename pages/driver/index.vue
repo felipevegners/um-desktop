@@ -1,9 +1,10 @@
 <script setup lang="ts">
 import { useDriverStore } from '@/stores/drivers.store';
-import { Info, LayoutDashboard } from 'lucide-vue-next';
+import { CalendarClock, Info, LayoutDashboard } from 'lucide-vue-next';
 
 definePageMeta({
   layout: 'admin',
+  middleware: 'sidebase-auth',
 });
 
 const { data } = useAuth();
@@ -12,8 +13,15 @@ const driverStore = useDriverStore();
 const { createNewDriverAction, getDriverByIdAction } = driverStore;
 const { driver } = storeToRefs(driverStore);
 
-// @ts-ignore
-await getDriverByIdAction(data?.value?.user.id);
+onBeforeMount(async () => {
+  // @ts-ignore
+  await getDriverByIdAction(data?.value?.user.id);
+});
+
+const userName = computed(() => {
+  //@ts-expect-error
+  if (data) return data?.value.user?.name;
+});
 </script>
 
 <template>
@@ -24,7 +32,25 @@ await getDriverByIdAction(data?.value?.user.id);
         Meu Dashboard
       </h1>
       <div
-        v-if="driver.status === 'pending'"
+        class="w-full h-[240px] rounded-xl bg-[url('/images/dashboard_banner_background.jpg')] bg-no-repeat bg-cover bg-center"
+      >
+        <div class="p-10 flex items-center justify-between h-full">
+          <div class="flex flex-col gap-2">
+            <h2 class="text-white">Olá, {{ userName }}</h2>
+            <h1 class="font-bold text-white text-2xl">Seja bem vindo a Urban Mobi!</h1>
+          </div>
+          <Button
+            type="button"
+            class="p-6 bg-um-primary hover:bg-um-primary/80 text-black uppercase font-bold shadow-lg"
+            @click="navigateTo('/driver/rides/open')"
+          >
+            <CalendarClock :size="18" />
+            Atendimentos Abertos
+          </Button>
+        </div>
+      </div>
+      <div
+        v-if="driver?.status === 'pending' || driver?.driverFiles?.cnhCopy?.name === ''"
         class="p-6 bg-amber-300 w-full rounded-md flex items-center justify-between"
       >
         <div>
@@ -37,7 +63,7 @@ await getDriverByIdAction(data?.value?.user.id);
         </div>
         <Button
           type="button"
-          class="bg-amber-700 hover:bg-amber-600"
+          class="p-6 bg-amber-700 hover:bg-amber-600"
           @click="navigateTo('driver/account')"
         >
           Finalizar Cadastro

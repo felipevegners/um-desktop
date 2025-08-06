@@ -2531,6 +2531,13 @@ acorn@^8.14.1:
   resolved "https://registry.yarnpkg.com/acorn/-/acorn-8.14.1.tgz#721d5dc10f7d5b5609a891773d47731796935dfb"
   integrity sha512-OvQ/2pUDKmgfCg++xsTX1wGxfTaszcHVcTctW4UJB4hibJx2HXxxO5UmVgyjMa+ZDsiaf5wWLXYpRWMmBI0QHg==
 
+add-to-calendar-button@^2.9.1:
+  version "2.9.1"
+  resolved "https://registry.yarnpkg.com/add-to-calendar-button/-/add-to-calendar-button-2.9.1.tgz#011958ca5ba3d25ca469935f9ffcb2b9f7124a1a"
+  integrity sha512-tOvSB738Me1zgXFuJ6LVEaWf2SftEMETRch79hKLrrA+NdLR8LNk7vQSnewzDV/uzUx/wgqqvPJah3mmAGgxdQ==
+  dependencies:
+    timezones-ical-library "^1.10.0"
+
 agent-base@6:
   version "6.0.2"
   resolved "https://registry.yarnpkg.com/agent-base/-/agent-base-6.0.2.tgz#49fff58577cfee3f37176feab4c22e00f86d7f77"
@@ -7792,6 +7799,11 @@ throttle-debounce@^5.0.0:
   version "5.0.2"
   resolved "https://registry.yarnpkg.com/throttle-debounce/-/throttle-debounce-5.0.2.tgz#ec5549d84e053f043c9fd0f2a6dd892ff84456b1"
   integrity sha512-B71/4oyj61iNH0KeCamLuE2rmKuTO5byTOSVwECM5FA7TiAiAW+UqTKZ9ERueC4qvgSttUhdmq1mXC3kJqGX7A==
+
+timezones-ical-library@^1.10.0:
+  version "1.10.0"
+  resolved "https://registry.yarnpkg.com/timezones-ical-library/-/timezones-ical-library-1.10.0.tgz#7cbfcae7d670c28f1ce2b2a0fcc04995d45c0799"
+  integrity sha512-aSwylC0FyyxMqMjkuaYz56HBhhooYabGT74CbTuY1uOeIcBXSQTXf+u/mTR0MWJFPQDe21REjex+4wt0OdFDpA==
 
 tiny-invariant@^1.1.0:
   version "1.3.3"

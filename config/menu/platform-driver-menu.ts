@@ -48,7 +48,7 @@ export const platformDriverMenu = {
   ],
   settings: [
     {
-      name: 'Minha conta',
+      name: 'Meus Dados',
       url: '/driver/account',
       icon: UserCog,
     },

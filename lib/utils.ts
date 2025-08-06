@@ -138,3 +138,7 @@ export const convertMetersToDistanceObject = (meters: any, threshold = 1000) => 
     formatted: `${value} km`,
   };
 };
+
+export const sanitizeRideDate = (rideDate: string) => {
+  return rideDate?.split('-').reverse().join('/');
+};

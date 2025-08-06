@@ -2,7 +2,7 @@
 import { useCielo } from '@/composables/cielo/useCielo';
 import { CreditCard, ExternalLink, LoaderCircle, MapPin, Shield } from 'lucide-vue-next';
 import { WPP_API } from '~/config/paths';
-import { currencyFormat, sanitizePhone } from '~/lib/utils';
+import { currencyFormat, sanitizePhone, sanitizeRideDate } from '~/lib/utils';
 
 interface Props {
   admin?: boolean;
@@ -11,6 +11,7 @@ interface Props {
     calculatedTravel: any;
     userData: any;
     originAddress: string;
+    stops: any;
     destinationAddress: string;
     departDate: string | undefined;
     departTime: string | undefined;
@@ -95,9 +96,16 @@ const openCheckout = () => {
     %0A%0AOlá ${props.rideData.userData.name}, obrigado por escolher a Urban Mobi!
     %0A%0ASeu atendimento foi gerado com sucesso. Confira os detalhes abaixo e acesse o link de pagamento Cielo para concluir o agendamento.
     %0A%0A*Código*: ${props?.rideData.code}
-    %0A*Data / Hora*: ${new Date(props?.rideData.departDate as string).toLocaleDateString('pt-BR')} / ${props?.rideData.departTime}HS
-    %0A*Origem*: ${props?.rideData.originAddress}
-    %0A*Destino*: ${props?.rideData.destinationAddress}
+    %0A*Data / Hora*: ${sanitizeRideDate(props?.rideData.departDate as string)} / ${props?.rideData.departTime}HS
+    %0A%0A*Origem*: ${props?.rideData.originAddress}
+    %0A%0A*Destino*: ${props?.rideData.destinationAddress}
+    ${
+      props.rideData.stops.length
+        ? props.rideData.stops.map((stop: any, index: any) => {
+            return `%0A%0A*Parada ${index + 1}*: ${stop.address}`;
+          })
+        : ''
+    }
     %0A*Agendado por*: ${props?.rideData.dispatcher?.user} - ${props.rideData.dispatcher?.email}
     %0A%0A*Valor total*: ${currencyFormat(props?.rideData.calculatedTravel.travelPrice)}
     %0A%0A*Link de pagamento Cielo*: ${checkoutUrl.value}
@@ -118,11 +126,11 @@ const openCheckout = () => {
 /**
  * Resets the component state
  */
-const resetCheckout = () => {
-  checkoutUrl.value = '';
-  orderNumber.value = '';
-  error.value = '';
-};
+// const resetCheckout = () => {
+//   checkoutUrl.value = '';
+//   orderNumber.value = '';
+//   error.value = '';
+// };
 
 // Auto-create checkout on mount
 onMounted(() => {
@@ -168,7 +176,7 @@ onMounted(() => {
             <div class="flex justify-between">
               <span class="text-gray-600">Data/Hora:</span>
               <span class="font-medium">
-                {{ new Date(rideData.departDate as string).toLocaleDateString('pt-BR') }}
+                {{ sanitizeRideDate(rideData.departDate as string) }}
                 às
                 {{ rideData.departTime }}
               </span>

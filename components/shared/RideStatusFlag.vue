@@ -8,10 +8,10 @@ const props = defineProps({
 
 const rideStatusTranslate = {
   created: 'Agendado',
-  confirmed: 'Confirmado',
+  accepted: 'Confirmado',
   cancelled: 'Cancelado',
   completed: 'Finalizado',
-  holding: 'Em espera',
+  refused: 'Recusada',
 };
 
 const renderRideStatus = computed(() => {
@@ -25,7 +25,7 @@ const renderRideStatus = computed(() => {
     ${
       rideStatus === 'created'
         ? 'bg-blue-600'
-        : rideStatus === 'confirmed'
+        : rideStatus === 'accepted'
           ? 'bg-green-600'
           : rideStatus === 'cancelled'
             ? 'bg-red-600'
