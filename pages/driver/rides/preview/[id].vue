@@ -332,14 +332,19 @@ const handleSetDriverCar = async () => {
                       {{ ride?.driver.selectedCar }}
                     </p>
                   </div>
-                  <Button type="button" variant="secondary" @click="showChangeCar = true">
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    @click="showChangeCar = true"
+                    v-if="ride.status !== 'completed'"
+                  >
                     <ArrowLeftRight />
                     Alterar Carro
                   </Button>
                 </div>
                 <div class="lg:grid lg:grid-cols-4 lg:gap-6">
                   <div
-                    v-if="showSelectCar || showChangeCar"
+                    v-if="showSelectCar || (showChangeCar && ride.status !== 'completed')"
                     class="flex items-start gap-4 col-span-1"
                   >
                     <SharedFormSelect
