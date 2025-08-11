@@ -1,6 +1,9 @@
 <script setup lang="ts">
+import CieloCheckoutUrl from '@/components/payments/CieloCheckoutUrl.vue';
+import StripeCheckout from '@/components/payments/StripeCheckout.vue';
 import FormSelect from '@/components/shared/FormSelect.vue';
 import NewDatePicker from '@/components/shared/NewDatePicker.vue';
+import ProductTag from '@/components/shared/ProductTag.vue';
 import RenderIcon from '@/components/shared/RenderIcon.vue';
 import { useToast } from '@/components/ui/toast/use-toast';
 import { paymentMethods } from '@/config/paymentMethods';
@@ -30,8 +33,6 @@ import { storeToRefs } from 'pinia';
 import { useForm } from 'vee-validate';
 import { GoogleMap, Marker, Polyline } from 'vue3-google-map';
 import * as z from 'zod';
-import CieloCheckoutUrl from '~/components/payments/CieloCheckoutUrl.vue';
-import StripeCheckout from '~/components/payments/StripeCheckout.vue';
 import { currencyFormat, getDate, polyLineCodec } from '~/lib/utils';
 
 definePageMeta({

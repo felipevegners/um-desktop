@@ -757,15 +757,7 @@ const onSubmit = form.handleSubmit(async (values) => {
                         <div class="flex flex-col items-start gap-2">
                           <div class="flex items-center w-full gap-2">
                             <SquareDot />
-                            <GMapAutocomplete
-                              placeholder="Insira a Origem"
-                              @place_changed="setOriginPlace"
-                              v-bind="componentField"
-                              :value="value"
-                              id="originField"
-                              :disabled="true"
-                              class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                            />
+                            <Input type="text" v-bind="componentField" disabled />
                           </div>
                         </div>
                       </FormControl>
@@ -786,35 +778,13 @@ const onSubmit = form.handleSubmit(async (values) => {
                           <FormControl>
                             <div class="flex items-center gap-2">
                               <SquareSquare />
-                              <GMapAutocomplete
-                                placeholder="Insira a parada"
-                                @place_changed="setWaypoints($event, index)"
-                                v-model="waypoint.address"
-                                :value="waypoint.address"
-                                :disabled="true"
-                                class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                              />
-                              <!-- <Button
-                                type="button"
-                                @click.prevent="removeWaypointRow(index)"
-                                size="icon"
-                              >
-                                <X />
-                              </Button> -->
+                              <Input type="text" v-model="waypoint.address" disabled />
                             </div>
                           </FormControl>
                           <FormMessage />
                         </FormItem>
                       </FormField>
                     </div>
-                    <!-- <Button
-                      type="button"
-                      v-if="showWaypointsForm"
-                      @click.prevent="addWaypointRow"
-                    >
-                      <Plus />
-                      Adicionar Parada
-                    </Button> -->
                   </div>
                   <FormField v-slot="{ componentField, value }" name="destination">
                     <FormItem>
@@ -822,14 +792,7 @@ const onSubmit = form.handleSubmit(async (values) => {
                       <FormControl>
                         <div class="flex items-center gap-2">
                           <SquareCheck />
-                          <GMapAutocomplete
-                            placeholder="Insira o Destino"
-                            @place_changed="setDestinationPlace"
-                            v-bind="componentField"
-                            :value="value"
-                            :disabled="true"
-                            class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                          />
+                          <Input type="text" v-bind="componentField" disabled />
                         </div>
                       </FormControl>
                       <FormMessage />
@@ -871,8 +834,6 @@ const onSubmit = form.handleSubmit(async (values) => {
                   style="width: 100%; height: 600px"
                   :center="center"
                   :zoom="11.98"
-                  :disable-default-ui="true"
-                  :gesture-handling="'none'"
                 >
                   <Marker
                     v-for="marker in markers"
