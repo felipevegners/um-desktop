@@ -56,7 +56,7 @@ export const useAccountStore = defineStore('accounts', {
     async getUsersAccountsAction() {
       this.isLoading = true;
       try {
-        const data = await getUsersAccountsService('');
+        const data = await getUsersAccountsService('', '');
         this.accounts = (data as any).filter((account: any) => account.enabled === true);
         this.inactiveAccounts = (data as any).filter(
           (account: any) => account.enabled === false,
@@ -71,7 +71,7 @@ export const useAccountStore = defineStore('accounts', {
     async getUsersAccountsByIdAction(accountId: string) {
       this.isLoading = true;
       try {
-        const data = await getUsersAccountsService(accountId);
+        const data = await getUsersAccountsService(accountId, '');
         this.account = data as any;
       } catch (error) {
         console.log('Error durging user register -> ', error);

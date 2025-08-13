@@ -34,7 +34,7 @@ export default NuxtAuthHandler({
             statusCode: 401,
             message:
               'Sua conta ainda não foi verificada!, Acesse seu e-mail e confirme seu cadastro para prosseguir com o acesso.',
-            cause: 'Barretos',
+            cause: 'Error',
           });
         }
 

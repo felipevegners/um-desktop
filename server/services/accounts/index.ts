@@ -1,5 +1,11 @@
-export const getUsersAccountsService = async (accountId: string) => {
+export const getUsersAccountsService = async (
+  accountId: string,
+  accountEmail: string,
+) => {
   try {
+    if (accountEmail.includes('@')) {
+      return await $fetch(`/api/auth/accounts?email=${accountEmail}`);
+    }
     if (accountId) {
       return await $fetch(`/api/auth/accounts?id=${accountId}`);
     }
