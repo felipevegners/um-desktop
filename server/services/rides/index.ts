@@ -16,10 +16,9 @@ export const getRideRoutesService = async (rideData: any) => {
   try {
     const response = await $fetch('/api/travels/routes', {
       method: 'POST',
-      params: {
+      body: {
         ...rideData,
       },
-      body: rideData.waypoints,
     });
     return response;
   } catch (error) {

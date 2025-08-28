@@ -1,7 +1,14 @@
 <script setup lang="ts">
+// import { GoogleMap, Marker, Polyline } from 'vue3-google-map';
+import FormButtons from '@/components/forms/FormButtons.vue';
 import BackLink from '@/components/shared/BackLink.vue';
 import FormSelect from '@/components/shared/FormSelect.vue';
+import ProductTag from '@/components/shared/ProductTag.vue';
+import RideStatusFlag from '@/components/shared/RideStatusFlag.vue';
 import { useToast } from '@/components/ui/toast/use-toast';
+import { WPP_API } from '@/config/paths';
+import { getRideCalculationService, getRideRoutesService } from '@/server/services/rides';
+import { useAccountStore } from '@/stores/account.store';
 import { useContractsStore } from '@/stores/contracts.store';
 import { useProductsStore } from '@/stores/products.store';
 import { useRidesStore } from '@/stores/rides.store';
@@ -31,16 +38,11 @@ import {
 import { vMaska } from 'maska/vue';
 import { storeToRefs } from 'pinia';
 import { useForm } from 'vee-validate';
-import { GoogleMap, Marker, Polyline } from 'vue3-google-map';
-import FormButtons from '~/components/forms/FormButtons.vue';
-import { WPP_API } from '~/config/paths';
 import { currencyFormat, polyLineCodec, sanitizePhone } from '~/lib/utils';
-import { getRideCalculationService, getRideRoutesService } from '~/server/services/rides';
-import { useAccountStore } from '~/stores/account.store';
 
-const API_KEY = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
-const customIconStart = `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="#FFFFFF" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-square-dot-icon lucide-square-dot"><rect width="18" height="18" x="3" y="3" rx="2"/><circle cx="12" cy="12" r="1"/></svg>`;
-const customIconEnd = `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="#FFFFFF" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-square-check-icon lucide-square-check"><rect width="18" height="18" x="3" y="3" rx="2"/><path d="m9 12 2 2 4-4"/></svg>`;
+// const API_KEY = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
+// const customIconStart = `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="#FFFFFF" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-square-dot-icon lucide-square-dot"><rect width="18" height="18" x="3" y="3" rx="2"/><circle cx="12" cy="12" r="1"/></svg>`;
+// const customIconEnd = `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="#FFFFFF" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-square-check-icon lucide-square-check"><rect width="18" height="18" x="3" y="3" rx="2"/><path d="m9 12 2 2 4-4"/></svg>`;
 
 definePageMeta({
   layout: 'admin',
@@ -162,24 +164,24 @@ const decodePolyline = (polyline: string) => {
   };
 
   // Set the markers on the map
-  markers.value = [
-    {
-      lat: coords[0].lat,
-      lng: coords[0].lng,
-      icon: 'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent(customIconStart),
-    },
-    {
-      lat: coords[coords.length - 1].lat,
-      lng: coords[coords.length - 1].lng,
-      icon: 'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent(customIconEnd),
-    },
-  ];
+  // markers.value = [
+  //   {
+  //     lat: coords[0].lat,
+  //     lng: coords[0].lng,
+  //     icon: 'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent(customIconStart),
+  //   },
+  //   {
+  //     lat: coords[coords.length - 1].lat,
+  //     lng: coords[coords.length - 1].lng,
+  //     icon: 'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent(customIconEnd),
+  //   },
+  // ];
 };
 
-onMounted(() => {
-  decodePolyline(ride?.value.travel.polyLineCoors);
-  routePolyLine.value = ride?.value.travel.polyLineCoors;
-});
+// onMounted(() => {
+//   decodePolyline(ride?.value.travel.polyLineCoors);
+//   routePolyLine.value = ride?.value.travel.polyLineCoors;
+// });
 
 onBeforeMount(async () => {
   await getUsersAccountsAction();
@@ -279,27 +281,27 @@ const setSelectedProduct = async (value: any) => {
 };
 
 // Set the location based on the place selected
-const setOriginPlace = (place: any) => {
-  originCoords.value.lat = place.geometry.location.lat();
-  originCoords.value.lng = place.geometry.location.lng();
-  // Update the location details
-  originLocationDetails.value.address = place.formatted_address;
-  originLocationDetails.value.url = place.url;
-  form.setValues({
-    origin: place.formatted_address,
-  });
-};
+// const setOriginPlace = (place: any) => {
+//   originCoords.value.lat = place.geometry.location.lat();
+//   originCoords.value.lng = place.geometry.location.lng();
+//   // Update the location details
+//   originLocationDetails.value.address = place.formatted_address;
+//   originLocationDetails.value.url = place.url;
+//   form.setValues({
+//     origin: place.formatted_address,
+//   });
+// };
 // Set the location based on the place selected
-const setDestinationPlace = (place: any) => {
-  destinationCoords.value.lat = place.geometry.location.lat();
-  destinationCoords.value.lng = place.geometry.location.lng();
-  // Update the location details
-  destinationLocationDetails.value.address = place.formatted_address;
-  destinationLocationDetails.value.url = place.url;
-  form.setValues({
-    destination: place.formatted_address,
-  });
-};
+// const setDestinationPlace = (place: any) => {
+//   destinationCoords.value.lat = place.geometry.location.lat();
+//   destinationCoords.value.lng = place.geometry.location.lng();
+//   // Update the location details
+//   destinationLocationDetails.value.address = place.formatted_address;
+//   destinationLocationDetails.value.url = place.url;
+//   form.setValues({
+//     destination: place.formatted_address,
+//   });
+// };
 
 waypointLocationDetails.value = ride?.value.travel.stops || [];
 
@@ -470,10 +472,11 @@ const onSubmit = form.handleSubmit(async (values) => {
       stops: waypointLocationDetails.value || [],
       distance: calculatedTravel.value.travelDistance,
       duration: calculatedTravel.value.travelTime,
-      polyLineCoors: routePolyLine.value,
+      polyLineCoords: routePolyLine.value,
+      routePreviewImg: ride?.value.travel.routePreviewImg,
     },
-    status: selectedDriver.value.name ? 'accepted' : ride?.value.status,
-    accepted: selectedDriver.value.name ? true : false,
+    status: selectedDriver.value.name ? 'pending' : ride?.value.status,
+    accepted: ride?.value.accepted,
     price: calculatedTravel.value.travelPrice,
     driver: {
       id: selectedDriver.value.id,
@@ -514,10 +517,13 @@ const onSubmit = form.handleSubmit(async (values) => {
       <BackLink />
     </header>
     <section class="mb-10 flex items-center justify-between">
-      <h1 class="flex items-center gap-2 text-2xl font-bold">
-        <CalendarDays class="w-6 h-6" />
-        Editar Atendimento - #{{ ride?.code || '' }}
-      </h1>
+      <div class="flex items-center justify-center gap-4">
+        <h1 class="flex items-center gap-2 text-2xl font-bold">
+          <CalendarDays class="w-6 h-6" />
+          Editar Atendimento - #{{ ride?.code || '' }}
+        </h1>
+        <RideStatusFlag :ride-status="ride?.status" />
+      </div>
       <div class="flex gap-6 items-center">
         <Button @click="toggleFinishModal">
           <Check />
@@ -542,10 +548,6 @@ const onSubmit = form.handleSubmit(async (values) => {
           <div class="md:grid md:grid-cols-2 gap-6">
             <!-- COLUNA DE DADOS -->
             <div class="flex flex-col gap-6">
-              <div>
-                <small class="text-xs text-muted-foreground">STATUS</small>
-                <SharedRideStatusFlag :ride-status="ride?.status" />
-              </div>
               <div
                 class="p-6 grid grid-cols-2 gap-6 items-start border border-zinc-900 rounded-md"
               >
@@ -559,7 +561,9 @@ const onSubmit = form.handleSubmit(async (values) => {
                   <div>
                     <FormField v-slot="{ componentField, value }" name="driver">
                       <FormItem>
-                        <FormLabel>Motorista Acionado</FormLabel>
+                        <FormLabel class="text-muted-foreground text-sm">
+                          Motorista Acionado
+                        </FormLabel>
                         <FormControl>
                           <FormSelect
                             v-bind="componentField"
@@ -588,6 +592,12 @@ const onSubmit = form.handleSubmit(async (values) => {
                       <ConciergeBell class="w-5 h-5 mr-2" />
                       Acionar Novo Motorista
                     </Button>
+                    <div
+                      v-show="!ride.accepted"
+                      class="my-4 p-2 bg-red-200 text-red-600 text-sm text-center"
+                    >
+                      <span> O Motorista ainda não aceitou este atendimento. </span>
+                    </div>
                   </div>
                 </div>
                 <div class="col-span-2 grid grid-cols-3 gap-3">
@@ -688,12 +698,7 @@ const onSubmit = form.handleSubmit(async (values) => {
                             class="w-[50px] h-[50px] rounded-md bg-zinc-200 bg-cover bg-no-repeat bg-center relative flex items-center justify-center"
                             :style="{ backgroundImage: `url(${product.image?.url})` }"
                           />
-                          <small
-                            class="px-2 py-1 uppercase text-white text-center rounded-md"
-                            :class="`${product.type === 'contract' ? 'bg-zinc-800' : product.type === 'free-km' ? 'bg-orange-400' : 'bg-purple-400'}`"
-                          >
-                            {{ product.code }}
-                          </small>
+                          <ProductTag :label="product.name" :type="product.name" />
                           <small>{{ product.name }}</small>
                           <div class="flex items-center justify-start">
                             <Users :size="14" />
@@ -828,8 +833,24 @@ const onSubmit = form.handleSubmit(async (values) => {
             <!-- COLUNA MAPA E ROTA -->
             <div class="flex flex-col items-start justify-start w-full">
               <div class="w-full">
-                <CardTitle class="mb-6">Mapa e Rota</CardTitle>
-                <GoogleMap
+                <NuxtImg
+                  :src="ride?.travel.routePreviewImg.url"
+                  alt="Mapa da rota"
+                  width="800"
+                  height="600"
+                  loading="lazy"
+                  class="p-4 bg-white rounded-md border border-zinc-900 w-full h-auto"
+                  v-slot="{ src, isLoaded, imgAttrs }"
+                  :custom="true"
+                >
+                  <LoaderCircle
+                    v-if="!isLoaded"
+                    :size="48"
+                    class="animate-spin self-center justify-self-center"
+                  />
+                  <img v-else :src="src" v-bind="imgAttrs" />
+                </NuxtImg>
+                <!-- <GoogleMap
                   :api-key="API_KEY"
                   style="width: 100%; height: 600px"
                   :center="center"
@@ -849,7 +870,7 @@ const onSubmit = form.handleSubmit(async (values) => {
                     class="w-10 h-10"
                   />
                   <Polyline :options="ridePath" />
-                </GoogleMap>
+                </GoogleMap> -->
               </div>
             </div>
           </div>

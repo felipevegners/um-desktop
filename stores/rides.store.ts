@@ -91,7 +91,7 @@ export const useRidesStore = defineStore('rides', {
       try {
         const newRideData = {
           id: rideId,
-          status: 'accepted',
+          status: 'pending',
           accepted: true,
           driver: {
             id: driverData.id,

@@ -43,7 +43,7 @@ const showUrlButton = computed(() => {
 <template>
   <div class="flex items-center gap-1">
     <span
-      :class="`py-2 px-4 h-9 flex items-center justify-center rounded-md text-white text-xs font-bold uppercase w-fit  
+      :class="`py-1 px-3 flex items-center justify-center rounded-md text-white text-[10px] uppercase w-fit  
       ${
         paymentStatus === 'pending'
           ? 'bg-blue-600'
@@ -56,7 +56,7 @@ const showUrlButton = computed(() => {
               ? 'bg-red-600'
               : paymentStatus === 'invoice'
                 ? 'bg-zinc-900'
-                : 'bg-amber-500'
+                : 'bg-amber-600'
       }`"
     >
       {{ renderPaymentStatus }}

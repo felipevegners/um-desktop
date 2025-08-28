@@ -17,7 +17,6 @@ import type { Product } from '@/types/products/types';
 import { DateFormatter, getLocalTimeZone } from '@internationalized/date';
 import { toTypedSchema } from '@vee-validate/zod';
 import {
-  CalendarPlus,
   LoaderCircle,
   Minus,
   Plus,
@@ -31,7 +30,6 @@ import {
 import { vMaska } from 'maska/vue';
 import { storeToRefs } from 'pinia';
 import { useForm } from 'vee-validate';
-import { GoogleMap, Marker, Polyline } from 'vue3-google-map';
 import * as z from 'zod';
 import { currencyFormat, getDate, polyLineCodec } from '~/lib/utils';
 
@@ -110,15 +108,23 @@ const addWaypointRow = () => {
 
 const removeWaypointRow = (index: number) => {
   routeWaypoints.value.splice(index, 1);
+  waypointLocationDetails.value.splice(index, 1);
 };
 
 // // Set the waypoints of the ride
-const setWaypoints = (place: any) => {
+const setWaypoints = (place: any, index: number) => {
   waypointCoords.value.lat = place.geometry.location.lat();
   waypointCoords.value.lng = place.geometry.location.lng();
 
-  const waypoint = { address: place.formatted_address };
+  const waypoint = {
+    address: place.formatted_address,
+    coords: {
+      lat: waypointCoords.value.lat,
+      lng: waypointCoords.value.lng,
+    },
+  };
   waypointLocationDetails.value.push(waypoint);
+  routeWaypoints.value[index].address = place.formatted_address;
 };
 
 const originCoords = ref<any>({
@@ -350,10 +356,17 @@ const calculatedTravel = ref({
 });
 
 const getRideCalculation = async () => {
+  const extractedWaypointsAddress = waypointLocationDetails.value.map((waypoint: any) => {
+    return {
+      ['address']: waypoint['address'],
+    };
+  });
   const rideData = {
     origins: originLocationDetails.value.address,
     destinations: destinationLocationDetails.value.address,
+    waypoints: extractedWaypointsAddress,
   };
+
   try {
     loadingRoute.value = true;
     const travelCalculation = await getRideCalculationService(rideData);
@@ -543,7 +556,36 @@ const handleCieloCheckoutCreated = (result: {
   }, 1000);
 };
 
+const buildStaticMapUrl = () => {
+  const key = API_KEY;
+  const size = '800x600';
+  const maptype = 'roadmap';
+  const originIconUrl = 'https://app.urbanmobi.com.br/icons/square-dot.png';
+  const stopIconUrl = 'https://app.urbanmobi.com.br/icons/square-square.png';
+  const destIconUrl = 'https://app.urbanmobi.com.br/icons/square-check.png';
+  const origin = `${originCoords.value.lat},${originCoords.value.lng}`;
+  const dest = `${destinationCoords.value.lat},${destinationCoords.value.lng}`;
+
+  // Gather stops as lat,lng
+  const stops = waypointLocationDetails.value?.length
+    ? waypointLocationDetails.value
+        .map((wp: any) => (wp.coords ? `${wp.coords.lat},${wp.coords.lng}` : ''))
+        .filter(Boolean)
+    : [];
+
+  // const pathPoints = [origin, ...stops, dest].join('|');
+  const path = `&path=color:0x000000FF%7Cenc:${routePolyLine.value}`;
+
+  // Markers: origin, stops, dest
+  const markers = [`&markers=icon:${originIconUrl}|${origin}`];
+  stops.forEach((stop: any) => markers.push(`&markers=icon:${stopIconUrl}|${stop}`));
+  markers.push(`&markers=icon:${destIconUrl}|${dest}`);
+
+  return `https://maps.googleapis.com/maps/api/staticmap?maptype=${maptype}&size=${size}${markers.join('')}${path}&key=${key}`;
+};
 const onSubmit = form.handleSubmit(async (values) => {
+  const routePreviewUrl = buildStaticMapUrl();
+
   const ridePayload = {
     code: rideCode.value,
     price: calculatedTravel.value.travelPrice,
@@ -589,10 +631,13 @@ const onSubmit = form.handleSubmit(async (values) => {
         lat: destinationCoords.value.lat,
         lng: destinationCoords.value.lng,
       },
-      stops: waypointLocationDetails.value || [],
+      stops: waypointLocationDetails.value,
       distance: calculatedTravel.value.travelDistance,
       duration: calculatedTravel.value.travelTime,
-      polyLineCoors: routePolyLine.value,
+      polyLineCoords: routePolyLine.value,
+      routePreviewImg: {
+        url: routePreviewUrl,
+      },
     },
     status: 'created',
     accepted: false,
@@ -604,25 +649,24 @@ const onSubmit = form.handleSubmit(async (values) => {
       dispatchDate: new Date().toLocaleDateString('pt-BR').padStart(10, '0'),
     },
   };
-
-  console.log('RIDE PAYLOAD -> ', ridePayload);
-
-  // try {
-  //   await createRideAction(ridePayload);
-  // } catch (error) {
-  //   toast({
-  //     title: 'Oops!',
-  //     description: `Ocorreu um erro ao criar o agendamento. Tente novamente.`,
-  //     variant: 'destructive',
-  //   });
-  // } finally {
-  //   toast({
-  //     title: 'Tudo pronto!',
-  //     class: 'bg-green-600 border-0 text-white text-2xl',
-  //     description: `Agendamento cadastrado com sucesso!`,
-  //   });
-  //   navigateTo('/admin/rides/open');
-  // }
+  try {
+    await createRideAction(ridePayload);
+  } catch (error) {
+    toast({
+      title: 'Oops!',
+      description: `Ocorreu um erro ao criar o agendamento. Tente novamente.`,
+      variant: 'destructive',
+    });
+  } finally {
+    toast({
+      title: 'Tudo pronto!',
+      class: 'bg-green-600 border-0 text-white text-2xl',
+      description: `Agendamento cadastrado com sucesso!`,
+    });
+    setTimeout(() => {
+      navigateTo('/admin/rides/open');
+    }, 1500);
+  }
 });
 </script>
 <template>
@@ -690,10 +734,7 @@ const onSubmit = form.handleSubmit(async (values) => {
                                   backgroundImage: `url(${product.image?.url})`,
                                 }"
                               />
-                              <SharedProductTag
-                                :label="product.name"
-                                :type="product.name"
-                              />
+                              <ProductTag :label="product.name" :type="product.name" />
                               <div class="flex items-center justify-start gap-4">
                                 <div class="flex items-center">
                                   <Users :size="14" />
@@ -853,8 +894,8 @@ const onSubmit = form.handleSubmit(async (values) => {
                                 <SquareSquare />
                                 <GMapAutocomplete
                                   placeholder="Insira a parada"
-                                  @place_changed="setWaypoints"
-                                  v-model="waypoint.address"
+                                  @place_changed="setWaypoints($event, index)"
+                                  :value="waypoint.address"
                                   class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                                 />
                                 <Button
@@ -945,29 +986,25 @@ const onSubmit = form.handleSubmit(async (values) => {
                 <small class="text-muted-foreground uppercase">Calculando rota</small>
               </div>
               <div v-else class="md:grid md:grid-cols-2 gap-10">
-                <div class="p-2 rounded-md overflow-hidden">
-                  <GoogleMap
-                    :api-key="API_KEY"
-                    style="width: 100%; height: 700px"
-                    :center="center"
-                    :zoom="11"
-                    :zoom-control="true"
+                <div class="space-y-6 flex flex-col items-start">
+                  <h3 class="text-lg font-bold">Preview da Rota</h3>
+                  <NuxtImg
+                    :src="buildStaticMapUrl()"
+                    alt="Mapa da rota"
+                    width="800"
+                    height="600"
+                    loading="lazy"
+                    class="p-4 bg-white rounded-md border border-zinc-900 w-full h-auto"
+                    v-slot="{ src, isLoaded, imgAttrs }"
+                    :custom="true"
                   >
-                    <Marker
-                      v-for="marker in markers"
-                      ref="markerRef"
-                      :key="marker.id"
-                      :options="{
-                        position: {
-                          lat: marker.lat,
-                          lng: marker.lng,
-                        },
-                        icon: marker.icon,
-                      }"
-                      class="w-10 h-10"
+                    <LoaderCircle
+                      v-if="!isLoaded"
+                      :size="48"
+                      class="animate-spin self-center justify-self-center"
                     />
-                    <Polyline :options="ridePath" />
-                  </GoogleMap>
+                    <img v-else :src="src" v-bind="imgAttrs" />
+                  </NuxtImg>
                 </div>
                 <div class="w-full space-y-6">
                   <h3 class="text-lg font-bold">Resumo</h3>
@@ -984,8 +1021,8 @@ const onSubmit = form.handleSubmit(async (values) => {
                       <p>{{ originLocationDetails.address }}</p>
                     </div>
                     <div
-                      v-if="waypointLocationDetails"
-                      v-for="(waypoint, index) in waypointLocationDetails"
+                      v-if="routeWaypoints"
+                      v-for="(waypoint, index) in routeWaypoints"
                     >
                       <small class="font-bold">Parada {{ index + 1 }}</small>
                       <p>{{ waypoint.address }}</p>
