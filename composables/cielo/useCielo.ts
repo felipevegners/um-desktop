@@ -92,6 +92,10 @@ export const useCielo = () => {
       shipping: {
         type: 'WithoutShipping',
       },
+      payment: {
+        capture: false,
+      },
+      sku: options.orderNumber as string,
       type: 'Service',
       name: options.itemName,
       description: options.itemDescription,

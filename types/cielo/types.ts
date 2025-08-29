@@ -33,6 +33,10 @@ export interface CieloCheckoutRequest {
       | 'WithoutShippingPickUp'
       | 'WithoutShipping';
   };
+  payment: {
+    capture: boolean;
+  };
+  sku: string;
   type: string;
   name: string;
   description?: string;

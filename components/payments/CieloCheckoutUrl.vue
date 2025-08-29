@@ -51,7 +51,7 @@ const createCheckout = async () => {
     error.value = '';
 
     // Create ride description
-    const rideDescription = `Atendimento ${props.rideData.selectedProduct.name} - ${props.rideData.originAddress} → ${props.rideData.destinationAddress}`;
+    const rideDescription = `Atendimento ${props.rideData.selectedProduct.name} | Origem: ${props.rideData.originAddress} | Destino: ${props.rideData.destinationAddress}`;
     const rideAmount = props.rideData.calculatedTravel.travelPrice * 100;
 
     const checkoutResponse = await createSimpleCheckout({

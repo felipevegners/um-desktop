@@ -1,5 +1,4 @@
 <script setup lang="ts">
-// import { GoogleMap, Marker, Polyline } from 'vue3-google-map';
 import FormButtons from '@/components/forms/FormButtons.vue';
 import BackLink from '@/components/shared/BackLink.vue';
 import FormSelect from '@/components/shared/FormSelect.vue';
@@ -7,7 +6,11 @@ import ProductTag from '@/components/shared/ProductTag.vue';
 import RideStatusFlag from '@/components/shared/RideStatusFlag.vue';
 import { useToast } from '@/components/ui/toast/use-toast';
 import { WPP_API } from '@/config/paths';
-import { getRideCalculationService, getRideRoutesService } from '@/server/services/rides';
+import {
+  deleteRideService,
+  getRideCalculationService,
+  getRideRoutesService,
+} from '@/server/services/rides';
 import { useAccountStore } from '@/stores/account.store';
 import { useContractsStore } from '@/stores/contracts.store';
 import { useProductsStore } from '@/stores/products.store';
@@ -38,11 +41,13 @@ import {
 import { vMaska } from 'maska/vue';
 import { storeToRefs } from 'pinia';
 import { useForm } from 'vee-validate';
+import { GoogleMap, Marker, Polyline } from 'vue3-google-map';
 import { currencyFormat, polyLineCodec, sanitizePhone } from '~/lib/utils';
 
-// const API_KEY = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
-// const customIconStart = `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="#FFFFFF" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-square-dot-icon lucide-square-dot"><rect width="18" height="18" x="3" y="3" rx="2"/><circle cx="12" cy="12" r="1"/></svg>`;
-// const customIconEnd = `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="#FFFFFF" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-square-check-icon lucide-square-check"><rect width="18" height="18" x="3" y="3" rx="2"/><path d="m9 12 2 2 4-4"/></svg>`;
+const API_KEY = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
+const customIconStart = `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="#FFFFFF" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-square-dot-icon lucide-square-dot"><rect width="18" height="18" x="3" y="3" rx="2"/><circle cx="12" cy="12" r="1"/></svg>`;
+const customIconStop = `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="#FFFFFF" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-square-pause-icon lucide-square-pause"><rect width="18" height="18" x="3" y="3" rx="2"/><line x1="10" x2="10" y1="15" y2="9"/><line x1="14" x2="14" y1="15" y2="9"/></svg>`;
+const customIconEnd = `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="#FFFFFF" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-square-check-icon lucide-square-check"><rect width="18" height="18" x="3" y="3" rx="2"/><path d="m9 12 2 2 4-4"/></svg>`;
 
 definePageMeta({
   layout: 'admin',
@@ -57,6 +62,12 @@ const { toast } = useToast();
 const { data } = useAuth();
 const df = new DateFormatter('pt-BR', {
   dateStyle: 'short',
+});
+//@ts-ignore
+const { user } = data.value;
+
+const isAdmin = computed(() => {
+  return user?.role === 'admin';
 });
 
 const route = useRoute();
@@ -98,6 +109,7 @@ const showRenderedMap = ref<boolean>(false);
 const showGenerateRide = ref<boolean>(false);
 const showRouteRecalculation = ref<boolean>(false);
 const showCancelationModal = ref<boolean>(false);
+const showDeleteConfirmationModal = ref<boolean>(false);
 const loadingCancelAndDelete = ref<boolean>(false);
 const showFinishModal = ref<boolean>(false);
 const showWaypointsForm = ref<boolean>(false);
@@ -163,25 +175,36 @@ const decodePolyline = (polyline: string) => {
     lng: coords[parseCenterCoord].lng,
   };
 
+  const stopsMarkers = ride?.value.travel.stops.map((stop: any, index: number) => {
+    return {
+      ...stop.coords,
+      icon: 'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent(customIconStop),
+      title: `Parada ${index + 1} de ${ride?.value.user.name}`,
+    };
+  });
+
   // Set the markers on the map
-  // markers.value = [
-  //   {
-  //     lat: coords[0].lat,
-  //     lng: coords[0].lng,
-  //     icon: 'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent(customIconStart),
-  //   },
-  //   {
-  //     lat: coords[coords.length - 1].lat,
-  //     lng: coords[coords.length - 1].lng,
-  //     icon: 'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent(customIconEnd),
-  //   },
-  // ];
+  markers.value = [
+    {
+      lat: coords[0].lat,
+      lng: coords[0].lng,
+      icon: 'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent(customIconStart),
+      title: `Embarque de ${ride?.value.user.name}`,
+    },
+    ...stopsMarkers,
+    {
+      lat: coords[coords.length - 1].lat,
+      lng: coords[coords.length - 1].lng,
+      icon: 'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent(customIconEnd),
+      title: `Desembarque de ${ride?.value.user.name}`,
+    },
+  ];
 };
 
-// onMounted(() => {
-//   decodePolyline(ride?.value.travel.polyLineCoors);
-//   routePolyLine.value = ride?.value.travel.polyLineCoors;
-// });
+onMounted(() => {
+  decodePolyline(ride?.value.travel.polyLineCoords);
+  routePolyLine.value = ride?.value.travel.polyLineCoords;
+});
 
 onBeforeMount(async () => {
   await getUsersAccountsAction();
@@ -229,7 +252,7 @@ const calculatedTravel = ref({
   travelPrice: ride?.value.price,
 });
 
-const getRideCalculation = async () => {
+const handleRideCalculation = async () => {
   const rideData = {
     origins: originLocationDetails.value.address,
     destinations: destinationLocationDetails.value.address,
@@ -275,7 +298,7 @@ const setSelectedProduct = async (value: any) => {
   if (selectedProduct.value.id !== value.id) {
     selectedProduct.value = value;
     showRouteRecalculation.value = true;
-    await getRideCalculation();
+    await handleRideCalculation();
     showRouteRecalculation.value = false;
   }
 };
@@ -317,7 +340,6 @@ waypointLocationDetails.value = ride?.value.travel.stops || [];
 
 // // Set the waypoints of the ride
 const setWaypoints = (place: any, index: any) => {
-  console.log(waypointLocationDetails.value[index].address);
   waypointLocationDetails.value[index].address = place.formatted_address;
 };
 
@@ -405,6 +427,25 @@ const handleFinishRide = async () => {
       description: `Ocorreu um erro ao cancelar o atendimento. Tente novamente.`,
       variant: 'destructive',
     });
+  }
+};
+
+const handleDeleteRide = async () => {
+  try {
+    loadingCancelAndDelete.value = true;
+    await deleteRideService(ride?.value.id);
+  } catch (error) {
+    toast({
+      title: 'Oops!',
+      description: `Ocorreu um erro ao deletar o atendimento. Tente novamente.`,
+      variant: 'destructive',
+    });
+  } finally {
+    setTimeout(() => {
+      loadingCancelAndDelete.value = false;
+      showCancelationModal.value = false;
+      navigateTo('/admin/rides/open');
+    }, 1500);
   }
 };
 
@@ -533,10 +574,14 @@ const onSubmit = form.handleSubmit(async (values) => {
           <X />
           Cancelar Atendimento
         </Button>
-        <!-- <Button variant="destructive" @click="">
+        <Button
+          v-if="isAdmin"
+          variant="destructive"
+          @click="showDeleteConfirmationModal = true"
+        >
           <Trash />
           Excluir Atendimento
-        </Button> -->
+        </Button>
       </div>
     </section>
     <form @submit.prevent="onSubmit" @keydown.enter.prevent="true">
@@ -593,7 +638,7 @@ const onSubmit = form.handleSubmit(async (values) => {
                       Acionar Novo Motorista
                     </Button>
                     <div
-                      v-show="!ride.accepted"
+                      v-show="!ride.accepted && ride.driver.name"
                       class="my-4 p-2 bg-red-200 text-red-600 text-sm text-center"
                     >
                       <span> O Motorista ainda não aceitou este atendimento. </span>
@@ -807,7 +852,7 @@ const onSubmit = form.handleSubmit(async (values) => {
                 </div>
                 <!-- <Button
                   type="button"
-                  @click.prevent="getRideCalculation"
+                  @click.prevent="handleRideCalculation"
                   :disabled="form.values.origin === ride?.travel.originAddress"
                 >
                   <LoaderCircle v-if="loadingRoute" class="animate-spin" />
@@ -831,10 +876,14 @@ const onSubmit = form.handleSubmit(async (values) => {
               </div>
             </div>
             <!-- COLUNA MAPA E ROTA -->
-            <div class="flex flex-col items-start justify-start w-full">
-              <div class="w-full">
-                <NuxtImg
-                  :src="ride?.travel.routePreviewImg.url"
+            <div class="flex flex-col">
+              <div
+                class="p-6 flex flex-col items-start border border-zinc-900 rounded-md"
+              >
+                <h3 class="mb-4 text-lg font-bold">Preview da Rota</h3>
+                <!-- <NuxtImg
+                  v-if="ride?.travel.routePreviewImg && ride?.travel.routePreviewImg.url"
+                  :src="ride?.travel.routePreviewImg.url || ''"
                   alt="Mapa da rota"
                   width="800"
                   height="600"
@@ -849,18 +898,20 @@ const onSubmit = form.handleSubmit(async (values) => {
                     class="animate-spin self-center justify-self-center"
                   />
                   <img v-else :src="src" v-bind="imgAttrs" />
-                </NuxtImg>
-                <!-- <GoogleMap
+                </NuxtImg> -->
+                <GoogleMap
                   :api-key="API_KEY"
-                  style="width: 100%; height: 600px"
+                  style="width: 100%; height: 700px"
                   :center="center"
-                  :zoom="11.98"
+                  :zoom="11"
+                  :zoom-control="true"
                 >
                   <Marker
                     v-for="marker in markers"
                     ref="markerRef"
                     :key="marker.id"
                     :options="{
+                      title: marker.title,
                       position: {
                         lat: marker.lat,
                         lng: marker.lng,
@@ -870,7 +921,7 @@ const onSubmit = form.handleSubmit(async (values) => {
                     class="w-10 h-10"
                   />
                   <Polyline :options="ridePath" />
-                </GoogleMap> -->
+                </GoogleMap>
               </div>
             </div>
           </div>
@@ -914,6 +965,35 @@ const onSubmit = form.handleSubmit(async (values) => {
           <Button type="button" variant="destructive" @click="handleCancelRide">
             <LoaderCircle v-if="loadingCancelAndDelete" class="animate-spin" />
             Cancelar
+          </Button>
+        </div>
+      </DialogFooter>
+    </DialogContent>
+  </Dialog>
+  <Dialog
+    :open="showDeleteConfirmationModal"
+    @update:open="showDeleteConfirmationModal = $event"
+  >
+    <DialogContent class="space-y-4">
+      <DialogHeader>
+        <DialogTitle>Deseja exluir este atendimento?</DialogTitle>
+      </DialogHeader>
+      <DialogDescription>
+        Essa ação irá excluir o atendimento
+        <span class="font-bold"> #{{ ride.code }} </span> e notificar o usuário motorista.
+      </DialogDescription>
+      <DialogFooter>
+        <div class="flex items-start justify-center gap-4 w-full">
+          <Button
+            type="button"
+            variant="secondary"
+            @click="() => (showDeleteConfirmationModal = false)"
+          >
+            Voltar
+          </Button>
+          <Button type="button" variant="destructive" @click="handleDeleteRide">
+            <LoaderCircle v-if="loadingCancelAndDelete" class="animate-spin" />
+            Excluir
           </Button>
         </div>
       </DialogFooter>

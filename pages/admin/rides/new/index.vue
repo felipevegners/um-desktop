@@ -29,7 +29,8 @@ import {
 } from 'lucide-vue-next';
 import { vMaska } from 'maska/vue';
 import { storeToRefs } from 'pinia';
-import { useForm } from 'vee-validate';
+import { useForm, useIsFormDirty, useIsFormValid } from 'vee-validate';
+import { GoogleMap, Marker, Polyline } from 'vue3-google-map';
 import * as z from 'zod';
 import { currencyFormat, getDate, polyLineCodec } from '~/lib/utils';
 
@@ -59,10 +60,12 @@ const { products } = storeToRefs(productsStore);
 
 const API_KEY = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
 const customIconStart = `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="#FFFFFF" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-square-dot-icon lucide-square-dot"><rect width="18" height="18" x="3" y="3" rx="2"/><circle cx="12" cy="12" r="1"/></svg>`;
+const customIconStop = `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="#FFFFFF" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-square-pause-icon lucide-square-pause"><rect width="18" height="18" x="3" y="3" rx="2"/><line x1="10" x2="10" y1="15" y2="9"/><line x1="14" x2="14" y1="15" y2="9"/></svg>`;
 const customIconEnd = `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="#FFFFFF" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-square-check-icon lucide-square-check"><rect width="18" height="18" x="3" y="3" rx="2"/><path d="m9 12 2 2 4-4"/></svg>`;
 
 const { toast } = useToast();
 const { data } = useAuth();
+const { meta } = useForm();
 const df = new DateFormatter('pt-BR', {
   dateStyle: 'short',
 });
@@ -71,7 +74,7 @@ const rideCode = ref('');
 const loadingProducts = ref<boolean>(false);
 const showAvailableProducts = ref<boolean>(false);
 const availableProducts = ref<any>([]);
-const selectedProduct = ref<any>();
+const selectedProduct = ref<any>({});
 const travelDate = ref<any>();
 const availableUsers = ref<any>([]);
 const selectedUser = ref<any>({
@@ -92,13 +95,44 @@ const contractBranchAreas = ref<any>();
 const contractBranchesList = ref<any>();
 const loadingAreas = ref<boolean>(false);
 const enablePayment = ref<boolean>(false);
-
 const showWaypointsForm = ref<boolean>(false);
+const loadingGenerateRide = ref<boolean>(false);
 const routeWaypoints = ref<any>([
   {
     address: '',
   },
 ]);
+const originCoords = ref<any>({
+  lat: '',
+  lng: '',
+});
+const originLocationDetails = ref<any>({
+  address: '',
+  url: '',
+});
+const waypointCoords = ref<any>([]);
+const waypointLocationDetails = ref<any>([]);
+const destinationCoords = ref<any>({
+  lat: '',
+  lng: '',
+});
+const destinationLocationDetails = ref<any>({
+  address: '',
+  url: '',
+});
+
+const routePolyLine = ref();
+const loadingRoute = ref<boolean>(false);
+const center = ref<any>({ lat: -23.55012592233407, lng: -46.63425371400603 });
+const ridePath = ref<any>({
+  path: [],
+  geodesic: true,
+  strokeColor: '#000000',
+  strokeOpacity: 1.0,
+  strokeWeight: 5,
+});
+const markers = ref<any>([]);
+const showRenderedMap = ref<boolean>(false);
 
 const addWaypointRow = () => {
   routeWaypoints.value.push({
@@ -109,6 +143,7 @@ const addWaypointRow = () => {
 const removeWaypointRow = (index: number) => {
   routeWaypoints.value.splice(index, 1);
   waypointLocationDetails.value.splice(index, 1);
+  waypointCoords.value.splice(index, 1);
 };
 
 // // Set the waypoints of the ride
@@ -123,45 +158,10 @@ const setWaypoints = (place: any, index: number) => {
       lng: waypointCoords.value.lng,
     },
   };
+  waypointCoords.value.push(waypoint.coords);
   waypointLocationDetails.value.push(waypoint);
   routeWaypoints.value[index].address = place.formatted_address;
 };
-
-const originCoords = ref<any>({
-  lat: '',
-  lng: '',
-});
-const originLocationDetails = ref<any>({
-  address: '',
-  url: '',
-});
-const waypointCoords = ref<any>({
-  lat: '',
-  lng: '',
-});
-
-const waypointLocationDetails = ref<any>([]);
-const destinationCoords = ref<any>({
-  lat: '',
-  lng: '',
-});
-const destinationLocationDetails = ref<any>({
-  address: '',
-  url: '',
-});
-
-const routePolyLine = ref();
-const loadingRoute = ref<boolean>(false);
-const center = ref<any>({ lat: -23.0397942, lng: -47.0004508 });
-const ridePath = ref<any>({
-  path: [],
-  geodesic: true,
-  strokeColor: '#000000',
-  strokeOpacity: 1.0,
-  strokeWeight: 5,
-});
-const markers = ref<any>([]);
-const showRenderedMap = ref<boolean>(false);
 
 onBeforeMount(async () => {
   await getUsersAccountsAction();
@@ -333,6 +333,13 @@ const decodePolyline = (polyline: string) => {
     lng: coords[parseCenterCoord].lng,
   };
 
+  const stopsMarkers = waypointCoords.value.map((waypoint: any) => {
+    return {
+      ...waypoint,
+      icon: 'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent(customIconStop),
+    };
+  });
+
   // Set the markers on the map
   markers.value = [
     {
@@ -340,6 +347,7 @@ const decodePolyline = (polyline: string) => {
       lng: coords[0].lng,
       icon: 'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent(customIconStart),
     },
+    ...stopsMarkers,
     {
       lat: coords[coords.length - 1].lat,
       lng: coords[coords.length - 1].lng,
@@ -355,7 +363,17 @@ const calculatedTravel = ref({
   arrivalTime: '',
 });
 
-const getRideCalculation = async () => {
+const handleRideCalculation = async () => {
+  const validateForm = await form.validate();
+  if (!validateForm.valid) {
+    const targetElement = document.getElementById('ride-info');
+    targetElement?.scrollIntoView({
+      behavior: 'smooth',
+      block: 'start',
+    });
+    return;
+  }
+
   const extractedWaypointsAddress = waypointLocationDetails.value.map((waypoint: any) => {
     return {
       ['address']: waypoint['address'],
@@ -453,12 +471,12 @@ rideCode.value = await newRideCode.value;
 
 const dynamicSchema = computed(() => {
   const baseSchema = z.object({
-    origin: z.string(),
-    destination: z.string(),
     departTime: z.string(),
     departDate: z
       .string()
       .refine((v) => v, { message: 'A data do atendimento é obrigatória!' }),
+    origin: z.string(),
+    destination: z.string(),
     observations: z.string().optional(),
   });
 
@@ -583,6 +601,7 @@ const buildStaticMapUrl = () => {
 
   return `https://maps.googleapis.com/maps/api/staticmap?maptype=${maptype}&size=${size}${markers.join('')}${path}&key=${key}`;
 };
+
 const onSubmit = form.handleSubmit(async (values) => {
   const routePreviewUrl = buildStaticMapUrl();
 
@@ -649,7 +668,9 @@ const onSubmit = form.handleSubmit(async (values) => {
       dispatchDate: new Date().toLocaleDateString('pt-BR').padStart(10, '0'),
     },
   };
+
   try {
+    loadingGenerateRide.value = true;
     await createRideAction(ridePayload);
   } catch (error) {
     toast({
@@ -658,6 +679,7 @@ const onSubmit = form.handleSubmit(async (values) => {
       variant: 'destructive',
     });
   } finally {
+    loadingGenerateRide.value = false;
     toast({
       title: 'Tudo pronto!',
       class: 'bg-green-600 border-0 text-white text-2xl',
@@ -791,10 +813,9 @@ const onSubmit = form.handleSubmit(async (values) => {
             </CardContent>
           </Card>
         </section>
-
         <!-- FORM -->
         <section id="ride-info">
-          <Card v-if="selectedProduct" class="mb-10 bg-zinc-200">
+          <Card v-if="selectedProduct.name" class="mb-10 bg-zinc-200">
             <CardContent>
               <CardTitle class="mt-6 mb-10 flex items-center gap-3 font-bold">
                 <span
@@ -955,18 +976,18 @@ const onSubmit = form.handleSubmit(async (values) => {
                   </div>
                   <Button
                     type="button"
-                    @click.prevent="getRideCalculation"
+                    @click.prevent="handleRideCalculation"
                     class="mb-4 p-6 col-span-2 uppercase"
                   >
                     <LoaderCircle v-if="loadingRoute" class="animate-spin" />
-                    Calcular Rota
+                    Calcular Atendimento
                   </Button>
                 </div>
               </div>
             </CardContent>
           </Card>
         </section>
-
+        <!-- MAP AND RIDE DETAILS -->
         <section id="ride-map" class="mb-10">
           <Card v-if="showRenderedMap" class="bg-zinc-200">
             <CardContent>
@@ -988,7 +1009,29 @@ const onSubmit = form.handleSubmit(async (values) => {
               <div v-else class="md:grid md:grid-cols-2 gap-10">
                 <div class="space-y-6 flex flex-col items-start">
                   <h3 class="text-lg font-bold">Preview da Rota</h3>
-                  <NuxtImg
+                  <GoogleMap
+                    :api-key="API_KEY"
+                    style="width: 100%; height: 700px"
+                    :center="center"
+                    :zoom="12"
+                    :zoom-control="true"
+                  >
+                    <Marker
+                      v-for="marker in markers"
+                      ref="markerRef"
+                      :key="marker.id"
+                      :options="{
+                        position: {
+                          lat: marker.lat,
+                          lng: marker.lng,
+                        },
+                        icon: marker.icon,
+                      }"
+                      class="w-10 h-10"
+                    />
+                    <Polyline :options="ridePath" />
+                  </GoogleMap>
+                  <!-- <NuxtImg
                     :src="buildStaticMapUrl()"
                     alt="Mapa da rota"
                     width="800"
@@ -1004,7 +1047,7 @@ const onSubmit = form.handleSubmit(async (values) => {
                       class="animate-spin self-center justify-self-center"
                     />
                     <img v-else :src="src" v-bind="imgAttrs" />
-                  </NuxtImg>
+                  </NuxtImg> -->
                 </div>
                 <div class="w-full space-y-6">
                   <h3 class="text-lg font-bold">Resumo</h3>
@@ -1057,10 +1100,13 @@ const onSubmit = form.handleSubmit(async (values) => {
                       </div>
                     </div>
                     <div class="border-t border-zinc-900">
-                      <small class="font-bold">Total</small>
+                      <small class="font-bold">Total estimado*</small>
                       <p class="font-bold text-2xl">
                         {{ currencyFormat(calculatedTravel?.travelPrice) }}
                       </p>
+                      <small class="text-muted-foreground text-xs">
+                        * O valor total será calculado ao término do atendimento
+                      </small>
                     </div>
                   </div>
                   <div>
@@ -1124,22 +1170,40 @@ const onSubmit = form.handleSubmit(async (values) => {
                       </li>
                     </ul>
                   </div>
-                  <Button
-                    v-if="paymentMethod && calculatedTravel.travelPrice"
-                    type="button"
-                    class="py-8 w-full uppercase"
-                    @click.prevent="showPaymentSection"
-                  >
-                    {{
-                      paymentMethod === 'corporative' && form.values.area
-                        ? 'Gerar atendimento faturado'
-                        : 'Gerar link pagamento'
-                    }}
-                  </Button>
                 </div>
               </div>
             </CardContent>
           </Card>
+          <div
+            v-if="paymentMethod && calculatedTravel.travelPrice"
+            class="my-6 w-full flex gap-6"
+          >
+            <Button
+              type="button"
+              class="p-6 px-10 uppercase"
+              @click.prevent="showPaymentSection"
+            >
+              <LoaderCircle v-if="loadingGenerateRide" class="animate-spin" />
+
+              {{
+                paymentMethod === 'corporative' && form.values.area
+                  ? 'Gerar atendimento corporativo'
+                  : 'Gerar atendimento'
+              }}
+            </Button>
+            <Button
+              type="button"
+              variant="secondary"
+              class="p-6 uppercase"
+              @click.prevent="
+                () => {
+                  navigateTo('/admin/rides/open');
+                }
+              "
+            >
+              Cancelar
+            </Button>
+          </div>
         </section>
       </form>
     </section>
