@@ -6,14 +6,19 @@ import 'add-to-calendar-button';
 import {
   CalendarDays,
   LoaderCircle,
-  Octagon,
-  OctagonX,
+  Map,
   SquareCheck,
   SquareDot,
   SquareSquare,
   X,
 } from 'lucide-vue-next';
-import { currencyFormat, sanitizeRideDate } from '~/lib/utils';
+import { GoogleMap, Marker, Polyline } from 'vue3-google-map';
+import { currencyFormat, polyLineCodec, sanitizeRideDate } from '~/lib/utils';
+
+const API_KEY = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
+const customIconStart = `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="#FFFFFF" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-square-dot-icon lucide-square-dot"><rect width="18" height="18" x="3" y="3" rx="2"/><circle cx="12" cy="12" r="1"/></svg>`;
+const customIconStop = `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="#FFFFFF" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-square-pause-icon lucide-square-pause"><rect width="18" height="18" x="3" y="3" rx="2"/><line x1="10" x2="10" y1="15" y2="9"/><line x1="14" x2="14" y1="15" y2="9"/></svg>`;
+const customIconEnd = `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="#FFFFFF" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-square-check-icon lucide-square-check"><rect width="18" height="18" x="3" y="3" rx="2"/><path d="m9 12 2 2 4-4"/></svg>`;
 
 definePageMeta({
   layout: 'admin',
@@ -31,6 +36,91 @@ const { getRideByIdAction, updateRideAction } = ridesStore;
 const { ride, loadingData } = storeToRefs(ridesStore);
 
 const showCancelationModal = ref<boolean>(false);
+const routePolyLine = ref();
+const markers = ref<any>([]);
+const center = ref<any>({ lat: 0, lng: 0 });
+const initialZoom = ref(1);
+const mapRef = ref<any>(null);
+const ridePath = ref<any>({
+  path: [],
+  geodesic: true,
+  strokeColor: '#000000',
+  strokeOpacity: 1.0,
+  strokeWeight: 5,
+});
+
+const origin = ride?.value.travel.origin;
+const destination = ride?.value.travel.destination;
+
+watch(
+  () => mapRef.value?.ready,
+  (ready) => {
+    if (ready) {
+      const map = mapRef.value.map;
+      //@ts-ignore
+      const bounds = new google.maps.LatLngBounds();
+      //@ts-ignore
+      bounds.extend(new google.maps.LatLng(origin.lat, origin.lng));
+      //@ts-ignore
+      bounds.extend(new google.maps.LatLng(destination.lat, destination.lng));
+
+      map.fitBounds(bounds);
+    }
+  },
+);
+
+// Google Maps Area
+const decodePolyline = (polyline: string) => {
+  const decode: any = polyLineCodec(polyline);
+  const coords = decode.map((path: any) => ({
+    lat: path[0],
+    lng: path[1],
+  }));
+
+  // Set the coords to build the path
+  ridePath.value = {
+    ...ridePath.value,
+    path: [...coords],
+  };
+
+  // Find the center of ride path to center the map
+  const centerCoord = coords.length > 2 ? coords.length / 2 : coords.length;
+  const parseCenterCoord = parseInt(centerCoord, 10) + 10; // parseInt if centerCoord is not divisivle by 2
+  center.value = {
+    lat: coords[parseCenterCoord].lat,
+    lng: coords[parseCenterCoord].lng,
+  };
+
+  const stopsMarkers = ride?.value.travel.stops.map((stop: any, index: number) => {
+    return {
+      ...stop.coords,
+      icon: 'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent(customIconStop),
+      title: `Parada ${index + 1} de ${ride?.value.user.name}`,
+    };
+  });
+
+  // Set the markers on the map
+  markers.value = [
+    {
+      lat: coords[0].lat,
+      lng: coords[0].lng,
+      icon: 'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent(customIconStart),
+      title: `Embarque de ${ride?.value.user.name}`,
+    },
+    ...stopsMarkers,
+    {
+      lat: coords[coords.length - 1].lat,
+      lng: coords[coords.length - 1].lng,
+      icon: 'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent(customIconEnd),
+      title: `Desembarque de ${ride?.value.user.name}`,
+    },
+  ];
+};
+
+onMounted(() => {
+  decodePolyline(ride?.value.travel.polyLineCoords);
+  routePolyLine.value = ride?.value.travel.polyLineCoords;
+});
 
 const toggleCancelationModal = () => {
   showCancelationModal.value = !showCancelationModal.value;
@@ -107,7 +197,7 @@ const travelEndTimeCalc = (time1: any, time2: any) => {
           variant="destructive"
           class="p-6"
         >
-          <OctagonX />
+          <X />
           Cancelar Atendimento
         </Button>
       </div>
@@ -140,14 +230,37 @@ const travelEndTimeCalc = (time1: any, time2: any) => {
     <section v-else class="mt-6">
       <Card class="p-6 bg-zinc-200">
         <div>
+          <div class="mb-6 flex items-center gap-2">
+            <Map />
+            <h3 class="text-sm font-bold">Dados do atendimento</h3>
+            <RideStatusFlag :ride-status="ride.status" />
+          </div>
           <div class="mb-6 md:grid md:grid-cols-5 md:gap-6">
-            <div class="p-6 bg-white rounded-md space-y-2">
-              <p class="text-sm text-zinc-600">Código</p>
-              <p class="text-xl font-bold">{{ ride?.code }}</p>
-            </div>
-            <div class="p-6 bg-white rounded-md space-y-2">
-              <p class="text-sm text-zinc-600">Status</p>
-              <RideStatusFlag :ride-status="ride.status" />
+            <div class="p-4 col-span-3 row-span-4 bg-white rounded-md">
+              <GoogleMap
+                ref="mapRef"
+                :api-key="API_KEY"
+                style="width: 100%; height: 100%"
+                :center="center"
+                :zoom="initialZoom"
+                :zoom-control="true"
+              >
+                <Marker
+                  v-for="marker in markers"
+                  ref="markerRef"
+                  :key="marker.id"
+                  :options="{
+                    title: marker.title,
+                    position: {
+                      lat: marker.lat,
+                      lng: marker.lng,
+                    },
+                    icon: marker.icon,
+                  }"
+                  class="w-10 h-10"
+                />
+                <Polyline :options="ridePath" />
+              </GoogleMap>
             </div>
             <div class="p-6 flex flex-col items-start bg-white rounded-md space-y-2">
               <p class="text-sm text-zinc-600">Data</p>
@@ -172,43 +285,12 @@ const travelEndTimeCalc = (time1: any, time2: any) => {
               </div>
             </div>
             <div class="p-6 bg-white rounded-md space-y-2">
-              <p class="text-sm text-zinc-600">Hora Partida</p>
+              <p class="text-sm text-zinc-600">Hora embarque</p>
               <p class="text-xl font-bold">{{ ride?.travel.departTime }}HS</p>
             </div>
             <div class="p-6 bg-white rounded-md space-y-2">
               <p class="text-sm text-zinc-600">Passageiros</p>
               <p class="text-xl font-bold">{{ ride?.travel.passengers }}</p>
-            </div>
-            <div class="p-6 bg-white rounded-md col-span-5 space-y-2">
-              <p class="text-sm text-zinc-600">Origem</p>
-              <p class="text-xl font-bold flex items-center gap-2">
-                <SquareDot />
-                {{ ride?.travel.originAddress }}
-              </p>
-            </div>
-            <div class="p-6 bg-white rounded-md col-span-5 space-y-2">
-              <p class="text-sm text-zinc-600">Paradas</p>
-              <div
-                v-if="ride?.travel.stops.length"
-                v-for="(stop, index) in ride?.travel.stops"
-                class="mt-3"
-              >
-                <p class="font-normal">Parada {{ index + 1 }}</p>
-                <p class="text-xl font-bold flex items-center gap-2">
-                  <SquareSquare />
-                  {{ stop.address }}
-                </p>
-              </div>
-              <div v-else class="mt-3">
-                <p class="font-bold">Não há paradas neste percurso.</p>
-              </div>
-            </div>
-            <div class="p-6 bg-white rounded-md col-span-5 space-y-2">
-              <p class="text-sm text-zinc-600">Destino</p>
-              <p class="text-xl font-bold flex items-center gap-2">
-                <SquareCheck />
-                {{ ride?.travel.destinationAddress }}
-              </p>
             </div>
             <div class="p-6 bg-white rounded-md space-y-2">
               <p class="text-sm text-zinc-600">Distância</p>
@@ -250,6 +332,37 @@ const travelEndTimeCalc = (time1: any, time2: any) => {
               </p>
               <p v-if="ride?.billing.installments">
                 Parcelado {{ ride.billing.installments }}x
+              </p>
+            </div>
+            <div class="p-6 bg-white rounded-md col-span-5 space-y-2">
+              <p class="text-sm text-zinc-600">Origem</p>
+              <p class="text-xl font-bold flex items-center gap-2">
+                <SquareDot />
+                {{ ride?.travel.originAddress }}
+              </p>
+            </div>
+            <div class="p-6 bg-white rounded-md col-span-5 space-y-2">
+              <p class="text-sm text-zinc-600">Paradas</p>
+              <div
+                v-if="ride?.travel.stops.length"
+                v-for="(stop, index) in ride?.travel.stops"
+                class="mt-3"
+              >
+                <p class="font-normal">Parada {{ index + 1 }}</p>
+                <p class="text-xl font-bold flex items-center gap-2">
+                  <SquareSquare />
+                  {{ stop.address }}
+                </p>
+              </div>
+              <div v-else class="mt-3">
+                <p class="font-bold">Não há paradas neste percurso.</p>
+              </div>
+            </div>
+            <div class="p-6 bg-white rounded-md col-span-5 space-y-2">
+              <p class="text-sm text-zinc-600">Destino</p>
+              <p class="text-xl font-bold flex items-center gap-2">
+                <SquareCheck />
+                {{ ride?.travel.destinationAddress }}
               </p>
             </div>
           </div>

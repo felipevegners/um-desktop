@@ -46,7 +46,7 @@ const showUrlButton = computed(() => {
       :class="`py-1 px-3 flex items-center justify-center rounded-md text-white text-[10px] uppercase w-fit  
       ${
         paymentStatus === 'pending'
-          ? 'bg-blue-600'
+          ? 'bg-amber-600'
           : paymentStatus === 'paid' || paymentStatus === 'authorized'
             ? 'bg-green-600'
             : paymentStatus === 'error' ||
@@ -56,7 +56,7 @@ const showUrlButton = computed(() => {
               ? 'bg-red-600'
               : paymentStatus === 'invoice'
                 ? 'bg-zinc-900'
-                : 'bg-amber-600'
+                : 'bg-blue-600'
       }`"
     >
       {{ renderPaymentStatus }}
