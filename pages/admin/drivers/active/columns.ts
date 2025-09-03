@@ -52,6 +52,21 @@ export const columns = [
       return h('div', { class: 'text-left font-medium' }, row.getValue('document'));
     },
   }),
+  columnHelper.accessor('scheduleOpen', {
+    header: () => h('div', { class: 'text-left' }, 'Ativo Plataforma'),
+    cell: ({ row }) => {
+      const status = row.getValue('scheduleOpen');
+      return h(
+        'div',
+        {
+          class: `px-2 flex items-center justify-center h-6 rounded-full text-white text-xs w-fit ${
+            status ? 'bg-green-600' : 'bg-red-600'
+          }`,
+        },
+        status ? 'Online' : 'Offline',
+      );
+    },
+  }),
   columnHelper.accessor('status', {
     header: () => h('div', { class: 'text-left' }, 'Cadastro'),
     cell: ({ row }) => {

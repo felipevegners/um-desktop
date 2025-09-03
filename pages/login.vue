@@ -12,6 +12,10 @@ definePageMeta({
   },
 });
 
+useHead({
+  title: 'Acesse a plataforma | Urban Mobi',
+});
+
 const route = useRoute();
 
 const formSchema = toTypedSchema(
@@ -50,11 +54,13 @@ const onSubmit = form.handleSubmit(async (values) => {
   <div
     class="dark w-full h-screen flex flex-col justify-center items-center bg-black bg-[url('/images/background.webp')] bg-cover bg-center bg-no-repeat"
   >
-    <img class="mb-12 h-10" src="/images/logo_horizontal_white.svg" alt="" />
+    <img class="mb-12 h-14" src="/images/logo_horizontal_white.svg" alt="" />
     <Card class="p-8 w-full max-w-sm md:max-w-md border-none bg-black shadow-lg">
       <form @submit="onSubmit">
         <div class="space-y-8">
-          <h1 class="font-bold text-2xl text-um-primary text-center">
+          <h1
+            class="pb-4 text-lg text-muted-foreground border-b border-muted-foreground/30"
+          >
             Acessar Plataforma
           </h1>
           <div class="flex flex-col gap-6">
@@ -67,6 +73,7 @@ const onSubmit = form.handleSubmit(async (values) => {
                     placeholder="Insira seu e-mail"
                     v-bind="componentField"
                     :disabled="isLoading"
+                    class="bg-zinc-800"
                   />
                 </FormControl>
               </FormItem>
@@ -81,6 +88,7 @@ const onSubmit = form.handleSubmit(async (values) => {
                       placeholder="Insira a senha"
                       v-bind="componentField"
                       :disabled="isLoading"
+                      class="bg-zinc-800"
                     />
                     <EyeOff
                       class="h-5 w-5 absolute top-[10px] right-3 cursor-pointer hover:text-zinc-700"
@@ -94,6 +102,7 @@ const onSubmit = form.handleSubmit(async (values) => {
                       placeholder="Insira a senha"
                       v-bind="componentField"
                       :disabled="isLoading"
+                      class="bg-zinc-800"
                     />
                     <Eye
                       class="h-5 w-5 absolute top-[10px] right-3 cursor-pointer hover:text-zinc-700"

@@ -22,11 +22,11 @@ const menuData = generateMenu(user.role);
           <SidebarMenuItem>
             <div class="py-2 flex items-start justify-center">
               <img
-                class="mt-8 mb-10 h-8 group-data-[collapsible=icon]:hidden"
+                class="mt-8 mb-10 h-12 group-data-[collapsible=icon]:hidden"
                 src="/images/logo_horizontal_white.svg"
               />
               <img
-                class="hidden text-um-primary group-data-[collapsible=icon]:block"
+                class="hidden mt-8 h-10 text-um-primary group-data-[collapsible=icon]:block transition-all"
                 src="/images/um_symbol_negative.svg"
               />
             </div>

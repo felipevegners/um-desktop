@@ -22,7 +22,7 @@ definePageMeta({
 });
 
 useHead({
-  title: 'Backoffice - Contas de Usuário | Urban Mobi',
+  title: 'Backoffice > Contas de Usuário | Urban Mobi',
 });
 
 onBeforeMount(async () => {

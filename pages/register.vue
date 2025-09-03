@@ -15,10 +15,6 @@ definePageMeta({
   },
 });
 
-useHead({
-  title: 'Nova Conta de Usuário | Urban Mobi',
-});
-
 const { toast } = useToast();
 
 const accountStore = useAccountStore();
@@ -36,6 +32,10 @@ const revealPassword = () => {
 const isLoading = ref<boolean>(false);
 const userType = ref('');
 userType.value = route?.query?.type as string;
+
+useHead({
+  title: `${userType.value === 'driver' ? 'Seja um motorista parceiro' : 'Nova conta de usuário'} | Urban Mobi`,
+});
 
 const registerType = {
   personal: 'platform-user',
@@ -192,7 +192,7 @@ const onSubmit = form.handleSubmit(async (values) => {
       <div
         class="p-10 lg:p-20 bg-black flex flex-col items-center lg:items-end justify-center bg-[url('/images/background.webp')] bg-cover bg-center bg-no-repeat"
       >
-        <img class="h-8 lg:h-10" src="/images/logo_horizontal_white.svg" alt="" />
+        <img class="h-8 lg:h-14" src="/images/logo_horizontal_white.svg" alt="" />
       </div>
       <div class="p-10 lg:p-20 flex items-center max-w-xl mx-auto">
         <form
@@ -205,9 +205,17 @@ const onSubmit = form.handleSubmit(async (values) => {
             <div class="space-y-4">
               <UserPlus class="text-um-primary" :size="32" />
               <h2 class="text-2xl md:text-3xl font-bold text-um-primary tracking-tight">
-                Criar conta UM
+                {{
+                  userType === 'driver'
+                    ? 'Seja um motorista parceiro UM'
+                    : 'Crie sua conta UM'
+                }}
               </h2>
-              <p class="text-muted-foreground text-sm">
+              <p v-if="userType === 'driver'" class="text-muted-foreground text-sm">
+                Trabalhe com uma plataforma que valoriza seus parceiros, oferece
+                segurança, atendimento diferenciado e suporte total online e offline.
+              </p>
+              <p v-else class="text-muted-foreground text-sm">
                 Para realizarmos seu atendimento, insira seus dados abaixo. Você receberá
                 um e-mail de confirmação. Leva apenas 2 minutos.
               </p>

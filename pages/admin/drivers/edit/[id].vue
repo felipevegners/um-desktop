@@ -87,15 +87,15 @@ const driversForm = useForm({
   validationSchema: driverSchema,
   initialValues: {
     ...driver?.value,
-    zipcode: driver?.value.address?.zipcode || '',
-    streetName: driver?.value.address?.streetName || '',
-    streetNumber: driver?.value.address?.streetNumber || '',
-    complement: driver?.value.address?.complement || '',
-    neighborhood: driver?.value.address?.neighborhood || '',
-    city: driver?.value.address?.city || '',
-    state: driver?.value.address?.state || '',
-    scheduleOpen: driver?.value.scheduleOpen || '',
-    outsideActuation: driver?.value.outsideActuation || '',
+    zipcode: driver?.value.address?.zipcode,
+    streetName: driver?.value.address?.streetName,
+    streetNumber: driver?.value.address?.streetNumber,
+    complement: driver?.value.address?.complement,
+    neighborhood: driver?.value.address?.neighborhood,
+    city: driver?.value.address?.city,
+    state: driver?.value.address?.state,
+    scheduleOpen: driver?.value.scheduleOpen,
+    outsideActuation: driver?.value.outsideActuation,
     status: driver?.value.status,
   },
 });
@@ -657,7 +657,7 @@ const onSubmit = driversForm.handleSubmit(async (values) => {
                           <Info class="w-4 h-4 text-zinc-400" />
                         </TooltipTrigger>
                         <TooltipContent class="bg-zinc-700 text-white">
-                          <p>Dejesa receber novos agendamentos?</p>
+                          <p>Deseja receber novos agendamentos da plataforma?</p>
                         </TooltipContent>
                       </Tooltip>
                     </TooltipProvider>
@@ -693,7 +693,7 @@ const onSubmit = driversForm.handleSubmit(async (values) => {
                           <Info class="w-4 h-4 text-zinc-400" />
                         </TooltipTrigger>
                         <TooltipContent class="bg-zinc-700 text-white">
-                          <p>Dejesa atuar fora de sua área de atendimento?</p>
+                          <p>Deseja atuar fora de sua área de atendimento?</p>
                         </TooltipContent>
                       </Tooltip>
                     </TooltipProvider>

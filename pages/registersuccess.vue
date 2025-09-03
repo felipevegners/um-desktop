@@ -13,7 +13,7 @@ definePageMeta({
     <div
       class="p-10 lg:p-20 bg-black flex flex-col items-center lg:items-end justify-center bg-[url('/images/background.webp')] bg-cover bg-center bg-no-repeat"
     >
-      <img class="h-8 lg:h-10" src="/images/logo_horizontal_white.svg" alt="" />
+      <img class="h-8 lg:h-14" src="/images/logo_horizontal_white.svg" alt="" />
     </div>
     <div>
       <div
