@@ -21,6 +21,7 @@ export default defineEventHandler(async (event) => {
     actuationArea,
     scheduleOpen,
     outsideActuation,
+    location,
     enabled,
   } = payload;
 
@@ -45,6 +46,7 @@ export default defineEventHandler(async (event) => {
       actuationArea,
       scheduleOpen,
       outsideActuation,
+      location,
       enabled,
     },
   });

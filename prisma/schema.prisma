@@ -118,6 +118,7 @@ model Drivers {
   enabled           Boolean
   outsideActuation  Boolean?
   scheduleOpen      Boolean?
+  location          Json?
   createdAt         DateTime? @default(now())
   updatedAt         DateTime? @updatedAt()
 }
