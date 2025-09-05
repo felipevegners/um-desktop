@@ -2,11 +2,11 @@
 import DataTable from '@/components/shared/DataTable.vue';
 import TableActions from '@/components/shared/TableActions.vue';
 import { Button } from '@/components/ui/button';
+import { useDriverStore } from '@/stores/drivers.store';
 import { createColumnHelper } from '@tanstack/vue-table';
-import { Car, LoaderCircle, Plus } from 'lucide-vue-next';
+import { Car, LoaderCircle, Map, Plus } from 'lucide-vue-next';
 import { storeToRefs } from 'pinia';
 import { onMounted, ref } from 'vue';
-import { useDriverStore } from '~/stores/drivers.store';
 
 import { columns } from './columns';
 
@@ -15,6 +15,7 @@ const columnHelper = createColumnHelper<any>();
 const driverStore = useDriverStore();
 const { loadingData, drivers } = storeToRefs(driverStore);
 const { getDriversAction, deleteDriverAction } = driverStore;
+
 definePageMeta({
   layout: 'admin',
 });
@@ -22,6 +23,8 @@ definePageMeta({
 useHead({
   title: 'Backoffice - Motoristas ativos | Urban Mobi',
 });
+
+const showDriversLocationsMap = ref<boolean>(false);
 
 onMounted(async () => {
   await getDriversAction();
@@ -75,15 +78,27 @@ const finalColumns = [
 <template>
   <main class="p-6">
     <section class="mb-6 flex items-center justify-between gap-6">
-      <h1 class="flex items-center gap-2 font-bold text-2xl">
-        <Car />
-        Motoristas Ativos
-      </h1>
+      <div class="flex items-center gap-4">
+        <h1 class="flex items-center gap-2 font-bold text-2xl">
+          <Car />
+          Motoristas Ativos
+        </h1>
+        <Button
+          type="button"
+          @click="() => (showDriversLocationsMap = !showDriversLocationsMap)"
+        >
+          <Map />
+          {{ !showDriversLocationsMap ? 'Mostrar no Mapa' : 'Fechar Mapa' }}
+        </Button>
+      </div>
       <div>
         <Button @click="navigateTo('/admin/drivers/new')">
           <Plus class="w-4 h-4" /> Novo Motorista
         </Button>
       </div>
+    </section>
+    <section v-if="showDriversLocationsMap" class="my-10">
+      <SharedDriversLocationMap />
     </section>
     <section
       v-if="loadingData"
