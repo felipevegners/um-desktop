@@ -53,7 +53,7 @@ export const columns = [
     },
   }),
   columnHelper.accessor('scheduleOpen', {
-    header: () => h('div', { class: 'text-left' }, 'Ativo Plataforma'),
+    header: () => h('div', { class: 'text-left' }, 'Status'),
     cell: ({ row }) => {
       const status = row.getValue('scheduleOpen');
       return h(
@@ -75,7 +75,7 @@ export const columns = [
         'div',
         {
           class: `px-2 flex items-center justify-center h-6 rounded-full text-white text-xs w-fit ${
-            status === 'validated' ? 'bg-green-600' : 'bg-amber-500'
+            status === 'validated' ? 'bg-blue-600' : 'bg-amber-500'
           }`,
         },
         status === 'validated' ? 'Validado' : 'Pendente',

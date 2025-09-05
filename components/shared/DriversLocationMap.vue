@@ -140,14 +140,14 @@ const custom = [
     elementType: 'geometry',
     stylers: [
       {
-        color: '#93c5fd',
+        color: '#bae6fd',
       },
     ],
   },
 ];
 </script>
 <template>
-  <Card class="p-2 bg-zinc-200 border-blue-300">
+  <Card class="p-2 bg-zinc-200 bg-">
     <GoogleMap
       ref="mapRef"
       :api-key="API_KEY"

@@ -28,6 +28,54 @@ export const backofficeMenu = {
   },
   navMain: [
     {
+      title: 'Atendimentos',
+      url: '',
+      icon: CalendarDays,
+      isActive: route.path.includes('rides'),
+      items: [
+        {
+          title: 'Abertos',
+          url: '/admin/rides/open',
+        },
+        {
+          title: 'Finalizados',
+          url: '/admin/rides/completed',
+        },
+        {
+          title: 'Cancelados',
+          url: '/admin/rides/cancelled',
+        },
+        {
+          title: '+ Novo Atendimento',
+          url: '/admin/rides/new',
+        },
+      ],
+    },
+    {
+      title: 'Motoristas',
+      url: '/admin/drivers/active',
+      icon: Car,
+      isActive: route.path.includes('drivers'),
+      items: [
+        {
+          title: 'Motoristas Ativos',
+          url: '/admin/drivers/active',
+        },
+        {
+          title: 'Motoristas Inativos',
+          url: '/admin/drivers/inactive',
+        },
+        {
+          title: 'Novo Motorista',
+          url: '/admin/drivers/new',
+        },
+        {
+          title: 'Parceiros',
+          url: '#',
+        },
+      ],
+    },
+    {
       title: 'Contratos',
       url: '/admin/contracts/active',
       icon: Handshake,
@@ -84,54 +132,6 @@ export const backofficeMenu = {
         {
           title: 'Novo Usuário',
           url: '/admin/accounts/new',
-        },
-      ],
-    },
-    {
-      title: 'Motoristas',
-      url: '/admin/drivers/active',
-      icon: Car,
-      isActive: route.path.includes('drivers'),
-      items: [
-        {
-          title: 'Motoristas Ativos',
-          url: '/admin/drivers/active',
-        },
-        {
-          title: 'Motoristas Inativos',
-          url: '/admin/drivers/inactive',
-        },
-        {
-          title: 'Novo Motorista',
-          url: '/admin/drivers/new',
-        },
-        {
-          title: 'Parceiros',
-          url: '#',
-        },
-      ],
-    },
-    {
-      title: 'Atendimentos',
-      url: '',
-      icon: CalendarDays,
-      isActive: route.path.includes('rides'),
-      items: [
-        {
-          title: 'Abertos',
-          url: '/admin/rides/open',
-        },
-        {
-          title: 'Finalizados',
-          url: '/admin/rides/completed',
-        },
-        {
-          title: 'Cancelados',
-          url: '/admin/rides/cancelled',
-        },
-        {
-          title: '+ Novo Atendimento',
-          url: '/admin/rides/new',
         },
       ],
     },
