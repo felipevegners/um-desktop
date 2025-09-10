@@ -14,8 +14,7 @@ import {
   SquareDot,
   SquareSquare,
 } from 'lucide-vue-next';
-import { collapseTextChangeRangesAcrossMultipleVersions } from 'typescript';
-import { currencyFormat, dateFormat, sanitizeRideDate } from '~/lib/utils';
+import { dateFormat, sanitizeRideDate } from '~/lib/utils';
 
 definePageMeta({
   layout: 'admin',
@@ -159,7 +158,12 @@ const sanitizeDriverCars = computed(() => {
 });
 
 const setSelectedCar = (value: any) => {
-  selectedCar.value = value;
+  const sanitizeCarString = value.split('-');
+  selectedCar.value = {
+    model: sanitizeCarString[0],
+    color: sanitizeCarString[1],
+    plate: sanitizeCarString[2] + '-' + sanitizeCarString[3],
+  };
   showConfirmCar.value = true;
 };
 
@@ -172,6 +176,7 @@ const handleSetDriverCar = async () => {
       hasCarSelected: true,
     },
   };
+
   try {
     loadingSetCar.value = true;
     await updateRideAction(payload);
@@ -182,7 +187,7 @@ const handleSetDriverCar = async () => {
     });
     setTimeout(() => {
       loadingSetCar.value = false;
-      navigateTo('/driver/rides/open');
+      // navigateTo('/driver/rides/open');
     }, 1000);
   } catch (error) {
     toast({
@@ -240,7 +245,7 @@ const handleSetDriverCar = async () => {
             </div>
             <div class="p-6 bg-white rounded-md space-y-4">
               <p class="text-sm text-zinc-600">Status</p>
-              <RideStatusFlag :ride-status="ride.status" class="w-full" />
+              <RideStatusFlag :ride-status="ride.status" class="w-full h-10" />
               <small v-if="ride.status === 'completed'">
                 Em: {{ dateFormat(ride.updatedAt) }}
               </small>
@@ -329,7 +334,9 @@ const handleSetDriverCar = async () => {
                   <div>
                     <Car :size="32" />
                     <p class="text-xl font-bold">
-                      {{ ride?.driver.selectedCar }}
+                      {{ ride?.driver.selectedCar.model }} -
+                      {{ ride?.driver.selectedCar.color }} -
+                      {{ ride?.driver.selectedCar.plate }}
                     </p>
                   </div>
                   <Button

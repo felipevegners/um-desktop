@@ -29,7 +29,9 @@ const driverOpenList = ref<any>([]);
 onMounted(async () => {
   //@ts-ignore
   await getDriverRidesAction(data?.value?.user?.id);
-  driverOpenList.value = rides?.value.filter((ride: any) => ride.status === 'accepted');
+  driverOpenList.value = rides?.value.filter(
+    (ride: any) => ride.status === 'accepted' || ride.status === 'pending',
+  );
 });
 
 const previewRide = (rideId: string) => {

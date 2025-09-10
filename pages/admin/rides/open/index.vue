@@ -135,7 +135,7 @@ const finalColumns = [
       return h(
         'div',
         { class: 'relative text-xs' },
-        driver.name ? driver.name : 'Não acionado',
+        driver.name ? driver.name : 'Nenhum',
         // row.original.accepted === false
         //   ? h(FormSelect, {
         //       ref: childRef,

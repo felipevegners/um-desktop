@@ -32,7 +32,7 @@ const renderRideStatus = computed(() => {
             ? 'bg-red-600'
             : rideStatus === 'completed'
               ? 'bg-zinc-900'
-              : 'bg-amber-600'
+              : 'bg-violet-600'
     }`"
   >
     {{ renderRideStatus }}

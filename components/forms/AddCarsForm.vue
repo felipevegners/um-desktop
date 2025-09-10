@@ -82,7 +82,12 @@ const removeRow = (index: any) => {
           <FormItem>
             <FormLabel>Placa</FormLabel>
             <FormControl>
-              <Input type="text" v-model="car.carPlate" />
+              <Input
+                type="text"
+                v-model="car.carPlate"
+                v-maska="'***-****'"
+                class="uppercase"
+              />
             </FormControl>
             <FormMessage />
           </FormItem>
