@@ -43,7 +43,7 @@ const onSubmit = form.handleSubmit(async (values) => {
     isLoading.value = true;
     await signIn('credentials', values);
   } catch (error) {
-    console.log('Erro no login -> ', error);
+    console.error('Erro no login -> ', error);
   } finally {
     isLoading.value = false;
   }

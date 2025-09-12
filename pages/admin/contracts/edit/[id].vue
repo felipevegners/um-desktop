@@ -270,7 +270,7 @@ const findAddress = async (code: string) => {
         class: 'bg-red-500 border-0 text-white text-2xl',
         description: `Ocorreu um erro ao buscar o endereço. Tente novamente.`,
       });
-      console.log('Erro ao buscar endereço -> ', error);
+      console.error('Erro ao buscar endereço -> ', error);
     } finally {
       isLoadingAddress.value = false;
     }
@@ -327,17 +327,17 @@ const findAddress = async (code: string) => {
                         allowedContent: '!absolute !top-10',
                       },
                       content: {
-                        allowedContent({ ready, fileTypes, isUploading }) {
+                        allowedContent({ ready, fileTypes, isUploading }: any) {
                           if (ready) return '';
                           if (isUploading) return 'Enviando seu arquivo, aguarde...';
                         },
                       },
                       endpoint: 'customerLogo',
-                      onClientUploadComplete: (file) => {
+                      onClientUploadComplete: (file: any) => {
                         customerLogo.name = file[0].name;
                         customerLogo.url = file[0].ufsUrl;
                       },
-                      onUploadError: (error) => {
+                      onUploadError: (error: any) => {
                         toast({
                           title: 'Ooops!',
                           class: 'bg-red-500 border-0 text-white text-2xl',

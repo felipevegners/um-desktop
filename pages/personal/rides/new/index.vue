@@ -7,12 +7,12 @@ import ProductTag from '@/components/shared/ProductTag.vue';
 import RenderIcon from '@/components/shared/RenderIcon.vue';
 import { useToast } from '@/components/ui/toast/use-toast';
 import { paymentMethods } from '@/config/paymentMethods';
-import { getRideCalculationService, getRideRoutesService } from '@/server/services/rides';
+import { getRideRoutesService } from '@/server/services/rides';
 import { useContractsStore } from '@/stores/contracts.store';
 import { useProductsStore } from '@/stores/products.store';
 import { useRidesStore } from '@/stores/rides.store';
 import type { Product } from '@/types/products/types';
-import { DateFormatter, getLocalTimeZone, parseDate } from '@internationalized/date';
+import { DateFormatter, getLocalTimeZone } from '@internationalized/date';
 import { toTypedSchema } from '@vee-validate/zod';
 import {
   CalendarPlus,
@@ -280,7 +280,6 @@ const getRideCalculation = async () => {
       const ridePrice = parseFloat(basePrice.toFixed(2));
       calculatedTravel.value.travelPrice = ridePrice.toFixed(2).toString();
       showContractProductAlert.value = true;
-      console.log('CONTRACT SERVICE', ridePrice);
     } else {
       const ridePrice =
         basePrice +

@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { useToast } from '@/components/ui/toast/use-toast';
-import { CircleX, Eye, LoaderCircle, Paperclip, Plus, Trash } from 'lucide-vue-next';
+import { CircleX, LoaderCircle, Paperclip, Plus, Trash } from 'lucide-vue-next';
 import { vMaska } from 'maska/vue';
 import { storeToRefs } from 'pinia';
 import { useFilesStore } from '~/stores/files.store';
@@ -115,18 +115,17 @@ const removeRow = (index: any) => {
                         allowedContent: '!absolute !top-10',
                       },
                       content: {
-                        allowedContent({ ready, fileTypes, isUploading }) {
+                        allowedContent({ ready, fileTypes, isUploading }: any) {
                           if (ready) return '';
                           if (isUploading) return 'Enviando seu arquivo, aguarde...';
                         },
                       },
                       endpoint: 'driverCarFiles',
-                      onClientUploadComplete: (file) => {
-                        console.log('uploaded', file);
+                      onClientUploadComplete: (file: any) => {
                         modelValue[index].carDocumentFile.name = file[0].name;
                         modelValue[index].carDocumentFile.url = file[0].ufsUrl;
                       },
-                      onUploadError: (error) => {
+                      onUploadError: (error: any) => {
                         toast({
                           title: 'Ooops!',
                           class: 'bg-red-500 border-0 text-white text-2xl',

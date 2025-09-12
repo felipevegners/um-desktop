@@ -3,7 +3,6 @@ import { useToast } from '@/components/ui/toast';
 import { findAddressByZipcode } from '@/server/services/FindAddress';
 import { LoaderCircle, Search } from 'lucide-vue-next';
 import { vMaska } from 'maska/vue';
-import { useForm } from 'vee-validate';
 import { ref } from 'vue';
 
 defineOptions({
@@ -72,7 +71,7 @@ const findAddress = async (code: string) => {
         class: 'bg-red-500 border-0 text-white text-2xl',
         description: `Ocorreu um erro ao buscar o endereço. Tente novamente.`,
       });
-      console.log('Erro ao buscar endereço -> ', error);
+      console.error('Erro ao buscar endereço -> ', error);
     } finally {
       isLoadingAddress.value = false;
     }

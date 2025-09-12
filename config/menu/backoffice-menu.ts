@@ -167,23 +167,17 @@ export const backofficeMenu = {
       icon: Box,
       active: route.path.includes('products'),
     },
+    {
+      name: 'Comissões e Taxas',
+      url: '/admin/configurations/fees',
+      icon: SquarePercent,
+      active: route.path.includes('fees'),
+    },
     // {
-    //   name: 'Contas de Usuário',
-    //   url: '/admin/configurations/accounts',
-    //   icon: UserPen,
+    //   name: 'Configurar Dashboards',
+    //   url: '#',
+    //   icon: LayoutDashboard,
     //   active: '',
     // },
-    {
-      name: 'Repasse Motorista',
-      url: '#',
-      icon: SquarePercent,
-      active: '',
-    },
-    {
-      name: 'Configurar Dashboards',
-      url: '#',
-      icon: LayoutDashboard,
-      active: '',
-    },
   ],
 };

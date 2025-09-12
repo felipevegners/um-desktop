@@ -119,6 +119,7 @@ model Drivers {
   outsideActuation  Boolean?
   scheduleOpen      Boolean?
   location          Json?
+  fee               Json?
   createdAt         DateTime? @default(now())
   updatedAt         DateTime? @updatedAt()
 }
@@ -181,6 +182,17 @@ model History {
   content   String
   status    String
   read      Boolean
+  createdAt DateTime? @default(now())
+  updatedAt DateTime? @updatedAt()
+}
+
+model Fees {
+  id        String    @id @default(auto()) @map("_id") @db.ObjectId
+  name      String
+  type      String    @unique
+  value     String
+  enabled   Boolean
+  active    Boolean
   createdAt DateTime? @default(now())
   updatedAt DateTime? @updatedAt()
 }

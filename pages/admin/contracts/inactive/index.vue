@@ -50,7 +50,7 @@ const deleteContract = async (contractId: string) => {
   try {
     await deleteContractAction(contractId);
   } catch (error) {
-    console.log('Error ->', error);
+    console.error('Error ->', error);
   } finally {
     loadingDelete.value = false;
     await getContractsAction();

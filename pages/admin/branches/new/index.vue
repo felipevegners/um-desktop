@@ -3,12 +3,12 @@ import AddressForm from '@/components/forms/AddressForm.vue';
 import BranchForm from '@/components/forms/BranchForm.vue';
 import BackLink from '@/components/shared/BackLink.vue';
 import { useToast } from '@/components/ui/toast/use-toast';
+import { useBranchesStore } from '@/stores/branches.store';
 import { toTypedSchema } from '@vee-validate/zod';
 import { Building2, LoaderCircle } from 'lucide-vue-next';
 import { storeToRefs } from 'pinia';
 import { useForm } from 'vee-validate';
 import * as z from 'zod';
-import { useBranchesStore } from '~/stores/branches.store';
 
 const store = useBranchesStore();
 const { createBranchAction } = store;
