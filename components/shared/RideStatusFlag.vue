@@ -13,6 +13,7 @@ const rideStatusTranslate = {
   cancelled: 'Cancelado',
   completed: 'Finalizado',
   refused: 'Recusado',
+  'in-progress': 'Em Andamento',
 };
 
 const renderRideStatus = computed(() => {
@@ -32,7 +33,11 @@ const renderRideStatus = computed(() => {
             ? 'bg-red-600'
             : rideStatus === 'completed'
               ? 'bg-zinc-900'
-              : 'bg-violet-600'
+              : rideStatus === 'in-progress'
+                ? 'bg-violet-600 animate-pulse'
+                : rideStatus === 'refused'
+                  ? 'bg-red-600'
+                  : 'bg-zinc-900'
     }`"
   >
     {{ renderRideStatus }}
