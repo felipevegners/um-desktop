@@ -16,6 +16,7 @@ const paymentStatusTranslate = {
   expired: 'Expirado',
   voided: 'Cancelado',
   invoice: 'Faturar',
+  unpaid: 'Não Pago',
   NotFinalized: 'Não finalizado',
   authorized: 'Autorizado',
   error: 'Erro',
@@ -35,6 +36,7 @@ const openPaymentLink = (link: string) => {
 const showUrlButton = computed(() => {
   return (
     props.paymentStatus === 'pending' ||
+    props.paymentStatus === 'unpaid' ||
     props.paymentStatus === 'denied' ||
     props.paymentStatus === 'NotFinalized'
   );
@@ -45,7 +47,7 @@ const showUrlButton = computed(() => {
     <span
       :class="`py-1 px-3 flex items-center justify-center rounded-md text-white text-[10px] uppercase w-fit  
       ${
-        paymentStatus === 'pending'
+        paymentStatus === 'pending' || paymentStatus === 'unpaid'
           ? 'bg-amber-600'
           : paymentStatus === 'paid' || paymentStatus === 'authorized'
             ? 'bg-green-600'

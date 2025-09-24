@@ -1,4 +1,4 @@
-import { decode, encode } from '@googlemaps/polyline-codec';
+import { decode } from '@googlemaps/polyline-codec';
 import type { Updater } from '@tanstack/vue-table';
 import { type ClassValue, clsx } from 'clsx';
 import { twMerge } from 'tailwind-merge';
@@ -69,14 +69,14 @@ export const convertSecondsToTime = (seconds: any) => {
     const minutes = Math.floor(time / 60);
     const remainingSeconds = time % 60;
 
-    return `${minutes.toString().padStart(2, '0')}:${remainingSeconds.toString().padStart(2, '0')}`;
+    return `${minutes.toString().padStart(2, '0')}:${remainingSeconds.toString().padStart(2, '0')} min`;
   }
 
   // If an hour or more, return HH:MM format
   const hours = Math.floor(time / 3600);
   const minutes = Math.floor((time % 3600) / 60);
 
-  return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
+  return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')} hs`;
 };
 
 export const convertMetersToDistance = (meters: any, threshold = 1000) => {

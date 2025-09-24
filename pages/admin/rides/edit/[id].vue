@@ -3,51 +3,35 @@ import FormButtons from '@/components/forms/FormButtons.vue';
 import BackLink from '@/components/shared/BackLink.vue';
 import FormSelect from '@/components/shared/FormSelect.vue';
 import PaymentStatusFlag from '@/components/shared/PaymentStatusFlag.vue';
-import ProductTag from '@/components/shared/ProductTag.vue';
 import RideStatusFlag from '@/components/shared/RideStatusFlag.vue';
 import { useToast } from '@/components/ui/toast/use-toast';
 import { WPP_API } from '@/config/paths';
-import {
-  deleteRideService,
-  getRideCalculationService,
-  getRideRoutesService,
-} from '@/server/services/rides';
+import { deleteRideService } from '@/server/services/rides';
 import { useAccountStore } from '@/stores/account.store';
 import { useContractsStore } from '@/stores/contracts.store';
 import { useProductsStore } from '@/stores/products.store';
 import { useRidesStore } from '@/stores/rides.store';
-import {
-  CalendarDate,
-  DateFormatter,
-  type DateValue,
-  getLocalTimeZone,
-} from '@internationalized/date';
+import { CalendarDate, DateFormatter } from '@internationalized/date';
 import {
   Banknote,
   CalendarDays,
   CarFront,
   Check,
-  ConciergeBell,
-  FileText,
   LoaderCircle,
   Mail,
   Map,
   MessageCircleMore,
+  MessageSquareWarning,
   Phone,
-  Plus,
   SquareCheck,
   SquareDot,
   SquareSquare,
-  SquareUser,
   Trash,
   User,
   UserPen,
-  Users,
   Users2,
-  Waypoints,
   X,
 } from 'lucide-vue-next';
-import { vMaska } from 'maska/vue';
 import { storeToRefs } from 'pinia';
 import { useForm } from 'vee-validate';
 import { GoogleMap, Marker, Polyline } from 'vue3-google-map';
@@ -85,6 +69,7 @@ const isAdmin = computed(() => {
 });
 
 const route = useRoute();
+const router = useRouter();
 const ridesStore = useRidesStore();
 const { getRideByIdAction, updateRideAction, setRideDriverAction } = ridesStore;
 const { ride } = storeToRefs(ridesStore);
@@ -125,6 +110,7 @@ const showDeleteConfirmationModal = ref<boolean>(false);
 const loadingCancelAndDelete = ref<boolean>(false);
 const showFinishModal = ref<boolean>(false);
 const showWaypointsForm = ref<boolean>(false);
+const loadingRemoveDriver = ref<boolean>(false);
 
 availableProducts.value = products?.value;
 showWaypointsForm.value = ride?.value.travel.stops.length;
@@ -268,28 +254,55 @@ const setNewDriver = (driverId: string) => {
 
 const contactDriver = async () => {
   await setRideDriverAction(ride?.value.id, selectedDriver.value);
-  const message = `
-  *Novo Atendimento - ${ride?.value?.code}*
-  %0A*Passageiro*: ${ride?.value.user.name}
-  %0A*Celular*: ${ride?.value.user.phone}
-  %0A*Data/Hora*: ${ride?.value.travel.date} / ${ride?.value.travel.departTime}
-  %0A------------------------------
-  %0A*Dados da Viagem* 
-  %0A%0A*Origem*: ${ride?.value.travel.originAddress}
-${
-  ride?.value.travel.stops.length
-    ? ride?.value.travel.stops.map((stop: any, index: any) => {
-        return `%0A%0A*Parada ${index + 1}*: ${stop.address}`;
-      })
-    : ''
-}
-  %0A%0A*Destino*: ${ride?.value.travel.destinationAddress}
-  %0A%0A*Despachado por*: ${ride?.value.dispatcher.user} - ${ride?.value.dispatcher.email}`;
-  const url =
-    WPP_API.replace('[[phone]]', sanitizePhone(selectedDriver.value.phone as string)) +
-    '&text=' +
-    message;
-  navigateTo(url, { external: true, open: { target: '_blank' } });
+  await getRideByIdAction(route?.params?.id as string);
+  editDriver.value = false;
+  selectedDriver.value = '';
+  form.values.driver = '';
+
+  //   const message = `
+  //   *Novo Atendimento - ${ride?.value?.code}*
+  //   %0A*Passageiro*: ${ride?.value.user.name}
+  //   %0A*Celular*: ${ride?.value.user.phone}
+  //   %0A*Data/Hora*: ${ride?.value.travel.date} / ${ride?.value.travel.departTime}
+  //   %0A------------------------------
+  //   %0A*Dados da Viagem*
+  //   %0A%0A*Origem*: ${ride?.value.travel.originAddress}
+  // ${
+  //   ride?.value.travel.stops.length
+  //     ? ride?.value.travel.stops.map((stop: any, index: any) => {
+  //         return `%0A%0A*Parada ${index + 1}*: ${stop.address}`;
+  //       })
+  //     : ''
+  // }
+  //   %0A%0A*Destino*: ${ride?.value.travel.destinationAddress}
+  //   %0A%0A*Despachado por*: ${ride?.value.dispatcher.user} - ${ride?.value.dispatcher.email}`;
+  //   const url =
+  //     WPP_API.replace('[[phone]]', sanitizePhone(selectedDriver.value.phone as string)) +
+  //     '&text=' +
+  //     message;
+  //   navigateTo(url, { external: true, open: { target: '_blank' } });
+};
+
+const handleRemoveRider = async () => {
+  const payload = {
+    ...ride?.value,
+    status: 'created',
+    driver: {},
+  };
+  try {
+    loadingRemoveDriver.value = true;
+    await updateRideAction(payload);
+  } catch (error) {
+    toast({
+      title: 'Oops!',
+      description: `Ocorreu um erro ao remover o motorista. Tente novamente.`,
+      variant: 'destructive',
+    });
+  } finally {
+    loadingRemoveDriver.value = false;
+    editDriver.value = false;
+    await getRideByIdAction(route?.params?.id as string);
+  }
 };
 
 const toggleCancelationModal = () => {
@@ -321,6 +334,7 @@ const handleCancelRide = async () => {
     });
   }
 };
+
 const handleFinishRide = async () => {
   const payload = {
     ...ride?.value,
@@ -378,6 +392,10 @@ const form = useForm({
   },
 });
 
+const actualLocationLength = computed(
+  () => ride?.value.progress.actualLocation.length - 1,
+);
+
 const onSubmit = form.handleSubmit(async (values) => {
   const ridePayload = {
     id: ride?.value.id,
@@ -433,11 +451,11 @@ const onSubmit = form.handleSubmit(async (values) => {
       <div class="flex gap-6 items-center">
         <Button @click="toggleFinishModal">
           <Check />
-          FInalizar Atendimento
+          FInalizar
         </Button>
-        <Button @click="toggleCancelationModal" variant="destructive">
+        <Button @click="toggleCancelationModal" variant="secondary">
           <X />
-          Cancelar Atendimento
+          Cancelar
         </Button>
         <Button
           v-if="isAdmin"
@@ -445,7 +463,7 @@ const onSubmit = form.handleSubmit(async (values) => {
           @click="showDeleteConfirmationModal = true"
         >
           <Trash />
-          Excluir Atendimento
+          Excluir
         </Button>
       </div>
     </section>
@@ -491,6 +509,17 @@ const onSubmit = form.handleSubmit(async (values) => {
                     />
                     <Polyline :options="ridePath" />
                   </GoogleMap>
+                  <!-- <SharedRideRouteMap
+                    :origin-coords="{
+                      lat: ride.progress.actualLocation[0].latitude,
+                      lng: ride.progress.actualLocation[0].longitude,
+                    }"
+                    :destination-coords="{
+                      lat: ride.progress.actualLocation[actualLocationLength].latitude,
+                      lng: ride.progress.actualLocation[actualLocationLength].longitude,
+                    }"
+                    :rideRealCoords="ride.progress.actualLocation"
+                  /> -->
                 </div>
                 <div class="p-3 border border-zinc-400 bg-white rounded-md">
                   <span class="text-muted-foreground text-sm">Data do embarque</span>
@@ -626,47 +655,60 @@ const onSubmit = form.handleSubmit(async (values) => {
                 <div>
                   <h3 class="mb-6 text-sm font-bold">Dados do Motorista</h3>
                   <h2 class="font-bold text-lg">
-                    {{ ride?.driver.name || 'Nenhum' }}
+                    {{ ride?.driver.name || 'Sem motorista' }}
                   </h2>
+                  <div
+                    v-if="!ride?.accepted && ride?.driver.name"
+                    class="my-4 p-2 flex items-center gap-2 rounded-md bg-red-100 text-red-600 text-sm"
+                  >
+                    <MessageSquareWarning />
+                    <span>
+                      {{ ride?.driver.name }} ainda não aceitou este atendimento.
+                    </span>
+                  </div>
                 </div>
               </div>
-              <div class="flex items-end gap-6 self-end">
-                <FormField v-slot="{ componentField, value }" name="driver">
-                  <FormItem class="w-full">
-                    <FormLabel class="text-sm"> Acionar motorista </FormLabel>
-                    <FormControl>
-                      <FormSelect
-                        v-bind="componentField"
-                        :items="sanitizeDrivers"
-                        :label="'Selecione'"
-                        @on-select="setNewDriver"
-                        :disabled="!editDriver"
-                      />
-                    </FormControl>
-                  </FormItem>
-                </FormField>
-                <Button
-                  v-if="!editDriver"
-                  class="mt-3"
-                  @click.prevent="editDriver = true"
-                >
-                  <UserPen class="mr-2" />
-                  Alterar Motorista
-                </Button>
-                <Button
-                  v-if="editDriver"
-                  class="mt-3 bg-green-600 hover:bg-green-700"
-                  :disabled="selectedDriver.id === ride?.driver.id"
-                  @click.prevent="contactDriver"
-                >
-                  <ConciergeBell class="w-5 h-5 mr-2" />
-                  Acionar Novo Motorista
-                </Button>
-                <div
-                  v-show="!ride?.accepted && ride?.driver.name"
-                  class="my-4 p-2 bg-red-200 text-red-600 text-sm text-center"
-                >
-                  <span> O Motorista ainda não aceitou este atendimento. </span>
+              <div class="flex flex-col items-start justify-center gap-6 h-full">
+                <div v-if="editDriver" class="w-full justify-self-center">
+                  <FormField v-slot="{ componentField, value }" name="driver">
+                    <FormItem class="w-full">
+                      <FormControl>
+                        <FormSelect
+                          v-bind="componentField"
+                          :items="sanitizeDrivers"
+                          :label="'Selecione'"
+                          @on-select="setNewDriver"
+                          :disabled="!editDriver"
+                        />
+                      </FormControl>
+                    </FormItem>
+                  </FormField>
+                  <div class="space-x-2">
+                    <Button
+                      class="mt-3 bg-green-800 hover:bg-green-700"
+                      :disabled="selectedDriver.id === ride?.driver.id"
+                      @click.prevent="contactDriver"
+                    >
+                      Acionar
+                    </Button>
+                    <Button variant="ghost" @click.prevent="editDriver = false">
+                      Cancelar
+                    </Button>
+                  </div>
+                </div>
+                <div v-else class="flex gap-2 self-end">
+                  <Button @click.prevent="editDriver = true">
+                    <UserPen />
+                    {{ !ride?.driver.name ? 'Acionar' : 'Alterar' }}
+                  </Button>
+                  <Button
+                    v-if="ride?.driver.name"
+                    @click.prevent="handleRemoveRider"
+                    variant="destructive"
+                  >
+                    <X />
+                    Remover
+                  </Button>
                 </div>
               </div>
               <div class="col-span-2 p-4 border border-zinc-900 rounded-md bg-amber-100">
@@ -725,6 +767,7 @@ const onSubmit = form.handleSubmit(async (values) => {
         cnc-label="Cancelar"
       />
     </form>
+    <pre v-if="ride.progress">{{ ride.progress }}</pre>
   </main>
   <Dialog :open="showRouteRecalculation">
     <DialogContent>

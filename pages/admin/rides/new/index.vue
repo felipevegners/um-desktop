@@ -7,14 +7,14 @@ import ProductTag from '@/components/shared/ProductTag.vue';
 import RenderIcon from '@/components/shared/RenderIcon.vue';
 import { useToast } from '@/components/ui/toast/use-toast';
 import { paymentMethods } from '@/config/paymentMethods';
-import { getRideCalculationService, getRideRoutesService } from '@/server/services/rides';
+import { getRideRoutesService } from '@/server/services/rides';
 import { useAccountStore } from '@/stores/account.store';
 import { useBranchesStore } from '@/stores/branches.store';
 import { useContractsStore } from '@/stores/contracts.store';
 import { useProductsStore } from '@/stores/products.store';
 import { useRidesStore } from '@/stores/rides.store';
 import type { Product } from '@/types/products/types';
-import { DateFormatter, getLocalTimeZone } from '@internationalized/date';
+import { DateFormatter } from '@internationalized/date';
 import { toTypedSchema } from '@vee-validate/zod';
 import {
   LoaderCircle,
@@ -29,10 +29,16 @@ import {
 } from 'lucide-vue-next';
 import { vMaska } from 'maska/vue';
 import { storeToRefs } from 'pinia';
-import { useForm, useIsFormDirty, useIsFormValid } from 'vee-validate';
+import { useForm } from 'vee-validate';
 import { GoogleMap, Marker, Polyline } from 'vue3-google-map';
 import * as z from 'zod';
-import { currencyFormat, getDate, polyLineCodec } from '~/lib/utils';
+import {
+  convertMetersToDistance,
+  convertSecondsToTime,
+  currencyFormat,
+  polyLineCodec,
+  sanitizeRideDate,
+} from '~/lib/utils';
 
 definePageMeta({
   layout: 'admin',
@@ -65,7 +71,6 @@ const customIconEnd = `<svg xmlns="http://www.w3.org/2000/svg" width="24" height
 
 const { toast } = useToast();
 const { data } = useAuth();
-const { meta } = useForm();
 const df = new DateFormatter('pt-BR', {
   dateStyle: 'short',
 });
@@ -96,6 +101,7 @@ const contractBranchesList = ref<any>();
 const loadingAreas = ref<boolean>(false);
 const enablePayment = ref<boolean>(false);
 const showWaypointsForm = ref<boolean>(false);
+const showContractProductAlert = ref<boolean>(false);
 const loadingGenerateRide = ref<boolean>(false);
 const routeWaypoints = ref<any>([
   {
@@ -120,10 +126,11 @@ const destinationLocationDetails = ref<any>({
   address: '',
   url: '',
 });
-
 const routePolyLine = ref();
 const loadingRoute = ref<boolean>(false);
-const center = ref<any>({ lat: -23.55012592233407, lng: -46.63425371400603 });
+const mapCenter = ref<any>({ lat: -23.55012592233407, lng: -46.63425371400603 });
+const mapRef = ref<any>(null);
+const initialZoom = ref(1);
 const ridePath = ref<any>({
   path: [],
   geodesic: true,
@@ -290,23 +297,6 @@ const setSelectedUser = async (user: any) => {
   }
 };
 
-// const useBrachAddressOnOrigin = (value: any) => {
-//   const { address } = branch?.value;
-//   if (value === true) {
-//     originLocationDetails.value.address = `${address.streetName}, ${address.streetNumber} - ${address.neighborhood}, ${address.city}`;
-//     const field = window.document.getElementById('originField');
-//     field?.focus();
-
-//     form.setValues({
-//       origin: `${address.streetName}, ${address.streetNumber} - ${address.neighborhood}, ${address.city}`,
-//     });
-//   } else {
-//     form.setValues({
-//       origin: '',
-//     });
-//   }
-// };
-
 const setPaymentMethod = (value: any) => {
   paymentMethod.value = value;
 };
@@ -328,7 +318,7 @@ const decodePolyline = (polyline: string) => {
   // Find the center of ride path to center the map
   const centerCoord = coords.length > 2 ? coords.length / 2 : coords.length;
   const parseCenterCoord = parseInt(centerCoord, 10) + 10; // parseInt if centerCoord is not divisivle by 2
-  center.value = {
+  mapCenter.value = {
     lat: coords[parseCenterCoord].lat,
     lng: coords[parseCenterCoord].lng,
   };
@@ -374,39 +364,54 @@ const handleRideCalculation = async () => {
     return;
   }
 
-  const extractedWaypointsAddress = waypointLocationDetails.value.map((waypoint: any) => {
-    return {
-      ['address']: waypoint['address'],
-    };
-  });
-  const rideData = {
-    origins: originLocationDetails.value.address,
-    destinations: destinationLocationDetails.value.address,
-    waypoints: extractedWaypointsAddress,
-  };
+  // const extractedWaypointsAddress = waypointLocationDetails.value.map((waypoint: any) => {
+  //   return {
+  //     ['address']: waypoint['address'],
+  //   };
+  // });
 
   try {
     loadingRoute.value = true;
-    const travelCalculation = await getRideCalculationService(rideData);
 
-    //Ride Price Calculation
-    const duration = travelCalculation?.rows[0]?.elements[0]?.duration.value / 60;
-    const basePrice = parseFloat(selectedProduct?.value.basePrice);
-    const distance = travelCalculation?.rows[0]?.elements[0]?.distance.value / 1000;
+    // Build a locations array for the complete route
+    const locations = [
+      { lat: originCoords.value.lat, lng: originCoords.value.lng },
+      ...waypointLocationDetails.value.map((wp: any) =>
+        wp.coords ? { lat: wp.coords.lat, lng: wp.coords.lng } : wp.address,
+      ),
+      { lat: destinationCoords.value.lat, lng: destinationCoords.value.lng },
+    ];
+    const departDate = form.values.departDate;
+    const departTime = form.values.departTime;
 
-    const ridePrice =
-      basePrice +
-      parseFloat(distance.toFixed(2)) * parseFloat(selectedProduct?.value.kmPrice) +
-      duration * parseFloat(selectedProduct?.value.minutePrice);
-
-    calculatedTravel.value.travelDistance =
-      travelCalculation?.rows[0]?.elements[0]?.distance.text;
-    calculatedTravel.value.travelTime =
-      travelCalculation?.rows[0]?.elements[0]?.duration.text;
-    calculatedTravel.value.travelPrice = ridePrice.toFixed(2).toString();
-
-    const routeCalculation: any = await getRideRoutesService(rideData);
+    const routeCalculation: any = await getRideRoutesService({
+      locations,
+      departDate,
+      departTime,
+    });
     routePolyLine.value = routeCalculation[0]?.polyline?.encodedPolyline;
+    const basePrice = parseFloat(selectedProduct?.value.basePrice);
+    const sanitizeDurationResponse = routeCalculation[0].duration.replace('s', '');
+    const duration = parseInt(sanitizeDurationResponse) / 60;
+    const distance = routeCalculation[0].distanceMeters / 1000;
+
+    if (selectedProduct.value.type === 'contract') {
+      const ridePrice = parseFloat(basePrice.toFixed(2));
+      calculatedTravel.value.travelPrice = ridePrice.toFixed(2).toString();
+      showContractProductAlert.value = true;
+    } else {
+      const ridePrice =
+        basePrice +
+        distance * parseFloat(selectedProduct?.value.kmPrice) +
+        duration * parseFloat(selectedProduct?.value.minutePrice);
+      calculatedTravel.value.travelPrice = ridePrice.toFixed(2).toString();
+    }
+
+    calculatedTravel.value.travelDistance = convertMetersToDistance(
+      routeCalculation[0].distanceMeters,
+    );
+    //@ts-ignore
+    calculatedTravel.value.travelTime = convertSecondsToTime(duration);
   } catch (error) {
     toast({
       title: 'Opss!',
@@ -431,6 +436,27 @@ const handleRideCalculation = async () => {
     }
   }
 };
+
+watch(
+  () => mapRef.value?.ready,
+  (ready) => {
+    if (ready) {
+      const map = mapRef.value.map;
+      //@ts-ignore
+      const bounds = new google.maps.LatLngBounds();
+      bounds.extend(
+        //@ts-ignore
+        new google.maps.LatLng(originCoords.value.lat, originCoords.value.lng),
+      );
+      bounds.extend(
+        //@ts-ignore
+        new google.maps.LatLng(destinationCoords.value.lat, destinationCoords.value.lng),
+      );
+
+      map.fitBounds(bounds);
+    }
+  },
+);
 
 // // Set the location based on the place selected
 const setOriginPlace = (place: any) => {
@@ -518,6 +544,13 @@ const showPaymentSection = async () => {
         area: 'Obrigatório!',
         branch: 'Obrigatório!',
       });
+    }
+
+    if (paymentMethod.value === 'pix') {
+      window.alert('PAGAMENTO PIX');
+      setTimeout(() => {
+        onSubmit();
+      }, 2000);
     }
   } else {
     const targetElement = document.getElementById('ride-info');
@@ -617,7 +650,12 @@ const onSubmit = form.handleSubmit(async (values) => {
         area: values?.area || '-',
       },
       ammount: calculatedTravel.value.travelPrice,
-      status: paymentMethod.value === 'corporative' ? 'invoice' : paymentStatus.value,
+      status:
+        paymentMethod.value === 'corporative'
+          ? 'invoice'
+          : paymentMethod.value === 'pix'
+            ? 'unpaid'
+            : paymentStatus.value,
       installments: 0,
     },
     user: {
@@ -1010,10 +1048,11 @@ const onSubmit = form.handleSubmit(async (values) => {
                 <div class="space-y-6 flex flex-col items-start">
                   <h3 class="text-lg font-bold">Preview da Rota</h3>
                   <GoogleMap
+                    ref="mapRef"
                     :api-key="API_KEY"
                     style="width: 100%; height: 700px"
-                    :center="center"
-                    :zoom="12"
+                    :center="mapCenter"
+                    :zoom="initialZoom"
                     :zoom-control="true"
                   >
                     <Marker
@@ -1055,7 +1094,7 @@ const onSubmit = form.handleSubmit(async (values) => {
                     <div>
                       <small class="font-bold">Data e Hora</small>
                       <h2 class="font-bold text-2xl">
-                        {{ df.format(travelDate?.toDate(getLocalTimeZone())) }} -
+                        {{ sanitizeRideDate(form.values.departDate as string) }} -
                         {{ form.values.departTime }}
                       </h2>
                     </div>
@@ -1099,13 +1138,42 @@ const onSubmit = form.handleSubmit(async (values) => {
                         <p>{{ calculatedTravel.travelTime }}</p>
                       </div>
                     </div>
-                    <div class="border-t border-zinc-900">
-                      <small class="font-bold">Total estimado*</small>
-                      <p class="font-bold text-2xl">
+                    <div
+                      v-if="showContractProductAlert"
+                      class="p-4 bg-amber-100 rounded-md border border-zinc-900"
+                    >
+                      <h3 class="mb-2 font-bold uppercase">Importante:</h3>
+                      <p>
+                        O Serviço
+                        <span class="font-bold">{{ selectedProduct.name }}</span> é
+                        oferecido no modelo <span class="font-bold">À Disposição</span>.
+                        Confira abaixo as franquias inclusas neste serviço.
+                      </p>
+                    </div>
+                    <div class="p-4 border-t border-zinc-900">
+                      <div v-if="showContractProductAlert">
+                        <p class="flex items-center gap-2 py-2 border-b border-zinc-200">
+                          <Gauge :size="18" />
+                          Franquia de KMs: ..............
+                          <span class="font-bold"
+                            >{{ selectedProduct.includedKms }} KM</span
+                          >
+                        </p>
+                        <p class="flex items-center gap-2 py-2 border-b border-zinc-200">
+                          <Clock :size="18" />
+                          Franquia de Horas: ............
+                          <span class="font-bold"
+                            >{{ selectedProduct.includedHours }} Hs</span
+                          >
+                        </p>
+                      </div>
+                      <p class="mt-4 font-bold">Total estimado:</p>
+                      <p class="font-bold text-3xl">
                         {{ currencyFormat(calculatedTravel?.travelPrice) }}
                       </p>
-                      <small class="text-muted-foreground text-xs">
-                        * O valor total será calculado ao término do atendimento
+                      <small class="text-muted-foreground">
+                        * O valor total final desse serviço será calculado ao término do
+                        atendimento, podendo haver ou não acréscimos neste valor.
                       </small>
                     </div>
                   </div>
@@ -1174,6 +1242,7 @@ const onSubmit = form.handleSubmit(async (values) => {
               </div>
             </CardContent>
           </Card>
+          <pre>{{ paymentMethod }}</pre>
           <div
             v-if="paymentMethod && calculatedTravel.travelPrice"
             class="my-6 w-full flex gap-6"

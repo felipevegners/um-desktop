@@ -185,7 +185,7 @@ const destinationLocationDetails = ref<any>({
 
 const routePolyLine = ref();
 const loadingRoute = ref<boolean>(false);
-const center = ref<any>({ lat: -23.0397942, lng: -47.0004508 });
+const mapCenter = ref<any>({ lat: -23.0397942, lng: -47.0004508 });
 const ridePath = ref<any>({
   path: [],
   geodesic: true,
@@ -231,7 +231,7 @@ const decodePolyline = (polyline: string) => {
   // Find the center of ride path to center the map
   const centerCoord = coords.length > 2 ? coords.length / 2 : coords.length;
   const parseCenterCoord = parseInt(centerCoord, 10) + 10; // parseInt if centerCoord is not divisivle by 2
-  center.value = {
+  mapCenter.value = {
     lat: coords[parseCenterCoord].lat,
     lng: coords[parseCenterCoord].lng,
   };
@@ -259,16 +259,19 @@ const calculatedTravel = ref({
 });
 
 const getRideCalculation = async () => {
-  const rideData = {
-    origins: originLocationDetails.value.address,
-    destinations: destinationLocationDetails.value.address,
-    waypoints: [...waypointLocationDetails.value],
-  };
+  // Build a locations array for the complete route
+  const locations = [
+    { lat: originCoords.value.lat, lng: originCoords.value.lng },
+    ...waypointLocationDetails.value.map((wp: any) =>
+      wp.coords ? { lat: wp.coords.lat, lng: wp.coords.lng } : wp.address,
+    ),
+    { lat: destinationCoords.value.lat, lng: destinationCoords.value.lng },
+  ];
 
   try {
     loadingRoute.value = true;
 
-    const routeCalculation: any = await getRideRoutesService(rideData);
+    const routeCalculation: any = await getRideRoutesService({ locations });
     // const {polyline, duration, distanceMeters} = routeCalculation[0]
     routePolyLine.value = routeCalculation[0]?.polyline?.encodedPolyline;
     const basePrice = parseFloat(selectedProduct?.value.basePrice);
@@ -876,7 +879,7 @@ const handleCieloCheckoutCreated = (result: {
                 <GoogleMap
                   :api-key="API_KEY"
                   style="width: 100%; height: 700px"
-                  :center="center"
+                  :center="mapCenter"
                   :zoom="11"
                   :zoom-control="true"
                 >
