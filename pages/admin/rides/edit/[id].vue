@@ -256,8 +256,7 @@ const contactDriver = async () => {
   await setRideDriverAction(ride?.value.id, selectedDriver.value);
   await getRideByIdAction(route?.params?.id as string);
   editDriver.value = false;
-  selectedDriver.value = '';
-  form.values.driver = '';
+  selectedDriver.value = ride?.value.driver;
 
   //   const message = `
   //   *Novo Atendimento - ${ride?.value?.code}*
