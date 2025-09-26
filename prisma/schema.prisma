@@ -155,6 +155,7 @@ model Rides {
   status         String?
   accepted       Boolean?
   estimatedPrice String?
+  rideFinalPrice String?
   driver         Json?
   dispatcher     Json?
   observations   String?

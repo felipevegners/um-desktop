@@ -16,6 +16,8 @@ export default defineEventHandler(async (event) => {
     status,
     code,
     observations,
+    estimatedPrice,
+    rideFinalPrice,
   } = payload;
 
   try {
@@ -36,6 +38,8 @@ export default defineEventHandler(async (event) => {
         status,
         code,
         observations,
+        estimatedPrice,
+        rideFinalPrice,
       },
     });
     return updatedRide;
