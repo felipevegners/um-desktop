@@ -36,6 +36,8 @@ import { storeToRefs } from 'pinia';
 import { useForm } from 'vee-validate';
 import { GoogleMap, Marker, Polyline } from 'vue3-google-map';
 import {
+  convertMetersToDistance,
+  convertSecondsToTime,
   currencyFormat,
   polyLineCodec,
   sanitizePhone,
@@ -111,6 +113,7 @@ const loadingCancelAndDelete = ref<boolean>(false);
 const showFinishModal = ref<boolean>(false);
 const showWaypointsForm = ref<boolean>(false);
 const loadingRemoveDriver = ref<boolean>(false);
+const finalRideCalculation = ref<any>({});
 
 availableProducts.value = products?.value;
 showWaypointsForm.value = ride?.value.travel.stops.length;
@@ -128,6 +131,13 @@ const ridePath = ref<any>({
   path: [],
   geodesic: true,
   strokeColor: '#000000',
+  strokeOpacity: 1.0,
+  strokeWeight: 5,
+});
+const finalRidePath = ref<any>({
+  path: [],
+  geodesic: true,
+  strokeColor: '#33ffcc',
   strokeOpacity: 1.0,
   strokeWeight: 5,
 });
@@ -391,9 +401,29 @@ const form = useForm({
   },
 });
 
-const actualLocationLength = computed(
-  () => ride?.value.progress.actualLocation.length - 1,
-);
+onMounted(() => {
+  if (ride?.value.status === 'completed') {
+    handleCalculateFinalPrice();
+  }
+});
+
+const handleCalculateFinalPrice = async () => {
+  try {
+    const response = await $fetch('/api/rides-calculate', {
+      method: 'POST',
+      body: {
+        ...ride?.value,
+      },
+    });
+    finalRideCalculation.value = {
+      duration: parseFloat(response?.routeCalculation[0].duration.replace('s', '')),
+      distance: response?.routeCalculation[0].distanceMeters,
+      polyline: response?.routeCalculation[0].polyline.encodedPolyline,
+    };
+  } catch (error) {
+    console.error('ERROR -> ', error);
+  }
+};
 
 const onSubmit = form.handleSubmit(async (values) => {
   const ridePayload = {
@@ -508,17 +538,6 @@ const onSubmit = form.handleSubmit(async (values) => {
                     />
                     <Polyline :options="ridePath" />
                   </GoogleMap>
-                  <!-- <SharedRideRouteMap
-                    :origin-coords="{
-                      lat: ride.progress.actualLocation[0].latitude,
-                      lng: ride.progress.actualLocation[0].longitude,
-                    }"
-                    :destination-coords="{
-                      lat: ride.progress.actualLocation[actualLocationLength].latitude,
-                      lng: ride.progress.actualLocation[actualLocationLength].longitude,
-                    }"
-                    :rideRealCoords="ride.progress.actualLocation"
-                  /> -->
                 </div>
                 <div class="p-3 border border-zinc-400 bg-white rounded-md">
                   <span class="text-muted-foreground text-sm">Data do embarque</span>
@@ -533,19 +552,21 @@ const onSubmit = form.handleSubmit(async (values) => {
                   </h3>
                 </div>
                 <div class="p-3 border border-zinc-400 bg-white rounded-md">
-                  <span class="text-muted-foreground text-sm">Distância</span>
+                  <span class="text-muted-foreground text-sm">Distância estimada</span>
                   <h3 class="text-lg font-bold">
-                    {{ ride?.travel.distance }}
+                    {{ convertMetersToDistance(ride?.travel.estimatedDistance) }}
                   </h3>
                 </div>
                 <div class="p-3 border border-zinc-400 bg-white rounded-md">
-                  <span class="text-muted-foreground text-sm">Duração</span>
-                  <h3 class="text-lg font-bold">{{ ride?.travel.duration }}</h3>
+                  <span class="text-muted-foreground text-sm">Duração estimada</span>
+                  <h3 class="text-lg font-bold">
+                    {{ convertSecondsToTime(ride?.travel.estimatedDuration) }}
+                  </h3>
                 </div>
                 <div class="p-3 border border-zinc-400 bg-white rounded-md">
-                  <span class="text-muted-foreground text-sm">Valor calculado</span>
+                  <span class="text-muted-foreground text-sm">Valor estimado</span>
                   <h3 class="text-lg font-bold">
-                    {{ currencyFormat(ride?.price) }}
+                    {{ currencyFormat(ride?.estimatedPrice) }}
                   </h3>
                 </div>
                 <div
@@ -766,7 +787,18 @@ const onSubmit = form.handleSubmit(async (values) => {
         cnc-label="Cancelar"
       />
     </form>
-    <pre v-if="ride.progress">{{ ride.progress }}</pre>
+    <SharedRideRouteMap
+      v-if="ride?.status === 'completed'"
+      :origin-coords="{
+        lat: ride.travel.origin.lat,
+        lng: ride.travel.origin.lng,
+      }"
+      :destination-coords="{
+        lat: ride.travel.destination.lat,
+        lng: ride.travel.destination.lng,
+      }"
+      :rideRealCoords="ride.progress.actualLocation"
+    />
   </main>
   <Dialog :open="showRouteRecalculation">
     <DialogContent>

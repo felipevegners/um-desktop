@@ -73,8 +73,6 @@ export default defineEventHandler(async (event) => {
         // ...(normalizedDepartTime ? { departureTime: normalizedDepartTime } : {}),
       },
     });
-    console.log('CHAMOU!!!!! -> ', body);
-
     return data?.routes;
   } catch (error) {
     console.error(error);

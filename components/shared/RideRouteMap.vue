@@ -7,6 +7,7 @@ const env = useRuntimeConfig();
 const mapRef = ref<any>(null);
 const GMAPS_API_KEY = computed(() => env.public.VITE_GOOGLE_MAPS_API_KEY);
 const gmap = ref<any>(null);
+
 const mapOptions = reactive({
   zoom: 20,
   maxZoom: 10,
@@ -19,7 +20,6 @@ const props = defineProps<{
   rideRealCoords: any;
 }>();
 
-const polyline = ref<any>(null);
 const polylineOpts = ref<any>({
   path: props.rideRealCoords.map((path: any) => ({
     lat: path.latitude,
@@ -29,20 +29,14 @@ const polylineOpts = ref<any>({
   strokeColor: '#000000',
   strokeOpacity: 1.0,
   strokeWeight: 5,
-});
-const polylineOpts2 = ref<any>({
-  path: props.rideRealCoords.map((path: any) => ({
-    lat: path.latitude,
-    lng: path.longitude,
-  })),
-  geodesic: true,
-  strokeColor: '#7c3aed',
-  strokeOpacity: 1.0,
-  strokeWeight: 8,
+  zIndex: 10,
 });
 
 const directionsRenderer = ref(null);
-const center = props.rideRealCoords[0];
+const center = {
+  lat: props.rideRealCoords[0].latitude,
+  lng: props.rideRealCoords[0].longitude,
+};
 watch(
   () => mapRef.value?.ready,
   (ready) => {
@@ -66,15 +60,39 @@ async function directions() {
     await directionsService.route(request, (response: any, status: any) => {
       //@ts-ignore
       if (status === window.google.maps.DirectionsStatus.OK) {
-        if (!directionsRenderer.value) {
+        const customArrow = {
           //@ts-ignore
-          setDirection(new window.google.maps.DirectionsRenderer());
+          path: google.maps.SymbolPath.FORWARD_CLOSED_ARROW,
+          scale: 4,
+          strokeColor: '#00F',
+          fillColor: '#00F',
+          fillOpacity: 1,
+        };
+        if (!directionsRenderer.value) {
+          setDirection(
+            //@ts-ignore
+            new window.google.maps.DirectionsRenderer({
+              suppressMarkers: true,
+              polylineOptions: {
+                geodesic: true,
+                strokeColor: '#ff33cc',
+                strokeOpacity: 1,
+                strokeWeight: 8,
+                zIndex: 9,
+                icons: [
+                  {
+                    icon: customArrow,
+                    offset: '0%',
+                  },
+                ],
+              },
+            }),
+          );
           //@ts-ignore
           directionsRenderer.value.setMap(gmap.value);
         }
         //@ts-ignore
         directionsRenderer.value.setDirections(response);
-        polyline.value = response.routes[0].overview_polyline;
       } else {
         console.error('Failed to calculate the route:', status);
         alert('No route found. Please check your coordinates and travel mode.');
@@ -87,7 +105,7 @@ async function directions() {
 </script>
 
 <template>
-  <section class="border border-violet-600">
+  <section>
     <GoogleMap
       ref="mapRef"
       :api-key="GMAPS_API_KEY"
@@ -97,7 +115,7 @@ async function directions() {
       :zoom="15"
     >
       <Polyline :options="polylineOpts" />
-      <Polyline :options="polylineOpts2" />
+      <DirectionsRenderer />
     </GoogleMap>
   </section>
 </template>

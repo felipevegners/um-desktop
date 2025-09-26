@@ -19,7 +19,7 @@ useHead({
 
 const ridesStore = useRidesStore();
 const { getRidesAction } = ridesStore;
-const { loadingData, rides } = storeToRefs(ridesStore);
+const { loadingData, cancelledRides } = storeToRefs(ridesStore);
 const columnHelper = createColumnHelper<any>();
 
 onMounted(async () => {
@@ -28,7 +28,7 @@ onMounted(async () => {
 
 const filteredRides = ref<any>([]);
 
-filteredRides.value = rides?.value.filter((ride: any) => ride.status === 'cancelled');
+filteredRides.value = cancelledRides;
 
 const editRide = (rideId: string) => {
   navigateTo({

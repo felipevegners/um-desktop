@@ -8,7 +8,7 @@ interface Props {
   admin?: boolean;
   rideData: {
     selectedProduct: any;
-    calculatedTravel: any;
+    calculatedEstimates: any;
     userData: any;
     originAddress: string;
     stops: any;
@@ -52,7 +52,7 @@ const createCheckout = async () => {
 
     // Create ride description
     const rideDescription = `Atendimento ${props.rideData.selectedProduct.name} | Origem: ${props.rideData.originAddress} | Destino: ${props.rideData.destinationAddress}`;
-    const rideAmount = props.rideData.calculatedTravel.travelPrice * 100;
+    const rideAmount = props.rideData.calculatedEstimates.estimatedPrice * 100;
 
     const checkoutResponse = await createSimpleCheckout({
       orderNumber: props.rideData.code,
@@ -107,7 +107,7 @@ const openCheckout = () => {
         : ''
     }
     %0A*Agendado por*: ${props?.rideData.dispatcher?.user} - ${props.rideData.dispatcher?.email}
-    %0A%0A*Valor total*: ${currencyFormat(props?.rideData.calculatedTravel.travelPrice)}
+    %0A%0A*Valor total*: ${currencyFormat(props?.rideData.calculatedEstimates.estimatedPrice)}
     %0A%0A*Link de pagamento Cielo*: ${checkoutUrl.value}
     %0A%0AEm caso de dúvidas, entre em contato conosco.
     %0A%0AEquipe Urban Mobi.
@@ -134,7 +134,10 @@ const openCheckout = () => {
 
 // Auto-create checkout on mount
 onMounted(() => {
-  if (props.rideData?.calculatedTravel?.travelPrice && props.rideData?.selectedProduct) {
+  if (
+    props.rideData?.calculatedEstimates?.estimatedPrice &&
+    props.rideData?.selectedProduct
+  ) {
     createCheckout();
   }
 });
@@ -188,17 +191,19 @@ onMounted(() => {
             <div class="flex justify-between">
               <span class="text-gray-600">Distância:</span>
               <span class="font-medium">
-                {{ rideData.calculatedTravel?.travelDistance }}
+                {{ rideData.calculatedEstimates?.travelDistance }}
               </span>
             </div>
             <div class="flex justify-between">
               <span class="text-gray-600">Tempo estimado:</span>
-              <span class="font-medium">{{ rideData.calculatedTravel?.travelTime }}</span>
+              <span class="font-medium">{{
+                rideData.calculatedEstimates?.estimatedDuration
+              }}</span>
             </div>
             <div class="flex justify-between font-semibold text-lg border-t pt-2">
               <span class="text-gray-900">Total:</span>
               <span class="text-green-600">
-                {{ currencyFormat(rideData.calculatedTravel?.travelPrice) }}
+                {{ currencyFormat(rideData.calculatedEstimates?.estimatedPrice) }}
               </span>
             </div>
           </div>
@@ -248,7 +253,7 @@ onMounted(() => {
           class="w-full py-8 text-lg font-semibold"
           size="lg"
         >
-          Pagar {{ currencyFormat(rideData.calculatedTravel?.travelPrice) }}
+          Pagar {{ currencyFormat(rideData.calculatedEstimates?.estimatedPrice) }}
           <ExternalLink class="ml-2" :size="16" />
         </Button>
 

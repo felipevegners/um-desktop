@@ -54,7 +54,7 @@ export const convertSecondsToTime = (seconds: any) => {
   let time = seconds;
   // Ensure we have a valid number
   if (typeof time !== 'number' || time < 0) {
-    return '00:00';
+    return 'not a number';
   }
 
   if (typeof time === 'string') {
@@ -67,9 +67,8 @@ export const convertSecondsToTime = (seconds: any) => {
   // If less than an hour (3600 seconds), return MM:SS format
   if (time < 3600) {
     const minutes = Math.floor(time / 60);
-    const remainingSeconds = time % 60;
 
-    return `${minutes.toString().padStart(2, '0')}:${remainingSeconds.toString().padStart(2, '0')} min`;
+    return `00:${minutes.toString().padStart(2, '0')} min`;
   }
 
   // If an hour or more, return HH:MM format
@@ -141,4 +140,31 @@ export const convertMetersToDistanceObject = (meters: any, threshold = 1000) => 
 
 export const sanitizeRideDate = (rideDate: string) => {
   return rideDate?.split('-').reverse().join('/');
+};
+
+export const calculateTimeDifference = (
+  startTime: string | number,
+  endTime: string | number,
+) => {
+  const start = new Date(startTime);
+  const end = new Date(endTime);
+
+  const differenceInMs = Math.abs(end.getTime() - start.getTime());
+
+  const seconds = Math.floor(differenceInMs / 1000);
+  const minutes = Math.floor(seconds / 60);
+  const hours = Math.floor(minutes / 60);
+  const days = Math.floor(hours / 24);
+
+  const remainingMinutes = minutes % 60;
+  const remainingSeconds = seconds % 60;
+
+  return {
+    milliseconds: differenceInMs,
+    seconds: seconds,
+    minutes: minutes,
+    hours: hours,
+    days: days,
+    formatted: `${hours} hours, ${remainingMinutes} minutes, ${remainingSeconds} seconds`,
+  };
 };

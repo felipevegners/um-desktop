@@ -141,6 +141,23 @@ const ridePath = ref<any>({
 const markers = ref<any>([]);
 const showRenderedMap = ref<boolean>(false);
 
+onBeforeMount(async () => {
+  await getUsersAccountsAction();
+  const filteredUsers = accounts.value.filter(
+    (user: any) =>
+      user.enabled === true &&
+      user.role !== 'admin' &&
+      user.role !== 'platform-driver' &&
+      user.emailConfirmed === true,
+  );
+  availableUsers.value = filteredUsers.map((user: any) => {
+    return {
+      label: user.username,
+      value: user.id,
+    };
+  });
+});
+
 const addWaypointRow = () => {
   routeWaypoints.value.push({
     address: '',
@@ -169,23 +186,6 @@ const setWaypoints = (place: any, index: number) => {
   waypointLocationDetails.value.push(waypoint);
   routeWaypoints.value[index].address = place.formatted_address;
 };
-
-onBeforeMount(async () => {
-  await getUsersAccountsAction();
-  const filteredUsers = accounts.value.filter(
-    (user: any) =>
-      user.enabled === true &&
-      user.role !== 'admin' &&
-      user.role !== 'platform-driver' &&
-      user.emailConfirmed === true,
-  );
-  availableUsers.value = filteredUsers.map((user: any) => {
-    return {
-      label: user.username,
-      value: user.id,
-    };
-  });
-});
 
 const getBranchAreas = (value: string) => {
   loadingAreas.value = true;
@@ -346,11 +346,10 @@ const decodePolyline = (polyline: string) => {
   ];
 };
 
-const calculatedTravel = ref({
-  travelDistance: '',
-  travelTime: '',
-  travelPrice: '',
-  arrivalTime: '',
+const calculatedEstimates = ref({
+  estimatedDistance: 0,
+  estimatedDuration: 0,
+  estimatedPrice: '',
 });
 
 const handleRideCalculation = async () => {
@@ -363,12 +362,6 @@ const handleRideCalculation = async () => {
     });
     return;
   }
-
-  // const extractedWaypointsAddress = waypointLocationDetails.value.map((waypoint: any) => {
-  //   return {
-  //     ['address']: waypoint['address'],
-  //   };
-  // });
 
   try {
     loadingRoute.value = true;
@@ -389,29 +382,27 @@ const handleRideCalculation = async () => {
       departDate,
       departTime,
     });
+
     routePolyLine.value = routeCalculation[0]?.polyline?.encodedPolyline;
     const basePrice = parseFloat(selectedProduct?.value.basePrice);
     const sanitizeDurationResponse = routeCalculation[0].duration.replace('s', '');
-    const duration = parseInt(sanitizeDurationResponse) / 60;
+    const duration = Math.ceil(sanitizeDurationResponse) / 60;
     const distance = routeCalculation[0].distanceMeters / 1000;
 
     if (selectedProduct.value.type === 'contract') {
       const ridePrice = parseFloat(basePrice.toFixed(2));
-      calculatedTravel.value.travelPrice = ridePrice.toFixed(2).toString();
+      calculatedEstimates.value.estimatedPrice = ridePrice.toFixed(2).toString();
       showContractProductAlert.value = true;
     } else {
       const ridePrice =
         basePrice +
         distance * parseFloat(selectedProduct?.value.kmPrice) +
         duration * parseFloat(selectedProduct?.value.minutePrice);
-      calculatedTravel.value.travelPrice = ridePrice.toFixed(2).toString();
+      calculatedEstimates.value.estimatedPrice = ridePrice.toFixed(2).toString();
     }
 
-    calculatedTravel.value.travelDistance = convertMetersToDistance(
-      routeCalculation[0].distanceMeters,
-    );
-    //@ts-ignore
-    calculatedTravel.value.travelTime = convertSecondsToTime(duration);
+    calculatedEstimates.value.estimatedDistance = routeCalculation[0].distanceMeters;
+    calculatedEstimates.value.estimatedDuration = parseInt(sanitizeDurationResponse);
   } catch (error) {
     toast({
       title: 'Opss!',
@@ -640,7 +631,7 @@ const onSubmit = form.handleSubmit(async (values) => {
 
   const ridePayload = {
     code: rideCode.value,
-    price: calculatedTravel.value.travelPrice,
+    estimatedPrice: calculatedEstimates.value.estimatedPrice,
     billing: {
       paymentMethod: paymentMethod.value,
       paymentUrl: paymentLinkUrl.value,
@@ -649,7 +640,7 @@ const onSubmit = form.handleSubmit(async (values) => {
         branch: values?.branch || '-',
         area: values?.area || '-',
       },
-      ammount: calculatedTravel.value.travelPrice,
+      ammount: calculatedEstimates.value.estimatedPrice,
       status:
         paymentMethod.value === 'corporative'
           ? 'invoice'
@@ -668,6 +659,7 @@ const onSubmit = form.handleSubmit(async (values) => {
       id: selectedProduct.value.id,
       code: selectedProduct.value.code,
       name: selectedProduct.value.name,
+      type: selectedProduct.value.type,
       basePrice: selectedProduct.value.basePrice,
       kmPrice: selectedProduct.value.kmPrice,
       minutePrice: selectedProduct.value.minutePrice,
@@ -689,12 +681,15 @@ const onSubmit = form.handleSubmit(async (values) => {
         lng: destinationCoords.value.lng,
       },
       stops: waypointLocationDetails.value,
-      distance: calculatedTravel.value.travelDistance,
-      duration: calculatedTravel.value.travelTime,
+      estimatedDistance: calculatedEstimates.value.estimatedDistance,
+      estimatedDuration: calculatedEstimates.value.estimatedDuration,
       polyLineCoords: routePolyLine.value,
       routePreviewImg: {
         url: routePreviewUrl,
       },
+    },
+    progress: {
+      actualLocation: [],
     },
     status: 'created',
     accepted: false,
@@ -1130,12 +1125,20 @@ const onSubmit = form.handleSubmit(async (values) => {
                         </div>
                       </div>
                       <div>
-                        <small class="font-bold">Distância</small>
-                        <p>{{ calculatedTravel.travelDistance }}</p>
+                        <small class="font-bold">Distância Estimada</small>
+                        <p>
+                          {{
+                            convertMetersToDistance(calculatedEstimates.estimatedDistance)
+                          }}
+                        </p>
                       </div>
                       <div>
-                        <small class="font-bold">Duração</small>
-                        <p>{{ calculatedTravel.travelTime }}</p>
+                        <small class="font-bold">Duração Estimada</small>
+                        <p>
+                          {{
+                            convertSecondsToTime(calculatedEstimates.estimatedDuration)
+                          }}
+                        </p>
                       </div>
                     </div>
                     <div
@@ -1167,11 +1170,11 @@ const onSubmit = form.handleSubmit(async (values) => {
                           >
                         </p>
                       </div>
-                      <p class="mt-4 font-bold">Total estimado:</p>
+                      <p class="mt-4 font-bold">Total estimado*</p>
                       <p class="font-bold text-3xl">
-                        {{ currencyFormat(calculatedTravel?.travelPrice) }}
+                        {{ currencyFormat(calculatedEstimates?.estimatedPrice) }}
                       </p>
-                      <small class="text-muted-foreground">
+                      <small class="text-muted-foreground text-[10px]">
                         * O valor total final desse serviço será calculado ao término do
                         atendimento, podendo haver ou não acréscimos neste valor.
                       </small>
@@ -1242,9 +1245,8 @@ const onSubmit = form.handleSubmit(async (values) => {
               </div>
             </CardContent>
           </Card>
-          <pre>{{ paymentMethod }}</pre>
           <div
-            v-if="paymentMethod && calculatedTravel.travelPrice"
+            v-if="paymentMethod && calculatedEstimates.estimatedPrice"
             class="my-6 w-full flex gap-6"
           >
             <Button
@@ -1286,7 +1288,7 @@ const onSubmit = form.handleSubmit(async (values) => {
         <DialogTitle class="mb-6">Gerar Pagamento - Crédito À Vista</DialogTitle>
       </DialogHeader>
       <StripeCheckout
-        :amount="calculatedTravel?.travelPrice || 1.0"
+        :amount="calculatedEstimates?.estimatedPrice || 1.0"
         currency="brl"
         :metadata="{ id: selectedUser.id, name: selectedUser.name }"
         @paymentComplete="handlePaymentComplete"
@@ -1308,7 +1310,7 @@ const onSubmit = form.handleSubmit(async (values) => {
         :rideData="{
           code: rideCode,
           selectedProduct: selectedProduct,
-          calculatedTravel: calculatedTravel,
+          calculatedEstimates: calculatedEstimates,
           userData: selectedUser,
           originAddress: originLocationDetails.address,
           stops: waypointLocationDetails,

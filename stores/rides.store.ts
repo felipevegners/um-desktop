@@ -22,6 +22,22 @@ export const useRidesStore = defineStore('rides', {
       loadingSetDriver: false,
     };
   },
+  getters: {
+    openRides({ rides }) {
+      if (rides.length > 0)
+        return rides.filter(
+          (ride: any) => ride.status !== 'completed' && ride.status !== 'cancelled',
+        );
+    },
+    completedRides({ rides }) {
+      if (rides.length > 0)
+        return rides.filter((ride: any) => ride.status === 'completed');
+    },
+    cancelledRides({ rides }) {
+      if (rides.length > 0)
+        return rides.filter((ride: any) => ride.status === 'cancelled');
+    },
+  },
   actions: {
     async getRidesAction() {
       this.loadingData = true;

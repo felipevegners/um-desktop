@@ -1,17 +1,17 @@
-export const getRideCalculationService = async (rideData: any) => {
-  try {
-    const response = await $fetch('/api/travels/distance', {
-      method: 'GET',
-      params: {
-        ...rideData,
-      },
-    });
-    return response;
-  } catch (error) {
-    console.error('Error -> ', error);
-    return error;
-  }
-};
+// export const getRideCalculationService = async (rideData: any) => {
+//   try {
+//     const response = await $fetch('/api/travels/distance', {
+//       method: 'GET',
+//       params: {
+//         ...rideData,
+//       },
+//     });
+//     return response;
+//   } catch (error) {
+//     console.error('Error -> ', error);
+//     return error;
+//   }
+// };
 export const getRideRoutesService = async (rideData: any) => {
   try {
     const response = await $fetch('/api/travels/routes', {
@@ -22,7 +22,7 @@ export const getRideRoutesService = async (rideData: any) => {
     });
     return response;
   } catch (error) {
-    console.error('Error -> ', error);
+    console.error('ERROR SERVICE -> ', error);
     return error;
   }
 };

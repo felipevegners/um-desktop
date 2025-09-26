@@ -19,16 +19,14 @@ useHead({
 
 const ridesStore = useRidesStore();
 const { getRidesAction } = ridesStore;
-const { loadingData, rides } = storeToRefs(ridesStore);
+const { loadingData, completedRides } = storeToRefs(ridesStore);
 const columnHelper = createColumnHelper<any>();
+const filteredRides = ref<any>([]);
+filteredRides.value = completedRides;
 
 onMounted(async () => {
   await getRidesAction();
 });
-
-const filteredRides = ref<any>([]);
-
-filteredRides.value = rides?.value.filter((ride: any) => ride.status === 'completed');
 
 const editRide = (rideId: string) => {
   navigateTo({
