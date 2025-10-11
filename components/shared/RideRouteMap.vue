@@ -16,12 +16,13 @@ const mapOptions = reactive({
 });
 const props = defineProps<{
   originCoords?: any;
+  stopsCoords?: any;
   destinationCoords?: any;
   rideRealCoords: any;
 }>();
 
 const polylineOpts = ref<any>({
-  path: props.rideRealCoords.map((path: any) => ({
+  path: props.rideRealCoords?.rideTracking.map((path: any) => ({
     lat: path.latitude,
     lng: path.longitude,
   })),
@@ -34,8 +35,8 @@ const polylineOpts = ref<any>({
 
 const directionsRenderer = ref(null);
 const center = {
-  lat: props.rideRealCoords[0].latitude,
-  lng: props.rideRealCoords[0].longitude,
+  lat: props.rideRealCoords?.startLocation.latitude,
+  lng: props.rideRealCoords?.startLocation.longitude,
 };
 watch(
   () => mapRef.value?.ready,
@@ -49,9 +50,18 @@ function setDirection(val: any) {
   directionsRenderer.value = val;
 }
 async function directions() {
+  const intermediates = props.stopsCoords.map((stop: any) => {
+    return {
+      location: {
+        lat: stop.coords.lat,
+        lng: stop.coords.lng,
+      },
+    };
+  });
   try {
     const request = {
       origin: props.originCoords, // Start point
+      waypoints: intermediates,
       destination: props.destinationCoords, // End point
       travelMode: 'DRIVING', // Travel mode: DRIVING, WALKING, BICYCLING, TRANSIT
     };

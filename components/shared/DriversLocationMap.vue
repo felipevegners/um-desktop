@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import { useDriversLocation } from '@/composables/drivers/useDriverLocations';
 import { cn } from '@/lib/utils';
-import { Map } from 'lucide-vue-next';
 import { CustomMarker, GoogleMap } from 'vue3-google-map';
 
 const API_KEY = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
@@ -94,7 +93,7 @@ const fetchDriversLocations = () => {
   intervalId.value = setInterval(async () => {
     await getDriversLocation();
     generateDriverMarkers();
-  }, 12000);
+  }, 5000);
 };
 
 onBeforeMount(async () => {

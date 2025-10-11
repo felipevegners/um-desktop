@@ -689,7 +689,7 @@ const onSubmit = form.handleSubmit(async (values) => {
       },
     },
     progress: {
-      actualLocation: [],
+      rideTracking: [],
     },
     status: 'created',
     accepted: false,

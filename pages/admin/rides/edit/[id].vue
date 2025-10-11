@@ -131,15 +131,17 @@ const ridePath = ref<any>({
   path: [],
   geodesic: true,
   strokeColor: '#000000',
-  strokeOpacity: 1.0,
+  strokeOpacity: 0.8,
   strokeWeight: 5,
+  zIndex: 9,
 });
 const finalRidePath = ref<any>({
   path: [],
   geodesic: true,
   strokeColor: '#33ffcc',
-  strokeOpacity: 1.0,
-  strokeWeight: 5,
+  strokeOpacity: 0.8,
+  strokeWeight: 7,
+  zIndex: 10,
 });
 
 const origin = ride?.value.travel.origin;
@@ -174,6 +176,17 @@ const decodePolyline = (polyline: string) => {
   ridePath.value = {
     ...ridePath.value,
     path: [...coords],
+  };
+
+  const finalDecode = polyLineCodec(ride?.value.travel.finalPolyline);
+  const finalCoords = finalDecode.map((path) => ({
+    lat: path[0],
+    lng: path[1],
+  }));
+
+  finalRidePath.value = {
+    ...finalRidePath.value,
+    path: [...finalCoords],
   };
 
   // Find the center of ride path to center the map
@@ -409,17 +422,12 @@ onMounted(() => {
 
 const handleCalculateFinalPrice = async () => {
   try {
-    const response = await $fetch('/api/rides-calculate', {
+    await $fetch('/api/rides-calculate', {
       method: 'POST',
       body: {
         ...ride?.value,
       },
     });
-    finalRideCalculation.value = {
-      duration: parseFloat(response?.routeCalculation[0].duration.replace('s', '')),
-      distance: response?.routeCalculation[0].distanceMeters,
-      polyline: response?.routeCalculation[0].polyline.encodedPolyline,
-    };
   } catch (error) {
     console.error('ERROR -> ', error);
   }
@@ -537,6 +545,7 @@ const onSubmit = form.handleSubmit(async (values) => {
                       class="w-10 h-10"
                     />
                     <Polyline :options="ridePath" />
+                    <Polyline :options="finalRidePath" />
                   </GoogleMap>
                 </div>
                 <div class="p-3 border border-zinc-400 bg-white rounded-md">
@@ -787,18 +796,19 @@ const onSubmit = form.handleSubmit(async (values) => {
         cnc-label="Cancelar"
       />
     </form>
-    <SharedRideRouteMap
+    <!-- <SharedRideRouteMap
       v-if="ride?.status === 'completed'"
       :origin-coords="{
         lat: ride.travel.origin.lat,
         lng: ride.travel.origin.lng,
       }"
+      :stops-coords="ride.travel.stops"
       :destination-coords="{
         lat: ride.travel.destination.lat,
         lng: ride.travel.destination.lng,
       }"
-      :rideRealCoords="ride.progress.actualLocation"
-    />
+      :rideRealCoords="ride.progress"
+    /> -->
   </main>
   <Dialog :open="showRouteRecalculation">
     <DialogContent>
