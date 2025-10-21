@@ -1,4 +1,3 @@
-<!-- // Transformar em Componente -->
 <script setup lang="ts">
 import { toTypedSchema } from '@vee-validate/zod';
 import { Eye, EyeOff, LoaderCircle } from 'lucide-vue-next';
@@ -16,12 +15,13 @@ useHead({
   title: 'Acesse a plataforma | Urban Mobi',
 });
 
-const route = useRoute();
-
 const formSchema = toTypedSchema(
   z.object({
     email: z.string().email(),
-    password: z.string().min(2).max(8),
+    password: z
+      .string({ message: 'A senha deve conter de 6 a 8 caracteres' })
+      .min(6, 'A senha deve conter no mínimo 6 caracteres')
+      .max(8, 'A senha deve conter no máximo 8 caracteres'),
   }),
 );
 
@@ -29,7 +29,7 @@ const form = useForm({
   validationSchema: formSchema,
 });
 
-const { signIn, status } = useAuth();
+const { signIn } = useAuth();
 const isLoading = ref<boolean>(false);
 
 const viewPassword = ref<boolean>(false);
@@ -89,6 +89,7 @@ const onSubmit = form.handleSubmit(async (values) => {
                       v-bind="componentField"
                       :disabled="isLoading"
                       class="bg-zinc-800"
+                      maxlength="8"
                     />
                     <EyeOff
                       class="h-5 w-5 absolute top-[10px] right-3 cursor-pointer hover:text-zinc-700"
@@ -103,6 +104,7 @@ const onSubmit = form.handleSubmit(async (values) => {
                       v-bind="componentField"
                       :disabled="isLoading"
                       class="bg-zinc-800"
+                      maxlength="8"
                     />
                     <Eye
                       class="h-5 w-5 absolute top-[10px] right-3 cursor-pointer hover:text-zinc-700"
@@ -111,6 +113,7 @@ const onSubmit = form.handleSubmit(async (values) => {
                     />
                   </div>
                 </FormControl>
+                <FormMessage class="text-xs" />
               </FormItem>
             </FormField>
             <div

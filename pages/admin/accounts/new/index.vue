@@ -62,9 +62,9 @@ const formSchema = toTypedSchema(
       .max(40, 'Máximo 40 caracteres'),
     userEmail: z.string().min(2, 'Insira um e-mail válido').max(100).email(),
     userPassword: z
-      .string({ message: 'Obrigatório!' })
-      .min(6, 'Mínimo de 6 caracteres')
-      .max(8, 'Máximo de 8 caracteres'),
+      .string({ message: 'A senha deve conter de 6 a 8 caracteres' })
+      .min(6, 'A senha deve conter no mínimo 6 caracteres')
+      .max(8, 'A senha deve conter no máximo 8 caracteres'),
     role: z.string({ message: 'Selecione o tipo de acesso' }).min(2).max(50),
     phone: z.string({ message: 'Obrigatório!' }).min(2),
     document: z.string({ message: 'Obrigatório!' }).min(2).max(18),
@@ -366,6 +366,7 @@ const onSubmit = form.handleSubmit(async (values) => {
                           placeholder="Insira a senha"
                           v-bind="componentField"
                           :disabled="isLoading"
+                          maxlength="8"
                         />
                         <EyeOff
                           class="h-5 w-5 absolute top-[10px] right-3 cursor-pointer hover:text-zinc-700"
@@ -379,6 +380,7 @@ const onSubmit = form.handleSubmit(async (values) => {
                           placeholder="Insira a senha"
                           v-bind="componentField"
                           :disabled="isLoading"
+                          maxlength="8"
                         />
                         <Eye
                           class="h-5 w-5 absolute top-[10px] right-3 cursor-pointer hover:text-zinc-700"
