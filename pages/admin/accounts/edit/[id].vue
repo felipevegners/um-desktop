@@ -6,8 +6,7 @@ import { useToast } from '@/components/ui/toast';
 import { rolesList } from '@/config/roles';
 import { useContractsStore } from '@/stores/contracts.store';
 import { toTypedSchema } from '@vee-validate/zod';
-import { Trash, UserPen } from 'lucide-vue-next';
-import { Eye, EyeOff, LoaderCircle } from 'lucide-vue-next';
+import { Eye, EyeOff, LoaderCircle, Trash, UserPen } from 'lucide-vue-next';
 import { vMaska } from 'maska/vue';
 import { storeToRefs } from 'pinia';
 import { useForm } from 'vee-validate';
@@ -178,7 +177,7 @@ const onSubmit = form.handleSubmit(async (values) => {
   const accountData = {
     accountId: account?.value.id,
     username: values.userName,
-    password: values.newPassword || '',
+    password: values.newPassword,
     email: values.userEmail,
     role: values.role,
     enabled: accountSituation.value,
@@ -378,7 +377,7 @@ const onSubmit = form.handleSubmit(async (values) => {
                     <FormMessage />
                   </FormItem>
                 </FormField>
-                <FormField v-slot="{ componentField }" name="userPassword">
+                <FormField v-slot="{ componentField }" name="newPassword">
                   <FormItem class="relative">
                     <FormLabel> Senha</FormLabel>
                     <FormControl>
