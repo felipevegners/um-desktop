@@ -3,13 +3,9 @@ import {
   Building2,
   CalendarDays,
   Car,
-  Coins,
   HandCoins,
   Handshake,
-  LayoutDashboard,
-  Plus,
   SquarePercent,
-  User,
   UserPen,
 } from 'lucide-vue-next';
 
@@ -155,7 +151,7 @@ export const backofficeMenu = {
         },
         {
           title: 'Pagamento Motoristas',
-          url: '#',
+          url: '/admin/finances/commissions',
         },
       ],
     },
@@ -168,7 +164,7 @@ export const backofficeMenu = {
       active: route.path.includes('products'),
     },
     {
-      name: 'Comissões e Taxas',
+      name: 'Taxas e Repasses',
       url: '/admin/configurations/fees',
       icon: SquarePercent,
       active: route.path.includes('fees'),

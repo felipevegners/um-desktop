@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ArrowLeft, ArrowRight, CircleCheck } from 'lucide-vue-next';
+import { ArrowRight, CircleCheck } from 'lucide-vue-next';
 
 definePageMeta({
   layout: 'login',
@@ -30,7 +30,7 @@ definePageMeta({
             </p>
           </div>
           <NuxtLink
-            to="/login"
+            to="/auth/login"
             class="py-1.5 px-2.5 flex items-center gap-4 text-um-primary text-sm border border-um-primary rounded-md uppercase"
           >
             Login

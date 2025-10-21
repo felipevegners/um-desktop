@@ -1,10 +1,10 @@
+import { defineStore } from 'pinia';
 import {
   createFeeService,
   deleteFeeService,
   getFeesService,
   updtateFeeService,
-} from '@/server/services/fess';
-import { defineStore } from 'pinia';
+} from '~/server/services/fees';
 
 export interface IFeesState {
   fees: any;

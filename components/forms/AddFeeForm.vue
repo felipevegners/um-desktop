@@ -13,7 +13,7 @@ import FormSelect from '../shared/FormSelect.vue';
 const { toast } = useToast();
 
 const store = useFeeStore();
-const { createFeeAction, getFeesAction } = store;
+const { createFeeAction } = store;
 const { isLoading } = storeToRefs(store);
 
 const formSchema = toTypedSchema(
@@ -40,13 +40,13 @@ const onSubmit = form.handleSubmit(async (values) => {
     toast({
       title: 'Tudo pronto!',
       class: 'bg-green-600 border-0 text-white text-2xl',
-      description: `Comissão criada com sucesso!`,
+      description: `Taxa de Comissão criada com sucesso!`,
     });
   } catch (error) {
     toast({
       title: 'Opss!',
       variant: 'destructive',
-      description: `Ocorreu um erro ao criar a Comissão. Tente novamente.`,
+      description: `Ocorreu um erro ao criar a Taxa de Comissão. Tente novamente.`,
     });
   } finally {
     emit('cancel');

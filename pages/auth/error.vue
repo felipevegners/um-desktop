@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ArrowLeft, ArrowRight, XCircleIcon } from 'lucide-vue-next';
+import { ArrowLeft, XCircleIcon } from 'lucide-vue-next';
 import { EMAIL_FROM } from '~/server/providers/ config';
 
 definePageMeta({
@@ -46,7 +46,7 @@ onBeforeMount(() => {
             </h2>
           </div>
           <NuxtLink
-            to="/login"
+            to="/auth/login"
             class="py-1.5 px-2.5 flex items-center gap-4 text-um-primary text-sm border border-um-primary rounded-md uppercase"
           >
             <ArrowLeft :size="16" />

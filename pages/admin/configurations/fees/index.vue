@@ -15,7 +15,7 @@ definePageMeta({
 });
 
 useHead({
-  title: 'Backoffice - Gerenciar Comissões e Taxas | Urban Mobi',
+  title: 'Backoffice - Gerenciar Taxas e Repasses | Urban Mobi',
 });
 
 const showAddForm = ref<boolean>(false);
@@ -166,7 +166,7 @@ const deleteItem = async () => {
     toast({
       title: 'Opss!',
       variant: 'destructive',
-      description: `Ocorreu um erro ao criar a Comissão. Tente novamente.`,
+      description: `Ocorreu um erro ao deletar a Comissão. Tente novamente.`,
     });
   } finally {
     setTimeout(async () => {
@@ -189,7 +189,7 @@ const toggleDeleteAlert = async (itemId: string) => {
     <section class="mb-6 flex items-center justify-between">
       <h1 class="flex items-center gap-4 text-3xl font-bold">
         <SquarePercent :size="32" />
-        Gerenciar Comissões e Taxas
+        Gerenciar Taxas e Repasses
       </h1>
       <Button @click="toggleShowAddForm">
         <Plus class="w-4 h-4" /> Adicionar Nova

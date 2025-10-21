@@ -12,11 +12,11 @@ export default defineEventHandler(async (event) => {
       },
     });
 
-    if (ride && ride.progress.rideTracking.length) {
+    if (ride) {
       const stopsLocations = ride.progress.stops.map((stop: any) => {
         return {
-          lat: stop.location.latitude,
-          lng: stop.location.longitude,
+          lat: stop.latitude,
+          lng: stop.longitude,
         };
       });
       const locations = [
@@ -30,63 +30,63 @@ export default defineEventHandler(async (event) => {
           lng: ride.progress.finishedLocation.longitude,
         },
       ];
-      const departDate = ride.progress.started;
-      const departTime = ride.progress.departTime;
+      const departDate = ride.progress.startedAt;
+      const departTime = ride.travel.departTime;
 
       try {
         const routeCalculation = await getRideRoutesService({
           locations,
-          departDate,
-          departTime,
+          // departDate,
+          // departTime,
         });
 
-        const normalizedDuration = routeCalculation[0].duration.replace('s', '');
-        const etaDuration = ride.travel.estimatedDuration; // in seconds
-        const etaDistance = ride.travel.estimatedDistance; // in meters
-        const realDuration = Math.ceil(normalizedDuration); // in seconds
-        const realDistance = routeCalculation[0].distanceMeters; // in meters
-        const totalTimeStopped =
-          ride.progress.stops.reduce((acc: any, curr: any) => {
-            return acc + curr.totalStopInMinutes;
-          }, 0) * 60;
-        const { basePrice, kmPrice, minutePrice } = ride.product;
+        console.log('--->', locations);
 
-        const finalDuration = Math.max(realDuration, etaDuration) + totalTimeStopped; // in seconds
-        const finalDistance = Math.max(realDistance, etaDistance); // in meters
+        // const normalizedDuration = routeCalculation[0].duration.replace('s', '');
+        // const etaDuration = ride.travel.estimatedDuration; // in seconds
+        // const etaDistance = ride.travel.estimatedDistance; // in meters
+        // const realDuration = Math.ceil(normalizedDuration); // in seconds
+        // const realDistance = routeCalculation[0].distanceMeters; // in meters
+        // const totalTimeStopped =
+        //   ride.progress.stops.reduce((acc: any, curr: any) => {
+        //     return acc + curr.totalStopInMinutes;
+        //   }, 0) * 60;
+        // const { basePrice, kmPrice, minutePrice } = ride.product;
 
-        const finalKmPrice =
-          parseFloat(basePrice) + parseFloat(kmPrice) * (finalDistance / 1000);
-        const finalDurationPrice = parseFloat(minutePrice) * (finalDuration / 60);
-        const rideFinalPrice = finalKmPrice + finalDurationPrice;
+        // const finalDuration = Math.max(realDuration, etaDuration) + totalTimeStopped; // in seconds
+        // const finalDistance = Math.max(realDistance, etaDistance); // in meters
 
-        const finalPolyline = routeCalculation[0].polyline.encodedPolyline;
+        // const finalKmPrice =
+        //   parseFloat(basePrice) + parseFloat(kmPrice) * (finalDistance / 1000);
+        // const finalDurationPrice = parseFloat(minutePrice) * (finalDuration / 60);
+        // const rideFinalPrice = finalKmPrice + finalDurationPrice;
 
-        const finalTravelData = {
-          ...ride.travel,
-          finalDuration,
-          finalDistance,
-          totalTimeStopped,
-          finalPolyline,
-        };
+        // const finalPolyline = routeCalculation[0].polyline.encodedPolyline;
 
-        await prisma.rides.update({
-          where: {
-            id: ride.id,
-          },
-          data: {
-            rideFinalPrice: rideFinalPrice.toFixed(2),
-            travel: finalTravelData,
-          },
-        });
+        // const finalTravelData = {
+        //   ...ride.travel,
+        //   finalDuration,
+        //   finalDistance,
+        //   totalTimeStopped,
+        //   finalPolyline,
+        // };
 
-        return ride;
+        // await prisma.rides.update({
+        //   where: {
+        //     id: ride.id,
+        //   },
+        //   data: {
+        //     rideFinalPrice: rideFinalPrice.toFixed(2),
+        //     travel: finalTravelData,
+        //   },
+        // });
+
+        // return ride;
       } catch (error) {
         console.error('ERROR RIDE CALCULATION API ->', error);
       } finally {
         console.log('RIDE CALCULATED');
       }
-    } else {
-      return;
     }
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {

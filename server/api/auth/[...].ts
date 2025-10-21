@@ -9,8 +9,8 @@ const { toast } = useToast();
 export default NuxtAuthHandler({
   secret: useRuntimeConfig().authSecret,
   pages: {
-    signIn: '/login',
-    error: '/error',
+    signIn: '/auth/login',
+    error: '/auth/error',
   },
   providers: [
     //@ts-expect-error

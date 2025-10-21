@@ -432,7 +432,7 @@ const onSubmit = form.handleSubmit(async (values) => {
               <small>Já possui uma conta?</small>
               <NuxtLink
                 class="text-xs hover:text-um-primary hover:underline"
-                :href="'/login'"
+                :href="'/auth/login'"
               >
                 Acesse aqui.
               </NuxtLink>
