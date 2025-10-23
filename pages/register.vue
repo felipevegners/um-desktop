@@ -237,7 +237,7 @@ const onSubmit = form.handleSubmit(async (values) => {
                     <Input
                       type="text"
                       v-bind="componentField"
-                      v-maska="'(##) # ####-####'"
+                      v-maska="'(##) #####-####'"
                     />
                   </FormControl>
                   <!-- <FormMessage class="absolute right-0 text-xs" /> -->

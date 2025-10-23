@@ -7,7 +7,6 @@ import AvatarEdit from '@/components/shared/AvatarEdit.vue';
 import { useToast } from '@/components/ui/toast/use-toast';
 import { toTypedSchema } from '@vee-validate/zod';
 import {
-  Calendar,
   Car,
   Check,
   Edit,
@@ -267,7 +266,7 @@ const onSubmit = driversForm.handleSubmit(async (values) => {
                       <Input
                         type="text"
                         v-bind="componentField"
-                        v-maska="'(##) # ####-####'"
+                        v-maska="'(##) #####-####'"
                       />
                     </FormControl>
                     <FormMessage />

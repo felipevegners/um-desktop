@@ -168,3 +168,25 @@ export const calculateTimeDifference = (
     formatted: `${hours} hours, ${remainingMinutes} minutes, ${remainingSeconds} seconds`,
   };
 };
+
+export const generatePassword = () => {
+  const lowercase = 'abcdefghijklmnopqrstuvwxyz';
+  const uppercase = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+  const numbers = '0123456789';
+  const symbols = '!@#$%&?';
+
+  // Combine all allowed characters
+  const allChars = lowercase + uppercase + numbers + symbols;
+
+  // Generate 6 random indices using cryptographically secure random values
+  const buf = new Uint8Array(8);
+  window.crypto.getRandomValues(buf);
+
+  // Use each random byte to select a character from the allowed set
+  let password = '';
+  for (let i = 0; i < 6; i++) {
+    password += allChars[buf[i] % allChars.length];
+  }
+
+  return password;
+};

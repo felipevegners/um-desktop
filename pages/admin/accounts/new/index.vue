@@ -4,13 +4,14 @@ import FormSelect from '@/components/shared/FormSelect.vue';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/components/ui/toast/use-toast';
 import { rolesList } from '@/config/roles';
+import { useAccountStore } from '@/stores/account.store';
 import { useContractsStore } from '@/stores/contracts.store';
 import { toTypedSchema } from '@vee-validate/zod';
-import { Eye, EyeOff, LoaderCircle, UserPen } from 'lucide-vue-next';
+import { Eye, EyeOff, LoaderCircle, UserPen, WandSparkles } from 'lucide-vue-next';
 import { vMaska } from 'maska/vue';
 import { useForm } from 'vee-validate';
 import * as z from 'zod';
-import { useAccountStore } from '~/stores/account.store';
+import { generatePassword } from '~/lib/utils';
 
 definePageMeta({
   layout: 'admin',
@@ -32,7 +33,7 @@ const { isLoading } = storeToRefs(contractsStore);
 
 await getContractsAction();
 
-const viewPassword = ref<boolean>(false);
+const viewPassword = ref<boolean>(true);
 const contractName = ref('');
 const contractBranches = ref([]);
 const loadingBranches = ref(false);
@@ -169,6 +170,15 @@ const onSubmit = form.handleSubmit(async (values) => {
     navigateTo('/admin/accounts/active');
   }
 });
+
+const handleGeneratePassword = () => {
+  const randomPassword = generatePassword();
+  if (randomPassword.length) {
+    form.setValues({
+      userPassword: randomPassword,
+    });
+  }
+};
 </script>
 <template>
   <main class="p-6">
@@ -389,12 +399,21 @@ const onSubmit = form.handleSubmit(async (values) => {
                         />
                       </div>
                     </FormControl>
-                    <small class="text-muted-foreground"
-                      >*A senha deve conter de 6 a 8 caracteres</small
+                    <small class="text-muted-foreground">
+                      *A senha deve conter de 6 a 8 caracteres</small
                     >
                     <FormMessage class="text-xs" />
                   </FormItem>
                 </FormField>
+                <div class="relative flex items-center">
+                  <Button
+                    class="relative px-2 top-[4px] max-w-[140px]"
+                    @click.prevent="handleGeneratePassword"
+                  >
+                    <WandSparkles class="w-6 h-6" />
+                    Gerar Senha
+                  </Button>
+                </div>
               </div>
             </div>
             <div
@@ -502,10 +521,19 @@ const onSubmit = form.handleSubmit(async (values) => {
                     <FormMessage class="text-xs" />
                   </FormItem>
                 </FormField>
+                <div class="relative flex items-center">
+                  <Button
+                    class="relative px-2 top-[4px] max-w-[140px]"
+                    @click.prevent="handleGeneratePassword"
+                  >
+                    <WandSparkles class="w-6 h-6" />
+                    Gerar Senha
+                  </Button>
+                </div>
               </div>
             </div>
           </CardContent>
-          <pre>{{ form.errors }}</pre>
+          <!-- <pre>{{ form.errors }}</pre> -->
         </Card>
         <div class="mt-6 flex gap-4">
           <Button type="submit">

@@ -6,12 +6,13 @@ import { useToast } from '@/components/ui/toast';
 import { rolesList } from '@/config/roles';
 import { useContractsStore } from '@/stores/contracts.store';
 import { toTypedSchema } from '@vee-validate/zod';
-import { Eye, EyeOff, LoaderCircle, Trash, UserPen } from 'lucide-vue-next';
+import { Eye, EyeOff, LoaderCircle, Trash, UserPen, WandSparkles } from 'lucide-vue-next';
 import { vMaska } from 'maska/vue';
 import { storeToRefs } from 'pinia';
 import { useForm } from 'vee-validate';
 import { onBeforeMount } from 'vue';
 import * as z from 'zod';
+import { generatePassword } from '~/lib/utils';
 import { useAccountStore } from '~/stores/account.store';
 
 const contractsStore = useContractsStore();
@@ -44,7 +45,7 @@ const accountSituation = ref<boolean>(false);
 const accountData = ref<any>();
 const loadingDelete = ref<boolean>(false);
 const loadingAreas = ref<boolean>(false);
-const viewPassword = ref<boolean>(false);
+const viewPassword = ref<boolean>(true);
 const contractName = ref('');
 const branchesList = ref<any>([]);
 const branchAreasList = ref<any>([]);
@@ -82,6 +83,11 @@ onBeforeMount(() => {
           label: `${area.areaCode} - ${area.areaName}`,
           value: area.areaCode,
         };
+      });
+
+      branchAreasList.value.push({
+        label: 'Todas',
+        value: 'all',
       });
     }
   }
@@ -166,12 +172,21 @@ const form = useForm({
     phone: account?.value.phone,
     position: account?.value.position,
     department: account?.value.department,
-    contract: account?.value.contract?.contractId || '-',
-    branch: account?.value.contract?.branchId || '-',
-    area: account?.value.contract?.area || '-',
+    contract: account?.value.contract?.contractId,
+    branch: account?.value.contract?.branchId,
+    area: account?.value.contract?.area,
     status: account?.value.status,
   },
 });
+
+const handleGeneratePassword = () => {
+  const randomPassword = generatePassword();
+  if (randomPassword.length) {
+    form.setValues({
+      newPassword: randomPassword,
+    });
+  }
+};
 
 const onSubmit = form.handleSubmit(async (values) => {
   const accountData = {
@@ -186,10 +201,10 @@ const onSubmit = form.handleSubmit(async (values) => {
     position: values.position,
     department: values.department,
     contract: {
-      contractId: values.contract || '-',
-      name: contractName.value || '-',
-      branchId: values.branch || '-',
-      area: values.area || '-',
+      contractId: values.contract,
+      name: contractName.value,
+      branchId: values.branch,
+      area: values.area,
     },
     avatar: {
       name: '',
@@ -217,11 +232,11 @@ const onSubmit = form.handleSubmit(async (values) => {
 });
 </script>
 <template>
-  <main>
+  <main class="p-6">
     <header>
       <BackLink />
     </header>
-    <section class="px-6 mb-10 flex items-center justify-between">
+    <section class="mb-10 flex items-center justify-between">
       <h1 class="flex items-center gap-2 text-3xl font-bold">
         <UserPen :size="32" />
         Editar Conta de Usuário
@@ -243,7 +258,7 @@ const onSubmit = form.handleSubmit(async (values) => {
         </Button>
       </div>
     </section>
-    <section class="p-6">
+    <section>
       <form @submit="onSubmit" @keydown.enter.prevent="true">
         <Card class="bg-zinc-200">
           <CardHeader class="gap-6">
@@ -305,7 +320,7 @@ const onSubmit = form.handleSubmit(async (values) => {
                 <div
                   v-if="!loadingAreas && !branchAreasList.length"
                   class="bg-zinc-300 rounded-md h-10 cursor-not-allowed"
-                ></div>
+                />
                 <FormField
                   v-if="!loadingAreas && branchAreasList.length"
                   v-slot="{ componentField }"
@@ -344,7 +359,7 @@ const onSubmit = form.handleSubmit(async (values) => {
                       <Input
                         type="text"
                         v-bind="componentField"
-                        v-maska="'(##) # ####-####'"
+                        v-maska="'(##) #####-####'"
                       />
                     </FormControl>
                     <FormMessage />
@@ -379,7 +394,7 @@ const onSubmit = form.handleSubmit(async (values) => {
                 </FormField>
                 <FormField v-slot="{ componentField }" name="newPassword">
                   <FormItem class="relative">
-                    <FormLabel> Senha</FormLabel>
+                    <FormLabel>Alterar Senha</FormLabel>
                     <FormControl>
                       <div v-if="viewPassword" class="relative">
                         <Input
@@ -412,6 +427,15 @@ const onSubmit = form.handleSubmit(async (values) => {
                     <FormMessage />
                   </FormItem>
                 </FormField>
+                <div class="relative flex items-center">
+                  <Button
+                    class="relative px-2 top-[4px] max-w-[140px]"
+                    @click.prevent="handleGeneratePassword"
+                  >
+                    <WandSparkles class="w-6 h-6" />
+                    Gerar Senha
+                  </Button>
+                </div>
               </div>
             </div>
           </CardContent>
@@ -431,7 +455,6 @@ const onSubmit = form.handleSubmit(async (values) => {
         </div>
       </form>
     </section>
-    <pre>{{ accountData }}</pre>
   </main>
 </template>
 

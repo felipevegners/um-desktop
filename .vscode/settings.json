@@ -15,5 +15,9 @@
     "source.fixAll": "explicit",
     "source.organizeImports": "explicit",
     "source.sortMembers": "explicit"
-  }
+  },
+  "workbench.colorCustomizations" : {
+    "terminal.foreground" : "#00FD61",
+    "terminal.background" : "#1d1d1d"
+}
 }

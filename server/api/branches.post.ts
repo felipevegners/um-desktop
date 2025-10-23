@@ -74,8 +74,9 @@ export default defineEventHandler(async (event) => {
       role: 'branch-manager',
       contract: {
         contractId: contract,
+        name: `${branchCode} - ${name}`,
         branchId: newBranch.id,
-        area: '-',
+        area: 'all',
       },
       phone: branchManagerPhone,
       position: branchManagerPosition,
@@ -104,11 +105,6 @@ export default defineEventHandler(async (event) => {
           connect: {
             id: contract,
           },
-        },
-        managerInfo: {
-          phone: branchManagerPhone,
-          position: branchManagerPosition,
-          department: branchManagerDepartment,
         },
       },
     });

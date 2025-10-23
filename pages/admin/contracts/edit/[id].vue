@@ -3,20 +3,20 @@ import AdditionalInfoForm from '@/components/forms/AdditionalInfoForm.vue';
 import ComercialConditionsForm from '@/components/forms/ComercialConditionsForm.vue';
 import CompanyForm from '@/components/forms/CompanyForm.vue';
 import MasterManagerForm from '@/components/forms/MasterManagerForm.vue';
+import ProductsForm from '@/components/forms/ProductsForm.vue';
+import AvatarEdit from '@/components/shared/AvatarEdit.vue';
 import BackLink from '@/components/shared/BackLink.vue';
 import FormSelect from '@/components/shared/FormSelect.vue';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/components/ui/toast/use-toast';
-import { findAddressByZipcode } from '@/server/services/FindAddress';
+import { useContractsStore } from '@/stores/contracts.store';
+import { useFilesStore } from '@/stores/files.store';
 import { toTypedSchema } from '@vee-validate/zod';
 import { CircleX, FileText, LoaderCircle, Paperclip, Trash } from 'lucide-vue-next';
 import { storeToRefs } from 'pinia';
 import { useForm } from 'vee-validate';
 import { ref } from 'vue';
 import * as z from 'zod';
-import ProductsForm from '~/components/forms/ProductsForm.vue';
-import { useContractsStore } from '~/stores/contracts.store';
-import { useFilesStore } from '~/stores/files.store';
 
 const filesStore = useFilesStore();
 const { deleteFileAction } = filesStore;
@@ -33,6 +33,10 @@ const store = useContractsStore();
 const { getContractByIdAction, updateContractAction } = store;
 const { contract, isLoading } = storeToRefs(store);
 
+const accountsStore = useAccountStore();
+const { getUsersAccountsAction } = accountsStore;
+const { accounts } = storeToRefs(accountsStore);
+
 const route = useRoute();
 await getContractByIdAction(route?.params?.id as string);
 
@@ -48,9 +52,32 @@ const customerLogo = ref<any>({
 const availableProducts = ref();
 const isLoadingProducts = ref<boolean>(false);
 const selectedProducts = ref<any>([]);
+const masterManagerUserList = ref<any>([]);
 
 contractSituation.value = contract?.value.enabled;
 selectedProducts.value = contract?.value.products;
+
+const customerLogoImage = reactive({
+  name: contract?.value.customer?.logo.name,
+  url: contract?.value.customer?.logo.url,
+});
+
+onMounted(async () => {
+  if (contract && contract.value.manager === null) {
+    await getUsersAccountsAction();
+  }
+  const findContractUsers = accounts.value.filter(
+    (account: any) =>
+      account.contract.contractId === (route?.params.id as string) &&
+      account.role === 'master-manager',
+  );
+  masterManagerUserList.value = findContractUsers.map((user: any) => {
+    return {
+      label: `${user.username} - Gestor Master`,
+      value: user.id,
+    };
+  });
+});
 
 const fetchProducts = async () => {
   isLoadingProducts.value = true;
@@ -83,10 +110,11 @@ const schema = toTypedSchema(
     phone: z.string().min(2).max(16),
     phoneExtension: z.string().min(0).max(6).optional(),
     website: z.string().min(2).max(50),
-    managerName: z.string().min(1).max(100),
-    managerCellPhone: z.string().min(2).max(16),
-    position: z.string().min(1).max(50),
-    department: z.string().min(1).max(50),
+    managerName: z.string().min(1).max(100).optional(),
+    managerId: z.string().min(1).max(100).optional(),
+    managerCellPhone: z.string().min(2).max(16).optional(),
+    position: z.string().min(1).max(50).optional(),
+    department: z.string().min(1).max(50).optional(),
     managerEmail: z.string().email().min(1).max(100),
     mainBudget: z.any().optional(),
     paymentTerm: z.string().min(1).max(10),
@@ -113,11 +141,11 @@ const form = useForm({
     phone: contract?.value?.customer?.phone,
     phoneExtension: contract?.value?.customer?.phoneExtension,
     website: contract?.value?.customer?.website,
-    managerName: contract?.value?.managerName,
-    managerCellPhone: contract?.value?.manager?.phone,
-    position: contract?.value?.manager?.position,
-    department: contract?.value?.manager?.department,
-    managerEmail: contract?.value?.manager.email,
+    managerName: contract?.value?.managerName || '-',
+    managerCellPhone: contract?.value?.manager?.phone || '(XX) XXXXX-XXXX',
+    position: contract?.value?.manager?.position || '-',
+    department: contract?.value?.manager?.department || '-',
+    managerEmail: contract?.value?.manager?.email || 'master-manager@email.com',
     mainBudget: Number(contract?.value.mainBudget) * 100,
     paymentTerm: contract?.value?.comercialConditions?.paymentTerm,
     paymentDueDate: contract?.value?.comercialConditions?.paymentDueDate,
@@ -130,9 +158,10 @@ const onSubmit = form.handleSubmit(async (values) => {
   const payloadIds = {
     contractId: contract?.value.id,
     customerId: contract?.value.customer.id,
-    managerId: contract?.value.managerId,
+    managerId: contract?.value.managerId || values.managerId,
   };
 
+  // CUSTOMER PAYLOAD
   const customerData = {
     document: values.document,
     name: values.name,
@@ -149,12 +178,10 @@ const onSubmit = form.handleSubmit(async (values) => {
     phone: values.phone,
     phoneExtension: values.phoneExtension,
     website: values.website,
-    logo: {
-      name: customerLogo.value.name,
-      url: customerLogo.value.url,
-    },
+    logo: { ...customerLogoImage },
   };
 
+  // CONTRACT PAYLOAD
   const { id, customerId, managerId, managerName, ...restContract } = contract?.value;
   const contractData = {
     ...restContract,
@@ -193,26 +220,6 @@ const onSubmit = form.handleSubmit(async (values) => {
     navigateTo('/admin/contracts/active');
   }
 });
-
-const deleteFile = async (url: string) => {
-  try {
-    await deleteFileAction(url);
-  } catch (error) {
-    toast({
-      title: 'Oops!',
-      description: `Arquivo do logotipo não pode ser removido. Tente novamente.`,
-      variant: 'destructive',
-    });
-  } finally {
-    toast({
-      title: 'Feito!',
-      class: 'bg-green-500 border-0 text-white text-2xl',
-      description: `Arquivo do logotipo foi removido com sucesso!`,
-    });
-    customerLogo.value.name = '';
-    customerLogo.value.url = '';
-  }
-};
 </script>
 <template>
   <main class="p-6">
@@ -250,62 +257,11 @@ const deleteFile = async (url: string) => {
           <div class="mb-10 px-6 flex justify-between items-start gap-4">
             <div class="flex flex-col gap-4">
               <p class="font-bold">Logo</p>
-              <div
-                class="p-4 h-[100px] rounded-md bg-white bg-contain bg-no-repeat bg-center"
-                :style="{ backgroundImage: `url(${customerLogo?.url})` }"
+              <AvatarEdit
+                v-model="customerLogoImage"
+                uploadUrl="customerLogo"
+                type="customer-logo"
               />
-              <div class="flex items-end justify-between gap-4">
-                <div v-if="customerLogo?.name === ''">
-                  <UploadButton
-                    class="relative ut-button:bg-zinc-900 ut-button:hover:bg-zinc-700 ut-button:ut-uploading:after:bg-green-500 ut-button:ut-uploading:cursor-not-allowed ut-button:ut-readying:bg-red-500"
-                    :config="{
-                      appearance: {
-                        container: '!items-start',
-                        allowedContent: '!absolute !top-10',
-                      },
-                      content: {
-                        allowedContent({ ready, fileTypes, isUploading }: any) {
-                          if (ready) return '';
-                          if (isUploading) return 'Enviando seu arquivo, aguarde...';
-                        },
-                      },
-                      endpoint: 'customerLogo',
-                      onClientUploadComplete: (file: any) => {
-                        customerLogo.name = file[0].name;
-                        customerLogo.url = file[0].ufsUrl;
-                      },
-                      onUploadError: (error: any) => {
-                        toast({
-                          title: 'Ooops!',
-                          class: 'bg-red-500 border-0 text-white text-2xl',
-                          description: `Erro ao enviar o arquivo. Tente novamente. ${error.cause}`,
-                        });
-                      },
-                    }"
-                  />
-                </div>
-                <div v-if="customerLogo?.name !== ''" class="flex gap-2 items-center">
-                  <Paperclip class="w-4 h-4 text-zinc-500" />
-                  <div
-                    class="px-4 py-2 border border-dashed border-zinc-500 rounded-md bg-white"
-                  >
-                    <a
-                      class="underline"
-                      :href="customerLogo?.url"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                    >
-                      {{ customerLogo?.name || 'Nenhum arquivo anexo' }}
-                    </a>
-                  </div>
-                  <LoaderCircle v-if="loadingFileData" class="w-4 h-4 animate-spin" />
-                  <CircleX
-                    v-else
-                    class="w-4 h-4 text-zinc-500 hover:text-red-500 cursor-pointer"
-                    @click.prevent="deleteFile(customerLogo?.url)"
-                  />
-                </div>
-              </div>
             </div>
             <FormField v-slot="{ componentField }" name="status">
               <FormItem class="grid grid-cols-2 items-center gap-4">
@@ -335,7 +291,29 @@ const deleteFile = async (url: string) => {
           </div>
           <div class="mb-10">
             <h2 class="px-6 mb-4 text-2xl font-bold">2. Gestor Master</h2>
-            <MasterManagerForm :editMode="true" :editId="contract?.managerId" />
+            <div v-if="contract?.manager === null" class="px-6 flex flex-col items-start">
+              <div class="my-4 px-4 bg-red-200">
+                <small class="text-red-500">
+                  *Contrato ainda não possui um Gestor Master atribuído. Selecione um
+                  usuário com perfil Gestor Master na lista abaixo.
+                </small>
+              </div>
+              <div class="grid grid-cols-4 gap-6 w-full">
+                <FormField v-slot="{ componentField }" name="managerId">
+                  <FormItem class="col-span-1">
+                    <FormLabel class="font-bold">Selecionar Gestor Master</FormLabel>
+                    <FormControl>
+                      <FormSelect
+                        v-bind="componentField"
+                        :items="masterManagerUserList"
+                        label="Selecione"
+                      />
+                    </FormControl>
+                  </FormItem>
+                </FormField>
+              </div>
+            </div>
+            <MasterManagerForm v-else :editMode="true" :editId="contract?.managerId" />
           </div>
           <div class="mb-10">
             <h2 class="px-6 mb-4 text-2xl font-bold">3. Condições Comerciais</h2>

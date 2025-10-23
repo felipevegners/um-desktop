@@ -2,6 +2,7 @@
 import BackLink from '@/components/shared/BackLink.vue';
 import { Edit, FileText, LoaderCircle, User } from 'lucide-vue-next';
 import { storeToRefs } from 'pinia';
+import { rolesTypes } from '~/config/roles';
 import { currencyFormat, dateFormat } from '~/lib/utils';
 import { useAccountStore } from '~/stores/account.store';
 import { useContractsStore } from '~/stores/contracts.store';
@@ -25,7 +26,7 @@ const { accounts } = storeToRefs(accountsStore);
 
 const contractAccounts = computed((): any => {
   return accounts?.value.filter(
-    (account: any) => account.contractId === (route?.params?.id as string),
+    (account: any) => account.contract.contractId === (route?.params?.id as string),
   );
 });
 
@@ -184,11 +185,13 @@ await getUsersAccountsAction();
                 :key="product.id"
                 class="mb-4 text-sm"
               >
-                <span
-                  class="mr-2 px-2 py-1 uppercase text-white text-center rounded-md text-sm"
-                  :class="`${product.type === 'contract' ? 'bg-zinc-800' : product.type === 'free-km' ? 'bg-orange-400' : 'bg-purple-400'}`"
-                  >{{ product.code }}</span
-                >{{ product.name }}
+              <div class="flex items-center gap-2">
+                <span class="uppercase font-bold">
+                  {{ product.code }}
+                </span>
+            <SharedProductTag :label="product.name" :type="product.name" />
+
+              </div>
               </p>
             </div>
             <div class="p-6 bg-white rounded-md">
@@ -269,7 +272,7 @@ await getUsersAccountsAction();
                       <small class="text-muted-foreground">
                         {{ account.email }}
                       </small>
-                      <small>{{ account.role }} </small>
+                      <small>{{ rolesTypes[account.role] }} </small>
                     </div>
                   </CardHeader>
                   <CardContent class="flex flex-col justify-start gap-6">

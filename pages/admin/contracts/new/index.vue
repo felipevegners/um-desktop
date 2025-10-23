@@ -219,7 +219,7 @@ function prevStep() {
             2. Gestor Master
           </AccordionTrigger>
           <AccordionContent>
-            <MasterManagerForm />
+            <MasterManagerForm :form="form" />
           </AccordionContent>
         </AccordionItem>
         <!-- @vue-skip -->

@@ -102,6 +102,7 @@ const onSubmit = form.handleSubmit(async (values) => {
             :loading="isLoadingAddress"
             v-model="ccAreas"
             :disabledFields="!!form.values.contract"
+            :form="form"
           >
             <AddressForm :form="form" />
           </BranchForm>

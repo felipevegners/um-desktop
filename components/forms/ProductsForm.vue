@@ -120,14 +120,12 @@ const checkAdded = (id: string) => {
             class="mb-4 w-[80px] h-[80px] rounded-md bg-zinc-200 bg-cover bg-no-repeat bg-center relative flex items-center justify-center"
             :style="{ backgroundImage: `url(${product.image?.url})` }"
           />
-          <p>
-            <span
-              class="mr-2 px-2 py-1 uppercase text-white text-center rounded-md"
-              :class="`${product.type === 'contract' ? 'bg-zinc-800' : product.type === 'free-km' ? 'bg-orange-400' : 'bg-purple-400'}`"
-              >{{ product.code }}</span
-            >
-            {{ product.name }}
-          </p>
+          <div class="flex items-center gap-2">
+            <span class="uppercase font-bold">
+              {{ product.code }}
+            </span>
+            <SharedProductTag :label="product.name" :type="product.name" />
+          </div>
         </div>
         <p class="text-sm text-zinc-500">{{ product.description }}</p>
         <div v-if="checkAdded(product.id)">

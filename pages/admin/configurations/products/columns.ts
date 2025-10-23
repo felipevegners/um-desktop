@@ -1,6 +1,7 @@
 import { Button } from '@/components/ui/button';
 import { createColumnHelper } from '@tanstack/vue-table';
 import { ArrowUpDown } from 'lucide-vue-next';
+import ProductTag from '~/components/shared/ProductTag.vue';
 
 const columnHelper = createColumnHelper<any>();
 
@@ -20,12 +21,10 @@ export const columns = [
   columnHelper.accessor('code', {
     header: () => h('div', { class: 'text-left text-xs' }, 'Código'),
     cell: ({ row }) => {
-      const value = row.original;
       return h(
         'div',
         {
-          class: `px-2 py-1 uppercase text-xs text-white text-center rounded-md
-          ${value.type === 'contract' ? 'bg-zinc-800' : value.type === 'free-km' ? 'bg-orange-400' : 'bg-purple-400'}`,
+          class: 'text-left text-xs font-bold',
         },
         row.getValue('code'),
       );
@@ -44,16 +43,20 @@ export const columns = [
         () => ['Nome', h(ArrowUpDown, { class: 'ml-2 h-4 w-4' })],
       );
     },
-    cell: ({ row }) =>
-      h(
+    cell: ({ row }) => {
+      const value = row.original;
+      return h(
         'div',
-        { class: 'text-left text-xs font-bold uppercase' },
-        row.getValue('name'),
-      ),
+        { class: 'text-left font-bold uppercase' },
+        h(ProductTag, {
+          label: value.name,
+          type: value.name,
+        }),
+      );
+    },
   }),
   columnHelper.accessor('type', {
-    header: () =>
-      h('div', { class: 'text-center text-xs' }, 'Tipo de Cobrança'),
+    header: () => h('div', { class: 'text-center text-xs' }, 'Tipo de Cobrança'),
     cell: ({ row }) => {
       const value = row.getValue('type');
       return h(
@@ -70,11 +73,7 @@ export const columns = [
   columnHelper.accessor('capacity', {
     header: () => h('div', { class: 'text-center text-xs' }, 'Capacidade'),
     cell: ({ row }) =>
-      h(
-        'div',
-        { class: 'capitalize text-xs text-center' },
-        row.getValue('capacity'),
-      ),
+      h('div', { class: 'capitalize text-xs text-center' }, row.getValue('capacity')),
   }),
   columnHelper.accessor('basePrice', {
     header: () => h('div', { class: 'text-center text-xs' }, 'Valor Base'),
@@ -101,8 +100,7 @@ export const columns = [
     },
   }),
   columnHelper.accessor('includedHours', {
-    header: () =>
-      h('div', { class: 'text-center text-xs' }, 'Franquia de Horas'),
+    header: () => h('div', { class: 'text-center text-xs' }, 'Franquia de Horas'),
     cell: ({ row }) => {
       return h(
         'div',

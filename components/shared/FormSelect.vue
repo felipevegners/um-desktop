@@ -4,7 +4,6 @@ import {
   SelectContent,
   SelectGroup,
   SelectItem,
-  SelectLabel,
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
@@ -17,7 +16,7 @@ const props = defineProps<{
   loading?: boolean;
   disabled?: boolean;
 }>();
-const selectedDriver = ref('');
+const selectedItem = ref('');
 const emit = defineEmits(['on-select']);
 
 const selected = (value: any) => {
@@ -25,7 +24,7 @@ const selected = (value: any) => {
 };
 
 const reset = () => {
-  selectedDriver.value = '';
+  selectedItem.value = '';
 };
 
 defineExpose({ reset });
@@ -34,7 +33,7 @@ defineExpose({ reset });
 <template>
   <Select
     @update:model-value="selected"
-    v-model="selectedDriver"
+    v-model="selectedItem"
     :disabled="props.disabled"
   >
     <SelectTrigger v-if="loading">

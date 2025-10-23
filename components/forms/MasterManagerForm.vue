@@ -1,7 +1,8 @@
 <script setup lang="ts">
-import { Info, Lock, User, WandSparkles } from 'lucide-vue-next';
+import { Info, User, WandSparkles } from 'lucide-vue-next';
 import { vMaska } from 'maska/vue';
 import { storeToRefs } from 'pinia';
+import { generatePassword } from '~/lib/utils';
 import { useContractsStore } from '~/stores/contracts.store';
 
 const store = useContractsStore();
@@ -11,10 +12,20 @@ definePageMeta({
   name: 'MasterManagerForm',
 });
 
-defineProps<{
+const props = defineProps<{
   editMode?: boolean;
   editId?: string;
+  form?: any;
 }>();
+
+const handleGeneratePassword = () => {
+  const randomPassword = generatePassword();
+  if (randomPassword.length) {
+    props.form.setValues({
+      password: randomPassword,
+    });
+  }
+};
 </script>
 <template v-if="currentStep === 1">
   <section class="px-6">
@@ -114,7 +125,10 @@ defineProps<{
                 <FormMessage />
               </FormItem>
             </FormField>
-            <Button class="mb-1 px-2 max-w-[140px]" @click.prevent="" disabled>
+            <Button
+              class="mb-1 px-2 max-w-[140px]"
+              @click.prevent="handleGeneratePassword"
+            >
               <WandSparkles class="w-6 h-6" />
               Gerar Senha
             </Button>

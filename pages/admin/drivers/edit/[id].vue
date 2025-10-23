@@ -269,7 +269,7 @@ const onSubmit = driversForm.handleSubmit(async (values) => {
                     <Input
                       type="text"
                       v-bind="componentField"
-                      v-maska="'(##) # ####-####'"
+                      v-maska="'(##) #####-####'"
                     />
                   </FormControl>
                   <FormMessage />

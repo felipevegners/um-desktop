@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { useToast } from '@/components/ui/toast/use-toast';
+import { cn } from '@/lib/utils';
 import { CircleX, LoaderCircle, Paperclip } from 'lucide-vue-next';
 import { ref } from 'vue';
 import { useFilesStore } from '~/stores/files.store';
@@ -9,11 +10,17 @@ const { deleteFileAction } = filesStore;
 
 const { toast } = useToast();
 
-defineProps<{
+type Props = {
   uploadUrl?: any;
-}>();
+  type?: string;
+};
 
-const loadingFileData = ref<boolean>(false);
+const props = withDefaults(defineProps<Props>(), {
+  type: 'profile-picture',
+});
+
+const loadingNewImage = ref<boolean>(false);
+const loadingDeleteImage = ref<boolean>(false);
 const avatarFile = defineModel<any>({
   default: { name: '', url: '' },
 });
@@ -21,6 +28,7 @@ const avatarFile = defineModel<any>({
 defineEmits(['update:avatarFile']);
 
 const deleteFile = async (url: string) => {
+  loadingDeleteImage.value = true;
   try {
     await deleteFileAction(url);
   } catch (error) {
@@ -37,29 +45,50 @@ const deleteFile = async (url: string) => {
     });
     avatarFile.value.name = '';
     avatarFile.value.url = '';
+    loadingDeleteImage.value = false;
   }
 };
+
+const imageSrc = computed(() => {
+  if (avatarFile?.value.url !== '') {
+    return avatarFile.value.url;
+  } else if (props.type === 'profile-picture') {
+    return '/images/no-avatar.png';
+  } else {
+    return '/images/no-image.png';
+  }
+});
 </script>
 <template>
-  <div class="p-2 pb-4 flex flex-col gap-2 border border-zinc-300 rounded-md bg-white">
+  <div
+    class="p-2 pb-4 w-[200px] flex flex-col items-center justify-center gap-2 border border-zinc-300 rounded-md bg-white"
+  >
     <NuxtImg
-      :src="avatarFile?.url"
+      :src="imageSrc"
       loading="lazy"
-      placeholder="/images/no-avatar.png"
-      class="w-[200px] h-[240px] rounded-md object-cover bg-white"
-      v-slot="{ src, isLoaded, imgAttrs }"
+      :class="
+        cn(
+          type === 'profile-picture' && 'w-[200px] h-[240px] object-cover bg-white',
+          type === 'customer-logo' && 'p-4 w-full h-[180px] object-fit bg-white',
+        )
+      "
+      v-slot="{ src, imgAttrs }"
       preload
       :custom="true"
     >
-      <img v-if="isLoaded" v-bind="imgAttrs" :src="src" />
-      <div v-else class="rounded-md flex items-center justify-center">
-        <img v-bind="imgAttrs" src="/images/no-avatar.png" />
+      <div
+        v-if="loadingNewImage"
+        v-bind="imgAttrs"
+        class="flex items-center justify-center"
+      >
+        <LoaderCircle class="animate-spin" :size="48" />
       </div>
+      <img v-else v-bind="imgAttrs" :src="src" />
     </NuxtImg>
     <div class="flex items-end justify-between gap-4">
       <div v-if="avatarFile?.name === ''" class="relative w-full">
         <UploadButton
-          class="ut-button:w-full ut-button:bg-zinc-900 ut-button:hover:bg-zinc-700 ut-button:ut-uploading:after:bg-green-500 ut-button:ut-uploading:cursor-not-allowed ut-button:ut-readying:bg-red-500 ut-button:text-sm"
+          class="ut-button:w-[180px] ut-button:bg-zinc-900 ut-button:hover:bg-zinc-700 ut-button:ut-uploading:after:bg-green-500 ut-button:ut-uploading:cursor-not-allowed ut-button:ut-readying:bg-red-500 ut-button:text-sm"
           :config="{
             appearance: {
               container: '!items-start',
@@ -72,9 +101,14 @@ const deleteFile = async (url: string) => {
               },
             },
             endpoint: uploadUrl,
+            //@ts-ignore
+            onBeforeUploadBegin: () => {
+              loadingNewImage = true;
+            },
             onClientUploadComplete: (file) => {
               avatarFile.name = file[0].name;
               avatarFile.url = file[0].ufsUrl;
+              loadingNewImage = false;
             },
             onUploadError: (error) => {
               toast({
@@ -100,7 +134,7 @@ const deleteFile = async (url: string) => {
               {{ avatarFile?.name || 'Nenhum arquivo anexo' }}
             </a>
           </div>
-          <LoaderCircle v-if="loadingFileData" class="w-4 h-4 animate-spin" />
+          <LoaderCircle v-if="loadingDeleteImage" class="w-4 h-4 animate-spin" />
           <CircleX
             v-else
             class="w-4 h-4 text-zinc-500 hover:text-red-500 cursor-pointer"

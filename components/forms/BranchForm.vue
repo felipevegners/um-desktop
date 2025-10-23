@@ -10,7 +10,7 @@ import {
 } from 'lucide-vue-next';
 import { vMaska } from 'maska/vue';
 import { storeToRefs } from 'pinia';
-import { currencyFormat } from '~/lib/utils';
+import { currencyFormat, generatePassword } from '~/lib/utils';
 import { useContractsStore } from '~/stores/contracts.store';
 
 const contractsStore = useContractsStore();
@@ -36,6 +36,7 @@ const showBudgetControl = ref<boolean>(false);
 const contractRemainBudget = ref(0);
 const calculatedBudget = ref(0);
 const contractMainBudget = ref(0);
+const selectedContract = ref<any>(null);
 
 onBeforeMount(async () => {
   if (props.editMode) {
@@ -80,6 +81,8 @@ const compileBudget = (value: string) => {
   } else {
     showBudgetControl.value = true;
     const contract = contracts?.value.find((contract: any) => contract.id === value);
+    console.log(contract);
+    selectedContract.value = contract;
     const { branches, mainBudget } = contract;
     contractMainBudget.value = parseFloat(mainBudget);
     const remainBudget = branches.reduce(
@@ -90,13 +93,45 @@ const compileBudget = (value: string) => {
     calculatedBudget.value = remainBudget;
   }
 };
+
+const setDocumentFromHQ = () => {
+  if (selectedContract.value !== null) {
+    props.form.setValues({
+      document: selectedContract.value.customer.document,
+      name: selectedContract.value.customer.name,
+      fantasyName: selectedContract.value.customer.fantasyName,
+      zipcode: selectedContract.value.customer.address.zipcode,
+      streetName: selectedContract.value.customer.address.streetName,
+      streetNumber: selectedContract.value.customer.address.streetNumber,
+      complement: selectedContract.value.customer.address.complement,
+      neighborhood: selectedContract.value.customer.address.neighborhood,
+      city: selectedContract.value.customer.address.city,
+      state: selectedContract.value.customer.address.state,
+      phone: selectedContract.value.customer.phone,
+      phoneExtension: selectedContract.value.customer.phoneExtension,
+    });
+  } else {
+    props.form.setErrors({
+      document: 'Selecione um contrato!',
+    });
+  }
+};
+
+const handleGeneratePassword = () => {
+  const randomPassword = generatePassword();
+  if (randomPassword.length) {
+    props.form.setValues({
+      password: randomPassword,
+    });
+  }
+};
 </script>
 <template>
   <section class="mb-6 px-6 flex items-center justify-between">
     <div class="md:max-w-[350px]">
       <h3 v-if="editMode" class="mb-4 text-lg font-bold">1. Contrato vinculado</h3>
       <h3 v-else class="mb-4 text-lg font-bold">1. Selecione o Contrato a vincular</h3>
-      <FormField v-slot="{ componentField, value }" name="contract">
+      <FormField v-slot="{ componentField }" name="contract">
         <FormItem>
           <FormLabel v-if="!editMode">Contrato</FormLabel>
           <FormControl>
@@ -105,6 +140,7 @@ const compileBudget = (value: string) => {
               :items="sanitizeContracts"
               :label="'Selecione'"
               @on-select="compileBudget"
+              :disabled="editMode"
             />
           </FormControl>
         </FormItem>
@@ -137,7 +173,7 @@ const compileBudget = (value: string) => {
   <section class="px-6">
     <h3 v-if="editMode" class="mb-4 text-lg font-bold">2. Dados da Filial</h3>
     <h3 v-else class="mb-4 text-lg font-bold">2. Insira os dados da Filial</h3>
-    <div class="mb-4 w-full md:grid md:grid-cols-4 gap-6">
+    <div class="mb-4 w-full md:grid md:grid-cols-5 gap-6">
       <FormField v-slot="{ componentField }" name="branchCode">
         <FormItem>
           <FormLabel>Código da Filial</FormLabel>
@@ -146,14 +182,23 @@ const compileBudget = (value: string) => {
           </FormControl>
         </FormItem>
       </FormField>
-      <FormField v-slot="{ componentField }" name="document">
-        <FormItem>
-          <FormLabel>CNPJ</FormLabel>
-          <FormControl>
-            <Input type="text" v-bind="componentField" v-maska="'##.###.###/####-##'" />
-          </FormControl>
-        </FormItem>
-      </FormField>
+      <div class="col-span-2 flex items-end justify-start gap-3 relative">
+        <FormField v-slot="{ componentField }" name="document">
+          <FormItem class="flex-1">
+            <FormLabel>CNPJ</FormLabel>
+            <FormControl>
+              <Input type="text" v-bind="componentField" v-maska="'##.###.###/####-##'" />
+            </FormControl>
+          </FormItem>
+        </FormField>
+        <Button
+          v-if="selectedContract !== null"
+          class="relative bottom-[3px] max-w-[180px]"
+          @click.prevent="setDocumentFromHQ"
+        >
+          Usar Dados Matriz
+        </Button>
+      </div>
       <FormField v-slot="{ componentField }" name="name">
         <FormItem>
           <FormLabel>Razão Social</FormLabel>
@@ -209,7 +254,12 @@ const compileBudget = (value: string) => {
         <FormItem>
           <FormLabel>Celular</FormLabel>
           <FormControl>
-            <Input type="text" v-bind="componentField" v-maska="'(##) # ####-####'" />
+            <Input
+              type="text"
+              v-bind="componentField"
+              v-maska="'(##) #####-####'"
+              :disabled="editMode"
+            />
           </FormControl>
         </FormItem>
       </FormField>
@@ -217,7 +267,7 @@ const compileBudget = (value: string) => {
         <FormItem>
           <FormLabel>Cargo</FormLabel>
           <FormControl>
-            <Input type="text" v-bind="componentField" />
+            <Input type="text" v-bind="componentField" :disabled="editMode" />
           </FormControl>
         </FormItem>
       </FormField>
@@ -225,7 +275,7 @@ const compileBudget = (value: string) => {
         <FormItem>
           <FormLabel>Departamento</FormLabel>
           <FormControl>
-            <Input type="text" v-bind="componentField" />
+            <Input type="text" v-bind="componentField" :disabled="editMode" />
           </FormControl>
         </FormItem>
       </FormField>
@@ -276,7 +326,10 @@ const compileBudget = (value: string) => {
                 </FormControl>
               </FormItem>
             </FormField>
-            <Button class="mb-1 px-2 max-w-[140px]" @click.prevent="">
+            <Button
+              class="mb-1 px-2 max-w-[140px]"
+              @click.prevent="handleGeneratePassword"
+            >
               <WandSparkles class="w-6 h-6" />
               Gerar Senha
             </Button>

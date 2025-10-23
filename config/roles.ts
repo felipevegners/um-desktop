@@ -10,3 +10,12 @@ export const rolesList = [
   { label: 'Usuário UM', value: 'platform-user' },
   { label: 'Motorista UM', value: 'platform-driver' },
 ];
+
+export const rolesTypes: any = {
+  'master-manager': 'Gestor Master',
+  'branch-manager': 'Gestor Filial',
+  'platform-admin': 'Adminstrador Filial',
+  'platform-corp-user': 'Usuário Corporativo',
+  'platform-user': 'Usuário UM',
+  'platform-driver': 'Motorista UM',
+};

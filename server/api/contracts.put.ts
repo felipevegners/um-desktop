@@ -4,48 +4,86 @@ export default defineEventHandler(async (event) => {
   const payload = await readBody(event);
   const { customerData, contractData, payloadIds } = payload;
 
-  const { id, ...restManager } = contractData?.manager;
-
-  try {
-    await prisma.contracts.update({
-      where: { id: payloadIds.contractId },
-      data: {
-        ...contractData,
-        customer: {
-          update: {
-            where: {
-              id: payloadIds.customerId,
+  if (contractData.manager === null) {
+    const { branches, ...restContractData } = contractData;
+    try {
+      await prisma.contracts.update({
+        where: { id: payloadIds.contractId },
+        data: {
+          ...restContractData,
+          customer: {
+            update: {
+              where: {
+                id: payloadIds.customerId,
+              },
+              data: {
+                ...customerData,
+              },
             },
-            data: {
-              ...customerData,
+          },
+          manager: {
+            connect: {
+              //@ts-ignore
+              id: payloadIds?.managerId,
             },
           },
         },
-        manager: {
-          update: {
-            where: {
-              id: payloadIds.managerId,
-            },
-            data: {
-              ...restManager,
-            },
-          },
+        include: {
+          manager: true,
+          customer: true,
         },
-        branches: {
-          ...contractData.branches,
-        },
-      },
-      include: {
-        customer: true,
-        branches: true,
-      },
-    });
-  } catch (error) {
-    if (error instanceof Prisma.PrismaClientKnownRequestError) {
-      if (error.code === 'P2002') {
-        console.log('Error Prisma -> ', error.message);
+      });
+    } catch (error) {
+      if (error instanceof Prisma.PrismaClientKnownRequestError) {
+        if (error.code === 'P2002') {
+          console.log('Error Prisma during set master manager -> ', error.message);
+        }
       }
+      console.error('Error during set master manager --> ', error);
+      throw error;
     }
-    throw error;
+  } else {
+    const { id, ...restManager } = contractData?.manager;
+    const { branches, ...restContractData } = contractData;
+
+    try {
+      await prisma.contracts.update({
+        where: { id: payloadIds.contractId },
+        data: {
+          ...restContractData,
+          customer: {
+            update: {
+              where: {
+                id: payloadIds.customerId,
+              },
+              data: {
+                ...customerData,
+              },
+            },
+          },
+          manager: {
+            update: {
+              where: {
+                id: payloadIds.managerId,
+              },
+              data: {
+                ...restManager,
+              },
+            },
+          },
+        },
+        include: {
+          manager: true,
+          customer: true,
+        },
+      });
+    } catch (error) {
+      if (error instanceof Prisma.PrismaClientKnownRequestError) {
+        if (error.code === 'P2002') {
+          console.log('Error Prisma -> ', error.message);
+        }
+      }
+      throw error;
+    }
   }
 });
