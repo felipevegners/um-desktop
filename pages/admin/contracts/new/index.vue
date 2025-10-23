@@ -98,7 +98,7 @@ const schemas = [
       position: z.string().min(1).max(50),
       department: z.string().min(1).max(50),
       managerEmail: z.string().email().min(1).max(100),
-      password: z.string().min(8, 'Mínimo de 8 caracteres').max(8),
+      password: z.string().min(6, 'Mínimo de 8 caracteres').max(8, 'Máximo 8 caracteres'),
     }),
   ),
   // Comercial Conditions Schema

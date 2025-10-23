@@ -23,7 +23,7 @@ defineProps<{
         <FormItem>
           <FormLabel>Nome</FormLabel>
           <FormControl>
-            <Input type="text" v-bind="componentField" />
+            <Input type="text" v-bind="componentField" :disabled="editMode" />
           </FormControl>
         </FormItem>
       </FormField>
@@ -31,7 +31,7 @@ defineProps<{
         <FormItem>
           <FormLabel>E-mail</FormLabel>
           <FormControl>
-            <Input type="text" v-bind="componentField" />
+            <Input type="text" v-bind="componentField" :disabled="editMode" />
           </FormControl>
         </FormItem>
       </FormField>
@@ -39,7 +39,12 @@ defineProps<{
         <FormItem>
           <FormLabel>Celular</FormLabel>
           <FormControl>
-            <Input type="text" v-bind="componentField" v-maska="'(##) # ####-####'" />
+            <Input
+              type="text"
+              v-bind="componentField"
+              v-maska="'(##) #####-####'"
+              :disabled="editMode"
+            />
           </FormControl>
         </FormItem>
       </FormField>
@@ -47,7 +52,7 @@ defineProps<{
         <FormItem>
           <FormLabel>Cargo</FormLabel>
           <FormControl>
-            <Input type="text" v-bind="componentField" />
+            <Input type="text" v-bind="componentField" :disabled="editMode" />
           </FormControl>
         </FormItem>
       </FormField>
@@ -55,7 +60,7 @@ defineProps<{
         <FormItem>
           <FormLabel>Departamento</FormLabel>
           <FormControl>
-            <Input type="text" v-bind="componentField" />
+            <Input type="text" v-bind="componentField" :disabled="editMode" />
           </FormControl>
         </FormItem>
       </FormField>
@@ -106,9 +111,10 @@ defineProps<{
                 <FormControl>
                   <Input type="text" v-bind="componentField" maxlength="8" />
                 </FormControl>
+                <FormMessage />
               </FormItem>
             </FormField>
-            <Button class="mb-1 px-2 max-w-[140px]" @click.prevent="">
+            <Button class="mb-1 px-2 max-w-[140px]" @click.prevent="" disabled>
               <WandSparkles class="w-6 h-6" />
               Gerar Senha
             </Button>

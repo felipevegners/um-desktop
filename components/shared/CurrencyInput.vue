@@ -27,13 +27,13 @@ defineProps<{
         data-maska-reversed
         class="relative pl-9"
       />
-      <span
-        class="absolute start-0 top-[35px] flex items-center justify-center px-3 text-sm"
-      >
-        R$
-      </span>
       <FormMessage />
     </FormControl>
+    <span
+      class="absolute start-0 top-[34px] flex items-center justify-center px-3 text-sm"
+    >
+      R$
+    </span>
   </FormItem>
 </template>
 

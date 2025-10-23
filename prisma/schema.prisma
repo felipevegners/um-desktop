@@ -49,7 +49,6 @@ model Contracts {
   manager             Accounts?  @relation(fields: [managerId, managerName], references: [id, username])
   managerId           String?    @db.ObjectId
   managerName         String?
-  managerInfo         Json?
   additionalInfo      String?
   history             Json?
   status              String?

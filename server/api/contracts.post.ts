@@ -1,5 +1,5 @@
-import { createUserAccountService } from '~/server/services/accounts';
-import { Prisma, prisma } from '~/utils/prisma';
+import { createUserAccountService } from '@/server/services/accounts';
+import { Prisma, prisma } from '@/utils/prisma';
 
 export default defineEventHandler(async (event) => {
   const payload = await readBody(event);
@@ -75,15 +75,11 @@ export default defineEventHandler(async (event) => {
         mainBudget,
         products,
         additionalInfo,
-        managerInfo: {
-          phone: managerCellPhone,
-          position: position,
-          department: department,
-        },
         enabled: true,
         status: 'pending',
       },
     });
+
     // Create master manager user account
     const newAccountData = {
       username: managerName,
@@ -101,6 +97,8 @@ export default defineEventHandler(async (event) => {
       phone: managerCellPhone,
       position: position,
       department: department,
+      emailConfirmed: false,
+      acceptTerms: false,
     };
     const newAccount = await createUserAccountService(newAccountData);
     await prisma.contracts.update({
@@ -119,9 +117,10 @@ export default defineEventHandler(async (event) => {
     return newContract;
   } catch (error: any) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
-      console.log('Error Prisma -> ', error);
+      console.error('Error Prisma During Create Contract -> ', error);
       throw error;
     }
-    throw error;
+    console.error('Error During Create Contract -> ', error);
+    return error;
   }
 });

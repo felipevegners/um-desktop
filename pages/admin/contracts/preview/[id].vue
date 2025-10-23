@@ -231,19 +231,19 @@ await getUsersAccountsAction();
             <div class="p-6 bg-white rounded-md">
               <p class="text-sm text-zinc-600">Celular</p>
               <p class="text-xl font-bold">
-                {{ contract?.managerInfo?.phone }}
+                {{ contract?.manager?.phone }}
               </p>
             </div>
             <div class="p-6 bg-white rounded-md">
               <p class="text-sm text-zinc-600">Cargo</p>
               <p class="text-xl font-bold">
-                {{ contract?.managerInfo?.position }}
+                {{ contract?.manager?.position }}
               </p>
             </div>
             <div class="p-6 bg-white rounded-md">
               <p class="text-sm text-zinc-600">Departamento</p>
               <p class="text-xl font-bold">
-                {{ contract?.managerInfo?.department }}
+                {{ contract?.manager?.department }}
               </p>
             </div>
           </div>

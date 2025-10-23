@@ -33,17 +33,6 @@ export const columns = [
       return h('div', { class: 'lowercase' }, value?.email);
     },
   }),
-  // columnHelper.accessor('customerBranches', {
-  //   header: () => h('div', { class: 'text-left' }, 'Filiais'),
-  //   cell: ({ row }) => {
-  //     const { customerBranches } = row.original;
-  //     return h(
-  //       'div',
-  //       { class: 'text-left font-medium' },
-  //       customerBranches.length,
-  //     );
-  //   },
-  // }),
   columnHelper.accessor('products', {
     header: () => h('div', { class: 'text-center' }, 'Produtos Ativos'),
     cell: ({ row }) => {

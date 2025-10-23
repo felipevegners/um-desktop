@@ -113,11 +113,11 @@ const form = useForm({
     phone: contract?.value?.customer?.phone,
     phoneExtension: contract?.value?.customer?.phoneExtension,
     website: contract?.value?.customer?.website,
-    managerName: contract?.value?.manager?.username,
-    managerCellPhone: contract?.value?.managerInfo?.phone,
-    position: contract?.value?.managerInfo?.position,
-    department: contract?.value?.managerInfo?.department,
-    managerEmail: contract?.value?.manager?.email,
+    managerName: contract?.value?.managerName,
+    managerCellPhone: contract?.value?.manager?.phone,
+    position: contract?.value?.manager?.position,
+    department: contract?.value?.manager?.department,
+    managerEmail: contract?.value?.manager.email,
     mainBudget: Number(contract?.value.mainBudget) * 100,
     paymentTerm: contract?.value?.comercialConditions?.paymentTerm,
     paymentDueDate: contract?.value?.comercialConditions?.paymentDueDate,
@@ -127,54 +127,51 @@ const form = useForm({
 });
 
 const onSubmit = form.handleSubmit(async (values) => {
+  const payloadIds = {
+    contractId: contract?.value.id,
+    customerId: contract?.value.customer.id,
+    managerId: contract?.value.managerId,
+  };
+
+  const customerData = {
+    document: values.document,
+    name: values.name,
+    fantasyName: values.fantasyName,
+    address: {
+      zipcode: values.zipcode,
+      streetName: values.streetName,
+      streetNumber: values.streetNumber,
+      complement: values.complement,
+      neighborhood: values.neighborhood,
+      city: values.city,
+      state: values.state,
+    },
+    phone: values.phone,
+    phoneExtension: values.phoneExtension,
+    website: values.website,
+    logo: {
+      name: customerLogo.value.name,
+      url: customerLogo.value.url,
+    },
+  };
+
+  const { id, customerId, managerId, managerName, ...restContract } = contract?.value;
+  const contractData = {
+    ...restContract,
+    customerName: values.fantasyName,
+    //@ts-ignore
+    mainBudget: parseFloat(values?.mainBudget?.replace(/,/g, '') * 1000).toString(),
+    comercialConditions: {
+      paymentTerm: values.paymentTerm,
+      paymentDueDate: values.paymentDueDate,
+    },
+    products: selectedProducts.value,
+    additionalInfo: values.additionalInfo,
+    enabled: contractSituation.value,
+    status: values.status,
+  };
+  isLoadingSend.value = !isLoadingSend.value;
   try {
-    const payloadIds = {
-      contractId: contract?.value.id,
-      customerId: contract?.value.customer.id,
-      managerId: contract?.value.manager.id,
-    };
-
-    const customerData = {
-      document: values.document,
-      name: values.name,
-      fantasyName: values.fantasyName,
-      address: {
-        zipcode: values.zipcode,
-        streetName: values.streetName,
-        streetNumber: values.streetNumber,
-        complement: values.complement,
-        neighborhood: values.neighborhood,
-        city: values.city,
-        state: values.state,
-      },
-      phone: values.phone,
-      phoneExtension: values.phoneExtension,
-      website: values.website,
-      logo: {
-        name: customerLogo.value.name,
-        url: customerLogo.value.url,
-      },
-    };
-
-    const contractData = {
-      managerInfo: {
-        phone: values.managerCellPhone,
-        position: values.position,
-        department: values.department,
-      },
-      customerName: values.fantasyName,
-      //@ts-ignore
-      mainBudget: parseFloat(values?.mainBudget?.replace(/,/g, '') * 1000).toString(),
-      comercialConditions: {
-        paymentTerm: values.paymentTerm,
-        paymentDueDate: values.paymentDueDate,
-      },
-      products: selectedProducts.value,
-      additionalInfo: values.additionalInfo,
-      enabled: contractSituation.value,
-      status: values.status,
-    };
-    isLoadingSend.value = !isLoadingSend.value;
     await updateContractAction({
       payloadIds,
       customerData,
@@ -214,66 +211,6 @@ const deleteFile = async (url: string) => {
     });
     customerLogo.value.name = '';
     customerLogo.value.url = '';
-  }
-};
-
-const findAddress = async (code: string) => {
-  if (code?.length !== 9) {
-    toast({
-      title: 'Opss!',
-      class: 'bg-red-500 border-0 text-white text-2xl',
-      description: `CEP inválido. Digite novamente.`,
-    });
-  } else {
-    try {
-      isLoadingAddress.value = true;
-      const response: any = await findAddressByZipcode(code);
-      form.setValues({
-        streetName: response.logradouro,
-        neighborhood: response.bairro,
-        city: response.localidade,
-        state: response.estado,
-        complement: response.complemento ? response.complemento : '-',
-      });
-      if (response.erro) {
-        toast({
-          title: 'CEP Inválido',
-          class: 'bg-red-500 border-0 text-white text-2xl',
-          description: `Confira o CEP e tente novamente.`,
-        });
-        //@ts-ignore
-        document.querySelector("input[name='zipcode']").focus();
-        document
-          .querySelector("input[name='zipcode']")
-          ?.classList.add(
-            'bg-red-300',
-            'focus:ring-0',
-            'focus-visible:ring-0',
-            'focus-visible:outline-3',
-            'focus-visible:outline-offset-2',
-            'focus-visible:outline-red-500',
-          );
-      } else {
-        document
-          .querySelector("input[name='zipcode']")
-          ?.classList.remove(
-            'bg-red-300',
-            'focus-visible:ring-0',
-            'focus-visible:outline-3',
-            'focus-visible:outline-offset-2',
-            'focus-visible:outline-red-500',
-          );
-      }
-    } catch (error) {
-      toast({
-        title: 'Opss!',
-        class: 'bg-red-500 border-0 text-white text-2xl',
-        description: `Ocorreu um erro ao buscar o endereço. Tente novamente.`,
-      });
-      console.error('Erro ao buscar endereço -> ', error);
-    } finally {
-      isLoadingAddress.value = false;
-    }
   }
 };
 </script>
@@ -394,16 +331,11 @@ const findAddress = async (code: string) => {
           </div>
           <div class="mb-10">
             <h2 class="px-6 mb-4 text-2xl font-bold">1. Dados do Cliente</h2>
-            <CompanyForm
-              :findAddress="findAddress"
-              :loading="isLoadingAddress"
-              :isEditing="true"
-              :form="form"
-            />
+            <CompanyForm :loading="isLoadingAddress" :isEditing="true" :form="form" />
           </div>
           <div class="mb-10">
             <h2 class="px-6 mb-4 text-2xl font-bold">2. Gestor Master</h2>
-            <MasterManagerForm :editMode="true" :editId="contract?.manager?.id" />
+            <MasterManagerForm :editMode="true" :editId="contract?.managerId" />
           </div>
           <div class="mb-10">
             <h2 class="px-6 mb-4 text-2xl font-bold">3. Condições Comerciais</h2>
@@ -421,11 +353,10 @@ const findAddress = async (code: string) => {
             <h2 class="px-6 mb-4 text-2xl font-bold">5. Informações Adicionais</h2>
             <AdditionalInfoForm />
           </div>
-          {{ form.errors }}
           <div class="px-6 flex gap-6">
             <Button type="submit">
               <LoaderCircle v-if="isLoadingSend" class="w-5 h-5 animate-spin" />
-              Salvar Contrato
+              Atualizar Contrato
             </Button>
             <Button
               type="button"

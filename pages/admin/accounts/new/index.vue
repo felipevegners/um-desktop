@@ -67,7 +67,7 @@ const formSchema = toTypedSchema(
       .max(8, 'A senha deve conter no máximo 8 caracteres'),
     role: z.string({ message: 'Selecione o tipo de acesso' }).min(2).max(50),
     phone: z.string({ message: 'Obrigatório!' }).min(2),
-    document: z.string({ message: 'Obrigatório!' }).min(2).max(18),
+    document: z.string({ message: 'Obrigatório!' }).min(2).max(18).optional(),
     birthDate: z.string().optional(),
     position: z.string().optional(),
     department: z.string().optional(),
@@ -323,7 +323,7 @@ const onSubmit = form.handleSubmit(async (values) => {
                       <Input
                         type="text"
                         v-bind="componentField"
-                        v-maska="'(##) # ####-####'"
+                        v-maska="'(##) #####-####'"
                       />
                     </FormControl>
                     <FormMessage class="text-xs" />
@@ -423,7 +423,7 @@ const onSubmit = form.handleSubmit(async (values) => {
                       <Input
                         type="text"
                         v-bind="componentField"
-                        v-maska="'(##) ####-####'"
+                        v-maska="'(##) #####-####'"
                       />
                       <!--  -->
                     </FormControl>
@@ -505,6 +505,7 @@ const onSubmit = form.handleSubmit(async (values) => {
               </div>
             </div>
           </CardContent>
+          <pre>{{ form.errors }}</pre>
         </Card>
         <div class="mt-6 flex gap-4">
           <Button type="submit">

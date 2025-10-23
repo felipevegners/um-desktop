@@ -13,7 +13,7 @@ class Mailer {
   sender: typeof sgMail;
 
   constructor() {
-    sgMail.setApiKey(process.env.SENDGRID_API_KEY as string);
+    sgMail.setApiKey(process.env.VITE_SENDGRID_API_KEY as string);
     this.sender = sgMail;
   }
 
@@ -23,7 +23,12 @@ class Mailer {
       to,
       html: confirEmailTemplate.replace('["name"]', to).replace('["link"]', link),
     };
-    return await this.sender.send(message);
+    try {
+      return await this.sender.send(message);
+    } catch (error) {
+      console.error('ERROR DURING SEND EMAIL -> ', error);
+      console.error('SEND GRID API KEY -> ', process.env.VITE_SENDGRID_API_KEY);
+    }
   }
 }
 export const mailer = new Mailer();
