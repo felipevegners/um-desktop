@@ -71,7 +71,7 @@ const form = useForm({
   validationSchema: formSchema,
   initialValues: {
     contract: branch?.value.contractId,
-    branchCode: branch?.value.branchCode,
+    branchCode: branch?.value?.branchCode,
     document: branch?.value.document,
     name: branch?.value.name,
     fantasyName: branch?.value.fantasyName,
@@ -84,10 +84,10 @@ const form = useForm({
     state: branch?.value.address.state,
     phone: branch?.value.phone,
     phoneExtension: branch?.value.phoneExtension || '-',
-    branchManagerName: branch?.value.manager.username,
-    branchManagerPhone: branch?.value.manager.phone,
-    branchManagerPosition: branch?.value.manager.position,
-    branchManagerDepartment: branch?.value.manager.department,
+    branchManagerName: branch?.value.manager?.username || '-',
+    branchManagerPhone: branch?.value.manager?.phone || '-',
+    branchManagerPosition: branch?.value.manager?.position || '-',
+    branchManagerDepartment: branch?.value.manager?.department || '-',
     branchBudget: [parseFloat(branch?.value.budget)],
     status: branch?.value.status,
   },
@@ -127,7 +127,7 @@ const onSubmit = form.handleSubmit(async (values) => {
     <section class="mb-6 flex items-center justify-between">
       <h1 class="flex items-center gap-2 text-2xl font-bold">
         <FileText class="w-6 h-6" />
-        Editar: {{ branch.branchCode }} - {{ branch.fantasyName }}
+        Editar: {{ branch?.branchCode }} - {{ branch?.fantasyName }}
       </h1>
       <div class="flex gap-10 items-center">
         <div>
@@ -154,7 +154,8 @@ const onSubmit = form.handleSubmit(async (values) => {
         <Card class="py-6 bg-zinc-200">
           <BranchForm
             :editMode="true"
-            :managerId="branch?.manager.id"
+            :branchData="branch"
+            :managerId="branch?.manager?.id || '-'"
             :contractId="branch?.contractId"
             v-model="ccAreas"
             :actualBranchBudget="branch?.budget"

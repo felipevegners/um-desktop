@@ -14,6 +14,7 @@ enum tagType {
   GOLD = 'GOLD',
   BLINDADO = 'BLINDADO',
   VAN = 'VAN',
+  RECEPTIVO = 'RECEPTIVO',
 }
 
 const tagTypeClasses = {
@@ -22,6 +23,7 @@ const tagTypeClasses = {
   [tagType.GOLD]: 'bg-product-gold text-white',
   [tagType.BLINDADO]: 'bg-product-blindado text-black',
   [tagType.VAN]: 'bg-product-van text-black',
+  [tagType.RECEPTIVO]: 'bg-product-receptivo text-black',
 };
 
 const classes = [

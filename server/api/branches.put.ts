@@ -50,11 +50,6 @@ export default defineEventHandler(async (event) => {
         areas,
         status,
         enabled,
-        managerInfo: {
-          phone: branchManagerPhone,
-          position: branchManagerPosition,
-          department: branchManagerDepartment,
-        },
       },
     });
 

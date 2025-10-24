@@ -143,7 +143,7 @@ await getBranchByIdAction(route?.params?.id as string);
           <div class="p-6 bg-white rounded-md col-span-3">
             <p class="text-sm text-zinc-600">Gestor da Filial</p>
             <p class="text-2xl font-bold">
-              {{ branch?.manager.username }}
+              {{ branch?.manager?.username }}
             </p>
             <p>
               {{ branch?.managerInfo?.position }} -

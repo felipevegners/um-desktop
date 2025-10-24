@@ -26,6 +26,7 @@ module.exports = withUt({
         'product-gold': '#D4AF37',
         'product-blindado': '#B9F2FF',
         'product-van': '#3BD084',
+        'product-receptivo': '#38bdf8',
         border: 'hsl(var(--border))',
         input: 'hsl(var(--input))',
         ring: 'hsl(var(--ring))',

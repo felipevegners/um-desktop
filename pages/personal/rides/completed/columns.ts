@@ -1,9 +1,8 @@
 import { Button } from '@/components/ui/button';
-import { WPP_API } from '@/config/paths';
 import { createColumnHelper } from '@tanstack/vue-table';
-import { ArrowUpDown, MessageCircleMore } from 'lucide-vue-next';
+import { ArrowUpDown } from 'lucide-vue-next';
 import RideStatusFlag from '~/components/shared/RideStatusFlag.vue';
-import { currencyFormat, sanitizePhone, sanitizeRideDate } from '~/lib/utils';
+import { currencyFormat, sanitizeRideDate } from '~/lib/utils';
 
 const columnHelper = createColumnHelper<any>();
 
@@ -57,10 +56,10 @@ export const columns: any = [
       );
     },
   }),
-  columnHelper.accessor('price', {
+  columnHelper.accessor('estimatedPrice', {
     header: () => h('div', { class: 'text-left' }, 'Valor'),
     cell: ({ row }) =>
-      h('div', { class: 'capitalize' }, currencyFormat(row.getValue('price'))),
+      h('div', { class: 'capitalize' }, currencyFormat(row.getValue('estimatedPrice'))),
   }),
   columnHelper.display({
     id: 'driver',

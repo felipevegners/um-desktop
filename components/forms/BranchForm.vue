@@ -1,5 +1,7 @@
 <script lang="ts" setup>
 import FormSelect from '@/components/shared/FormSelect.vue';
+import { useAccountStore } from '@/stores/account.store';
+import { useContractsStore } from '@/stores/contracts.store';
 import {
   Info,
   Plus,
@@ -11,11 +13,14 @@ import {
 import { vMaska } from 'maska/vue';
 import { storeToRefs } from 'pinia';
 import { currencyFormat, generatePassword } from '~/lib/utils';
-import { useContractsStore } from '~/stores/contracts.store';
 
 const contractsStore = useContractsStore();
 const { getContractsAction, getContractByIdAction } = contractsStore;
 const { contracts, contract } = storeToRefs(contractsStore);
+
+const accountsStore = useAccountStore();
+const { getUsersAccountsAction } = accountsStore;
+const { accounts } = storeToRefs(accountsStore);
 
 const props = defineProps<{
   editMode?: boolean;
@@ -23,6 +28,7 @@ const props = defineProps<{
   contractId?: string;
   disabledFields?: boolean;
   actualBranchBudget?: any;
+  branchData?: any;
   form?: any;
 }>();
 
@@ -37,12 +43,30 @@ const contractRemainBudget = ref(0);
 const calculatedBudget = ref(0);
 const contractMainBudget = ref(0);
 const selectedContract = ref<any>(null);
+const branchManagerUsersList = ref<any>([]);
 
 onBeforeMount(async () => {
   if (props.editMode) {
     await getContractByIdAction(props.contractId as string);
   }
   await getContractsAction();
+});
+
+onMounted(async () => {
+  await getUsersAccountsAction();
+  if (props.branchData && props.branchData.manager === null) {
+  }
+  const findContractUsers = accounts.value.filter(
+    (account: any) =>
+      account.contract.contractId === props.contractId &&
+      account.role === 'branch-manager',
+  );
+  branchManagerUsersList.value = findContractUsers.map((user: any) => {
+    return {
+      label: `${user.username} - Gestor Filial`,
+      value: user.id,
+    };
+  });
 });
 
 const sanitizeContracts = computed(() => {
@@ -240,7 +264,29 @@ const handleGeneratePassword = () => {
   </section>
   <section class="p-6">
     <h3 v-if="editMode" class="mb-4 text-lg font-bold">3. Dados do Gestor da Filial</h3>
-    <h3 v-else class="mb-4 text-lg font-bold">3. Gestor da Filial</h3>
+    <div v-if="branchData?.manager === null" class="px-6 flex flex-col items-start">
+      <div class="my-4 px-4 bg-red-200">
+        <small class="text-red-500">
+          *Contrato ainda não possui um Gestor Master atribuído. Selecione um usuário com
+          perfil Gestor Master na lista abaixo.
+        </small>
+      </div>
+      <div class="grid grid-cols-4 gap-6 w-full">
+        <FormField v-slot="{ componentField }" name="managerId">
+          <FormItem class="col-span-1">
+            <FormLabel class="font-bold">Selecionar Gestor da Filial</FormLabel>
+            <FormControl>
+              <FormSelect
+                v-bind="componentField"
+                :items="branchManagerUsersList"
+                label="Selecione"
+              />
+            </FormControl>
+          </FormItem>
+        </FormField>
+      </div>
+    </div>
+    <h3 v-if="!editMode" class="mb-4 text-lg font-bold">3. Gestor da Filial</h3>
     <div class="mb-4 grid grid-cols-4 gap-6">
       <FormField v-slot="{ componentField }" name="branchManagerName">
         <FormItem>

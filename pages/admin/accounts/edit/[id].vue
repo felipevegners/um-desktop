@@ -1,12 +1,19 @@
 <script setup lang="ts">
-import BackLink from '@/components/shared/BackLink.vue';
 import FormSelect from '@/components/shared/FormSelect.vue';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/components/ui/toast';
 import { rolesList } from '@/config/roles';
 import { useContractsStore } from '@/stores/contracts.store';
 import { toTypedSchema } from '@vee-validate/zod';
-import { Eye, EyeOff, LoaderCircle, Trash, UserPen, WandSparkles } from 'lucide-vue-next';
+import {
+  ArrowLeft,
+  Eye,
+  EyeOff,
+  LoaderCircle,
+  Trash,
+  UserPen,
+  WandSparkles,
+} from 'lucide-vue-next';
 import { vMaska } from 'maska/vue';
 import { storeToRefs } from 'pinia';
 import { useForm } from 'vee-validate';
@@ -29,6 +36,7 @@ const {
 const { isLoadingSend, account } = storeToRefs(accountStore);
 
 const route = useRoute();
+const router = useRouter();
 const { toast } = useToast();
 
 await getUsersAccountsByIdAction(route?.params?.id as string);
@@ -84,7 +92,6 @@ onBeforeMount(() => {
           value: area.areaCode,
         };
       });
-
       branchAreasList.value.push({
         label: 'Todas',
         value: 'all',
@@ -234,7 +241,14 @@ const onSubmit = form.handleSubmit(async (values) => {
 <template>
   <main class="p-6">
     <header>
-      <BackLink />
+      <Button
+        variant="ghost"
+        class="mb-8 flex items-center text-zinc-700 hover:text-zinc-900"
+        @click="router.push('/admin/accounts/active')"
+      >
+        <ArrowLeft class="w-5 h-5" />
+        Voltar
+      </Button>
     </header>
     <section class="mb-10 flex items-center justify-between">
       <h1 class="flex items-center gap-2 text-3xl font-bold">

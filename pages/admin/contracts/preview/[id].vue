@@ -180,19 +180,18 @@ await getUsersAccountsAction();
               <p class="mb-4 text-2xl font-bold">
                 {{ contract?.products.length }}
               </p>
-              <p
-                v-for="product in contract?.products"
-                :key="product.id"
-                class="mb-4 text-sm"
-              >
-              <div class="flex items-center gap-2">
-                <span class="uppercase font-bold">
-                  {{ product.code }}
-                </span>
-            <SharedProductTag :label="product.name" :type="product.name" />
-
+              <div class="flex items-center gap-3 flex-wrap">
+                <div
+                  v-for="product in contract?.products"
+                  :key="product.id"
+                  class="pl-2 flex items-center justify-between gap-2 border rounded-md"
+                >
+                  <span class="uppercase font-bold">
+                    {{ product.code }}
+                  </span>
+                  <SharedProductTag :label="product.name" :type="product.name" />
+                </div>
               </div>
-              </p>
             </div>
             <div class="p-6 bg-white rounded-md">
               <p class="mb-6 text-sm text-zinc-600">Budget Mensal Total</p>

@@ -69,7 +69,7 @@ export const columns: any = [
       );
     },
   }),
-  columnHelper.accessor('price', {
+  columnHelper.accessor('estimatedPrice', {
     header: () => h('div', { class: 'text-left' }, 'Valor'),
     cell: ({ row }) => {
       const data = row.original;
@@ -78,7 +78,7 @@ export const columns: any = [
         {
           class: `capitalize font-bold ${data?.billing?.status === 'paid' ? 'text-green-600' : data.billing.status === 'invoice' ? 'text-amber-600' : 'text-red-600'}`,
         },
-        currencyFormat(row.getValue('price') + ' ' + data.billing.status),
+        currencyFormat(row.getValue('estimatedPrice') + ' ' + data.billing.status),
       );
     },
   }),

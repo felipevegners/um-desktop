@@ -2,6 +2,7 @@
 import { SharedBackLink } from '#components';
 import RideStatusFlag from '@/components/shared/RideStatusFlag.vue';
 import { useToast } from '@/components/ui/toast/use-toast';
+import { useRidesStore } from '@/stores/rides.store';
 import 'add-to-calendar-button';
 import {
   CalendarDays,
@@ -12,8 +13,15 @@ import {
   SquareSquare,
   X,
 } from 'lucide-vue-next';
+import { storeToRefs } from 'pinia';
 import { GoogleMap, Marker, Polyline } from 'vue3-google-map';
-import { currencyFormat, polyLineCodec, sanitizeRideDate } from '~/lib/utils';
+import {
+  convertMetersToDistance,
+  convertSecondsToTime,
+  currencyFormat,
+  polyLineCodec,
+  sanitizeRideDate,
+} from '~/lib/utils';
 
 const API_KEY = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
 const customIconStart = `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="#FFFFFF" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-square-dot-icon lucide-square-dot"><rect width="18" height="18" x="3" y="3" rx="2"/><circle cx="12" cy="12" r="1"/></svg>`;
@@ -49,25 +57,8 @@ const ridePath = ref<any>({
   strokeWeight: 5,
 });
 
-const origin = ride?.value.travel.origin;
-const destination = ride?.value.travel.destination;
-
-watch(
-  () => mapRef.value?.ready,
-  (ready) => {
-    if (ready) {
-      const map = mapRef.value.map;
-      //@ts-ignore
-      const bounds = new google.maps.LatLngBounds();
-      //@ts-ignore
-      bounds.extend(new google.maps.LatLng(origin.lat, origin.lng));
-      //@ts-ignore
-      bounds.extend(new google.maps.LatLng(destination.lat, destination.lng));
-
-      map.fitBounds(bounds);
-    }
-  },
-);
+const origin = ref<any>({});
+const destination = ref<any>({});
 
 // Google Maps Area
 const decodePolyline = (polyline: string) => {
@@ -84,7 +75,7 @@ const decodePolyline = (polyline: string) => {
   };
 
   // Find the center of ride path to center the map
-  const centerCoord = coords.length > 2 ? coords.length / 2 : coords.length;
+  const centerCoord = coords?.length > 2 ? coords?.length / 2 : coords?.length;
   const parseCenterCoord = parseInt(centerCoord, 10) + 10; // parseInt if centerCoord is not divisivle by 2
   center.value = {
     lat: coords[parseCenterCoord].lat,
@@ -116,11 +107,31 @@ const decodePolyline = (polyline: string) => {
     },
   ];
 };
+await getRideByIdAction(route?.params.id as string);
+origin.value = ride?.value?.travel.origin;
+destination.value = ride?.value?.travel.destination;
 
 onMounted(() => {
-  decodePolyline(ride?.value.travel.polyLineCoords);
-  routePolyLine.value = ride?.value.travel.polyLineCoords;
+  decodePolyline(ride?.value?.travel?.polyLineCoords);
+  routePolyLine.value = ride?.value?.travel?.polyLineCoords;
 });
+
+watch(
+  () => mapRef.value?.ready,
+  (ready) => {
+    if (ready) {
+      const map = mapRef.value.map;
+      //@ts-ignore
+      const bounds = new google.maps.LatLngBounds();
+      //@ts-ignore
+      bounds.extend(new google.maps.LatLng(origin.value.lat, origin.value.lng));
+      //@ts-ignore
+      bounds.extend(new google.maps.LatLng(destination.value.lat, destination.value.lng));
+
+      map.fitBounds(bounds);
+    }
+  },
+);
 
 const toggleCancelationModal = () => {
   showCancelationModal.value = !showCancelationModal.value;
@@ -149,10 +160,6 @@ const cancelRide = async () => {
   }
 };
 
-onBeforeMount(async () => {
-  await getRideByIdAction(route.params.id as string);
-});
-
 const travelEndTimeCalc = (time1: any, time2: any) => {
   const timeToMinutes = (timeString: any) => {
     const [hours, minutes] = timeString.split(':').map(Number);
@@ -170,8 +177,9 @@ const travelEndTimeCalc = (time1: any, time2: any) => {
   };
 
   // Convert both times to minutes
+  const sanitizeTime2 = time2.replace(' min', '');
   const totalMinutes1 = timeToMinutes(time1);
-  const totalMinutes2 = timeToMinutes(time2);
+  const totalMinutes2 = timeToMinutes(sanitizeTime2);
 
   // Sum the total minutes
   const sumOfMinutes = totalMinutes1 + totalMinutes2;
@@ -233,7 +241,7 @@ const travelEndTimeCalc = (time1: any, time2: any) => {
           <div class="mb-6 flex items-center gap-2">
             <Map />
             <h3 class="text-sm font-bold">Dados do atendimento</h3>
-            <RideStatusFlag :ride-status="ride.status" />
+            <RideStatusFlag :ride-status="ride?.status" />
           </div>
           <div class="mb-6 md:grid md:grid-cols-5 md:gap-6">
             <div class="p-4 col-span-3 row-span-4 bg-white rounded-md">
@@ -265,17 +273,17 @@ const travelEndTimeCalc = (time1: any, time2: any) => {
             <div class="p-6 flex flex-col items-start bg-white rounded-md space-y-2">
               <p class="text-sm text-zinc-600">Data</p>
               <p class="mb-3 inline-block text-xl font-bold">
-                {{ sanitizeRideDate(ride?.travel.date) }}
+                {{ sanitizeRideDate(ride?.travel?.date) }}
               </p>
               <div>
                 <add-to-calendar-button
                   styleDark="--btn-background: #09090B; --btn-shadow: 0;"
-                  :name="`Atendimento - ${ride.code}`"
-                  :location="`${ride.travel.originAddress}`"
-                  :description="`[strong]Corrida Urban Mobi - ${ride.code}[/strong][strong][p]Origem:[/strong] ${ride.travel.originAddress}][strong][/p]Destino:[/strong] ${ride.travel.destinationAddress}`"
-                  :startDate="`${ride.travel.date}`"
-                  :startTime="`${ride.travel.departTime}`"
-                  :endTime="`${travelEndTimeCalc(ride.travel.departTime, ride.travel.duration)}`"
+                  :name="`Atendimento - ${ride?.code}`"
+                  :location="`${ride?.travel.originAddress}`"
+                  :description="`[strong]Corrida Urban Mobi - ${ride.code}[/strong][strong][p]Origem:[/strong] ${ride?.travel.originAddress}][strong][/p]Destino:[/strong] ${ride?.travel.destinationAddress}`"
+                  :startDate="`${ride?.travel.date}`"
+                  :startTime="`${ride?.travel.departTime}`"
+                  :endTime="`${travelEndTimeCalc(ride?.travel?.departTime, convertSecondsToTime(ride?.travel?.estimatedDuration))}`"
                   timeZone="America/Sao_Paulo"
                   label="Adicionar ao Calendário"
                   options="'Apple','Google','Outlook.com'"
@@ -293,12 +301,16 @@ const travelEndTimeCalc = (time1: any, time2: any) => {
               <p class="text-xl font-bold">{{ ride?.travel.passengers }}</p>
             </div>
             <div class="p-6 bg-white rounded-md space-y-2">
-              <p class="text-sm text-zinc-600">Distância</p>
-              <p class="text-xl font-bold">{{ ride?.travel.distance }}</p>
+              <p class="text-sm text-zinc-600">Distância Estimada</p>
+              <p class="text-xl font-bold">
+                {{ convertMetersToDistance(ride?.travel.estimatedDistance) }}
+              </p>
             </div>
             <div class="p-6 bg-white rounded-md space-y-2">
-              <p class="text-sm text-zinc-600">Duração</p>
-              <p class="text-xl font-bold">{{ ride?.travel.duration }}</p>
+              <p class="text-sm text-zinc-600">Duração Estimada</p>
+              <p class="text-xl font-bold">
+                {{ convertSecondsToTime(ride?.travel.estimatedDuration) }}
+              </p>
             </div>
             <div class="p-6 bg-white rounded-md space-y-2">
               <p class="text-sm text-zinc-600">Serviço Contratado</p>
@@ -311,7 +323,7 @@ const travelEndTimeCalc = (time1: any, time2: any) => {
             </div>
             <div class="p-6 bg-white rounded-md space-y-2">
               <p class="text-sm text-zinc-600">Valor total</p>
-              <p class="text-xl font-bold">{{ currencyFormat(ride?.price) }}</p>
+              <p class="text-xl font-bold">{{ currencyFormat(ride?.estimatedPrice) }}</p>
             </div>
             <div class="p-6 bg-white rounded-md space-y-2">
               <p class="text-sm text-zinc-600">Pagamento</p>
@@ -344,7 +356,7 @@ const travelEndTimeCalc = (time1: any, time2: any) => {
             <div class="p-6 bg-white rounded-md col-span-5 space-y-2">
               <p class="text-sm text-zinc-600">Paradas</p>
               <div
-                v-if="ride?.travel.stops.length"
+                v-if="ride?.travel?.stops?.length"
                 v-for="(stop, index) in ride?.travel.stops"
                 class="mt-3"
               >
