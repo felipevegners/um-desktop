@@ -16,6 +16,12 @@ useHead({
   title: 'Acompanhar Meu Atendimento | Urban Mobi',
 });
 
+definePageMeta({
+  auth: {
+    unauthenticatedOnly: true,
+  },
+});
+
 const { toast } = useToast();
 const route = useRoute();
 const ridesStore = useRidesStore();
