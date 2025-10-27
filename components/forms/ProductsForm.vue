@@ -172,6 +172,9 @@ const checkAdded = (id: string) => {
                   v-model="product.kmPrice"
                   name="kmPrice"
                   class="mt-2"
+                  v-maska="'R$ 9#.99#,##'"
+                  data-maska-tokens="9:[0-9]:repeated"
+                  data-maska-reversed
                 />
               </div>
               <div>
@@ -182,6 +185,9 @@ const checkAdded = (id: string) => {
                   v-model="product.minutePrice"
                   name="minutePrice"
                   class="mt-2"
+                  v-maska="'R$ 9#.99#,##'"
+                  data-maska-tokens="9:[0-9]:repeated"
+                  data-maska-reversed
                 />
               </div>
             </div>
@@ -199,6 +205,9 @@ const checkAdded = (id: string) => {
                   v-model="product.basePrice"
                   name="basePrice"
                   class="mt-2"
+                  v-maska="'R$ 9#.99#,##'"
+                  data-maska-tokens="9:[0-9]:repeated"
+                  data-maska-reversed
                 />
               </div>
               <div>
@@ -208,6 +217,9 @@ const checkAdded = (id: string) => {
                   v-model="product.kmPrice"
                   name="kmPrice"
                   class="mt-2"
+                  v-maska="'R$ 9#.99#,##'"
+                  data-maska-tokens="9:[0-9]:repeated"
+                  data-maska-reversed
                 />
               </div>
               <div>
@@ -218,6 +230,9 @@ const checkAdded = (id: string) => {
                   v-model="product.minutePrice"
                   name="minutePrice"
                   class="mt-2"
+                  v-maska="'R$ 9#.99#,##'"
+                  data-maska-tokens="9:[0-9]:repeated"
+                  data-maska-reversed
                 />
               </div>
             </div>
@@ -262,6 +277,9 @@ const checkAdded = (id: string) => {
                   v-model="product.basePrice"
                   name="basePrice"
                   class="mt-2"
+                  v-maska="'R$ 9#.99#,##'"
+                  data-maska-tokens="9:[0-9]:repeated"
+                  data-maska-reversed
                 />
               </div>
               <div>
@@ -291,6 +309,9 @@ const checkAdded = (id: string) => {
                   v-model="product.kmPrice"
                   name="kmPrice"
                   class="mt-2"
+                  v-maska="'R$ 9#.99#,##'"
+                  data-maska-tokens="9:[0-9]:repeated"
+                  data-maska-reversed
                 />
               </div>
               <div>
@@ -301,6 +322,9 @@ const checkAdded = (id: string) => {
                   v-model="product.minutePrice"
                   name="minutePrice"
                   class="mt-2"
+                  v-maska="'R$ 9#.99#,##'"
+                  data-maska-tokens="9:[0-9]:repeated"
+                  data-maska-reversed
                 />
               </div>
             </div>
@@ -318,6 +342,9 @@ const checkAdded = (id: string) => {
                   v-model="product.basePrice"
                   name="basePrice"
                   class="mt-2"
+                  v-maska="'R$ 9#.99#,##'"
+                  data-maska-tokens="9:[0-9]:repeated"
+                  data-maska-reversed
                 />
               </div>
               <div>
@@ -327,6 +354,9 @@ const checkAdded = (id: string) => {
                   v-model="product.kmPrice"
                   name="kmPrice"
                   class="mt-2"
+                  v-maska="'R$ 9#.99#,##'"
+                  data-maska-tokens="9:[0-9]:repeated"
+                  data-maska-reversed
                 />
               </div>
               <div>
@@ -337,6 +367,9 @@ const checkAdded = (id: string) => {
                   v-model="product.minutePrice"
                   name="minutePrice"
                   class="mt-2"
+                  v-maska="'R$ 9#.99#,##'"
+                  data-maska-tokens="9:[0-9]:repeated"
+                  data-maska-reversed
                 />
               </div>
             </div>

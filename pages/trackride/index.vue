@@ -1,10 +1,12 @@
 <script setup lang="ts">
 import { useToast } from '@/components/ui/toast/use-toast';
+import { WPP_API } from '@/config/paths';
+import { cn } from '@/lib/utils';
 import 'add-to-calendar-button';
-import { LoaderCircle } from 'lucide-vue-next';
+import { Car, LoaderCircle, Map, MessageCircleMore } from 'lucide-vue-next';
 import { CustomMarker, GoogleMap, Marker, Polyline } from 'vue3-google-map';
 import RideStatusFlag from '~/components/shared/RideStatusFlag.vue';
-import { polyLineCodec } from '~/lib/utils';
+import { polyLineCodec, sanitizePhone } from '~/lib/utils';
 
 const API_KEY = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
 const customIconStart = `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="#FFFFFF" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-square-dot-icon lucide-square-dot"><rect width="18" height="18" x="3" y="3" rx="2"/><circle cx="12" cy="12" r="1"/></svg>`;
@@ -17,9 +19,7 @@ useHead({
 });
 
 definePageMeta({
-  auth: {
-    unauthenticatedOnly: true,
-  },
+  auth: false,
 });
 
 const { toast } = useToast();
@@ -88,6 +88,10 @@ onUnmounted(() => {
   }
 });
 
+const driverSpeedConverted = computed(() => {
+  return parseInt(driver?.value?.location?.speed) || 0;
+});
+
 watch(
   () => mapRef.value?.ready,
   (ready) => {
@@ -154,109 +158,123 @@ const decodePolyline = (polyline: string) => {
 };
 </script>
 <template>
-  <main>
-    <header class="p-4 bg-zinc-900 flex items-center justify-between">
-      <div>
-        <small class="text-white">Atendimento</small>
-        <h1 class="flex items-center gap-2 text-2xl font-bold text-white">
-          {{ ride?.code }}
-        </h1>
-      </div>
-      <RideStatusFlag :rideStatus="ride?.status" />
-    </header>
-    <section v-if="loadingData" class="min-h-[300px] flex items-center justify-center">
+  <header class="p-4 bg-zinc-900 flex items-center justify-between">
+    <div>
+      <small class="text-white">Atendimento</small>
+      <h1 class="flex items-center gap-2 text-2xl font-bold text-white">
+        {{ ride?.code }}
+      </h1>
+    </div>
+    <RideStatusFlag :rideStatus="ride?.status" />
+  </header>
+  <section v-if="loadingData" class="min-h-[300px] flex items-center justify-center">
+    <LoaderCircle class="animate-spin" />
+  </section>
+  <section v-else>
+    <div
+      v-if="loadingDriverLocation"
+      class="m-3 p-3 flex items-center gap-3 bg-um-primary rounded-md"
+    >
       <LoaderCircle class="animate-spin" />
-    </section>
-    <section v-else>
-      <div
-        v-if="loadingDriverLocation"
-        class="m-3 p-3 flex items-center gap-3 bg-um-primary rounded-md"
+      <h3>Carregando localização do motorista...</h3>
+    </div>
+    <div class="h-[600px]">
+      <GoogleMap
+        ref="mapRef"
+        :api-key="API_KEY"
+        style="width: 100%; height: 100%"
+        :center="center"
+        :zoom="initialZoom"
+        :zoom-control="true"
       >
-        <LoaderCircle class="animate-spin" />
-        <h3>Carregando localização do motorista...</h3>
-      </div>
-      <div class="mb-6 h-[600px]">
-        <GoogleMap
-          ref="mapRef"
-          :api-key="API_KEY"
-          style="width: 100%; height: 100%"
-          :center="center"
-          :zoom="initialZoom"
-          :zoom-control="true"
+        <Marker
+          v-for="marker in markers"
+          ref="markerRef"
+          :key="marker.id"
+          :options="{
+            title: marker.title,
+            position: {
+              lat: marker.lat,
+              lng: marker.lng,
+            },
+            icon: marker.icon,
+          }"
+          class="w-10 h-10"
+        />
+        <CustomMarker
+          v-if="!loadingDriverLocation && driver"
+          :options="{ position: driverLocation, anchorPoint: 'BOTTOM_CENTER' }"
         >
-          <Marker
-            v-for="marker in markers"
-            ref="markerRef"
-            :key="marker.id"
-            :options="{
-              title: marker.title,
-              position: {
-                lat: marker.lat,
-                lng: marker.lng,
-              },
-              icon: marker.icon,
-            }"
-            class="w-10 h-10"
-          />
-          <CustomMarker
-            v-if="!loadingDriverLocation && driver"
-            :options="{ position: driverLocation, anchorPoint: 'BOTTOM_CENTER' }"
-          >
-            <div>
-              <img
-                :src="driver?.driverFiles?.picture?.url || '/images/no-avatar.png'"
-                class="w-14 h-14 object-cover border-4 border-purple-500 rounded-full relative bottom-10"
-              />
-            </div>
-          </CustomMarker>
-          <Polyline :options="ridePath" />
-        </GoogleMap>
+          <div class="relative">
+            <img
+              :src="driver?.driverFiles?.picture?.url || '/images/no-avatar.png'"
+              class="w-14 h-14 object-cover border-4 border-zinc-900 rounded-full relative"
+            />
+            <div
+              :class="
+                cn(
+                  'absolute bottom-[-6px] left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-8 border-r-8 border-t-8 border-l-transparent border-r-transparent',
+                  driver?.location && driverSpeedConverted > 1 && 'border-t-zinc-900',
+                  driverSpeedConverted === 0 && 'border-t-amber-500',
+                )
+              "
+            />
+          </div>
+        </CustomMarker>
+        <Polyline :options="ridePath" />
+      </GoogleMap>
+    </div>
+    <section class="p-4 bg-zinc-200">
+      <div>
+        <Car />
+        <h2 class="mb-4 text-xl font-bold">Dados do Motorista</h2>
       </div>
-      <section>
-        <h2 class="mb-4 text-2xl font-bold">Dados do Motorista</h2>
-        <div class="md:grid md:grid-cols-4 md:gap-6">
-          <div class="p-6 bg-white rounded-md col-span-2 space-y-2">
-            <p class="text-sm text-zinc-600">Nome</p>
-            <p class="text-xl font-bold">
-              {{ ride?.driver.name || 'Sem motorista' }}
-            </p>
-          </div>
-          <div class="p-6 bg-white rounded-md space-y-2">
-            <p class="text-sm text-zinc-600">Celular</p>
-            <p class="text-xl font-bold">{{ ride?.driver.phone || '-' }}</p>
-          </div>
-          <div class="p-6 bg-white rounded-md space-y-2">
-            <p class="text-sm text-zinc-600">Veículo</p>
-            <p class="text-xl font-bold">{{ ride?.driver?.car?.model || '-' }}</p>
-          </div>
-          <div class="p-6 bg-white rounded-md col-span-4 space-y-2">
-            <p class="text-sm text-zinc-600">Observações ao Motorista</p>
-            <p class="text-xl font-bold">{{ ride?.observations || '-' }}</p>
-          </div>
-        </div>
-      </section>
-      <Separator class="my-6 border-b border-zinc-300" />
-      <section>
-        <h2 class="mb-4 text-2xl font-bold">Agendado por</h2>
-        <div class="md:grid md:grid-cols-3 md:gap-6">
-          <div class="p-6 bg-white rounded-md space-y-2">
-            <p class="text-sm text-zinc-600">Nome</p>
-            <p class="text-xl font-bold">
-              {{ ride?.dispatcher.user || '-' }}
-            </p>
-          </div>
-          <div class="p-6 bg-white rounded-md space-y-2">
-            <p class="text-sm text-zinc-600">E-mail</p>
-            <p class="text-xl font-bold">{{ ride?.dispatcher.email || '-' }}</p>
-          </div>
-          <div class="p-6 bg-white rounded-md space-y-2">
-            <p class="text-sm text-zinc-600">Data</p>
-            <p class="text-xl font-bold">{{ ride?.dispatcher.dispatchDate || '-' }}</p>
-          </div>
-        </div>
-      </section>
+      <div class="p-6 bg-white rounded-md col-span-2 space-y-2">
+        <p class="text-sm text-zinc-600">Nome</p>
+        <p class="text-xl font-bold">
+          {{ ride?.driver.name }}
+        </p>
+        <p class="text-sm text-zinc-600">Celular</p>
+        <a
+          :href="
+            WPP_API.replace('[[phone]]', sanitizePhone(ride?.driver?.phone as string))
+          "
+          class="flex items-center gap-2 font-bold text-xl"
+          target="_blank"
+        >
+          {{ driver?.phone }}
+          <MessageCircleMore :size="18" class="text-green-500" />
+        </a>
+        <p class="text-sm text-zinc-600">Veículo</p>
+        <p v-if="ride?.driver.hasCarSelected" class="text-xl font-bold">
+          {{ ride?.driver?.selectedCar?.model }}
+        </p>
+        <p v-else class="text-muted-foreground text-sm">-</p>
+        <p class="text-sm text-zinc-600">Observações ao Motorista</p>
+        <p class="text-xl font-bold">{{ ride?.observations }}</p>
+      </div>
     </section>
-  </main>
+    <section class="p-4 bg-zinc-200">
+      <div>
+        <Map />
+        <h2 class="mb-4 text-xl font-bold">Dados do Atendimento</h2>
+      </div>
+      <div class="p-6 bg-white rounded-md col-span-2 space-y-2">
+        <p class="text-sm text-zinc-600">Origem</p>
+        <p class="text-xl font-bold">
+          {{ ride?.travel.originAddress }}
+        </p>
+        <div class="py-2 border-y">
+          <p class="text-sm text-zinc-600">Paradas</p>
+          <p v-for="(stop, idx) in ride?.travel?.stops" class="text-base font-bold">
+            {{ idx + 1 }} - {{ stop.address }}
+          </p>
+        </div>
+        <p class="text-sm text-zinc-600">Destino</p>
+        <p class="text-xl font-bold">{{ ride?.travel.destinationAddress }}</p>
+      </div>
+    </section>
+  </section>
 </template>
 
 <style scoped></style>
