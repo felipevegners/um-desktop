@@ -24,7 +24,7 @@ export const platformDriverMenu = {
           url: '/driver/rides/open',
         },
         {
-          title: 'Realizados',
+          title: 'Finalizados',
           url: '/driver/rides/completed',
         },
         {
@@ -41,7 +41,7 @@ export const platformDriverMenu = {
       items: [
         {
           title: 'Histórico de Pagamentos',
-          url: '/personal/invoices/active',
+          url: '#',
         },
       ],
     },
