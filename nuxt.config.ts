@@ -101,4 +101,9 @@ export default defineNuxtConfig({
       },
     },
   },
+  router: {
+    //@ts-ignore
+    linkActiveClass: 'text-um-primary',
+    linkExactActiveClass: 'your-custom-exact-active-link',
+  },
 });

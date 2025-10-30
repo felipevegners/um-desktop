@@ -82,7 +82,10 @@ const menuData = generateMenu(user.role);
                       class="hover:bg-zinc-800"
                     >
                       <SidebarMenuSubButton as-child>
-                        <NuxtLink :href="subItem.url">
+                        <NuxtLink
+                          :href="subItem.url"
+                          exact-active-class="text-um-primary"
+                        >
                           <!-- @vue-skip -->
                           <component :v-if="subItem.icon" :is="subItem.icon" />
                           <span>{{ subItem.title }}</span>
@@ -107,6 +110,7 @@ const menuData = generateMenu(user.role);
                 <NuxtLink
                   :to="item.url"
                   :class="`${item?.active ? 'text-um-primary' : 'text-white'}`"
+                  exact-active-class="text-um-primary"
                 >
                   <component :is="item.icon" />
                   <span>{{ item.name }}</span>
@@ -126,6 +130,7 @@ const menuData = generateMenu(user.role);
                 <NuxtLink
                   :to="item.url"
                   :class="`${item?.active ? 'text-um-primary' : 'text-white'}`"
+                  exact-active-class="text-um-primary"
                 >
                   <component :is="item.icon" />
                   <span>{{ item.name }}</span>

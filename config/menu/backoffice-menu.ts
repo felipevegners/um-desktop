@@ -27,7 +27,7 @@ export const backofficeMenu = {
       title: 'Atendimentos',
       url: '',
       icon: CalendarDays,
-      isActive: route.path.includes('rides'),
+      isActive: route.path.startsWith('rides'),
       items: [
         {
           title: 'Abertos',
@@ -51,7 +51,7 @@ export const backofficeMenu = {
       title: 'Motoristas',
       url: '/admin/drivers/active',
       icon: Car,
-      isActive: route.path.includes('drivers'),
+      isActive: route.path.startsWith('drivers'),
       items: [
         {
           title: 'Motoristas Ativos',
@@ -75,7 +75,7 @@ export const backofficeMenu = {
       title: 'Contratos',
       url: '/admin/contracts/active',
       icon: Handshake,
-      isActive: route.path.includes('contracts'),
+      isActive: route.path.startsWith('contracts'),
       items: [
         {
           title: 'Contratos Ativos',
@@ -95,7 +95,7 @@ export const backofficeMenu = {
       title: 'Empresas',
       url: '/admin/branches/active',
       icon: Building2,
-      isActive: route.path.includes('branches'),
+      isActive: route.path.startsWith('branches'),
       items: [
         {
           title: 'Filiais Ativas',
@@ -115,7 +115,7 @@ export const backofficeMenu = {
       title: 'Contas de Usuários',
       url: '/admin/accounts/active',
       icon: UserPen,
-      isActive: route.path.includes('accounts'),
+      isActive: route.path.startsWith('accounts'),
       items: [
         {
           title: 'Usuários Ativos',
@@ -135,7 +135,7 @@ export const backofficeMenu = {
       title: 'Financeiro',
       url: '#',
       icon: HandCoins,
-      isActive: route.path.includes('invoices'),
+      isActive: route.path.startsWith('invoices'),
       items: [
         {
           title: 'Faturas em aberto',
@@ -161,13 +161,13 @@ export const backofficeMenu = {
       name: 'Produtos',
       url: '/admin/configurations/products/',
       icon: Box,
-      active: route.path.includes('products'),
+      active: route.path.startsWith('products'),
     },
     {
       name: 'Taxas e Repasses',
       url: '/admin/configurations/fees',
       icon: SquarePercent,
-      active: route.path.includes('fees'),
+      active: route.path.startsWith('fees'),
     },
     // {
     //   name: 'Configurar Dashboards',
