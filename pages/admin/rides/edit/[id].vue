@@ -564,7 +564,6 @@ const handleCopyTrackLink = async () => {
                 </div>
 
                 <div class="col-span-2 grid grid-cols-4 gap-3">
-                  <pre>{{ driverLocation }}</pre>
                   <div
                     class="col-span-2 row-span-4 p-4 bg-white rounded-md w-full overflow-hidden"
                   >
@@ -590,8 +589,8 @@ const handleCopyTrackLink = async () => {
                         }"
                         class="w-10 h-10"
                       />
-                      <!-- v-if="ride.status === 'in-progress'" -->
                       <CustomMarker
+                        v-if="ride.status === 'in-progress'"
                         :options="{
                           position: {
                             lat: driverLocation.latitude,

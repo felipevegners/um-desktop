@@ -1,6 +1,9 @@
 import { Prisma, prisma } from '@/utils/prisma';
 import bcrypt from 'bcrypt';
 
+// import { mailer } from '~/server/providers/Mailer';
+// import { tokenGenerator } from '~/server/providers/TokenGenerator';
+
 export default defineEventHandler(async (event) => {
   const body = await readBody(event);
   if (!body.username || !body.email || !body.password || !body.role) {
