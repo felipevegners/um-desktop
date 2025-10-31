@@ -159,9 +159,12 @@ const decodePolyline = (polyline: string) => {
 </script>
 <template>
   <header class="p-4 bg-zinc-900 flex items-center justify-between">
-    <div>
-      <small class="text-white">Atendimento</small>
-      <h1 class="flex items-center gap-2 text-2xl font-bold text-white">
+    <div class="h-10 w-10">
+      <img src="/images/um_symbol_negative.svg" alt="Logotipo UM" />
+    </div>
+    <div class="flex flex-col items-center">
+      <small class="text-white text-center">Atendimento</small>
+      <h1 class="text-2xl font-bold text-white">
         {{ ride?.code }}
       </h1>
     </div>
@@ -202,8 +205,9 @@ const decodePolyline = (polyline: string) => {
           class="w-10 h-10"
         />
         <CustomMarker
-          v-if="!loadingDriverLocation && driver"
-          :options="{ position: driverLocation, anchorPoint: 'BOTTOM_CENTER' }"
+          v-if="!loadingDriverLocation"
+          :options="{ position: driverLocation, anchorPoint: 'TOP_CENTER' }"
+          class="top-[-10px]"
         >
           <div class="relative">
             <img

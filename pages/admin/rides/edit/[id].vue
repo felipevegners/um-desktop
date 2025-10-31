@@ -6,6 +6,7 @@ import PaymentStatusFlag from '@/components/shared/PaymentStatusFlag.vue';
 import RideStatusFlag from '@/components/shared/RideStatusFlag.vue';
 import { useToast } from '@/components/ui/toast/use-toast';
 import { WPP_API } from '@/config/paths';
+import { cn } from '@/lib/utils';
 import { deleteRideService } from '@/server/services/rides';
 import { useAccountStore } from '@/stores/account.store';
 import { useContractsStore } from '@/stores/contracts.store';
@@ -35,7 +36,7 @@ import {
 } from 'lucide-vue-next';
 import { storeToRefs } from 'pinia';
 import { useForm } from 'vee-validate';
-import { GoogleMap, Marker, Polyline } from 'vue3-google-map';
+import { CustomMarker, GoogleMap, Marker, Polyline } from 'vue3-google-map';
 import {
   convertMetersToDistance,
   convertSecondsToTime,
@@ -86,8 +87,8 @@ const { getContractByIdAction } = contractsStore;
 const { contract } = storeToRefs(contractsStore);
 
 const driversStore = useDriverStore();
-const { getDriversAction } = driversStore;
-const { drivers } = storeToRefs(driversStore);
+const { getDriversAction, getDriverByIdAction } = driversStore;
+const { drivers, driver } = storeToRefs(driversStore);
 
 const productsStore = useProductsStore();
 const { getProductsAction } = productsStore;
@@ -115,6 +116,8 @@ const showFinishModal = ref<boolean>(false);
 const showWaypointsForm = ref<boolean>(false);
 const loadingRemoveDriver = ref<boolean>(false);
 const finalRideCalculation = ref<any>({});
+const driverLocation = ref<any>({});
+const driverLocationInterval = ref<any>(null);
 
 availableProducts.value = products?.value;
 showWaypointsForm.value = ride?.value.travel?.stops?.length;
@@ -414,9 +417,23 @@ const form = useForm({
   },
 });
 
-onMounted(() => {
+onMounted(async () => {
   if (ride?.value.status === 'completed') {
     handleCalculateFinalPrice();
+  }
+
+  // if(ride?.value.status === 'in-progress') {
+
+  // }
+  driverLocationInterval.value = setInterval(async () => {
+    await getDriverByIdAction(ride?.value.driver.id);
+    driverLocation.value = driver.value.location;
+  }, 10000);
+});
+
+onUnmounted(() => {
+  if (driverLocationInterval.value) {
+    clearInterval(driverLocationInterval.value);
   }
 });
 
@@ -547,6 +564,7 @@ const handleCopyTrackLink = async () => {
                 </div>
 
                 <div class="col-span-2 grid grid-cols-4 gap-3">
+                  <pre>{{ driverLocation }}</pre>
                   <div
                     class="col-span-2 row-span-4 p-4 bg-white rounded-md w-full overflow-hidden"
                   >
@@ -572,6 +590,36 @@ const handleCopyTrackLink = async () => {
                         }"
                         class="w-10 h-10"
                       />
+                      <!-- v-if="ride.status === 'in-progress'" -->
+                      <CustomMarker
+                        :options="{
+                          position: {
+                            lat: driverLocation.latitude,
+                            lng: driverLocation.longitude,
+                          },
+                          anchorPoint: 'TOP_CENTER',
+                        }"
+                      >
+                        <div class="relative">
+                          <img
+                            :src="
+                              driver?.driverFiles?.picture?.url || '/images/no-avatar.png'
+                            "
+                            class="w-14 h-14 object-cover border-4 border-zinc-900 rounded-full relative"
+                          />
+                          <div
+                            :class="
+                              cn(
+                                'absolute bottom-[-6px] left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-8 border-r-8 border-t-8 border-l-transparent border-r-transparent',
+                                driverLocation &&
+                                  driverLocation.speed > 1 &&
+                                  'border-t-zinc-900',
+                                driverLocation.speed === 0 && 'border-t-amber-500',
+                              )
+                            "
+                          />
+                        </div>
+                      </CustomMarker>
                       <Polyline :options="ridePath" />
                       <Polyline :options="finalRidePath" />
                     </GoogleMap>
