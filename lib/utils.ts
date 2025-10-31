@@ -37,7 +37,12 @@ export const currencyFormat = (value: string) => {
 };
 // To decode Google Maps Polyline into a Paths
 export const polyLineCodec = (polyline: string) => {
-  return decode(polyline, 5);
+  if (!!polyline) {
+    const response = decode(polyline, 5);
+    return response;
+  } else {
+    return [];
+  }
 };
 
 export const sanitizePhone = (phone: string) => {

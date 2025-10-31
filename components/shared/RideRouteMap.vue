@@ -35,14 +35,15 @@ const polylineOpts = ref<any>({
 
 const directionsRenderer = ref(null);
 const center = {
-  lat: props.rideRealCoords?.startLocation.latitude,
-  lng: props.rideRealCoords?.startLocation.longitude,
+  lat: props.rideRealCoords?.startLocation.latitude || 0.0,
+  lng: props.rideRealCoords?.startLocation.longitude || 0.0,
 };
+
 watch(
   () => mapRef.value?.ready,
   (ready) => {
     if (!ready) return;
-    gmap.value = mapRef.value.map;
+    gmap.value = mapRef.value?.map;
     directions();
   },
 );
@@ -50,7 +51,7 @@ function setDirection(val: any) {
   directionsRenderer.value = val;
 }
 async function directions() {
-  const intermediates = props.stopsCoords.map((stop: any) => {
+  const intermediates = props.stopsCoords?.map((stop: any) => {
     return {
       location: {
         lat: stop.coords.lat,

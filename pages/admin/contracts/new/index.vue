@@ -139,6 +139,11 @@ const onSubmit = form.handleSubmit(async (values) => {
           //@ts-ignore
           url: filesResponse[0]?.ufsUrl || '',
         };
+      } else {
+        values.logo = {
+          name: '',
+          url: '',
+        };
       }
       const newContractData = {
         ...values,

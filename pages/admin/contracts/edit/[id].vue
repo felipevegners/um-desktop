@@ -58,8 +58,8 @@ contractSituation.value = contract?.value.enabled;
 selectedProducts.value = contract?.value.products;
 
 const customerLogoImage = reactive({
-  name: contract?.value.customer?.logo.name,
-  url: contract?.value.customer?.logo.url,
+  name: contract?.value.customer?.logo?.name || '',
+  url: contract?.value.customer?.logo?.url || '',
 });
 
 onMounted(async () => {

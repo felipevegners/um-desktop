@@ -1,8 +1,5 @@
-import { prisma } from '~/utils/prisma';
-
 export default defineEventHandler(async (event) => {
   const payload = await readBody(event);
-  console.log('Payload ---> ', payload);
   const { contractId } = payload;
 
   // const newManager = await prisma.masterManager.create({ data: payload });

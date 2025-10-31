@@ -17,6 +17,7 @@ import {
   CalendarDays,
   CarFront,
   Check,
+  Link,
   LoaderCircle,
   Mail,
   Map,
@@ -74,7 +75,7 @@ const route = useRoute();
 const router = useRouter();
 const ridesStore = useRidesStore();
 const { getRideByIdAction, updateRideAction, setRideDriverAction } = ridesStore;
-const { ride } = storeToRefs(ridesStore);
+const { ride, loadingData } = storeToRefs(ridesStore);
 
 const accountStore = useAccountStore();
 const { getUsersAccountsAction } = accountStore;
@@ -116,7 +117,7 @@ const loadingRemoveDriver = ref<boolean>(false);
 const finalRideCalculation = ref<any>({});
 
 availableProducts.value = products?.value;
-showWaypointsForm.value = ride?.value.travel.stops.length;
+showWaypointsForm.value = ride?.value.travel?.stops?.length;
 
 const waypointLocationDetails = ref<any>([]);
 
@@ -177,17 +178,18 @@ const decodePolyline = (polyline: string) => {
     ...ridePath.value,
     path: [...coords],
   };
+  if (ride?.value.status === 'completed') {
+    const finalDecode = polyLineCodec(ride?.value?.travel?.finalPolyline);
+    const finalCoords = finalDecode.map((path) => ({
+      lat: path[0],
+      lng: path[1],
+    }));
 
-  const finalDecode = polyLineCodec(ride?.value.travel.finalPolyline);
-  const finalCoords = finalDecode.map((path) => ({
-    lat: path[0],
-    lng: path[1],
-  }));
-
-  finalRidePath.value = {
-    ...finalRidePath.value,
-    path: [...finalCoords],
-  };
+    finalRidePath.value = {
+      ...finalRidePath.value,
+      path: [...finalCoords],
+    };
+  }
 
   // Find the center of ride path to center the map
   const centerCoord = coords.length > 2 ? coords.length / 2 : coords.length;
@@ -223,14 +225,9 @@ const decodePolyline = (polyline: string) => {
   ];
 };
 
-onMounted(() => {
-  decodePolyline(ride?.value.travel.polyLineCoords);
-  routePolyLine.value = ride?.value.travel.polyLineCoords;
-});
-
 onBeforeMount(async () => {
   await getUsersAccountsAction();
-  const filteredUsers = accounts.value.filter(
+  const filteredUsers = accounts?.value.filter(
     (user: any) =>
       user.enabled === true && user.role !== 'admin' && user.role !== 'platform-driver',
   );
@@ -254,6 +251,9 @@ onBeforeMount(async () => {
   travelDate.value = new CalendarDate(dateNumbers[0], dateNumbers[1], dateNumbers[2]);
 
   await getDriversAction();
+
+  decodePolyline(ride?.value.travel?.polyLineCoords);
+  routePolyLine.value = ride?.value.travel?.polyLineCoords;
 });
 
 const sanitizeDrivers = computed(() => {
@@ -472,6 +472,23 @@ const onSubmit = form.handleSubmit(async (values) => {
     navigateTo('/admin/rides/open');
   }
 });
+
+const handleCopyTrackLink = async () => {
+  const url = `https://app.urbanmobi.com.br/trackRide?rideId=${ride?.value.id}`;
+  try {
+    await navigator.clipboard.writeText(url);
+    toast({
+      title: 'Link copiado com sucesso!',
+      class: 'bg-green-600 border-0 text-white text-2xl hover:text-white',
+    });
+  } catch (err) {
+    toast({
+      title: 'Oops!',
+      description: `Ocorreu um erro ao copiar o link. Tente novamente.`,
+      variant: 'destructive',
+    });
+  }
+};
 </script>
 <template>
   <main class="p-6">
@@ -486,329 +503,343 @@ const onSubmit = form.handleSubmit(async (values) => {
         </h1>
       </div>
       <div class="flex gap-6 items-center">
-        <Button @click="toggleFinishModal">
-          <Check />
-          FInalizar
+        <Button @click="handleCopyTrackLink" class="bg-blue-600 hover:bg-blue-700">
+          <Link />
+          Copiar Link Rastreio
         </Button>
-        <Button @click="toggleCancelationModal" variant="secondary">
-          <X />
-          Cancelar
-        </Button>
-        <Button
-          v-if="isAdmin"
-          variant="destructive"
-          @click="showDeleteConfirmationModal = true"
-        >
-          <Trash />
-          Excluir
-        </Button>
+
+        <div class="p-2 border border-zinc-950 rounded-md flex gap-6">
+          <Button @click="toggleFinishModal">
+            <Check />
+            FInalizar
+          </Button>
+          <Button @click="toggleCancelationModal" variant="secondary">
+            <X />
+            Cancelar
+          </Button>
+          <Button
+            v-if="isAdmin"
+            variant="destructive"
+            @click="showDeleteConfirmationModal = true"
+          >
+            <Trash />
+            Excluir
+          </Button>
+        </div>
       </div>
     </section>
-    <form @submit.prevent="onSubmit" @keydown.enter.prevent="true">
-      <Card class="p-0 bg-zinc-200">
-        <CardContent class="p-4">
-          <div class="p-4 flex flex-col gap-4 border border-zinc-300 rounded-md">
-            <!-- RIDE -->
-            <div class="grid grid-cols-2 gap-6 items-start">
-              <div class="col-span-2 flex items-start justify-between gap-4">
-                <div class="flex items-center gap-2">
-                  <Map />
-                  <h3 class="text-sm font-bold">Dados do atendimento</h3>
+    <section v-if="loadingData" class="p-6 flex items-center justify-center">
+      <LoaderCircle :size="48" class="animate-spin" />
+    </section>
+    <section>
+      <form @submit.prevent="onSubmit" @keydown.enter.prevent="true">
+        <Card class="p-0 bg-zinc-200">
+          <CardContent class="p-4">
+            <div class="p-4 flex flex-col gap-4 border border-zinc-300 rounded-md">
+              <!-- RIDE -->
+              <div class="grid grid-cols-2 gap-6 items-start">
+                <div class="col-span-2 flex items-start justify-between gap-4">
+                  <div class="flex items-center gap-2">
+                    <Map />
+                    <h3 class="text-sm font-bold">Dados do atendimento</h3>
+                  </div>
+                  <RideStatusFlag :ride-status="ride?.status" />
                 </div>
-                <RideStatusFlag :ride-status="ride?.status" />
-              </div>
 
-              <div class="col-span-2 grid grid-cols-4 gap-3">
-                <div
-                  class="col-span-2 row-span-4 p-4 bg-white rounded-md w-full overflow-hidden"
-                >
-                  <GoogleMap
-                    ref="mapRef"
-                    :api-key="API_KEY"
-                    style="width: 100%; height: 450px"
-                    :center="center"
-                    :zoom="initialZoom"
-                    :zoom-control="true"
+                <div class="col-span-2 grid grid-cols-4 gap-3">
+                  <div
+                    class="col-span-2 row-span-4 p-4 bg-white rounded-md w-full overflow-hidden"
                   >
-                    <Marker
-                      v-for="marker in markers"
-                      ref="markerRef"
-                      :key="marker.id"
-                      :options="{
-                        title: marker.title,
-                        position: {
-                          lat: marker.lat,
-                          lng: marker.lng,
-                        },
-                        icon: marker.icon,
-                      }"
-                      class="w-10 h-10"
-                    />
-                    <Polyline :options="ridePath" />
-                    <Polyline :options="finalRidePath" />
-                  </GoogleMap>
-                </div>
-                <div class="p-3 border border-zinc-400 bg-white rounded-md">
-                  <span class="text-muted-foreground text-sm">Data do embarque</span>
-                  <h3 class="text-lg font-bold">
-                    {{ sanitizeRideDate(ride?.travel.date) }}
-                  </h3>
-                </div>
-                <div class="p-3 border border-zinc-400 bg-white rounded-md">
-                  <span class="text-muted-foreground text-sm">Hora do embarque</span>
-                  <h3 class="text-lg font-bold">
-                    {{ ride?.travel.departTime }}
-                  </h3>
-                </div>
-                <div class="p-3 border border-zinc-400 bg-white rounded-md">
-                  <span class="text-muted-foreground text-sm">Distância estimada</span>
-                  <h3 class="text-lg font-bold">
-                    {{ convertMetersToDistance(ride?.travel.estimatedDistance) }}
-                  </h3>
-                </div>
-                <div class="p-3 border border-zinc-400 bg-white rounded-md">
-                  <span class="text-muted-foreground text-sm">Duração estimada</span>
-                  <h3 class="text-lg font-bold">
-                    {{ convertSecondsToTime(ride?.travel.estimatedDuration) }}
-                  </h3>
-                </div>
-                <div class="p-3 border border-zinc-400 bg-white rounded-md">
-                  <span class="text-muted-foreground text-sm">Valor estimado</span>
-                  <h3 class="text-lg font-bold">
-                    {{ currencyFormat(ride?.estimatedPrice) }}
-                  </h3>
-                </div>
-                <div
-                  class="p-3 flex flex-col items-start gap-2 border border-zinc-400 bg-white rounded-md"
-                >
-                  <span class="text-muted-foreground text-sm">Serviço</span>
-                  <div class="flex items-center gap-2">
-                    <SharedProductTag
-                      :label="ride?.product.name"
-                      :type="ride?.product.name"
-                    />
-                    <small>{{ ride?.product.code }}</small>
+                    <GoogleMap
+                      ref="mapRef"
+                      :api-key="API_KEY"
+                      style="width: 100%; height: 450px"
+                      :center="center"
+                      :zoom="initialZoom"
+                      :zoom-control="true"
+                    >
+                      <Marker
+                        v-for="marker in markers"
+                        ref="markerRef"
+                        :key="marker.id"
+                        :options="{
+                          title: marker.title,
+                          position: {
+                            lat: marker.lat,
+                            lng: marker.lng,
+                          },
+                          icon: marker.icon,
+                        }"
+                        class="w-10 h-10"
+                      />
+                      <Polyline :options="ridePath" />
+                      <Polyline :options="finalRidePath" />
+                    </GoogleMap>
                   </div>
-                </div>
-                <div
-                  class="p-3 flex flex-col items-start gap-2 border border-zinc-400 bg-white rounded-md"
-                >
-                  <span class="text-muted-foreground text-sm">Passageiros</span>
-                  <div class="flex items-center gap-2">
-                    <Users2 :size="16" />
-                    <p class="font-bold text-lg">{{ ride?.travel.passengers }}</p>
+                  <div class="p-3 border border-zinc-400 bg-white rounded-md">
+                    <span class="text-muted-foreground text-sm">Data do embarque</span>
+                    <h3 class="text-lg font-bold">
+                      {{ sanitizeRideDate(ride?.travel.date) }}
+                    </h3>
                   </div>
-                </div>
-                <div
-                  class="p-3 flex flex-col items-start gap-2 border border-zinc-400 bg-white rounded-md"
-                >
-                  <span class="text-muted-foreground text-sm">Solicitante</span>
-                  <div class="flex flex-col items-start">
-                    <p class="font-bold">{{ ride?.dispatcher.user }}</p>
-                    <small>em: {{ ride?.dispatcher.dispatchDate }}</small>
+                  <div class="p-3 border border-zinc-400 bg-white rounded-md">
+                    <span class="text-muted-foreground text-sm">Hora do embarque</span>
+                    <h3 class="text-lg font-bold">
+                      {{ ride?.travel.departTime }}
+                    </h3>
                   </div>
-                </div>
-                <div
-                  class="col-span-4 p-3 flex flex-col items-start gap-2 border border-zinc-400 bg-white rounded-md"
-                >
-                  <div class="flex items-center gap-2">
-                    <SquareDot :size="16" />
-                    <span class="text-muted-foreground text-sm">Origem</span>
+                  <div class="p-3 border border-zinc-400 bg-white rounded-md">
+                    <span class="text-muted-foreground text-sm">Distância estimada</span>
+                    <h3 class="text-lg font-bold">
+                      {{ convertMetersToDistance(ride?.travel.estimatedDistance) }}
+                    </h3>
                   </div>
-                  <p class="font-bold text-lg">{{ ride?.travel.originAddress }}</p>
-                </div>
-                <div
-                  v-if="ride?.travel.stops.length > 0"
-                  class="col-span-4 p-3 flex flex-col items-start gap-2 border border-zinc-400 bg-white rounded-md"
-                >
-                  <div v-for="(stop, index) in ride?.travel.stops" :key="index">
+                  <div class="p-3 border border-zinc-400 bg-white rounded-md">
+                    <span class="text-muted-foreground text-sm">Duração estimada</span>
+                    <h3 class="text-lg font-bold">
+                      {{ convertSecondsToTime(ride?.travel.estimatedDuration) }}
+                    </h3>
+                  </div>
+                  <div class="p-3 border border-zinc-400 bg-white rounded-md">
+                    <span class="text-muted-foreground text-sm">Valor estimado</span>
+                    <h3 class="text-lg font-bold">
+                      {{ currencyFormat(ride?.estimatedPrice) }}
+                    </h3>
+                  </div>
+                  <div
+                    class="p-3 flex flex-col items-start gap-2 border border-zinc-400 bg-white rounded-md"
+                  >
+                    <span class="text-muted-foreground text-sm">Serviço</span>
                     <div class="flex items-center gap-2">
-                      <SquareSquare :size="16" />
-                      <span class="text-muted-foreground text-sm">
-                        Parada {{ index + 1 }}
+                      <SharedProductTag
+                        :label="ride?.product.name"
+                        :type="ride?.product.name"
+                      />
+                      <small>{{ ride?.product.code }}</small>
+                    </div>
+                  </div>
+                  <div
+                    class="p-3 flex flex-col items-start gap-2 border border-zinc-400 bg-white rounded-md"
+                  >
+                    <span class="text-muted-foreground text-sm">Passageiros</span>
+                    <div class="flex items-center gap-2">
+                      <Users2 :size="16" />
+                      <p class="font-bold text-lg">{{ ride?.travel.passengers }}</p>
+                    </div>
+                  </div>
+                  <div
+                    class="p-3 flex flex-col items-start gap-2 border border-zinc-400 bg-white rounded-md"
+                  >
+                    <span class="text-muted-foreground text-sm">Solicitante</span>
+                    <div class="flex flex-col items-start">
+                      <p class="font-bold">{{ ride?.dispatcher.user }}</p>
+                      <small>em: {{ ride?.dispatcher.dispatchDate }}</small>
+                    </div>
+                  </div>
+                  <div
+                    class="col-span-4 p-3 flex flex-col items-start gap-2 border border-zinc-400 bg-white rounded-md"
+                  >
+                    <div class="flex items-center gap-2">
+                      <SquareDot :size="16" />
+                      <span class="text-muted-foreground text-sm">Origem</span>
+                    </div>
+                    <p class="font-bold text-lg">{{ ride?.travel.originAddress }}</p>
+                  </div>
+                  <div
+                    v-if="ride?.travel.stops.length > 0"
+                    class="col-span-4 p-3 flex flex-col items-start gap-2 border border-zinc-400 bg-white rounded-md"
+                  >
+                    <div v-for="(stop, index) in ride?.travel.stops" :key="index">
+                      <div class="flex items-center gap-2">
+                        <SquareSquare :size="16" />
+                        <span class="text-muted-foreground text-sm">
+                          Parada {{ index + 1 }}
+                        </span>
+                      </div>
+                      <p class="font-bold text-lg">{{ stop.address }}</p>
+                    </div>
+                  </div>
+                  <div
+                    class="col-span-4 p-3 flex flex-col items-start gap-2 border border-zinc-400 bg-white rounded-md"
+                  >
+                    <div class="flex items-center gap-2">
+                      <SquareCheck :size="16" />
+                      <span class="text-muted-foreground text-sm">Destino</span>
+                    </div>
+                    <p class="font-bold text-lg">{{ ride?.travel.destinationAddress }}</p>
+                  </div>
+                </div>
+              </div>
+              <!-- USER -->
+              <div
+                class="p-6 flex flex-col gap-6 bg-white border border-zinc-900 rounded-md"
+              >
+                <div class="flex items-center gap-2">
+                  <User />
+                  <div>
+                    <h3 class="text-sm font-bold">Dados do usuário</h3>
+                  </div>
+                </div>
+                <div class="space-y-2">
+                  <h2 class="font-bold text-lg">{{ ride?.user.name }}</h2>
+                  <p class="flex items-center gap-2 text-sm">
+                    <Phone :size="16" />
+                    <a
+                      :href="
+                        WPP_API.replace(
+                          '[[phone]]',
+                          sanitizePhone(ride?.user.phone as string),
+                        )
+                      "
+                      class="flex items-center gap-2"
+                      target="_blank"
+                    >
+                      {{ ride?.user.phone }}
+                      <MessageCircleMore :size="18" class="text-green-500" />
+                    </a>
+                  </p>
+                  <p class="flex items-center gap-2 text-sm">
+                    <Mail :size="16" />{{ ride?.user.email }}
+                  </p>
+                </div>
+              </div>
+              <!-- DRIVER  -->
+              <div
+                class="p-6 grid grid-cols-2 gap-6 items-start bg-white border border-zinc-900 rounded-md"
+              >
+                <div class="flex items-start gap-4">
+                  <CarFront />
+                  <div>
+                    <h3 class="mb-6 text-sm font-bold">Dados do Motorista</h3>
+                    <h2 class="font-bold text-lg">
+                      {{ ride?.driver.name || 'Sem motorista' }}
+                    </h2>
+                    <div
+                      v-if="!ride?.accepted && ride?.driver.name"
+                      class="my-4 p-2 flex items-center gap-2 rounded-md bg-red-100 text-red-600 text-sm"
+                    >
+                      <MessageSquareWarning />
+                      <span>
+                        {{ ride?.driver.name }} ainda não aceitou este atendimento.
                       </span>
                     </div>
-                    <p class="font-bold text-lg">{{ stop.address }}</p>
+                  </div>
+                </div>
+                <div class="flex flex-col items-start justify-center gap-6 h-full">
+                  <div v-if="editDriver" class="w-full justify-self-center">
+                    <FormField v-slot="{ componentField, value }" name="driver">
+                      <FormItem class="w-full">
+                        <FormControl>
+                          <FormSelect
+                            v-bind="componentField"
+                            :items="sanitizeDrivers"
+                            :label="'Selecione'"
+                            @on-select="setNewDriver"
+                            :disabled="!editDriver"
+                          />
+                        </FormControl>
+                      </FormItem>
+                    </FormField>
+                    <div class="space-x-2">
+                      <Button
+                        class="mt-3 bg-green-800 hover:bg-green-700"
+                        :disabled="selectedDriver.id === ride?.driver.id"
+                        @click.prevent="contactDriver"
+                      >
+                        Acionar
+                      </Button>
+                      <Button variant="ghost" @click.prevent="editDriver = false">
+                        Cancelar
+                      </Button>
+                    </div>
+                  </div>
+                  <div v-else class="flex gap-2 self-end">
+                    <Button @click.prevent="editDriver = true">
+                      <UserPen />
+                      {{ !ride?.driver.name ? 'Acionar' : 'Alterar' }}
+                    </Button>
+                    <Button
+                      v-if="ride?.driver.name"
+                      @click.prevent="handleRemoveRider"
+                      variant="destructive"
+                    >
+                      <X />
+                      Remover
+                    </Button>
                   </div>
                 </div>
                 <div
-                  class="col-span-4 p-3 flex flex-col items-start gap-2 border border-zinc-400 bg-white rounded-md"
+                  class="col-span-2 p-4 border border-zinc-900 rounded-md bg-amber-100"
                 >
-                  <div class="flex items-center gap-2">
-                    <SquareCheck :size="16" />
-                    <span class="text-muted-foreground text-sm">Destino</span>
-                  </div>
-                  <p class="font-bold text-lg">{{ ride?.travel.destinationAddress }}</p>
-                </div>
-              </div>
-            </div>
-            <!-- USER -->
-            <div
-              class="p-6 flex flex-col gap-6 bg-white border border-zinc-900 rounded-md"
-            >
-              <div class="flex items-center gap-2">
-                <User />
-                <div>
-                  <h3 class="text-sm font-bold">Dados do usuário</h3>
-                </div>
-              </div>
-              <div class="space-y-2">
-                <h2 class="font-bold text-lg">{{ ride?.user.name }}</h2>
-                <p class="flex items-center gap-2 text-sm">
-                  <Phone :size="16" />
-                  <a
-                    :href="
-                      WPP_API.replace(
-                        '[[phone]]',
-                        sanitizePhone(ride?.user.phone as string),
-                      )
-                    "
-                    class="flex items-center gap-2"
-                    target="_blank"
-                  >
-                    {{ ride?.user.phone }}
-                    <MessageCircleMore :size="18" class="text-green-500" />
-                  </a>
-                </p>
-                <p class="flex items-center gap-2 text-sm">
-                  <Mail :size="16" />{{ ride?.user.email }}
-                </p>
-              </div>
-            </div>
-            <!-- DRIVER  -->
-            <div
-              class="p-6 grid grid-cols-2 gap-6 items-start bg-white border border-zinc-900 rounded-md"
-            >
-              <div class="flex items-start gap-4">
-                <CarFront />
-                <div>
-                  <h3 class="mb-6 text-sm font-bold">Dados do Motorista</h3>
-                  <h2 class="font-bold text-lg">
-                    {{ ride?.driver.name || 'Sem motorista' }}
-                  </h2>
-                  <div
-                    v-if="!ride?.accepted && ride?.driver.name"
-                    class="my-4 p-2 flex items-center gap-2 rounded-md bg-red-100 text-red-600 text-sm"
-                  >
-                    <MessageSquareWarning />
-                    <span>
-                      {{ ride?.driver.name }} ainda não aceitou este atendimento.
-                    </span>
-                  </div>
-                </div>
-              </div>
-              <div class="flex flex-col items-start justify-center gap-6 h-full">
-                <div v-if="editDriver" class="w-full justify-self-center">
-                  <FormField v-slot="{ componentField, value }" name="driver">
-                    <FormItem class="w-full">
+                  <FormField v-slot="{ componentField }" name="observations">
+                    <FormItem>
+                      <FormLabel>Instruções / Observações para o Motorista</FormLabel>
                       <FormControl>
-                        <FormSelect
-                          v-bind="componentField"
-                          :items="sanitizeDrivers"
-                          :label="'Selecione'"
-                          @on-select="setNewDriver"
-                          :disabled="!editDriver"
-                        />
+                        <Textarea class="resize-none bg-white" v-bind="componentField" />
                       </FormControl>
                     </FormItem>
                   </FormField>
-                  <div class="space-x-2">
-                    <Button
-                      class="mt-3 bg-green-800 hover:bg-green-700"
-                      :disabled="selectedDriver.id === ride?.driver.id"
-                      @click.prevent="contactDriver"
-                    >
-                      Acionar
-                    </Button>
-                    <Button variant="ghost" @click.prevent="editDriver = false">
-                      Cancelar
-                    </Button>
+                </div>
+              </div>
+              <!-- PAYMENT -->
+              <div
+                class="p-6 flex flex-col gap-6 bg-white border border-zinc-900 rounded-md"
+              >
+                <div class="flex items-center gap-4">
+                  <Banknote />
+                  <div class="flex items-center justify-between w-full">
+                    <h3 class="text-sm font-bold">Dados do Pagamento</h3>
+                    <PaymentStatusFlag
+                      :payment-status="ride?.billing.status"
+                      :payment-url="ride?.billing.paymentUrl"
+                    />
                   </div>
                 </div>
-                <div v-else class="flex gap-2 self-end">
-                  <Button @click.prevent="editDriver = true">
-                    <UserPen />
-                    {{ !ride?.driver.name ? 'Acionar' : 'Alterar' }}
-                  </Button>
-                  <Button
-                    v-if="ride?.driver.name"
-                    @click.prevent="handleRemoveRider"
-                    variant="destructive"
-                  >
-                    <X />
-                    Remover
-                  </Button>
-                </div>
-              </div>
-              <div class="col-span-2 p-4 border border-zinc-900 rounded-md bg-amber-100">
-                <FormField v-slot="{ componentField }" name="observations">
-                  <FormItem>
-                    <FormLabel>Instruções / Observações para o Motorista</FormLabel>
-                    <FormControl>
-                      <Textarea class="resize-none bg-white" v-bind="componentField" />
-                    </FormControl>
-                  </FormItem>
-                </FormField>
-              </div>
-            </div>
-            <!-- PAYMENT -->
-            <div
-              class="p-6 flex flex-col gap-6 bg-white border border-zinc-900 rounded-md"
-            >
-              <div class="flex items-center gap-4">
-                <Banknote />
-                <div class="flex items-center justify-between w-full">
-                  <h3 class="text-sm font-bold">Dados do Pagamento</h3>
-                  <PaymentStatusFlag
-                    :payment-status="ride?.billing.status"
-                    :payment-url="ride?.billing.paymentUrl"
-                  />
-                </div>
-              </div>
-              <div class="flex items-start justify-between">
-                <div class="space-y-2 text-center">
-                  <small class="text-xs text-muted-foreground">MEIO DE PAGAMENTO</small>
-                  <p class="text-center uppercase font-bold">
-                    {{ ride?.billing.paymentMethod }}
-                  </p>
-                </div>
-                <div class="space-y-2 text-center">
-                  <small class="text-xs text-muted-foreground">DATA DO PAGAMENTO</small>
-                  <p class="text-center uppercase font-bold">
-                    {{ ride?.billing.date || '-' }}
-                  </p>
-                </div>
-                <div class="space-y-2 text-center">
-                  <small class="text-xs text-muted-foreground">PARCELAS</small>
-                  <p class="text-center uppercase font-bold">
-                    {{ ride?.billing.installments || '-' }}
-                  </p>
+                <div class="flex items-start justify-between">
+                  <div class="space-y-2 text-center">
+                    <small class="text-xs text-muted-foreground">MEIO DE PAGAMENTO</small>
+                    <p class="text-center uppercase font-bold">
+                      {{ ride?.billing.paymentMethod }}
+                    </p>
+                  </div>
+                  <div class="space-y-2 text-center">
+                    <small class="text-xs text-muted-foreground">DATA DO PAGAMENTO</small>
+                    <p class="text-center uppercase font-bold">
+                      {{ ride?.billing.date || '-' }}
+                    </p>
+                  </div>
+                  <div class="space-y-2 text-center">
+                    <small class="text-xs text-muted-foreground">PARCELAS</small>
+                    <p class="text-center uppercase font-bold">
+                      {{ ride?.billing.installments || '-' }}
+                    </p>
+                  </div>
                 </div>
               </div>
             </div>
-          </div>
-        </CardContent>
-      </Card>
-      <FormButtons
-        :cancel="'/admin/rides/open'"
-        :loading="loadingSend"
-        sbm-label="Salvar Atendimento"
-        cnc-label="Cancelar"
-      />
-    </form>
-    <!-- <SharedRideRouteMap
-      v-if="ride?.status === 'completed'"
-      :origin-coords="{
-        lat: ride.travel.origin.lat,
-        lng: ride.travel.origin.lng,
-      }"
-      :stops-coords="ride.travel.stops"
-      :destination-coords="{
-        lat: ride.travel.destination.lat,
-        lng: ride.travel.destination.lng,
-      }"
-      :rideRealCoords="ride.progress"
-    /> -->
+          </CardContent>
+        </Card>
+        <FormButtons
+          :cancel="'/admin/rides/open'"
+          :loading="loadingSend"
+          sbm-label="Salvar Atendimento"
+          cnc-label="Cancelar"
+        />
+      </form>
+      <!-- <RideRouteMap
+        v-if="ride?.status === 'completed'"
+        :origin-coords="{
+          lat: ride.travel.origin.lat,
+          lng: ride.travel.origin.lng,
+        }"
+        :stops-coords="ride.travel.stops"
+        :destination-coords="{
+          lat: ride.travel.destination.lat,
+          lng: ride.travel.destination.lng,
+        }"
+        :rideRealCoords="ride.progress"
+      /> -->
+    </section>
   </main>
   <Dialog :open="showRouteRecalculation">
     <DialogContent>
