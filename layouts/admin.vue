@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import Header from '@/components/shared/Header.vue';
 import { generateMenu } from '@/config/menu/generateMenu';
-import { ChevronRight, LayoutDashboard, LogOut, User } from 'lucide-vue-next';
+import { ChevronRight, LayoutDashboard, LogOut, Package, User } from 'lucide-vue-next';
 
 const { data, signOut } = useAuth();
 //@ts-ignore
@@ -140,6 +140,11 @@ const menuData = generateMenu(user.role);
           </SidebarMenu>
         </SidebarGroup>
       </SidebarContent>
+      <SidebarSeparator class="border-b border-zinc-700" />
+      <div class="p-2 flex flex-row items-center gap-2">
+        <Package class="text-muted-foreground" :size="16" />
+        <small class="text-muted-foreground"> v{{ $config.public.clientVersion }} </small>
+      </div>
       <SidebarSeparator class="border-b border-zinc-700" />
       <SidebarGroup>
         <SidebarMenu>

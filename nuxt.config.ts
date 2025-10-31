@@ -1,5 +1,7 @@
 import type { RouteHandlerConfig } from 'uploadthing/types';
 
+import { version } from './package.json';
+
 const { DATABASE_URL, VITE_GOOGLE_MAPS_API_KEY } = process.env;
 
 // https://nuxt.com/docs/api/configuration/nuxt-config
@@ -71,6 +73,7 @@ export default defineNuxtConfig({
       VITE_GOOGLE_MAPS_API_KEY,
       DATABASE_URL,
       stripePublishableKey: process.env.VITE_STRIPE_PUBLISHABLE_KEY,
+      clientVersion: version,
     },
   },
   imports: {
