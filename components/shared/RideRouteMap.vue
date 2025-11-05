@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { useRuntimeConfig } from 'nuxt/app';
 import { computed, reactive, ref, watch } from 'vue';
-import { GoogleMap, Polyline } from 'vue3-google-map';
+import { GoogleMap } from 'vue3-google-map';
 
 const env = useRuntimeConfig();
 const mapRef = ref<any>(null);
@@ -18,25 +18,26 @@ const props = defineProps<{
   originCoords?: any;
   stopsCoords?: any;
   destinationCoords?: any;
-  rideRealCoords: any;
+  rideRealCoords?: any;
 }>();
 
 const polylineOpts = ref<any>({
-  path: props.rideRealCoords?.rideTracking.map((path: any) => ({
-    lat: path.latitude,
-    lng: path.longitude,
-  })),
+  path:
+    props.rideRealCoords?.ridePath?.map((path: any) => ({
+      lat: path.latitude,
+      lng: path.longitude,
+    })) || [],
   geodesic: true,
-  strokeColor: '#000000',
+  strokeColor: '#ffcc00',
   strokeOpacity: 1.0,
   strokeWeight: 5,
-  zIndex: 10,
+  // zIndex: 10,
 });
 
 const directionsRenderer = ref(null);
 const center = {
-  lat: props.rideRealCoords?.startLocation.latitude || 0.0,
-  lng: props.rideRealCoords?.startLocation.longitude || 0.0,
+  lat: props.originCoords?.latitude || 0.0,
+  lng: props.originCoords?.longitude || 0.0,
 };
 
 watch(
@@ -74,11 +75,15 @@ async function directions() {
         const customArrow = {
           //@ts-ignore
           path: google.maps.SymbolPath.FORWARD_CLOSED_ARROW,
-          scale: 4,
-          strokeColor: '#00F',
-          fillColor: '#00F',
+          scale: 5,
+          strokeColor: '#000000',
+          fillColor: '#33ffcc',
           fillOpacity: 1,
+          //@ts-ignore
+          anchor: new google.maps.Point(0, 0),
         };
+
+        const icon = '@/icons/square-check.png';
         if (!directionsRenderer.value) {
           setDirection(
             //@ts-ignore
@@ -86,9 +91,9 @@ async function directions() {
               suppressMarkers: true,
               polylineOptions: {
                 geodesic: true,
-                strokeColor: '#ff33cc',
+                strokeColor: '#000000',
                 strokeOpacity: 1,
-                strokeWeight: 8,
+                strokeWeight: 4,
                 zIndex: 9,
                 icons: [
                   {

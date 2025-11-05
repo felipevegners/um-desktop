@@ -6,7 +6,6 @@ import PaymentStatusFlag from '@/components/shared/PaymentStatusFlag.vue';
 import RideStatusFlag from '@/components/shared/RideStatusFlag.vue';
 import { useToast } from '@/components/ui/toast/use-toast';
 import { WPP_API } from '@/config/paths';
-import { cn } from '@/lib/utils';
 import { deleteRideService } from '@/server/services/rides';
 import { useAccountStore } from '@/stores/account.store';
 import { useContractsStore } from '@/stores/contracts.store';
@@ -36,7 +35,7 @@ import {
 } from 'lucide-vue-next';
 import { storeToRefs } from 'pinia';
 import { useForm } from 'vee-validate';
-import { CustomMarker, GoogleMap, Marker, Polyline } from 'vue3-google-map';
+import RideRouteMap from '~/components/shared/RideRouteMap.vue';
 import {
   convertMetersToDistance,
   convertSecondsToTime,
@@ -137,15 +136,24 @@ const ridePath = ref<any>({
   strokeColor: '#000000',
   strokeOpacity: 0.8,
   strokeWeight: 5,
-  zIndex: 9,
+  zIndex: 11,
 });
 const finalRidePath = ref<any>({
   path: [],
   geodesic: true,
   strokeColor: '#33ffcc',
   strokeOpacity: 0.8,
-  strokeWeight: 7,
+  strokeWeight: 9,
   zIndex: 10,
+});
+
+const realRidePath = ref<any>({
+  path: [],
+  geodesic: true,
+  strokeColor: '#ffcc00',
+  strokeOpacity: 0.8,
+  strokeWeight: 13,
+  zIndex: 9,
 });
 
 const origin = ride?.value.travel.origin;
@@ -257,6 +265,22 @@ onBeforeMount(async () => {
 
   decodePolyline(ride?.value.travel?.polyLineCoords);
   routePolyLine.value = ride?.value.travel?.polyLineCoords;
+});
+
+onMounted(() => {
+  if (ride?.value.status === 'completed') {
+    const realFinalCoords: any = ride?.value.progress
+      ? ride?.value.progress?.ridePath?.map((path: any) => ({
+          lat: path.latitude,
+          lng: path.longitude,
+        }))
+      : [];
+
+    realRidePath.value = {
+      ...realRidePath.value,
+      path: [...realFinalCoords],
+    };
+  }
 });
 
 const sanitizeDrivers = computed(() => {
@@ -422,9 +446,6 @@ onMounted(async () => {
     handleCalculateFinalPrice();
   }
 
-  // if(ride?.value.status === 'in-progress') {
-
-  // }
   driverLocationInterval.value = setInterval(async () => {
     await getDriverByIdAction(ride?.value.driver.id);
     driverLocation.value = driver.value.location;
@@ -506,6 +527,10 @@ const handleCopyTrackLink = async () => {
     });
   }
 };
+
+const showRideControls = computed(() => {
+  return ride?.value.status !== 'completed' && ride?.value.status !== 'cancelled';
+});
 </script>
 <template>
   <main class="p-6">
@@ -519,7 +544,7 @@ const handleCopyTrackLink = async () => {
           Editar Atendimento - #{{ ride?.code || '' }}
         </h1>
       </div>
-      <div class="flex gap-6 items-center">
+      <div v-if="showRideControls" class="flex gap-6 items-center">
         <Button @click="handleCopyTrackLink" class="bg-blue-600 hover:bg-blue-700">
           <Link />
           Copiar Link Rastreio
@@ -567,7 +592,7 @@ const handleCopyTrackLink = async () => {
                   <div
                     class="col-span-2 row-span-4 p-4 bg-white rounded-md w-full overflow-hidden"
                   >
-                    <GoogleMap
+                    <!-- <GoogleMap
                       ref="mapRef"
                       :api-key="API_KEY"
                       style="width: 100%; height: 450px"
@@ -621,7 +646,21 @@ const handleCopyTrackLink = async () => {
                       </CustomMarker>
                       <Polyline :options="ridePath" />
                       <Polyline :options="finalRidePath" />
-                    </GoogleMap>
+                      <Polyline :options="realRidePath" />
+                    </GoogleMap> -->
+                    <!-- v-if="ride?.status === 'completed'" -->
+                    <RideRouteMap
+                      :origin-coords="{
+                        lat: ride.travel.origin.lat,
+                        lng: ride.travel.origin.lng,
+                      }"
+                      :stops-coords="ride.travel.stops"
+                      :destination-coords="{
+                        lat: ride.travel.destination.lat,
+                        lng: ride.travel.destination.lng,
+                      }"
+                      :rideRealCoords="ride.status === 'completed' ? ride.progress : {}"
+                    />
                   </div>
                   <div class="p-3 border border-zinc-400 bg-white rounded-md">
                     <span class="text-muted-foreground text-sm">Data do embarque</span>
@@ -772,7 +811,10 @@ const handleCopyTrackLink = async () => {
                     </div>
                   </div>
                 </div>
-                <div class="flex flex-col items-start justify-center gap-6 h-full">
+                <div
+                  v-if="showRideControls"
+                  class="flex flex-col items-start justify-center gap-6 h-full"
+                >
                   <div v-if="editDriver" class="w-full justify-self-center">
                     <FormField v-slot="{ componentField, value }" name="driver">
                       <FormItem class="w-full">
@@ -816,6 +858,7 @@ const handleCopyTrackLink = async () => {
                   </div>
                 </div>
                 <div
+                  v-if="showRideControls"
                   class="col-span-2 p-4 border border-zinc-900 rounded-md bg-amber-100"
                 >
                   <FormField v-slot="{ componentField }" name="observations">
@@ -826,6 +869,11 @@ const handleCopyTrackLink = async () => {
                       </FormControl>
                     </FormItem>
                   </FormField>
+                </div>
+                <div v-else class="p-4 border border-zinc-900 rounded-md">
+                  <span class="text-muted-foreground text-sm">Observações</span>
+
+                  <p>{{ ride.travel.observations || 'Sem observações' }}</p>
                 </div>
               </div>
               <!-- PAYMENT -->
@@ -873,19 +921,6 @@ const handleCopyTrackLink = async () => {
           cnc-label="Cancelar"
         />
       </form>
-      <!-- <RideRouteMap
-        v-if="ride?.status === 'completed'"
-        :origin-coords="{
-          lat: ride.travel.origin.lat,
-          lng: ride.travel.origin.lng,
-        }"
-        :stops-coords="ride.travel.stops"
-        :destination-coords="{
-          lat: ride.travel.destination.lat,
-          lng: ride.travel.destination.lng,
-        }"
-        :rideRealCoords="ride.progress"
-      /> -->
     </section>
   </main>
   <Dialog :open="showRouteRecalculation">

@@ -1,5 +1,4 @@
 <script setup lang="ts">
-import { useToast } from '@/components/ui/toast/use-toast';
 import { WPP_API } from '@/config/paths';
 import { cn } from '@/lib/utils';
 import 'add-to-calendar-button';
@@ -22,7 +21,6 @@ definePageMeta({
   auth: false,
 });
 
-const { toast } = useToast();
 const route = useRoute();
 const ridesStore = useRidesStore();
 const { getRideByIdAction } = ridesStore;
@@ -32,11 +30,10 @@ const driverStore = useDriverStore();
 const { getDriverByIdAction } = driverStore;
 const { driver } = storeToRefs(driverStore);
 
-const showCancelationModal = ref<boolean>(false);
 const routePolyLine = ref();
 const markers = ref<any>([]);
 const center = ref<any>({ lat: 0, lng: 0 });
-const initialZoom = ref(1);
+const initialZoom = ref(18);
 const mapRef = ref<any>(null);
 const ridePath = ref<any>({
   path: [],
@@ -63,7 +60,16 @@ const fetchDriverLocation = async () => {
   }
   await getDriverByIdAction(rideDriverId.value);
   if (driver.value) {
+    const hour = new Date(driver.value.location?.timestamp).getHours();
+    const minutes = new Date(driver.value.location?.timestamp).getMinutes();
     driverLocation.value = {
+      time: `${hour}:${minutes}`,
+      speed: driver?.value.location?.speed,
+      lat: driver?.value.location?.latitude,
+      lng: driver?.value.location?.longitude,
+    };
+
+    center.value = {
       lat: driver?.value.location.latitude,
       lng: driver?.value.location.longitude,
     };
@@ -78,7 +84,6 @@ onMounted(() => {
   routePolyLine.value = ride?.value.travel.polyLineCoords;
   intervalId.value = setInterval(async () => {
     fetchDriverLocation();
-    console.log('ATUALIZANDO LOC MOTORA!');
   }, 5000);
 });
 
@@ -89,25 +94,35 @@ onUnmounted(() => {
 });
 
 const driverSpeedConverted = computed(() => {
-  return parseInt(driver?.value?.location?.speed) || 0;
+  return parseInt(driver?.value?.location?.speed);
 });
 
-watch(
-  () => mapRef.value?.ready,
-  (ready) => {
-    if (ready) {
-      const map = mapRef.value.map;
-      //@ts-ignore
-      const bounds = new google.maps.LatLngBounds();
-      //@ts-ignore
-      bounds.extend(new google.maps.LatLng(origin.value.lat, origin.value.lng));
-      //@ts-ignore
-      bounds.extend(new google.maps.LatLng(destination.value.lat, destination.value.lng));
+// watch(
+//   () => mapRef.value?.ready,
+//   (ready) => {
+//     if (ready) {
+//       const map = mapRef.value.map;
+//       //@ts-ignore
+//       const bounds = new google.maps.LatLngBounds();
+//       bounds.extend(
+//         //@ts-ignore
+//         new google.maps.LatLng(
+//           driver?.value.location?.latitude,
+//           driver?.value.location?.longitude,
+//         ),
+//       );
+//       bounds.extend(
+//         //@ts-ignore
+//         new google.maps.LatLng(
+//           driver?.value.location?.latitude,
+//           driver?.value.location?.longitude,
+//         ),
+//       );
 
-      map.fitBounds(bounds);
-    }
-  },
-);
+//       map.fitBounds(bounds);
+//     }
+//   },
+// );
 
 // Google Maps Area
 const decodePolyline = (polyline: string) => {
@@ -188,7 +203,6 @@ const decodePolyline = (polyline: string) => {
         style="width: 100%; height: 100%"
         :center="center"
         :zoom="initialZoom"
-        :zoom-control="true"
       >
         <Marker
           v-for="marker in markers"
@@ -205,20 +219,31 @@ const decodePolyline = (polyline: string) => {
           class="w-10 h-10"
         />
         <CustomMarker
-          v-if="!loadingDriverLocation"
+          v-show="!loadingDriverLocation"
           :options="{ position: driverLocation, anchorPoint: 'TOP_CENTER' }"
           class="top-[-10px]"
         >
-          <div class="relative">
+          <div class="relative flex flex-col items-center">
+            <p
+              class="px-2 py-1 text-white rounded-md"
+              :class="driver?.location?.speed <= 5 ? 'bg-amber-500' : 'bg-zinc-900'"
+            >
+              {{ driverLocation.time }} | {{ driverLocation?.speed }} Km/h
+            </p>
             <img
               :src="driver?.driverFiles?.picture?.url || '/images/no-avatar.png'"
-              class="w-14 h-14 object-cover border-4 border-zinc-900 rounded-full relative"
+              :class="
+                cn(
+                  'w-14 h-14 object-cover border-4 border-zinc-900 rounded-full relative',
+                  driverSpeedConverted === 0 && 'border-amber-500',
+                )
+              "
             />
             <div
               :class="
                 cn(
                   'absolute bottom-[-6px] left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-8 border-r-8 border-t-8 border-l-transparent border-r-transparent',
-                  driver?.location && driverSpeedConverted > 1 && 'border-t-zinc-900',
+                  driver?.location && driverSpeedConverted > 5 && 'border-t-zinc-900',
                   driverSpeedConverted === 0 && 'border-t-amber-500',
                 )
               "

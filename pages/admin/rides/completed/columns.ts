@@ -1,10 +1,8 @@
-import PaymentStatusFlag from '@/components/shared/PaymentStatusFlag.vue';
-import RideStatusFlag from '@/components/shared/RideStatusFlag.vue';
 import { Button } from '@/components/ui/button';
 import { WPP_API } from '@/config/paths';
 import { createColumnHelper } from '@tanstack/vue-table';
 import { ArrowUpDown, MessageCircleMore } from 'lucide-vue-next';
-import { currencyFormat, sanitizePhone, sanitizeRideDate } from '~/lib/utils';
+import { sanitizePhone, sanitizeRideDate } from '~/lib/utils';
 
 const columnHelper = createColumnHelper<any>();
 
@@ -74,13 +72,14 @@ export const columns: any = [
       ]);
     },
   }),
-  columnHelper.accessor('status', {
-    header: () => h('div', { class: 'text-left' }, 'Status'),
+  columnHelper.accessor('finishedAt', {
+    header: () => h('div', { class: 'text-left' }, 'Finalizado em'),
     cell: ({ row }) => {
-      const status = row.getValue('status');
-      return h(RideStatusFlag, {
-        rideStatus: status,
-      });
+      const data = row.original;
+      const sanitizeDate = data?.progress?.finishedAt
+        ? new Date(data?.progress?.finishedAt).toLocaleDateString('pt-BR')
+        : '-';
+      return h('div', { class: 'capitalize text-xs' }, sanitizeDate);
     },
   }),
 ];
