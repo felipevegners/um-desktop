@@ -173,10 +173,14 @@ const decodePolyline = (polyline: string) => {
   ];
 };
 
-const sanitizeDriverName = computed(() => {
-  const splited = driver.value.name.split(' ');
-  return splited[0];
-});
+// TODO - transformar em ref e colocar no onBeforMount
+
+// const sanitizeDriverName = computed(() => {
+//   if (driver.value) {
+//     const splited = driver?.value.name?.split(' ');
+//     return splited[0];
+//   }
+// });
 </script>
 <template>
   <header class="p-4 bg-zinc-900 flex items-center justify-between">
@@ -195,13 +199,6 @@ const sanitizeDriverName = computed(() => {
     <LoaderCircle class="animate-spin" />
   </section>
   <section v-else>
-    <!-- <div
-      v-if="loadingDriverLocation"
-      class="m-3 p-3 flex items-center gap-3 bg-um-primary rounded-md"
-    >
-      <LoaderCircle class="animate-spin" />
-      <h3>Carregando localização do motorista...</h3>
-    </div> -->
     <div class="h-[600px]">
       <GoogleMap
         ref="mapRef"
@@ -234,7 +231,7 @@ const sanitizeDriverName = computed(() => {
               class="px-2 py-1 text-white rounded-md flex flex-row items-center gap-3"
               :class="driver?.location?.speed <= 5 ? 'bg-amber-600' : 'bg-zinc-900'"
             >
-              {{ sanitizeDriverName }} - {{ driverLocation.time }} -
+              {{ driver?.name }} - {{ driverLocation.time }} -
               {{ driverLocation?.speed && driverLocation.speed + ' Km/h' }}
               <LoaderCircle
                 v-if="loadingDriverLocation"
