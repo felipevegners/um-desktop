@@ -55,8 +55,8 @@ destination.value = ride?.value?.travel.destination;
 rideDriverId.value = ride?.value.driver.id;
 
 const fetchDriverLocation = async () => {
+  loadingDriverLocation.value = true;
   if (!intervalId.value) {
-    loadingDriverLocation.value = true;
   }
   await getDriverByIdAction(rideDriverId.value);
   if (driver.value) {
@@ -80,11 +80,12 @@ const fetchDriverLocation = async () => {
 };
 
 onMounted(() => {
+  fetchDriverLocation();
   decodePolyline(ride?.value.travel.polyLineCoords);
   routePolyLine.value = ride?.value.travel.polyLineCoords;
   intervalId.value = setInterval(async () => {
     fetchDriverLocation();
-  }, 5000);
+  }, 30000);
 });
 
 onUnmounted(() => {
@@ -171,6 +172,11 @@ const decodePolyline = (polyline: string) => {
     },
   ];
 };
+
+const sanitizeDriverName = computed(() => {
+  const splited = driver.value.name.split(' ');
+  return splited[0];
+});
 </script>
 <template>
   <header class="p-4 bg-zinc-900 flex items-center justify-between">
@@ -189,13 +195,13 @@ const decodePolyline = (polyline: string) => {
     <LoaderCircle class="animate-spin" />
   </section>
   <section v-else>
-    <div
+    <!-- <div
       v-if="loadingDriverLocation"
       class="m-3 p-3 flex items-center gap-3 bg-um-primary rounded-md"
     >
       <LoaderCircle class="animate-spin" />
       <h3>Carregando localização do motorista...</h3>
-    </div>
+    </div> -->
     <div class="h-[600px]">
       <GoogleMap
         ref="mapRef"
@@ -225,17 +231,23 @@ const decodePolyline = (polyline: string) => {
         >
           <div class="relative flex flex-col items-center">
             <p
-              class="px-2 py-1 text-white rounded-md"
-              :class="driver?.location?.speed <= 5 ? 'bg-amber-500' : 'bg-zinc-900'"
+              class="px-2 py-1 text-white rounded-md flex flex-row items-center gap-3"
+              :class="driver?.location?.speed <= 5 ? 'bg-amber-600' : 'bg-zinc-900'"
             >
-              {{ driverLocation.time }} | {{ driverLocation?.speed }} Km/h
+              {{ sanitizeDriverName }} - {{ driverLocation.time }} -
+              {{ driverLocation?.speed && driverLocation.speed + ' Km/h' }}
+              <LoaderCircle
+                v-if="loadingDriverLocation"
+                :size="12"
+                class="text-white animate-spin"
+              />
             </p>
             <img
               :src="driver?.driverFiles?.picture?.url || '/images/no-avatar.png'"
               :class="
                 cn(
                   'w-14 h-14 object-cover border-4 border-zinc-900 rounded-full relative',
-                  driverSpeedConverted === 0 && 'border-amber-500',
+                  driverSpeedConverted === 0 && 'border-amber-600',
                 )
               "
             />
@@ -244,7 +256,7 @@ const decodePolyline = (polyline: string) => {
                 cn(
                   'absolute bottom-[-6px] left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-8 border-r-8 border-t-8 border-l-transparent border-r-transparent',
                   driver?.location && driverSpeedConverted > 5 && 'border-t-zinc-900',
-                  driverSpeedConverted === 0 && 'border-t-amber-500',
+                  driverSpeedConverted === 0 && 'border-t-amber-600',
                 )
               "
             />
