@@ -110,6 +110,7 @@ model Drivers {
   driverFiles       Json?
   address           Json?
   actuationArea     String?
+  offers            Json?
   driverCars        Json?
   rating            Json?
   history           Json?

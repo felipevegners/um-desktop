@@ -16,7 +16,6 @@ const isAdmin = computed(() => {
 });
 
 const props = defineProps<{
-  // expects string array with options eg.: ['edit', 'delete', [preview]]
   options?: string[];
   dataId?: string;
   loading?: any;
@@ -85,9 +84,7 @@ const deleteFn = () => {
         </AlertDialogDescription>
       </AlertDialogHeader>
       <AlertDialogFooter>
-        <AlertDialogCancel @click="toggleConfirmationModal">
-          Cancelar
-        </AlertDialogCancel>
+        <AlertDialogCancel @click="toggleConfirmationModal"> Cancelar </AlertDialogCancel>
         <AlertDialogAction
           class="bg-red-500 hover:bg-red-600"
           @click="

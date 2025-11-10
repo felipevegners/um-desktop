@@ -2,6 +2,7 @@
 import DataTable from '@/components/shared/DataTable.vue';
 import TableActions from '@/components/shared/TableActions.vue';
 import { Button } from '@/components/ui/button';
+import { useToast } from '@/components/ui/toast';
 import { useDriverStore } from '@/stores/drivers.store';
 import { createColumnHelper } from '@tanstack/vue-table';
 import { Car, LoaderCircle, Map, Plus } from 'lucide-vue-next';
@@ -10,11 +11,13 @@ import { onMounted, ref } from 'vue';
 
 import { columns } from './columns';
 
+const { toast } = useToast();
+
 const columnHelper = createColumnHelper<any>();
 
 const driverStore = useDriverStore();
+const { getDriversAction, deleteDriverAction, loadingSend } = driverStore;
 const { loadingData, drivers } = storeToRefs(driverStore);
-const { getDriversAction, deleteDriverAction } = driverStore;
 
 definePageMeta({
   layout: 'admin',
@@ -48,7 +51,16 @@ const viewDriver = (id: string) => {
 };
 
 const deleteDriver = async (id: string) => {
-  await deleteDriverAction(id);
+  try {
+    const result = await deleteDriverAction(id);
+    if (result.success) {
+      toast({
+        title: 'Sucesso!',
+        class: 'bg-green-600 border-0 text-white text-2xl',
+        description: `O motorista foi removido com sucesso!`,
+      });
+    }
+  } catch (error) {}
 };
 
 const finalColumns = [
@@ -65,7 +77,7 @@ const finalColumns = [
         h(TableActions, {
           dataId: id,
           options: ['preview', 'edit', 'delete'],
-          loading: () => {},
+          loading: loadingSend,
           onView: viewDriver,
           onEdit: editDriver,
           onDelete: deleteDriver,

@@ -1,7 +1,11 @@
 <script setup lang="ts">
 import { useRuntimeConfig } from 'nuxt/app';
 import { computed, reactive, ref, watch } from 'vue';
-import { GoogleMap } from 'vue3-google-map';
+import { GoogleMap, Polyline } from 'vue3-google-map';
+
+const customIconStart = `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="#FFFFFF" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-square-dot-icon lucide-square-dot"><rect width="18" height="18" x="3" y="3" rx="2"/><circle cx="12" cy="12" r="1"/></svg>`;
+const customIconStop = `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="#FFFFFF" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-square-pause-icon lucide-square-pause"><rect width="18" height="18" x="3" y="3" rx="2"/><line x1="10" x2="10" y1="15" y2="9"/><line x1="14" x2="14" y1="15" y2="9"/></svg>`;
+const customIconEnd = `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="#FFFFFF" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-square-check-icon lucide-square-check"><rect width="18" height="18" x="3" y="3" rx="2"/><path d="m9 12 2 2 4-4"/></svg>`;
 
 const env = useRuntimeConfig();
 const mapRef = ref<any>(null);
@@ -27,17 +31,17 @@ const polylineOpts = ref<any>({
       lat: path.latitude,
       lng: path.longitude,
     })) || [],
-  geodesic: true,
-  strokeColor: '#ffcc00',
-  strokeOpacity: 1.0,
+  geodesic: false,
+  strokeColor: '#f0f',
+  strokeOpacity: 0.8,
   strokeWeight: 5,
-  // zIndex: 10,
+  zIndex: 10,
 });
 
 const directionsRenderer = ref(null);
 const center = {
-  lat: props.originCoords?.latitude || 0.0,
-  lng: props.originCoords?.longitude || 0.0,
+  lat: props.originCoords?.latitude,
+  lng: props.originCoords?.longitude,
 };
 
 watch(
@@ -46,6 +50,16 @@ watch(
     if (!ready) return;
     gmap.value = mapRef.value?.map;
     directions();
+    //@ts-ignore
+    const bounds = new google.maps.LatLngBounds();
+    //@ts-ignore
+    bounds.extend(new google.maps.LatLng(props.originCoords.lat, props.originCoords.lng));
+    bounds.extend(
+      //@ts-ignore
+      new google.maps.LatLng(props.destinationCoords.lat, props.destinationCoords.lng),
+    );
+
+    gmap.value.fitBounds(bounds);
   },
 );
 function setDirection(val: any) {
@@ -77,13 +91,19 @@ async function directions() {
           path: google.maps.SymbolPath.FORWARD_CLOSED_ARROW,
           scale: 5,
           strokeColor: '#000000',
-          fillColor: '#33ffcc',
-          fillOpacity: 1,
+          fillColor: '#000000',
+          fillOpacity: 0.8,
           //@ts-ignore
           anchor: new google.maps.Point(0, 0),
         };
 
-        const icon = '@/icons/square-check.png';
+        const square = {
+          path: 'M 10 20 10 20',
+          strokeColor: '#000',
+          fillColor: '#33ffcc',
+          fillOpacity: 1,
+          scale: 5,
+        };
         if (!directionsRenderer.value) {
           setDirection(
             //@ts-ignore
@@ -91,21 +111,60 @@ async function directions() {
               suppressMarkers: true,
               polylineOptions: {
                 geodesic: true,
-                strokeColor: '#000000',
-                strokeOpacity: 1,
+                strokeColor: '#000',
+                strokeOpacity: 0.8,
                 strokeWeight: 4,
                 zIndex: 9,
-                icons: [
-                  {
-                    icon: customArrow,
-                    offset: '0%',
-                  },
-                ],
+                // icons: [
+                //   {
+                //     icon: customArrow,
+                //     offset: '0%',
+                //   },
+                // ],
               },
             }),
           );
+          const route = response.routes[0];
+          const startLocation = route.legs[0].start_location;
+          const endLocation = route.legs[0].end_location;
+          //@ts-ignore
+          new google.maps.Marker({
+            position: startLocation,
+            map: gmap.value,
+            icon:
+              'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent(customIconStart),
+            title: 'Embarque',
+          });
+
+          const legs = response.routes[0].legs;
+          legs.forEach((leg: any, index: number) => {
+            if (index > 0) {
+              // Skip origin
+              //@ts-ignore
+              new google.maps.Marker({
+                position: leg.start_location,
+                map: gmap.value,
+                icon:
+                  'data:image/svg+xml;charset=UTF-8,' +
+                  encodeURIComponent(customIconStop),
+                title: `Parada ${index + 1}`,
+                scale: 8,
+              });
+            }
+          });
+          //@ts-ignore
+          new google.maps.Marker({
+            position: endLocation,
+            map: gmap.value,
+            icon: 'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent(customIconEnd),
+            title: `Destino`,
+          });
           //@ts-ignore
           directionsRenderer.value.setMap(gmap.value);
+          gmap.value.fitBounds(response.routes[0].bounds);
+          setTimeout(() => {
+            gmap.value.panTo(response.routes[0].bounds);
+          }, 200);
         }
         //@ts-ignore
         directionsRenderer.value.setDirections(response);
@@ -126,9 +185,8 @@ async function directions() {
       ref="mapRef"
       :api-key="GMAPS_API_KEY"
       :options="mapOptions"
-      :center="center"
-      style="width: 100%; height: 450px"
-      :zoom="15"
+      style="width: 100%; height: 550px"
+      :disable-default-ui="true"
     >
       <Polyline :options="polylineOpts" />
       <DirectionsRenderer />

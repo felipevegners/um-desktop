@@ -85,9 +85,13 @@ export const useAccountStore = defineStore('accounts', {
       try {
         const newAccount = await createUserAccountService(accountData);
         return newAccount;
-      } catch (error) {
-        console.log('Error durging user register -> ', error);
-        throw error;
+      } catch (error: any) {
+        const message = error?.data?.message || error?.message || 'Erro desconhecido';
+        return {
+          success: false,
+          error: message,
+          statusCode: error?.statusCode || 500,
+        };
       } finally {
         this.isLoadingSend = false;
       }

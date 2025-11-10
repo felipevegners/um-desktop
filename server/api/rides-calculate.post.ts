@@ -13,10 +13,10 @@ export default defineEventHandler(async (event) => {
     });
 
     if (ride) {
-      const stopsLocations = ride.progress.stops.map((stop: any) => {
+      const stopsLocations = ride?.progress?.stops?.map((stop: any) => {
         return {
-          lat: stop.latitude,
-          lng: stop.longitude,
+          lat: stop.location.latitude,
+          lng: stop.location.longitude,
         };
       });
       const locations = [

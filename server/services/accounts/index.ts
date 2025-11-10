@@ -22,9 +22,8 @@ export const createUserAccountService = async (accountData: any) => {
       method: 'POST',
       body: accountData,
     });
-  } catch (error) {
-    console.error('Error during POST Account -> ', error);
-    return error;
+  } catch (error: any) {
+    throw error;
   }
 };
 

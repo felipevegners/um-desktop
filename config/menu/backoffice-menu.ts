@@ -62,7 +62,7 @@ export const backofficeMenu = {
           url: '/admin/drivers/inactive',
         },
         {
-          title: 'Novo Motorista',
+          title: '+ Novo Motorista',
           url: '/admin/drivers/new',
         },
         {
@@ -86,7 +86,7 @@ export const backofficeMenu = {
           url: '/admin/contracts/inactive',
         },
         {
-          title: 'Novo Contrato',
+          title: '+ Novo Contrato',
           url: '/admin/contracts/new',
         },
       ],
@@ -126,7 +126,7 @@ export const backofficeMenu = {
           url: '/admin/accounts/inactive',
         },
         {
-          title: 'Novo Usuário',
+          title: '+ Novo Usuário',
           url: '/admin/accounts/new',
         },
       ],

@@ -75,10 +75,50 @@ export default defineEventHandler(async (event) => {
     // await mailer.sendEmail(email, `${url}?token=${token}`);
 
     return newAccount;
-  } catch (error: any) {
+  } catch (error) {
+    // Handle Prisma-specific errors
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
-      console.error('Error Prisma on Create Account API -> ', error);
+      // P2002: Unique constraint violation
+      if (error.code === 'P2002') {
+        throw createError({
+          statusCode: 409,
+          statusMessage: 'E-mail já cadastrado!',
+          message: `Já existe uma conta vinculada a este e-mail: "${email}". Tente novamente!`,
+        });
+      }
+      // P2025: Record not found
+      if (error.code === 'P2025') {
+        throw createError({
+          statusCode: 404,
+          statusMessage: 'Not Found',
+          message: 'Registro não encontrado.',
+        });
+      }
+      // P2003: Foreign key constraint failed
+      if (error.code === 'P2003') {
+        throw createError({
+          statusCode: 400,
+          statusMessage: 'Bad Request',
+          message: 'Referência inválida aos dados relacionados.',
+        });
+      }
     }
-    console.error('Error During Create Account API -> ', error);
+
+    // Handle validation errors
+    if (error instanceof Prisma.PrismaClientValidationError) {
+      throw createError({
+        statusCode: 400,
+        statusMessage: 'Bad Request',
+        message: 'Dados inválidos fornecidos.',
+      });
+    }
+
+    // Generic error fallback
+    console.error('Unexpected error:', error);
+    throw createError({
+      statusCode: 500,
+      statusMessage: 'Internal Server Error',
+      message: 'Ocorreu um erro interno. Tente novamente.',
+    });
   }
 });

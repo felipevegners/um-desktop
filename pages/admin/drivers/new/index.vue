@@ -3,20 +3,30 @@ import { SharedBackLink } from '#components';
 import AddCarsForm from '@/components/forms/AddCarsForm.vue';
 import AddressForm from '@/components/forms/AddressForm.vue';
 import { Button } from '@/components/ui/button';
+import { Checkbox } from '@/components/ui/checkbox';
+import {
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from '@/components/ui/form';
 import { useToast } from '@/components/ui/toast/use-toast';
 import { toTypedSchema } from '@vee-validate/zod';
-import { Car, Info, LoaderCircle } from 'lucide-vue-next';
+import { Car, Eye, EyeOff, Info, LoaderCircle, WandSparkles } from 'lucide-vue-next';
 import { vMaska } from 'maska/vue';
 import { TooltipArrow } from 'radix-vue';
 import { useForm } from 'vee-validate';
 import { ref } from 'vue';
 import * as z from 'zod';
+import { generatePassword } from '~/lib/utils';
 import { useDriverStore } from '~/stores/drivers.store';
 
 const { toast } = useToast();
 
 const driverStore = useDriverStore();
 const { createNewDriverAction } = driverStore;
+const { loadingData } = storeToRefs(driverStore);
 
 definePageMeta({
   layout: 'admin',
@@ -27,6 +37,8 @@ useHead({
 });
 
 const showAddForm = ref<boolean>(false);
+const viewPassword = ref<boolean>(true);
+
 const isLoadingSend = ref(false);
 const driverCars = reactive([
   {
@@ -41,10 +53,6 @@ const driverCars = reactive([
   },
 ]);
 
-const toggleShowAddForm = () => {
-  showAddForm.value = !showAddForm.value;
-};
-
 const MAX_FILE_SIZE = 5000000;
 const ACCEPTED_IMAGE_TYPES = [
   'image/jpeg',
@@ -54,10 +62,37 @@ const ACCEPTED_IMAGE_TYPES = [
   'application/pdf',
 ];
 
+const driverOffersList = [
+  {
+    id: 'standard',
+    label: 'Atendimento Padrão',
+  },
+  {
+    id: 'bilingual-english',
+    label: 'Atendimento em Inglês',
+  },
+  {
+    id: 'bilingual-spanish',
+    label: 'Atendimento em Espanhol',
+  },
+  {
+    id: 'libras',
+    label: 'Atendimento em Libras',
+  },
+  {
+    id: 'pcd-ride',
+    label: 'Atendimento PCD',
+  },
+] as const;
+
 const driverSchema = toTypedSchema(
   z.object({
     name: z.string({ message: 'Obrigatório' }).min(2).max(50),
     email: z.string({ message: 'Obrigatório' }).min(2).max(50),
+    userPassword: z
+      .string({ message: 'A senha deve conter de 6 a 8 caracteres' })
+      .min(6, 'A senha deve conter no mínimo 6 caracteres')
+      .max(8, 'A senha deve conter no máximo 8 caracteres'),
     phone: z.string({ message: 'Obrigatório' }).min(2).max(50),
     document: z.string({ message: 'Obrigatório' }).min(2).max(50),
     driverLicense: z.string({ message: 'Obrigatório' }).min(2).max(50),
@@ -71,6 +106,9 @@ const driverSchema = toTypedSchema(
     city: z.string({ message: 'Obrigatório' }).min(2).max(50),
     state: z.string({ message: 'Obrigatório' }).min(2).max(50),
     actuationArea: z.string({ message: 'Obrigatório' }).min(2).max(200),
+    driverOffers: z.array(z.string()).refine((value) => value.some((item) => item), {
+      message: 'You have to select at least one item.',
+    }),
     picture: z
       .any()
       .refine((file) => file?.size <= MAX_FILE_SIZE, `Tamanho máximo é de 5Mb.`)
@@ -109,7 +147,23 @@ const driverSchema = toTypedSchema(
 const driversForm = useForm({
   validationSchema: driverSchema,
   keepValuesOnUnmount: true,
+  initialValues: {
+    driverOffers: ['standard'],
+  },
 });
+
+const revealPassword = () => {
+  viewPassword.value = !viewPassword.value;
+};
+
+const handleGeneratePassword = () => {
+  const randomPassword = generatePassword();
+  if (randomPassword.length) {
+    driversForm.setValues({
+      userPassword: randomPassword,
+    });
+  }
+};
 
 const { startUpload } = useUploadThing('driverFiles', {
   //@ts-ignore
@@ -119,14 +173,22 @@ const { startUpload } = useUploadThing('driverFiles', {
 });
 const onSubmit = driversForm.handleSubmit(async (values) => {
   const files = [values?.picture, values?.cnhCopy, values?.addressCopy, values?.bankCopy];
+  console.log('FILES -> ', files);
   isLoadingSend.value = true;
-  try {
-    if (!files) return;
+  if (files.includes(undefined)) {
+    toast({
+      title: 'Oops!',
+      description: `Nenhum arquivo anexado.`,
+      variant: 'destructive',
+    });
+    isLoadingSend.value = false;
+  } else {
     const filesResponse = await startUpload(files);
     const newDriverData = {
       driverCars,
       name: values.name,
       email: values.email,
+      password: values.userPassword,
       phone: values.phone,
       document: values.document,
       driverLicense: values.driverLicense,
@@ -136,11 +198,13 @@ const onSubmit = driversForm.handleSubmit(async (values) => {
         zipcode: values.zipcode,
         streetName: values.streetName,
         streetNumber: values.streetNumber,
-        addComplement: values.complement,
+        neighborhood: values.neighborhood,
+        complement: values.complement,
         city: values.city,
         state: values.state,
       },
       actuationArea: values.actuationArea,
+      offers: values.driverOffers,
       driverFiles: {
         picture: {
           //@ts-ignore
@@ -172,21 +236,33 @@ const onSubmit = driversForm.handleSubmit(async (values) => {
       status: 'pending',
       enabled: true,
     };
-    await createNewDriverAction(newDriverData);
-  } catch (error) {
-    toast({
-      title: 'Oops!',
-      description: `Ocorreu um erro ${error} ao adicionar o motorista.`,
-      variant: 'destructive',
-    });
-  } finally {
-    isLoadingSend.value = false;
-    toast({
-      title: 'Sucesso!',
-      class: 'bg-green-600 border-0 text-white text-2xl',
-      description: `O motorista ${values.name} foi cadastrado com sucesso!`,
-    });
-    navigateTo('/admin/drivers/active');
+    const result = await createNewDriverAction(newDriverData);
+    if (result?.success) {
+      toast({
+        title: 'Sucesso!',
+        class: 'bg-green-600 border-0 text-white text-2xl',
+        description: `O motorista ${values.name} foi cadastrado com sucesso!`,
+      });
+      isLoadingSend.value = false;
+      setTimeout(() => {
+        navigateTo('/admin/drivers/active');
+      }, 1000);
+    } else {
+      if (result.statusCode === 409) {
+        //@ts-ignore
+        document.querySelector("input[name='email']").focus();
+        driversForm.setFieldError(
+          'email',
+          'Já existe uma conta vinculada a este e-mail.',
+        );
+      }
+      isLoadingSend.value = false;
+      toast({
+        title: 'Erro ao criar novo motorista!',
+        description: result.error,
+        variant: 'destructive',
+      });
+    }
   }
 });
 </script>
@@ -206,20 +282,71 @@ const onSubmit = driversForm.handleSubmit(async (values) => {
       <form @submit.prevent="onSubmit" @keydown.enter.prevent="true">
         <Card class="bg-zinc-200">
           <CardContent>
-            <h2 class="mt-4 mb-6 text-lg font-bold">Dados Pessoais</h2>
+            <h2 class="mt-4 mb-6 text-lg font-bold">Dados de Acesso</h2>
             <div class="mb-4 w-full grid grid-cols-3 gap-8">
-              <FormField v-slot="{ componentField }" name="name">
+              <FormField v-slot="{ componentField }" name="email">
                 <FormItem>
-                  <FormLabel>Nome Completo</FormLabel>
+                  <FormLabel>E-mail</FormLabel>
                   <FormControl>
                     <Input type="text" v-bind="componentField" />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
               </FormField>
-              <FormField v-slot="{ componentField }" name="email">
+              <FormField v-slot="{ componentField }" name="userPassword">
+                <FormItem class="relative">
+                  <FormLabel>Senha*</FormLabel>
+                  <FormControl>
+                    <div v-if="viewPassword" class="relative">
+                      <Input
+                        type="text"
+                        placeholder="Insira a senha"
+                        v-bind="componentField"
+                        :disabled="loadingData"
+                        maxlength="8"
+                      />
+                      <EyeOff
+                        class="h-5 w-5 absolute top-[10px] right-3 cursor-pointer hover:text-zinc-700"
+                        :class="viewPassword ? 'text-zinc-700' : 'text-zinc-400'"
+                        @click.prevent="revealPassword"
+                      />
+                    </div>
+                    <div v-else class="relative">
+                      <Input
+                        type="password"
+                        placeholder="Insira a senha"
+                        v-bind="componentField"
+                        :disabled="loadingData"
+                        maxlength="8"
+                      />
+                      <Eye
+                        class="h-5 w-5 absolute top-[10px] right-3 cursor-pointer hover:text-zinc-700"
+                        :class="viewPassword ? 'text-zinc-700' : 'text-zinc-400'"
+                        @click.prevent="revealPassword"
+                      />
+                    </div>
+                  </FormControl>
+                  <small class="text-muted-foreground">
+                    *A senha deve conter de 6 a 8 caracteres</small
+                  >
+                  <FormMessage class="text-xs" />
+                </FormItem>
+              </FormField>
+              <div class="relative flex items-center">
+                <Button
+                  class="relative px-2 top-[4px] max-w-[140px]"
+                  @click.prevent="handleGeneratePassword"
+                >
+                  <WandSparkles class="w-6 h-6" />
+                  Gerar Senha
+                </Button>
+              </div>
+            </div>
+            <h2 class="mt-4 mb-6 text-lg font-bold">Dados Pessoais</h2>
+            <div class="mb-4 w-full grid grid-cols-4 gap-8">
+              <FormField v-slot="{ componentField }" name="name">
                 <FormItem>
-                  <FormLabel>E-mail</FormLabel>
+                  <FormLabel>Nome Completo</FormLabel>
                   <FormControl>
                     <Input type="text" v-bind="componentField" />
                   </FormControl>
@@ -239,8 +366,6 @@ const onSubmit = driversForm.handleSubmit(async (values) => {
                   <FormMessage />
                 </FormItem>
               </FormField>
-            </div>
-            <div class="mb-4 w-full grid grid-cols-4 gap-8">
               <FormField v-slot="{ componentField }" name="document">
                 <FormItem class="col-span-1">
                   <FormLabel>CPF</FormLabel>
@@ -263,6 +388,8 @@ const onSubmit = driversForm.handleSubmit(async (values) => {
                   <FormMessage />
                 </FormItem>
               </FormField>
+            </div>
+            <div class="mb-4 w-full grid grid-cols-4 gap-8">
               <FormField v-slot="{ componentField }" name="licenseCategory">
                 <FormItem class="col-span-1">
                   <FormLabel>Categoria CNH</FormLabel>
@@ -283,12 +410,12 @@ const onSubmit = driversForm.handleSubmit(async (values) => {
               </FormField>
             </div>
             <section class="my-10">
-              <h2 class="mt-4 mb-6 text-lg font-bold">Endereço e Área de Atuação</h2>
+              <h2 class="mt-4 mb-6 text-lg font-bold">Endereço</h2>
               <AddressForm :edit-mode="false" :form="driversForm" />
               <div class="mb-4 w-full md:grid md:grid-cols-4 gap-8">
                 <FormField v-slot="{ componentField }" name="actuationArea">
                   <FormItem class="col-span-1">
-                    <FormLabel>Área de atuação</FormLabel>
+                    <FormLabel>Região Atendida (KM / Área / Período)</FormLabel>
                     <FormControl>
                       <Input type="text" v-bind="componentField" />
                     </FormControl>
@@ -296,6 +423,35 @@ const onSubmit = driversForm.handleSubmit(async (values) => {
                   </FormItem>
                 </FormField>
               </div>
+            </section>
+            <section>
+              <h2 class="mt-4 mb-6 text-lg font-bold">Atributos / Diferenciais</h2>
+              <FormField name="driverOffers">
+                <FormItem>
+                  <FormField
+                    v-for="item in driverOffersList"
+                    v-slot="{ value, handleChange }"
+                    :key="item.id"
+                    type="checkbox"
+                    :value="item.id"
+                    :unchecked-value="false"
+                    name="driverOffers"
+                  >
+                    <FormItem class="flex flex-row items-start space-x-3 space-y-0">
+                      <FormControl>
+                        <Checkbox
+                          @update:checked="handleChange"
+                          :checked="value.includes(item.id)"
+                        />
+                      </FormControl>
+                      <FormLabel class="font-normal">
+                        {{ item.label }}
+                      </FormLabel>
+                    </FormItem>
+                  </FormField>
+                  <FormMessage />
+                </FormItem>
+              </FormField>
             </section>
             <section class="my-10">
               <h2 class="mb-4 text-lg font-bold">Dados do(s) Veículo(s)</h2>

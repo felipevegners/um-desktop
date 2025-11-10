@@ -40,15 +40,9 @@ import {
   convertMetersToDistance,
   convertSecondsToTime,
   currencyFormat,
-  polyLineCodec,
   sanitizePhone,
   sanitizeRideDate,
 } from '~/lib/utils';
-
-const API_KEY = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
-const customIconStart = `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="#FFFFFF" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-square-dot-icon lucide-square-dot"><rect width="18" height="18" x="3" y="3" rx="2"/><circle cx="12" cy="12" r="1"/></svg>`;
-const customIconStop = `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="#FFFFFF" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-square-pause-icon lucide-square-pause"><rect width="18" height="18" x="3" y="3" rx="2"/><line x1="10" x2="10" y1="15" y2="9"/><line x1="14" x2="14" y1="15" y2="9"/></svg>`;
-const customIconEnd = `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="#FFFFFF" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-square-check-icon lucide-square-check"><rect width="18" height="18" x="3" y="3" rx="2"/><path d="m9 12 2 2 4-4"/></svg>`;
 
 definePageMeta({
   layout: 'admin',
@@ -100,13 +94,10 @@ const selectedDriver = ref<any>();
 selectedDriver.value = ride?.value.driver;
 const selectedUser = ref<any>();
 const loadingSend = ref<boolean>(false);
-const loadingRoute = ref<boolean>(false);
 const availableUsers = ref();
 const availableProducts = ref<any>([]);
 const selectedProduct = ref<any>(ride?.value.product);
 const travelDate = ref<any>();
-const showRenderedMap = ref<boolean>(false);
-const showGenerateRide = ref<boolean>(false);
 const showRouteRecalculation = ref<boolean>(false);
 const showCancelationModal = ref<boolean>(false);
 const showDeleteConfirmationModal = ref<boolean>(false);
@@ -114,7 +105,6 @@ const loadingCancelAndDelete = ref<boolean>(false);
 const showFinishModal = ref<boolean>(false);
 const showWaypointsForm = ref<boolean>(false);
 const loadingRemoveDriver = ref<boolean>(false);
-const finalRideCalculation = ref<any>({});
 const driverLocation = ref<any>({});
 const driverLocationInterval = ref<any>(null);
 
@@ -122,119 +112,6 @@ availableProducts.value = products?.value;
 showWaypointsForm.value = ride?.value.travel?.stops?.length;
 
 const waypointLocationDetails = ref<any>([]);
-
-const routePolyLine = ref();
-const markers = ref<any>([]);
-
-const center = ref<any>({ lat: 0, lng: 0 });
-const initialZoom = ref(1);
-const mapRef = ref<any>(null);
-
-const ridePath = ref<any>({
-  path: [],
-  geodesic: true,
-  strokeColor: '#000000',
-  strokeOpacity: 0.8,
-  strokeWeight: 5,
-  zIndex: 11,
-});
-const finalRidePath = ref<any>({
-  path: [],
-  geodesic: true,
-  strokeColor: '#33ffcc',
-  strokeOpacity: 0.8,
-  strokeWeight: 9,
-  zIndex: 10,
-});
-
-const realRidePath = ref<any>({
-  path: [],
-  geodesic: true,
-  strokeColor: '#ffcc00',
-  strokeOpacity: 0.8,
-  strokeWeight: 13,
-  zIndex: 9,
-});
-
-const origin = ride?.value.travel.origin;
-const destination = ride?.value.travel.destination;
-
-watch(
-  () => mapRef.value?.ready,
-  (ready) => {
-    if (ready) {
-      const map = mapRef.value.map;
-      //@ts-ignore
-      const bounds = new google.maps.LatLngBounds();
-      //@ts-ignore
-      bounds.extend(new google.maps.LatLng(origin.lat, origin.lng));
-      //@ts-ignore
-      bounds.extend(new google.maps.LatLng(destination.lat, destination.lng));
-
-      map.fitBounds(bounds);
-    }
-  },
-);
-
-// Google Maps Area
-const decodePolyline = (polyline: string) => {
-  const decode: any = polyLineCodec(polyline);
-  const coords = decode.map((path: any) => ({
-    lat: path[0],
-    lng: path[1],
-  }));
-
-  // Set the coords to build the path
-  ridePath.value = {
-    ...ridePath.value,
-    path: [...coords],
-  };
-  if (ride?.value.status === 'completed') {
-    const finalDecode = polyLineCodec(ride?.value?.travel?.finalPolyline);
-    const finalCoords = finalDecode.map((path) => ({
-      lat: path[0],
-      lng: path[1],
-    }));
-
-    finalRidePath.value = {
-      ...finalRidePath.value,
-      path: [...finalCoords],
-    };
-  }
-
-  // Find the center of ride path to center the map
-  const centerCoord = coords.length > 2 ? coords.length / 2 : coords.length;
-  const parseCenterCoord = parseInt(centerCoord, 10) + 10; // parseInt if centerCoord is not divisivle by 2
-  center.value = {
-    lat: coords[parseCenterCoord].lat,
-    lng: coords[parseCenterCoord].lng,
-  };
-
-  const stopsMarkers = ride?.value.travel.stops.map((stop: any, index: number) => {
-    return {
-      ...stop.coords,
-      icon: 'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent(customIconStop),
-      title: `Parada ${index + 1} de ${ride?.value.user.name}`,
-    };
-  });
-
-  // Set the markers on the map
-  markers.value = [
-    {
-      lat: coords[0].lat,
-      lng: coords[0].lng,
-      icon: 'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent(customIconStart),
-      title: `Embarque de ${ride?.value.user.name}`,
-    },
-    ...stopsMarkers,
-    {
-      lat: coords[coords.length - 1].lat,
-      lng: coords[coords.length - 1].lng,
-      icon: 'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent(customIconEnd),
-      title: `Desembarque de ${ride?.value.user.name}`,
-    },
-  ];
-};
 
 onBeforeMount(async () => {
   await getUsersAccountsAction();
@@ -262,25 +139,6 @@ onBeforeMount(async () => {
   travelDate.value = new CalendarDate(dateNumbers[0], dateNumbers[1], dateNumbers[2]);
 
   await getDriversAction();
-
-  decodePolyline(ride?.value.travel?.polyLineCoords);
-  routePolyLine.value = ride?.value.travel?.polyLineCoords;
-});
-
-onMounted(() => {
-  if (ride?.value.status === 'completed') {
-    const realFinalCoords: any = ride?.value.progress
-      ? ride?.value.progress?.ridePath?.map((path: any) => ({
-          lat: path.latitude,
-          lng: path.longitude,
-        }))
-      : [];
-
-    realRidePath.value = {
-      ...realRidePath.value,
-      path: [...realFinalCoords],
-    };
-  }
 });
 
 const sanitizeDrivers = computed(() => {
@@ -308,28 +166,28 @@ const contactDriver = async () => {
   editDriver.value = false;
   selectedDriver.value = ride?.value.driver;
 
-  //   const message = `
-  //   *Novo Atendimento - ${ride?.value?.code}*
-  //   %0A*Passageiro*: ${ride?.value.user.name}
-  //   %0A*Celular*: ${ride?.value.user.phone}
-  //   %0A*Data/Hora*: ${ride?.value.travel.date} / ${ride?.value.travel.departTime}
-  //   %0A------------------------------
-  //   %0A*Dados da Viagem*
-  //   %0A%0A*Origem*: ${ride?.value.travel.originAddress}
-  // ${
-  //   ride?.value.travel.stops.length
-  //     ? ride?.value.travel.stops.map((stop: any, index: any) => {
-  //         return `%0A%0A*Parada ${index + 1}*: ${stop.address}`;
-  //       })
-  //     : ''
-  // }
-  //   %0A%0A*Destino*: ${ride?.value.travel.destinationAddress}
-  //   %0A%0A*Despachado por*: ${ride?.value.dispatcher.user} - ${ride?.value.dispatcher.email}`;
-  //   const url =
-  //     WPP_API.replace('[[phone]]', sanitizePhone(selectedDriver.value.phone as string)) +
-  //     '&text=' +
-  //     message;
-  //   navigateTo(url, { external: true, open: { target: '_blank' } });
+  const message = `
+    *Novo Atendimento - ${ride?.value?.code}*
+    %0A*Passageiro*: ${ride?.value.user.name}
+    %0A*Celular*: ${ride?.value.user.phone}
+    %0A*Data/Hora*: ${ride?.value.travel.date} / ${ride?.value.travel.departTime}
+    %0A------------------------------
+    %0A*Dados da Viagem*
+    %0A%0A*Origem*: ${ride?.value.travel.originAddress}
+  ${
+    ride?.value.travel.stops.length
+      ? ride?.value.travel.stops.map((stop: any, index: any) => {
+          return `%0A%0A*Parada ${index + 1}*: ${stop.address}`;
+        })
+      : ''
+  }
+    %0A%0A*Destino*: ${ride?.value.travel.destinationAddress}
+    %0A%0A*Despachado por*: ${ride?.value.dispatcher.user} - ${ride?.value.dispatcher.email}`;
+  const url =
+    WPP_API.replace('[[phone]]', sanitizePhone(selectedDriver.value.phone as string)) +
+    '&text=' +
+    message;
+  navigateTo(url, { external: true, open: { target: '_blank' } });
 };
 
 const handleRemoveRider = async () => {
@@ -543,6 +401,7 @@ const showRideControls = computed(() => {
           <CalendarDays class="w-6 h-6" />
           Editar Atendimento - #{{ ride?.code || '' }}
         </h1>
+        <RideStatusFlag :ride-status="ride?.status" />
       </div>
       <div v-if="showRideControls" class="flex gap-6 items-center">
         <Button @click="handleCopyTrackLink" class="bg-blue-600 hover:bg-blue-700">
@@ -585,70 +444,12 @@ const showRideControls = computed(() => {
                     <Map />
                     <h3 class="text-sm font-bold">Dados do atendimento</h3>
                   </div>
-                  <RideStatusFlag :ride-status="ride?.status" />
                 </div>
 
                 <div class="col-span-2 grid grid-cols-4 gap-3">
                   <div
                     class="col-span-2 row-span-4 p-4 bg-white rounded-md w-full overflow-hidden"
                   >
-                    <!-- <GoogleMap
-                      ref="mapRef"
-                      :api-key="API_KEY"
-                      style="width: 100%; height: 450px"
-                      :center="center"
-                      :zoom="initialZoom"
-                      :zoom-control="true"
-                    >
-                      <Marker
-                        v-for="marker in markers"
-                        ref="markerRef"
-                        :key="marker.id"
-                        :options="{
-                          title: marker.title,
-                          position: {
-                            lat: marker.lat,
-                            lng: marker.lng,
-                          },
-                          icon: marker.icon,
-                        }"
-                        class="w-10 h-10"
-                      />
-                      <CustomMarker
-                        v-if="ride.status === 'in-progress'"
-                        :options="{
-                          position: {
-                            lat: driverLocation.latitude,
-                            lng: driverLocation.longitude,
-                          },
-                          anchorPoint: 'TOP_CENTER',
-                        }"
-                      >
-                        <div class="relative">
-                          <img
-                            :src="
-                              driver?.driverFiles?.picture?.url || '/images/no-avatar.png'
-                            "
-                            class="w-14 h-14 object-cover border-4 border-zinc-900 rounded-full relative"
-                          />
-                          <div
-                            :class="
-                              cn(
-                                'absolute bottom-[-6px] left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-8 border-r-8 border-t-8 border-l-transparent border-r-transparent',
-                                driverLocation &&
-                                  driverLocation.speed > 1 &&
-                                  'border-t-zinc-900',
-                                driverLocation.speed === 0 && 'border-t-amber-500',
-                              )
-                            "
-                          />
-                        </div>
-                      </CustomMarker>
-                      <Polyline :options="ridePath" />
-                      <Polyline :options="finalRidePath" />
-                      <Polyline :options="realRidePath" />
-                    </GoogleMap> -->
-                    <!-- v-if="ride?.status === 'completed'" -->
                     <RideRouteMap
                       :origin-coords="{
                         lat: ride.travel.origin.lat,
@@ -669,28 +470,67 @@ const showRideControls = computed(() => {
                     </h3>
                   </div>
                   <div class="p-3 border border-zinc-400 bg-white rounded-md">
-                    <span class="text-muted-foreground text-sm">Hora do embarque</span>
-                    <h3 class="text-lg font-bold">
-                      {{ ride?.travel.departTime }}
-                    </h3>
+                    <span class="text-muted-foreground text-sm">
+                      Hora de embarque (estimado)
+                    </span>
+                    <h3 class="text-lg font-bold">{{ ride?.travel.departTime }}H</h3>
+                    <div v-if="ride.status === 'completed'">
+                      <span class="text-muted-foreground text-sm">
+                        Hora de embarque (realizado)
+                      </span>
+                      <h3 class="text-lg font-bold">
+                        {{
+                          new Date(ride?.progress.startedAt).toLocaleTimeString('pt-BR', {
+                            hour: '2-digit',
+                            minute: '2-digit',
+                          })
+                        }}H
+                      </h3>
+                    </div>
                   </div>
                   <div class="p-3 border border-zinc-400 bg-white rounded-md">
                     <span class="text-muted-foreground text-sm">Distância estimada</span>
                     <h3 class="text-lg font-bold">
                       {{ convertMetersToDistance(ride?.travel.estimatedDistance) }}
                     </h3>
+                    <div v-if="ride.status === 'completed'">
+                      <span class="text-muted-foreground text-sm">
+                        Distância realizada
+                      </span>
+                      <h3 class="text-lg font-bold">
+                        {{ convertMetersToDistance(ride?.travel.finalDistance) }}
+                      </h3>
+                    </div>
                   </div>
                   <div class="p-3 border border-zinc-400 bg-white rounded-md">
                     <span class="text-muted-foreground text-sm">Duração estimada</span>
                     <h3 class="text-lg font-bold">
                       {{ convertSecondsToTime(ride?.travel.estimatedDuration) }}
                     </h3>
+                    <span class="text-muted-foreground text-sm">Duração real</span>
+                    <h3 class="text-lg font-bold text-amber-600">
+                      {{ convertSecondsToTime(ride?.travel.finalDuration) }}
+                    </h3>
+                    <div v-if="ride?.progress.stops.length">
+                      <span class="text-muted-foreground text-sm">
+                        Tempo em Paradas ({{ ride?.progress.stops.length }})
+                      </span>
+                      <h3 class="text-lg font-bold text-red-600">
+                        {{ convertSecondsToTime(ride?.travel.totalTimeStopped) }}
+                      </h3>
+                    </div>
                   </div>
                   <div class="p-3 border border-zinc-400 bg-white rounded-md">
                     <span class="text-muted-foreground text-sm">Valor estimado</span>
                     <h3 class="text-lg font-bold">
                       {{ currencyFormat(ride?.estimatedPrice) }}
                     </h3>
+                    <div v-if="ride.status === 'completed'">
+                      <span class="text-muted-foreground text-sm">Valor final</span>
+                      <h3 class="text-lg font-bold text-amber-600">
+                        {{ currencyFormat(ride?.rideFinalPrice) }}
+                      </h3>
+                    </div>
                   </div>
                   <div
                     class="p-3 flex flex-col items-start gap-2 border border-zinc-400 bg-white rounded-md"

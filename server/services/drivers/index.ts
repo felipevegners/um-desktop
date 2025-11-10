@@ -24,8 +24,7 @@ export const createDriver = async (driverData: Driver) => {
       method: 'POST',
       body: driverData,
     });
-  } catch (error) {
-    console.log('Error during POST Driver -> ', error);
+  } catch (error: any) {
     throw error;
   }
 };
@@ -49,7 +48,6 @@ export const deleteDriver = async (id: string) => {
       body: { id },
     });
   } catch (error) {
-    console.log('Error -> ', error);
     throw error;
   }
 };

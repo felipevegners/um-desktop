@@ -58,10 +58,16 @@ export const useDriverStore = defineStore('driver', {
     async createNewDriverAction(driverData: Driver) {
       this.loadingSend = true;
       try {
-        await createDriver(driverData);
-      } catch (error) {
-        console.log('Driver Store Error Create -> ', error);
-        throw error;
+        const result = await createDriver(driverData);
+        return { success: true, data: result };
+      } catch (error: any) {
+        // Extract error message from fetch error
+        const message = error?.data?.message || error?.message || 'Erro desconhecido';
+        return {
+          success: false,
+          error: message,
+          statusCode: error?.statusCode || 500,
+        };
       } finally {
         this.loadingSend = false;
       }
@@ -81,10 +87,16 @@ export const useDriverStore = defineStore('driver', {
     async deleteDriverAction(driverId: string) {
       this.loadingSend = true;
       try {
-        await deleteDriver(driverId);
-      } catch (error) {
-        console.log('Driver Store Error Delete -> ', error);
-        throw error;
+        const result = await deleteDriver(driverId);
+        return { success: true, data: result };
+      } catch (error: any) {
+        // Extract error message from fetch error
+        const message = error?.data?.message || error?.message || 'Erro desconhecido';
+        return {
+          success: false,
+          error: message,
+          statusCode: error?.statusCode || 500,
+        };
       } finally {
         this.drivers = this.drivers.filter((driver) => driver.id !== driverId);
         setTimeout(() => {
