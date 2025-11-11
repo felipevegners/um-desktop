@@ -47,7 +47,7 @@ const finalColumns = [
       return h(
         'div',
         { class: 'relative text-xs' },
-        driver.name ? driver.name : 'Nenhum',
+        driver.name ? driver.name.split(' ')[0] : 'Nenhum',
       );
     },
   }),

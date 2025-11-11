@@ -45,7 +45,7 @@ const showUrlButton = computed(() => {
 <template>
   <div class="flex items-center gap-1">
     <span
-      :class="`py-1 px-3 flex items-center justify-center rounded-md text-white text-[10px] uppercase w-fit  
+      :class="`py-1 px-3 flex items-center justify-center rounded-md text-white text-[9px] uppercase w-fit  
       ${
         paymentStatus === 'pending' || paymentStatus === 'unpaid'
           ? 'bg-amber-600'

@@ -105,7 +105,12 @@ const loadingCancelAndDelete = ref<boolean>(false);
 const showFinishModal = ref<boolean>(false);
 const showWaypointsForm = ref<boolean>(false);
 const loadingRemoveDriver = ref<boolean>(false);
-const driverLocation = ref<any>({});
+const driverData = ref<any>({
+  loading: true,
+  location: {},
+  name: '',
+  picture: '',
+});
 const driverLocationInterval = ref<any>(null);
 
 availableProducts.value = products?.value;
@@ -305,8 +310,19 @@ onMounted(async () => {
   }
 
   driverLocationInterval.value = setInterval(async () => {
+    driverData.value = {
+      loading: driverData.value.loading,
+      location: driverData.value.location,
+      name: driverData.value.name,
+      picture: driverData.value.picture,
+    };
     await getDriverByIdAction(ride?.value.driver.id);
-    driverLocation.value = driver?.value.location;
+    driverData.value = {
+      loading: false,
+      location: driver?.value.location,
+      name: driver?.value.name,
+      picture: driver?.value.driverFiles.picture.url,
+    };
   }, 10000);
 });
 
@@ -452,15 +468,17 @@ const showRideControls = computed(() => {
                   >
                     <RideRouteMap
                       :origin-coords="{
-                        lat: ride.travel.origin.lat,
-                        lng: ride.travel.origin.lng,
+                        lat: ride?.travel.origin.lat,
+                        lng: ride?.travel.origin.lng,
                       }"
-                      :stops-coords="ride.travel.stops"
+                      :stops-coords="ride?.travel.stops"
                       :destination-coords="{
-                        lat: ride.travel.destination.lat,
-                        lng: ride.travel.destination.lng,
+                        lat: ride?.travel.destination.lat,
+                        lng: ride?.travel.destination.lng,
                       }"
-                      :rideRealCoords="ride.status === 'completed' ? ride.progress : {}"
+                      :rideRealCoords="ride?.status === 'completed' ? ride?.progress : {}"
+                      :driverData="ride?.status === 'in-progress' ? driverData : {}"
+                      :in-progress="ride?.status === 'in-progress'"
                     />
                   </div>
                   <div class="p-3 border border-zinc-400 bg-white rounded-md">

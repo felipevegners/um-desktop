@@ -1,7 +1,9 @@
 <script setup lang="ts">
+import { cn } from '@/lib/utils';
+import { LoaderCircle } from 'lucide-vue-next';
 import { useRuntimeConfig } from 'nuxt/app';
 import { computed, reactive, ref, watch } from 'vue';
-import { GoogleMap, Polyline } from 'vue3-google-map';
+import { CustomMarker, GoogleMap, Polyline } from 'vue3-google-map';
 
 const customIconStart = `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="#FFFFFF" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-square-dot-icon lucide-square-dot"><rect width="18" height="18" x="3" y="3" rx="2"/><circle cx="12" cy="12" r="1"/></svg>`;
 const customIconStop = `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="#FFFFFF" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-square-pause-icon lucide-square-pause"><rect width="18" height="18" x="3" y="3" rx="2"/><line x1="10" x2="10" y1="15" y2="9"/><line x1="14" x2="14" y1="15" y2="9"/></svg>`;
@@ -23,6 +25,8 @@ const props = defineProps<{
   stopsCoords?: any;
   destinationCoords?: any;
   rideRealCoords?: any;
+  driverData?: any;
+  inProgress?: boolean;
 }>();
 
 const polylineOpts = ref<any>({
@@ -86,24 +90,24 @@ async function directions() {
     await directionsService.route(request, (response: any, status: any) => {
       //@ts-ignore
       if (status === window.google.maps.DirectionsStatus.OK) {
-        const customArrow = {
-          //@ts-ignore
-          path: google.maps.SymbolPath.FORWARD_CLOSED_ARROW,
-          scale: 5,
-          strokeColor: '#000000',
-          fillColor: '#000000',
-          fillOpacity: 0.8,
-          //@ts-ignore
-          anchor: new google.maps.Point(0, 0),
-        };
+        // const customArrow = {
+        //   //@ts-ignore
+        //   path: google.maps.SymbolPath.FORWARD_CLOSED_ARROW,
+        //   scale: 5,
+        //   strokeColor: '#000000',
+        //   fillColor: '#000000',
+        //   fillOpacity: 0.8,
+        //   //@ts-ignore
+        //   anchor: new google.maps.Point(0, 0),
+        // };
 
-        const square = {
-          path: 'M 10 20 10 20',
-          strokeColor: '#000',
-          fillColor: '#33ffcc',
-          fillOpacity: 1,
-          scale: 5,
-        };
+        // const square = {
+        //   path: 'M 10 20 10 20',
+        //   strokeColor: '#000',
+        //   fillColor: '#33ffcc',
+        //   fillOpacity: 1,
+        //   scale: 5,
+        // };
         if (!directionsRenderer.value) {
           setDirection(
             //@ts-ignore
@@ -139,7 +143,6 @@ async function directions() {
           const legs = response.routes[0].legs;
           legs.forEach((leg: any, index: number) => {
             if (index > 0) {
-              // Skip origin
               //@ts-ignore
               new google.maps.Marker({
                 position: leg.start_location,
@@ -181,6 +184,13 @@ async function directions() {
 
 <template>
   <section>
+    <div
+      v-if="driverData?.loading"
+      class="p-3 flex flex-row items-center gap-3 bg-zinc-900"
+    >
+      <LoaderCircle class="animate-spin text-white" />
+      <small class="text-white">Carregando localização do motorista...</small>
+    </div>
     <GoogleMap
       ref="mapRef"
       :api-key="GMAPS_API_KEY"
@@ -188,6 +198,34 @@ async function directions() {
       style="width: 100%; height: 550px"
       :disable-default-ui="true"
     >
+      <CustomMarker
+        v-if="inProgress && !driverData.loading"
+        :options="{
+          position: {
+            lat: driverData?.location?.latitude,
+            lng: driverData?.location?.longitude,
+          },
+          anchorPoint: 'TOP_CENTER',
+        }"
+      >
+        <div class="relative flex flex-col items-center">
+          <span class="px-2 py-1 rounded-md bg-zinc-900 text-white">
+            {{ driverData?.name.split(' ')[0] }}
+          </span>
+          <img
+            :src="driverData?.picture || '/images/no-avatar.png'"
+            :class="
+              cn(
+                'w-14 h-14 object-cover border-4 border-zinc-900 rounded-full relative',
+                driverData?.location?.speed === 0 && 'border-amber-600',
+              )
+            "
+          />
+          <div
+            class="absolute bottom-[-6px] left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-8 border-r-8 border-t-8 border-l-transparent border-r-transparent border-t-zinc-900"
+          />
+        </div>
+      </CustomMarker>
       <Polyline :options="polylineOpts" />
       <DirectionsRenderer />
     </GoogleMap>

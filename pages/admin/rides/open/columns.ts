@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { WPP_API } from '@/config/paths';
 import { createColumnHelper } from '@tanstack/vue-table';
 import { ArrowUpDown, MessageCircleMore } from 'lucide-vue-next';
-import { currencyFormat, sanitizePhone, sanitizeRideDate } from '~/lib/utils';
+import { sanitizePhone, sanitizeRideDate } from '~/lib/utils';
 
 const columnHelper = createColumnHelper<any>();
 
@@ -59,7 +59,7 @@ export const columns: any = [
         .slice(0, 1)
         .pop();
       const travelDateTime = `${sanitizeRideDate(data.travel.date as string)} - ${data.travel.departTime}`;
-      return h('div', { class: 'capitalize text-xs' }, [
+      return h('div', { class: 'capitalize text-xs text-wrap' }, [
         `${normalizeOrigin} → ${normalizeDestination} | ${travelDateTime}`,
         data?.travel.stops?.length > 0
           ? h(
