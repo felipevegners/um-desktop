@@ -306,7 +306,7 @@ onMounted(async () => {
 
   driverLocationInterval.value = setInterval(async () => {
     await getDriverByIdAction(ride?.value.driver.id);
-    driverLocation.value = driver.value.location;
+    driverLocation.value = driver?.value.location;
   }, 10000);
 });
 
@@ -507,13 +507,17 @@ const showRideControls = computed(() => {
                     <h3 class="text-lg font-bold">
                       {{ convertSecondsToTime(ride?.travel.estimatedDuration) }}
                     </h3>
-                    <span class="text-muted-foreground text-sm">Duração real</span>
-                    <h3 class="text-lg font-bold text-amber-600">
-                      {{ convertSecondsToTime(ride?.travel.finalDuration) }}
-                    </h3>
-                    <div v-if="ride?.progress.stops.length">
+                    <div v-if="ride?.status === 'completed'">
+                      <span class="text-muted-foreground text-sm">Duração real</span>
+                      <h3 class="text-lg font-bold text-amber-600">
+                        {{ convertSecondsToTime(ride?.travel.finalDuration) }}
+                      </h3>
+                    </div>
+                    <div
+                      v-if="ride?.status === 'completed' && ride?.progress?.stops?.length"
+                    >
                       <span class="text-muted-foreground text-sm">
-                        Tempo em Paradas ({{ ride?.progress.stops.length }})
+                        Tempo em Paradas ({{ ride?.progress?.stops?.length }})
                       </span>
                       <h3 class="text-lg font-bold text-red-600">
                         {{ convertSecondsToTime(ride?.travel.totalTimeStopped) }}
