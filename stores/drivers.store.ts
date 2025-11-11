@@ -61,7 +61,6 @@ export const useDriverStore = defineStore('driver', {
         const result = await createDriver(driverData);
         return { success: true, data: result };
       } catch (error: any) {
-        // Extract error message from fetch error
         const message = error?.data?.message || error?.message || 'Erro desconhecido';
         return {
           success: false,
@@ -75,10 +74,15 @@ export const useDriverStore = defineStore('driver', {
     async updateDriverAction(driverData: Driver) {
       this.loadingSend = true;
       try {
-        await updateDriver(driverData);
-      } catch (error) {
-        console.log('Driver Store Error Update -> ', error);
-        throw error;
+        const result = await updateDriver(driverData);
+        return { success: true, data: result };
+      } catch (error: any) {
+        const message = error?.data?.message || error?.message || 'Erro desconhecido';
+        return {
+          success: false,
+          error: message,
+          statusCode: error?.statusCode || 500,
+        };
       } finally {
         this.loadingSend = false;
       }

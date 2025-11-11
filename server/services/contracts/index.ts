@@ -40,7 +40,6 @@ export const deleteContractService = async (id: string) => {
       body: { id },
     });
   } catch (error) {
-    console.log('Error during delete Service -> ', error);
     throw error;
   }
 };

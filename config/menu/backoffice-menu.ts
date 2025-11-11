@@ -92,7 +92,7 @@ export const backofficeMenu = {
       ],
     },
     {
-      title: 'Empresas',
+      title: 'Filiais',
       url: '/admin/branches/active',
       icon: Building2,
       isActive: route.path.startsWith('branches'),
@@ -106,7 +106,7 @@ export const backofficeMenu = {
           url: '/admin/branches/inactive',
         },
         {
-          title: 'Nova Filial',
+          title: '+ Nova Filial',
           url: '/admin/branches/new',
         },
       ],

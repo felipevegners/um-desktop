@@ -213,6 +213,7 @@ const handleGeneratePassword = () => {
             <FormControl>
               <Input type="text" v-bind="componentField" v-maska="'##.###.###/####-##'" />
             </FormControl>
+            <FormMessage />
           </FormItem>
         </FormField>
         <Button

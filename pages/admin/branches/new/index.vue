@@ -59,26 +59,33 @@ const form = useForm({
 });
 
 const onSubmit = form.handleSubmit(async (values) => {
-  try {
-    const newBranchData = {
-      ...values,
-      areas: [...ccAreas],
-      branchBudget: values?.branchBudget?.toString(),
-    };
-    await createBranchAction(newBranchData);
+  const newBranchData = {
+    ...values,
+    areas: [...ccAreas],
+    branchBudget: values?.branchBudget?.toString(),
+  };
+  const result = await createBranchAction(newBranchData);
+
+  if (result.success) {
     toast({
       title: 'Tudo pronto!',
       class: 'bg-green-600 border-0 text-white text-2xl',
       description: `Filial cadastrada com sucesso!`,
     });
-    navigateTo('/admin/branches/active');
-  } catch (error) {
+    setTimeout(() => {
+      navigateTo('/admin/branches/active');
+    }, 1000);
+  } else {
+    if (result.statusCode === 409) {
+      //@ts-ignore
+      document.querySelector("input[name='document']").focus();
+      form.setFieldError('document', 'Já existe uma filial com este CNPJ');
+    }
     toast({
-      title: 'Opss!',
+      title: `Opss, ocorreu um erro ao cadastrar a Filial:`,
       class: 'bg-red-500 border-0 text-white text-2xl',
-      description: `Ocorreu um erro ao cadastrar a Filial. Tente novamente.`,
+      description: result.error,
     });
-    throw error;
   }
 });
 </script>

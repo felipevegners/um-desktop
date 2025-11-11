@@ -54,9 +54,14 @@ export const useBranchesStore = defineStore('braches', {
       this.isLoadingData = true;
       try {
         await createBranchService(branchData);
-      } catch (error) {
-        console.error('Error from create store --> ', error);
-        throw error;
+        return { success: true };
+      } catch (error: any) {
+        const message = error?.data?.message || error?.message || 'Erro desconhecido';
+        return {
+          success: false,
+          error: message,
+          statusCode: error?.statusCode || 500,
+        };
       } finally {
         this.isLoadingData = false;
       }
@@ -65,9 +70,14 @@ export const useBranchesStore = defineStore('braches', {
       this.isLoadingData = true;
       try {
         await updateBranchService(branchData);
-      } catch (error) {
-        console.error('Error from update store --> ', error);
-        throw error;
+        return { success: true };
+      } catch (error: any) {
+        const message = error?.data?.message || error?.message || 'Erro desconhecido';
+        return {
+          success: false,
+          error: message,
+          statusCode: error?.statusCode || 500,
+        };
       } finally {
         this.isLoadingData = false;
       }

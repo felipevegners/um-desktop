@@ -192,7 +192,7 @@ export const ErrorMessages = {
   },
   Branch: {
     create: {
-      duplicate: 'Já existe uma filial com este código ou documento.',
+      duplicate: 'Já existe uma filial com este CNPJ.',
       invalidReference: 'Contrato ou dados relacionados inválidos.',
       validation: 'Dados de filial inválidos.',
       generic: 'Erro ao cadastrar filial. Tente novamente.',

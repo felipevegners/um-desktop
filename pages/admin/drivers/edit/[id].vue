@@ -5,6 +5,8 @@ import AddressForm from '@/components/forms/AddressForm.vue';
 import AvatarEdit from '@/components/shared/AvatarEdit.vue';
 import FormSelect from '@/components/shared/FormSelect.vue';
 import { useToast } from '@/components/ui/toast/use-toast';
+import { driverOffersList } from '@/config/drivers';
+import { useDriverStore } from '@/stores/drivers.store';
 import { toTypedSchema } from '@vee-validate/zod';
 import {
   Calendar,
@@ -23,7 +25,6 @@ import { storeToRefs } from 'pinia';
 import { useForm } from 'vee-validate';
 import * as z from 'zod';
 import { dateFormat } from '~/lib/utils';
-import { useDriverStore } from '~/stores/drivers.store';
 
 definePageMeta({
   layout: 'admin',
@@ -76,6 +77,9 @@ const driverSchema = toTypedSchema(
     city: z.string().min(2).max(50),
     state: z.string().min(2).max(50),
     actuationArea: z.string().min(2).max(200),
+    driverOffers: z.array(z.string()).refine((value) => value.some((item) => item), {
+      message: 'You have to select at least one item.',
+    }),
     status: z.string().min(2).max(50),
     enabled: z.boolean(),
     scheduleOpen: z.boolean(),
@@ -97,6 +101,7 @@ const driversForm = useForm({
     scheduleOpen: driver?.value.scheduleOpen,
     outsideActuation: driver?.value.outsideActuation,
     status: driver?.value.status,
+    driverOffers: driver?.value?.offers || ['standard'],
   },
 });
 
@@ -111,6 +116,7 @@ const onSubmit = driversForm.handleSubmit(async (values) => {
     licenseExpiration: values.licenseExpiration,
     licenseCategory: values.licenseCategory,
     driverCars: driverCars.value,
+    offers: values.driverOffers,
     driverFiles: {
       ...driverFiles.value,
       picture: driverProfilePicture,
@@ -133,23 +139,24 @@ const onSubmit = driversForm.handleSubmit(async (values) => {
     enabled: driverSituation.value,
   };
 
-  try {
-    //@ts-ignore
-    await updateDriverAction(newDriverData);
-  } catch (error) {
-    toast({
-      title: 'Oops!',
-      description: `Ocorreu um erro ${error} ao adicionar o motorista.`,
-      variant: 'destructive',
-    });
-  } finally {
+  const result = await updateDriverAction(newDriverData);
+
+  if (result.success) {
     toast({
       title: 'Sucesso!',
       class: 'bg-green-600 border-0 text-white text-2xl',
-      description: `O motorista ${values?.name} foi cadastrado com sucesso!`,
+      description: `O motorista ${values?.name} foi alterado com sucesso!`,
     });
     driversForm.values = newDriverData;
-    navigateTo('/admin/drivers/active');
+    setTimeout(() => {
+      navigateTo('/admin/drivers/active');
+    }, 1000);
+  } else {
+    toast({
+      title: 'Oops, ocorreu um erro ao atualizar o cadastro do motorista:',
+      description: result.error,
+      variant: 'destructive',
+    });
   }
 });
 </script>
@@ -328,7 +335,8 @@ const onSubmit = driversForm.handleSubmit(async (values) => {
               <div class="mb-4 w-full md:grid md:grid-cols-4 gap-8">
                 <FormField v-slot="{ componentField }" name="actuationArea">
                   <FormItem class="col-span-1">
-                    <FormLabel>Área de atuação</FormLabel>
+                    <FormLabel>Região Atendida (KM / Área / Período)</FormLabel>
+
                     <FormControl>
                       <Input type="text" v-bind="componentField" />
                     </FormControl>
@@ -336,6 +344,35 @@ const onSubmit = driversForm.handleSubmit(async (values) => {
                   </FormItem>
                 </FormField>
               </div>
+            </section>
+            <section>
+              <h2 class="mt-4 mb-6 text-lg font-bold">Atributos / Diferenciais</h2>
+              <FormField name="driverOffers">
+                <FormItem>
+                  <FormField
+                    v-for="item in driverOffersList"
+                    v-slot="{ value, handleChange }"
+                    :key="item.id"
+                    type="checkbox"
+                    :value="item.id"
+                    :unchecked-value="false"
+                    name="driverOffers"
+                  >
+                    <FormItem class="flex flex-row items-start space-x-3 space-y-0">
+                      <FormControl>
+                        <Checkbox
+                          @update:checked="handleChange"
+                          :checked="value.includes(item.id)"
+                        />
+                      </FormControl>
+                      <FormLabel class="font-normal">
+                        {{ item.label }}
+                      </FormLabel>
+                    </FormItem>
+                  </FormField>
+                  <FormMessage />
+                </FormItem>
+              </FormField>
             </section>
             <section class="my-10">
               <h2 class="mb-4 text-lg font-bold">Editar Veículo(s)</h2>

@@ -112,10 +112,16 @@ export default defineEventHandler(async (event) => {
     });
   } catch (error: any) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
-      console.error('Error Prisma -> ', error);
-      throw error;
+      if (error.code === 'P2002') {
+        handlePrismaError(error, ErrorMessages.Branch.create.duplicate);
+      }
+      if (error.code === 'P2003') {
+        handlePrismaError(error, ErrorMessages.Branch.create.invalidReference);
+      }
     }
-    console.error('Error Prisma -> ', error);
-    throw error;
+    if (error instanceof Prisma.PrismaClientValidationError) {
+      handlePrismaError(error, ErrorMessages.Branch.create.validation);
+    }
+    handlePrismaError(error, ErrorMessages.Branch.create.generic);
   }
 });

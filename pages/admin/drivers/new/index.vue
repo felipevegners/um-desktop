@@ -12,6 +12,8 @@ import {
   FormMessage,
 } from '@/components/ui/form';
 import { useToast } from '@/components/ui/toast/use-toast';
+import { driverOffersList } from '@/config/drivers';
+import { useDriverStore } from '@/stores/drivers.store';
 import { toTypedSchema } from '@vee-validate/zod';
 import { Car, Eye, EyeOff, Info, LoaderCircle, WandSparkles } from 'lucide-vue-next';
 import { vMaska } from 'maska/vue';
@@ -20,7 +22,6 @@ import { useForm } from 'vee-validate';
 import { ref } from 'vue';
 import * as z from 'zod';
 import { generatePassword } from '~/lib/utils';
-import { useDriverStore } from '~/stores/drivers.store';
 
 const { toast } = useToast();
 
@@ -36,7 +37,6 @@ useHead({
   title: 'Motoristas ativos | Urban Mobi',
 });
 
-const showAddForm = ref<boolean>(false);
 const viewPassword = ref<boolean>(true);
 
 const isLoadingSend = ref(false);
@@ -61,29 +61,6 @@ const ACCEPTED_IMAGE_TYPES = [
   'image/webp',
   'application/pdf',
 ];
-
-const driverOffersList = [
-  {
-    id: 'standard',
-    label: 'Atendimento Padrão',
-  },
-  {
-    id: 'bilingual-english',
-    label: 'Atendimento em Inglês',
-  },
-  {
-    id: 'bilingual-spanish',
-    label: 'Atendimento em Espanhol',
-  },
-  {
-    id: 'libras',
-    label: 'Atendimento em Libras',
-  },
-  {
-    id: 'pcd-ride',
-    label: 'Atendimento PCD',
-  },
-] as const;
 
 const driverSchema = toTypedSchema(
   z.object({

@@ -43,51 +43,18 @@ export default defineEventHandler(async (event) => {
       });
       return newDriver;
     }
-  } catch (error) {
-    // Handle Prisma-specific errors
+  } catch (error: any) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
-      // P2002: Unique constraint violation
-      if (error.code === 'P2002') {
-        throw createError({
-          statusCode: 409,
-          statusMessage: 'E-mail já cadastrado!',
-          message: `Já existe uma conta vinculada a este e-mail: "${rest.email}". Tente novamente!`,
-        });
-      }
-      // P2025: Record not found
       if (error.code === 'P2025') {
-        throw createError({
-          statusCode: 404,
-          statusMessage: 'Not Found',
-          message: 'Registro não encontrado.',
-        });
+        handlePrismaError(error, ErrorMessages.Driver.update.notFound);
       }
-      // P2003: Foreign key constraint failed
-      if (error.code === 'P2003') {
-        throw createError({
-          statusCode: 400,
-          statusMessage: 'Bad Request',
-          message: 'Referência inválida aos dados relacionados.',
-        });
+      if (error.code === 'P2002') {
+        handlePrismaError(error, ErrorMessages.Driver.update.duplicate);
       }
     }
-
-    // Handle validation errors
     if (error instanceof Prisma.PrismaClientValidationError) {
-      console.error(error);
-      throw createError({
-        statusCode: 400,
-        statusMessage: 'Bad Request',
-        message: `Dados inválidos fornecidos - ${error}`,
-      });
+      handlePrismaError(error, ErrorMessages.Driver.update.validation);
     }
-
-    // Generic error fallback
-    console.error('Unexpected error -->', error);
-    throw createError({
-      statusCode: 500,
-      statusMessage: 'Internal Server Error',
-      message: 'Ocorreu um erro interno. Tente novamente.',
-    });
+    handlePrismaError(error, ErrorMessages.Driver.update.generic);
   }
 });

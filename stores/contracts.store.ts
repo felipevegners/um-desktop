@@ -1,6 +1,5 @@
 import type { Contract } from '@/types/contracts/types';
 import { defineStore } from 'pinia';
-import { getBranchesService } from '~/server/services/branches';
 import {
   createContractService,
   deleteContractService,
@@ -79,9 +78,14 @@ export const useContractsStore = defineStore('contracts', {
       try {
         await deleteContractService(contractId);
         this.isLoading = false;
-      } catch (error) {
-        console.error('Error from Store -> ', error);
-        throw new Error();
+        return { success: true };
+      } catch (error: any) {
+        const message = error?.data?.message || error?.message || 'Erro desconhecido';
+        return {
+          success: false,
+          error: message,
+          statusCode: error?.statusCode || 500,
+        };
       }
     },
   },

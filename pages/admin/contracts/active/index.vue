@@ -50,23 +50,23 @@ const editContract = (value: string) => {
 
 const deleteContract = async (contractId: string) => {
   loadingDelete.value = true;
-  try {
-    await deleteContractAction(contractId);
-  } catch (error) {
-    toast({
-      title: 'Opss!',
-      class: 'bg-red-500 border-0 text-white text-2xl',
-      description: `Ocorreu um erro ao deletar o contrato. Tente novamente.`,
-    });
-    throw error;
-  } finally {
-    loadingDelete.value = true;
+  const result: any = await deleteContractAction(contractId);
+
+  if (result.success) {
     toast({
       title: 'Tudo pronto!',
       class: 'bg-green-600 border-0 text-white text-2xl',
       description: `Contrato deletado com sucesso!`,
     });
+    loadingDelete.value = false;
+
     await getContractsAction();
+  } else {
+    toast({
+      title: 'Opss, ocorreu um erro!',
+      variant: 'destructive',
+      description: result.error,
+    });
   }
 };
 

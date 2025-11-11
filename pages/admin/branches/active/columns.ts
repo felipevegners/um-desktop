@@ -19,7 +19,8 @@ export const columns = [
         () => ['Código', h(ArrowUpDown, { class: 'ml-2 h-4 w-4' })],
       );
     },
-    cell: ({ row }) => h('div', { class: 'uppercase' }, row.getValue('branchCode')),
+    cell: ({ row }) =>
+      h('div', { class: 'uppercase text-xs' }, row.getValue('branchCode')),
   }),
   columnHelper.accessor('fantasyName', {
     enablePinning: true,
@@ -34,38 +35,39 @@ export const columns = [
         () => ['Nome', h(ArrowUpDown, { class: 'ml-2 h-4 w-4' })],
       );
     },
-    cell: ({ row }) => h('div', { class: 'capitalize' }, row.getValue('fantasyName')),
+    cell: ({ row }) =>
+      h('div', { class: 'capitalize text-xs' }, row.getValue('fantasyName')),
   }),
   columnHelper.accessor('document', {
     header: () => h('div', { class: 'text-left' }, 'CNPJ'),
     cell: ({ row }) => {
       const value: any = row.getValue('document');
-      return h('div', { class: 'capitalize' }, value);
+      return h('div', { class: 'capitalize text-xs' }, value);
     },
   }),
   columnHelper.accessor('phone', {
     header: () => h('div', { class: 'text-left' }, 'Telefone'),
     cell: ({ row }) => {
       const value: any = row.getValue('phone');
-      return h('div', { class: 'capitalize' }, value);
+      return h('div', { class: 'capitalize text-xs' }, value);
     },
   }),
   columnHelper.accessor('manager', {
-    header: () => h('div', { class: 'text-left' }, 'Gestor'),
+    header: () => h('div', { class: 'text-left text-xs' }, 'Gestor'),
     cell: ({ row }) => {
       const value: any = row.getValue('manager');
       return h('div', { class: 'capitalize' }, value?.username);
     },
   }),
   columnHelper.accessor('manager', {
-    header: () => h('div', { class: 'text-left' }, 'E-mail Gestor'),
+    header: () => h('div', { class: 'text-left text-xs' }, 'E-mail Gestor'),
     cell: ({ row }) => {
       const value: any = row.getValue('manager');
       return h('div', { class: 'lowercase' }, value?.email);
     },
   }),
   columnHelper.accessor('budget', {
-    header: () => h('div', { class: 'text-left' }, 'Budget'),
+    header: () => h('div', { class: 'text-left text-xs' }, 'Budget'),
     cell: ({ row }) => {
       const value: any = row.getValue('budget');
       return h('div', { class: 'capitalize' }, currencyFormat(value));
@@ -73,7 +75,7 @@ export const columns = [
   }),
 
   columnHelper.accessor('status', {
-    header: () => h('div', { class: 'text-left' }, 'Status'),
+    header: () => h('div', { class: 'text-left text-xs' }, 'Status'),
     cell: ({ row }) => {
       const status = row.getValue('status');
       return h(

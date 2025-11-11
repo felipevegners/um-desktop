@@ -5,8 +5,7 @@ export const getBranchesService = async (branchId?: string) => {
     }
     return await $fetch('/api/branches');
   } catch (error) {
-    console.log('Error during service GET -> ', error);
-    return error;
+    throw error;
   }
 };
 
@@ -17,8 +16,7 @@ export const createBranchService = async (branchData?: any) => {
       body: branchData,
     });
   } catch (error) {
-    console.log('Error during service POST -> ', error);
-    return error;
+    throw error;
   }
 };
 
@@ -29,8 +27,7 @@ export const updateBranchService = async (branchData?: any) => {
       body: branchData,
     });
   } catch (error) {
-    console.log('Error during update Service -> ', error);
-    return error;
+    throw error;
   }
 };
 
@@ -41,7 +38,6 @@ export const deleteBranchService = async (id: string) => {
       body: { id },
     });
   } catch (error) {
-    console.log('Error during delete Service -> ', error);
-    return error;
+    throw error;
   }
 };

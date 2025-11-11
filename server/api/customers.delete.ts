@@ -6,23 +6,4 @@ export default defineEventHandler(async (event) => {
   await prisma.customers.delete({
     where: { id },
   });
-  // await prisma.customers
-  //   .update({
-  //     where: {
-  //       id
-  //     },
-  //     data: {
-  //       passengers: {
-  //         deleteMany: {}
-  //       }
-  //     },
-  //     include: {
-  //       passengers: true
-  //     }
-  //   })
-  //   .then(async () => {
-  //     await prisma.customers.delete({
-  //       where: { id }
-  //     });
-  //   });
 });
