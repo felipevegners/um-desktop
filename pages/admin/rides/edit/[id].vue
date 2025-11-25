@@ -567,7 +567,7 @@ const showRideControls = computed(() => {
                       />
                       <small>{{ ride?.product.code }}</small>
                     </div>
-                    <div v-if="ride?.billing.addons.length">
+                    <div v-if="ride?.billing.addons?.length">
                       <span class="text-muted-foreground text-sm">Adicionais</span>
                       <p v-for="item in ride?.billing.addons" class="text-sm">
                         <span class="font-bold">{{ item.code }}</span> - {{ item.name }}
