@@ -4,12 +4,17 @@ import DataTable from '@/components/shared/DataTable.vue';
 import FormSelect from '@/components/shared/FormSelect.vue';
 import TableActions from '@/components/shared/TableActions.vue';
 import { useToast } from '@/components/ui/toast';
+import { productTypes } from '@/config/products';
+import {
+  createProductService,
+  deleteProductService,
+  getProductsService,
+} from '@/server/services/products';
 import { createColumnHelper } from '@tanstack/vue-table';
 import { toTypedSchema } from '@vee-validate/zod';
 import { Box, LoaderCircle, Plus } from 'lucide-vue-next';
 import { useForm } from 'vee-validate';
 import * as z from 'zod';
-import { deleteProductService, getProductsService } from '~/server/services/products';
 
 import { columns } from './columns';
 
@@ -32,7 +37,7 @@ const isLoading = ref<boolean>(false);
 const isLoadingSend = ref<boolean>(false);
 const showAddForm = ref<boolean>(false);
 const productsList = ref<any>([]);
-const productType = ref<string>('');
+const productType = ref<string | null>(null);
 const columnHelper = createColumnHelper<any>();
 
 const fetchData = async (productId: string) => {
@@ -56,8 +61,8 @@ const fetchData = async (productId: string) => {
 
 productsList.value = await fetchData('');
 
-const formSchema = toTypedSchema(
-  z.object({
+const dynamicSchema = computed(() => {
+  let baseSchema = z.object({
     code: z
       .string({ message: '*Obrigatório' })
       .min(1, 'Insira pelo menos 1 caracter')
@@ -66,54 +71,57 @@ const formSchema = toTypedSchema(
       .string({ message: '*Obrigatório' })
       .min(2, 'Insira um nome com mais de 2 caracteres')
       .max(50, 'O nome deve conter no máximo 50 caracteres'),
-    capacity: z.number({ message: '*Obrigatório' }).min(1),
-    category: z.any().optional(),
     description: z.string().optional(),
     type: z.string({ message: '*Obrigatório' }),
-    basePrice: z.string({ message: '*Obrigatório' }).min(1).optional(),
-    includedHours: z.string({ message: '*Obrigatório' }).min(1).optional(),
-    includedKms: z.number({ message: '*Obrigatório' }).min(1).optional(),
+    basePrice: z.string({ message: '*Obrigatório' }).min(1),
+    includedHours: z.string({ message: '*Obrigatório' }).min(1),
+    includedKms: z.number({ message: '*Obrigatório' }).min(1),
+    category: z.any().optional(),
+    capacity: z.number({ message: '*Obrigatório' }).min(1),
     kmPrice: z.string({ message: '*Obrigatório' }).min(1),
     minutePrice: z.string({ message: '*Obrigatório' }).min(1),
-  }),
-);
+  });
+
+  if (productType.value === 'addon') {
+    //@ts-expect-error
+    baseSchema = baseSchema.extend({
+      capacity: z.number().optional(),
+      kmPrice: z.string().optional(),
+      minutePrice: z.string().optional(),
+      includedHours: z.string().optional(),
+      includedKms: z.number().optional(),
+    });
+  }
+
+  return toTypedSchema(baseSchema);
+});
 
 const form = useForm({
-  validationSchema: formSchema,
+  validationSchema: dynamicSchema,
 });
 
 const onSubmit = form.handleSubmit(async (values) => {
   isLoadingSend.value = true;
   try {
-    await $fetch('/api/products', {
-      method: 'POST',
-      body: {
-        image: {
-          name: '',
-          url: '',
-        },
-        code: values.code,
-        name: values.name,
-        capacity: values.capacity,
-        category: values.category,
-        description: values.description,
-        type: productType.value,
-        basePrice: values.basePrice?.replace('.', '').replace(',', '.'),
-        includedHours: values.includedHours || '0',
-        includedKms: values.includedKms || 0,
-        kmPrice: values.kmPrice.replace(',', '.'),
-        minutePrice: values.minutePrice.replace(',', '.'),
-        enabled: true,
+    const newProductData = {
+      image: {
+        name: '',
+        url: '',
       },
-    });
-  } catch (error) {
-    toast({
-      title: 'Opss!',
-      class: 'bg-red-500 border-0 text-white text-2xl',
-      description: `Ocorreu um erro ao cadastrar o produto. Tente novamente.`,
-    });
-  } finally {
-    isLoadingSend.value = false;
+      code: values.code,
+      name: values.name,
+      capacity: values?.capacity || null,
+      category: values?.category || null,
+      description: values.description || '',
+      type: productType.value,
+      basePrice: values.basePrice?.replace('.', '').replace(',', '.'),
+      includedHours: values.includedHours || null,
+      includedKms: values.includedKms || null,
+      kmPrice: values.kmPrice?.replace(',', '.') || null,
+      minutePrice: values.minutePrice?.replace(',', '.') || null,
+      enabled: true,
+    };
+    await createProductService(newProductData);
     toast({
       title: 'Tudo pronto!',
       class: 'bg-green-600 border-0 text-white text-2xl',
@@ -121,6 +129,15 @@ const onSubmit = form.handleSubmit(async (values) => {
     });
     showAddForm.value = !showAddForm.value;
     productsList.value = await fetchData('');
+  } catch (error) {
+    console.error(error);
+    toast({
+      title: 'Opss!',
+      class: 'bg-red-500 border-0 text-white text-2xl',
+      description: `Ocorreu um erro ao cadastrar o produto. Tente novamente.`,
+    });
+  } finally {
+    isLoadingSend.value = false;
   }
 });
 
@@ -192,11 +209,29 @@ const finalColumns = [
     <section v-if="showAddForm" class="mb-4 py-4">
       <Card class="bg-zinc-200">
         <CardHeader>
-          <CardTitle>Criar Produto</CardTitle>
+          <CardTitle
+            >Criar Novo {{ productType === 'addon' ? 'Serviço' : 'Produto' }}</CardTitle
+          >
         </CardHeader>
         <CardContent>
           <form @submit.prevent="onSubmit" @keydown.enter.prevent="true">
             <div class="mb-4 md:grid md:grid-cols-4 md:gap-6">
+              <FormField v-slot="{ componentField }" name="type">
+                <FormItem>
+                  <FormLabel>Tipo de Cobrança</FormLabel>
+                  <FormControl>
+                    <FormSelect
+                      :items="productTypes"
+                      v-model="productType"
+                      label="Selecione o tipo"
+                      v-bind="componentField"
+                    />
+                    <FormMessage />
+                  </FormControl>
+                </FormItem>
+              </FormField>
+            </div>
+            <div v-if="productType !== ''" class="mb-4 md:grid md:grid-cols-4 md:gap-6">
               <FormField v-slot="{ componentField }" name="code">
                 <FormItem>
                   <FormLabel>Código</FormLabel>
@@ -215,7 +250,11 @@ const finalColumns = [
                   </FormControl>
                 </FormItem>
               </FormField>
-              <FormField v-slot="{ componentField }" name="capacity">
+              <FormField
+                v-if="productType !== 'addon'"
+                v-slot="{ componentField }"
+                name="capacity"
+              >
                 <FormItem>
                   <FormLabel>Capacidade</FormLabel>
                   <FormControl>
@@ -224,7 +263,11 @@ const finalColumns = [
                   </FormControl>
                 </FormItem>
               </FormField>
-              <FormField v-slot="{ componentField }" name="category">
+              <FormField
+                v-if="productType !== 'addon'"
+                v-slot="{ componentField }"
+                name="category"
+              >
                 <FormItem>
                   <FormLabel>Categoria</FormLabel>
                   <FormControl>
@@ -233,6 +276,15 @@ const finalColumns = [
                   </FormControl>
                 </FormItem>
               </FormField>
+
+              <FormField
+                v-if="productType === 'addon'"
+                v-slot="{ componentField }"
+                name="basePrice"
+              >
+                <CurrencyInput :componentField="componentField" label="Valor Base" />
+              </FormField>
+
               <FormField v-slot="{ componentField }" name="description">
                 <FormItem>
                   <FormLabel>
@@ -241,25 +293,6 @@ const finalColumns = [
                   </FormLabel>
                   <FormControl>
                     <Input type="text" v-bind="componentField" />
-                    <FormMessage />
-                  </FormControl>
-                </FormItem>
-              </FormField>
-
-              <FormField v-slot="{ componentField }" name="type">
-                <FormItem>
-                  <FormLabel>Tipo de Cobrança</FormLabel>
-                  <FormControl>
-                    <FormSelect
-                      :items="[
-                        { label: 'Valor Fechado', value: 'contract' },
-                        { label: 'Km e Minuto', value: 'free' },
-                        { label: 'Km', value: 'free-km' },
-                      ]"
-                      v-model="productType"
-                      label="Selecione o tipo"
-                      v-bind="componentField"
-                    />
                     <FormMessage />
                   </FormControl>
                 </FormItem>
@@ -327,7 +360,7 @@ const finalColumns = [
             <div v-if="productType !== ''" class="mt-6">
               <Button type="submit">
                 <LoaderCircle v-if="isLoadingSend" class="w-10 h-10 animate-spin" />
-                Cadastrar
+                Cadastrar {{ productType === 'addon' ? 'Adicional' : 'Produto' }}
               </Button>
               <Button variant="ghost" class="ml-4" @click.prevent="toggleShowAddForm">
                 Cancelar

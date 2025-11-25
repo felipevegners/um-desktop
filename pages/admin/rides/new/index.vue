@@ -5,6 +5,7 @@ import FormSelect from '@/components/shared/FormSelect.vue';
 import NewDatePicker from '@/components/shared/NewDatePicker.vue';
 import ProductTag from '@/components/shared/ProductTag.vue';
 import RenderIcon from '@/components/shared/RenderIcon.vue';
+import { Checkbox } from '@/components/ui/checkbox';
 import { useToast } from '@/components/ui/toast/use-toast';
 import { paymentMethods } from '@/config/paymentMethods';
 import { getRideRoutesService } from '@/server/services/rides';
@@ -14,7 +15,6 @@ import { useContractsStore } from '@/stores/contracts.store';
 import { useProductsStore } from '@/stores/products.store';
 import { useRidesStore } from '@/stores/rides.store';
 import type { Product } from '@/types/products/types';
-import { DateFormatter } from '@internationalized/date';
 import { toTypedSchema } from '@vee-validate/zod';
 import {
   LoaderCircle,
@@ -55,8 +55,6 @@ const ridesStore = useRidesStore();
 const productsStore = useProductsStore();
 const { getContractByIdAction } = contractsStore;
 const { contract } = storeToRefs(contractsStore);
-const { getBranchByIdAction } = branchesStore;
-const { branch } = storeToRefs(branchesStore);
 const { getUsersAccountsAction } = accountStore;
 const { accounts } = storeToRefs(accountStore);
 const { createRideAction, getRidesAction, loadingData } = ridesStore;
@@ -71,16 +69,13 @@ const customIconEnd = `<svg xmlns="http://www.w3.org/2000/svg" width="24" height
 
 const { toast } = useToast();
 const { data } = useAuth();
-const df = new DateFormatter('pt-BR', {
-  dateStyle: 'short',
-});
 
 const rideCode = ref('');
 const loadingProducts = ref<boolean>(false);
 const showAvailableProducts = ref<boolean>(false);
 const availableProducts = ref<any>([]);
+const addonProducts = ref<any>([]);
 const selectedProduct = ref<any>({});
-const travelDate = ref<any>();
 const availableUsers = ref<any>([]);
 const selectedUser = ref<any>({
   id: '',
@@ -156,6 +151,11 @@ onBeforeMount(async () => {
       value: user.id,
     };
   });
+
+  await getProductsAction();
+  addonProducts.value = products.value.filter(
+    (product: Product) => product.type === 'addon',
+  );
 });
 
 const addWaypointRow = () => {
@@ -251,8 +251,11 @@ const setSelectedUser = async (user: any) => {
     try {
       showAvailableProducts.value = true;
       loadingProducts.value = true;
-      await getProductsAction();
-      availableProducts.value = products.value.sort(
+
+      const regularProducts = products.value.filter(
+        (product: Product) => product.type !== 'addon',
+      );
+      availableProducts.value = regularProducts.sort(
         (a: Product, b: Product) =>
           ['EASY', 'PREMIUM', 'GOLD', 'BLINDADO', 'VAN'].indexOf(a.name) -
           ['EASY', 'PREMIUM', 'GOLD', 'BLINDADO', 'VAN'].indexOf(b.name),
@@ -352,6 +355,8 @@ const calculatedEstimates = ref({
   estimatedPrice: '',
 });
 
+const selectedRideAddons = ref<any>([]);
+
 const handleRideCalculation = async () => {
   const validateForm = await form.validate();
   if (!validateForm.valid) {
@@ -403,6 +408,20 @@ const handleRideCalculation = async () => {
 
     calculatedEstimates.value.estimatedDistance = routeCalculation[0].distanceMeters;
     calculatedEstimates.value.estimatedDuration = parseInt(sanitizeDurationResponse);
+
+    if (form.values.rideAddons.length) {
+      const actualRidePrice = calculatedEstimates.value.estimatedPrice;
+      const filteredAddons = addonProducts.value.filter((item: Product) =>
+        form.values.rideAddons.includes(item.id),
+      );
+      selectedRideAddons.value = filteredAddons;
+      const calculateAddons = filteredAddons?.reduce((acc: any, curr: any) => {
+        return acc + parseFloat(curr.basePrice);
+      }, 0);
+
+      const finalPrice = parseFloat(actualRidePrice) + calculateAddons;
+      calculatedEstimates.value.estimatedPrice = finalPrice.toFixed(2).toString();
+    }
   } catch (error) {
     toast({
       title: 'Opss!',
@@ -495,6 +514,7 @@ const dynamicSchema = computed(() => {
     origin: z.string(),
     destination: z.string(),
     observations: z.string().optional(),
+    rideAddons: z.any(),
   });
 
   if (selectedUser?.value.role !== 'platform-user') {
@@ -516,6 +536,9 @@ const newRideSchema = toTypedSchema(dynamicSchema.value);
 
 const form = useForm({
   validationSchema: newRideSchema,
+  initialValues: {
+    rideAddons: [],
+  },
 });
 
 const showPaymentSection = async () => {
@@ -626,6 +649,24 @@ const buildStaticMapUrl = () => {
   return `https://maps.googleapis.com/maps/api/staticmap?maptype=${maptype}&size=${size}${markers.join('')}${path}&key=${key}`;
 };
 
+const addOnsList = [
+  {
+    id: 'bilingual-english',
+    label: 'Atendimento Bilíngue',
+    price: '150',
+  },
+  {
+    id: 'pcd-ride',
+    label: 'Atendimento PCD',
+    price: '150',
+  },
+  {
+    id: 'airport-receptive',
+    label: 'Receptivo Aeroporto',
+    price: '250',
+  },
+] as const;
+
 const onSubmit = form.handleSubmit(async (values) => {
   const routePreviewUrl = buildStaticMapUrl();
 
@@ -640,6 +681,7 @@ const onSubmit = form.handleSubmit(async (values) => {
         branch: values?.branch || '-',
         area: values?.area || '-',
       },
+      addons: selectedRideAddons.value,
       ammount: calculatedEstimates.value.estimatedPrice,
       status:
         paymentMethod.value === 'corporative'
@@ -992,6 +1034,46 @@ const onSubmit = form.handleSubmit(async (values) => {
                       </FormItem>
                     </FormField>
                     <div class="p-4 border border-zinc-900 rounded-md col-span-3">
+                      <div class="mb-6">
+                        <h3 class="font-bold">Serviços Opcionais</h3>
+                        <small class="text-xs text-muted-foreground">
+                          Os valores dos serviços opcionais serão adicionados no valor
+                          total do atendimento.
+                        </small>
+                      </div>
+                      <FormField name="rideAddons">
+                        <div class="space-y-3">
+                          <FormField
+                            v-for="item in addonProducts"
+                            v-slot="{ value, handleChange }"
+                            :key="item.id"
+                            type="checkbox"
+                            :value="item.id"
+                            :unchecked-value="false"
+                            name="rideAddons"
+                          >
+                            <FormItem
+                              class="flex flex-row items-start space-x-3 space-y-0"
+                            >
+                              <FormControl>
+                                <Checkbox
+                                  @update:checked="handleChange"
+                                  :checked="value.includes(item.id)"
+                                />
+                              </FormControl>
+                              <FormLabel class="font-normal">
+                                <span class="font-bold">{{ item.code }}</span> -
+                                {{ item.name }}
+                                <span v-if="item.price !== null" class="font-bold">
+                                  - {{ currencyFormat(item.basePrice) }}
+                                </span>
+                              </FormLabel>
+                            </FormItem>
+                          </FormField>
+                        </div>
+                      </FormField>
+                    </div>
+                    <div class="rounded-md col-span-3">
                       <FormField v-slot="{ componentField }" name="observations">
                         <FormItem>
                           <FormLabel>
@@ -1140,6 +1222,16 @@ const onSubmit = form.handleSubmit(async (values) => {
                           }}
                         </p>
                       </div>
+                    </div>
+                    <div>
+                      <small class="font-bold">Serviços opcionais</small>
+                      <p v-for="item in selectedRideAddons" class="text-sm">
+                        <span class="font-bold">{{ item.code }}</span> - {{ item.name }}
+                        <span> ---------------------- </span>
+                        <span class="font-bold">
+                          {{ currencyFormat(item.basePrice) }}
+                        </span>
+                      </p>
                     </div>
                     <div
                       v-if="showContractProductAlert"

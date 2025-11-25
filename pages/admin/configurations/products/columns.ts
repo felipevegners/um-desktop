@@ -15,7 +15,10 @@ export const columns = [
     header: () => h('div', { class: 'text-left text-xs' }, 'Imagem'),
     cell: ({ row }) => {
       const image: ProductImage = row.getValue('image');
-      return h('img', { class: 'h-20', src: image?.url });
+      return h('img', {
+        class: 'h-20',
+        src: image?.url !== '' ? image.url : '/images/no-image.png',
+      });
     },
   }),
   columnHelper.accessor('code', {
@@ -66,14 +69,20 @@ export const columns = [
           ? 'Valor fechado'
           : value === 'free-km'
             ? 'Valor Km/Min'
-            : 'Valor Km',
+            : value === 'addon'
+              ? 'Adicional fixo'
+              : 'Valor Km',
       );
     },
   }),
   columnHelper.accessor('capacity', {
     header: () => h('div', { class: 'text-center text-xs' }, 'Capacidade'),
     cell: ({ row }) =>
-      h('div', { class: 'capitalize text-xs text-center' }, row.getValue('capacity')),
+      h(
+        'div',
+        { class: 'capitalize text-xs text-center' },
+        row.getValue('capacity') || '-',
+      ),
   }),
   columnHelper.accessor('basePrice', {
     header: () => h('div', { class: 'text-center text-xs' }, 'Valor Base'),
@@ -112,26 +121,33 @@ export const columns = [
   columnHelper.accessor('kmPrice', {
     header: () => h('div', { class: 'text-center text-xs' }, 'Valor Km'),
     cell: ({ row }) => {
+      const data = row.original;
       return h(
         'div',
         { class: 'text-center text-xs' },
-        new Intl.NumberFormat('pt-BR', {
-          style: 'currency',
-          currency: 'BRL',
-        }).format(parseFloat(row.getValue('kmPrice'))),
+        data.kmPrice !== null
+          ? new Intl.NumberFormat('pt-BR', {
+              style: 'currency',
+              currency: 'BRL',
+            }).format(parseFloat(row.getValue('kmPrice')))
+          : '-',
       );
     },
   }),
   columnHelper.accessor('minutePrice', {
     header: () => h('div', { class: 'text-center text-xs' }, 'Valor Minuto'),
     cell: ({ row }) => {
+      const data = row.original;
+
       return h(
         'div',
         { class: 'text-center text-xs' },
-        new Intl.NumberFormat('pt-BR', {
-          style: 'currency',
-          currency: 'BRL',
-        }).format(row.getValue('minutePrice')),
+        data.kmPrice !== null
+          ? new Intl.NumberFormat('pt-BR', {
+              style: 'currency',
+              currency: 'BRL',
+            }).format(row.getValue('minutePrice'))
+          : '-',
       );
     },
   }),

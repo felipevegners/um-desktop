@@ -3,12 +3,13 @@ import BackLink from '@/components/shared/BackLink.vue';
 import CurrencyInput from '@/components/shared/CurrencyInput.vue';
 import FormSelect from '@/components/shared/FormSelect.vue';
 import { useToast } from '@/components/ui/toast';
+import { productTypes } from '@/config/products';
+import { getProductsService, updtateProductService } from '@/server/services/products';
+import { useFilesStore } from '@/stores/files.store';
 import { toTypedSchema } from '@vee-validate/zod';
 import { Box, LoaderCircle, Trash, X } from 'lucide-vue-next';
 import { useForm } from 'vee-validate';
 import * as z from 'zod';
-import { getProductsService } from '~/server/services/products';
-import { useFilesStore } from '~/stores/files.store';
 
 const filesStore = useFilesStore();
 const { deleteFileAction } = filesStore;
@@ -59,8 +60,8 @@ productType.value = product?.value.type;
 productSituation.value = product?.value.enabled;
 productImage.value = product.value.image;
 
-const formSchema = toTypedSchema(
-  z.object({
+const dynamicSchema = computed(() => {
+  let baseSchema = z.object({
     code: z
       .string({ message: '*Obrigatório' })
       .min(1, 'Insira pelo menos 1 caracter')
@@ -69,56 +70,72 @@ const formSchema = toTypedSchema(
       .string({ message: '*Obrigatório' })
       .min(2, 'Insira um nome com mais de 2 caracteres')
       .max(50, 'O nome deve conter no máximo 50 caracteres'),
-    capacity: z.number({ message: '*Obrigatório' }).min(0),
-    category: z.any().optional(),
     description: z.string().optional(),
     type: z.string({ message: '*Obrigatório' }),
-    basePrice: z.string({ message: '*Obrigatório' }).min(0),
-    includedHours: z.string({ message: '*Obrigatório' }).min(0).optional(),
-    includedKms: z.number({ message: '*Obrigatório' }).min(0).optional(),
-    kmPrice: z.string({ message: '*Obrigatório' }).min(0),
-    minutePrice: z.string({ message: '*Obrigatório' }).min(0),
-  }),
-);
+    basePrice: z.string({ message: '*Obrigatório' }).min(1),
+    includedHours: z.string({ message: '*Obrigatório' }).min(1),
+    includedKms: z.any().optional(),
+    category: z.any().optional(),
+    capacity: z.number({ message: '*Obrigatório' }).min(1),
+    kmPrice: z.string({ message: '*Obrigatório' }).min(1),
+    minutePrice: z.string({ message: '*Obrigatório' }).min(1),
+  });
+
+  if (product.value.type === 'addon') {
+    //@ts-expect-error
+    baseSchema = baseSchema.extend({
+      capacity: z.any().optional(),
+      kmPrice: z.any().optional(),
+      minutePrice: z.any().optional(),
+      includedHours: z.any().optional(),
+      includedKms: z.any().optional(),
+    });
+  }
+
+  return toTypedSchema(baseSchema);
+});
 
 const form = useForm({
-  validationSchema: formSchema,
+  validationSchema: dynamicSchema,
   initialValues: {
     ...product.value,
     basePrice: product?.value.basePrice.replace('.', ','),
-    kmPrice: product?.value.kmPrice.replace('.', ','),
-    minutePrice: product?.value.minutePrice.replace('.', ','),
-    includedHours: product?.value.includedHours || '0',
-    includedKms: product?.value.includedKms || 0,
-    category: product?.value.category,
+    kmPrice: product?.value.kmPrice?.replace('.', ',') || null,
+    minutePrice: product?.value.minutePrice?.replace('.', ',') || null,
+    includedHours: product?.value.includedHours || null,
+    includedKms: product?.value.includedKms || null,
+    category: product?.value.category || null,
+    capacity: product?.value.capacity || null,
   },
 });
 
 const onSubmit = form.handleSubmit(async (values) => {
   isLoadingSend.value = true;
+  const updatedProductData = {
+    ...product.value,
+    image: {
+      name: productImage?.value.name,
+      url: productImage?.value.url,
+    },
+    id: product.value.id,
+    code: values.code,
+    name: values.name,
+    capacity: values.capacity,
+    category: values.category,
+    description: values.description,
+    basePrice: values.basePrice?.replace('.', '').replace(',', '.'),
+    includedHours: values.includedHours || '0',
+    includedKms: values.includedKms || 0,
+    kmPrice: values.kmPrice.replace(',', '.'),
+    minutePrice: values.minutePrice.replace(',', '.'),
+    enabled: productSituation.value,
+  };
   try {
-    await $fetch('/api/products', {
-      method: 'PUT',
-      body: {
-        image: {
-          name: productImage?.value.name,
-          url: productImage?.value.url,
-        },
-        id: product.value.id,
-        code: values.code,
-        name: values.name,
-        capacity: values.capacity,
-        category: values.category,
-        description: values.description,
-        type: values.type,
-        // basePrice: values.basePrice?.replace(',', '.'),
-        basePrice: values.basePrice?.replace('.', '').replace(',', '.'),
-        includedHours: values.includedHours || '0',
-        includedKms: values.includedKms || 0,
-        kmPrice: values.kmPrice.replace(',', '.'),
-        minutePrice: values.minutePrice.replace(',', '.'),
-        enabled: productSituation.value,
-      },
+    await updtateProductService(updatedProductData);
+    toast({
+      title: 'Tudo pronto!',
+      class: 'bg-green-600 border-0 text-white text-2xl',
+      description: `Produto alterado com sucesso!`,
     });
   } catch (error) {
     toast({
@@ -128,11 +145,6 @@ const onSubmit = form.handleSubmit(async (values) => {
     });
   } finally {
     isLoadingSend.value = false;
-    toast({
-      title: 'Tudo pronto!',
-      class: 'bg-green-600 border-0 text-white text-2xl',
-      description: `Produto alterado com sucesso!`,
-    });
     navigateTo('/admin/configurations/products');
   }
 });
@@ -202,7 +214,10 @@ const deleteFile = async (url: string) => {
         </CardHeader>
         <CardContent>
           <form @submit.prevent="onSubmit" @keydown.enter.prevent="true">
-            <div class="mb-6 flex flex-col gap-4 items-start justify-start">
+            <div
+              v-if="product?.type !== 'addon'"
+              class="mb-6 flex flex-col gap-4 items-start justify-start"
+            >
               <div class="relative">
                 <p class="mb-2 font-bold">Imagem</p>
                 <NuxtImg
@@ -219,12 +234,6 @@ const deleteFile = async (url: string) => {
                     <img v-bind="imgAttrs" src="/images/no-image.png" />
                   </div>
                 </NuxtImg>
-                <!-- <div
-                  class="peer p-2 w-[200px] h-[200px] rounded-md bg-white bg-contain bg-no-repeat bg-center relative flex items-center justify-center"
-                  :style="{
-                    backgroundImage: `url(${productImage?.url ? productImage?.url : '/images/no-image.png'})`,
-                  }"
-                /> -->
               </div>
               <div class="flex flex-col items-center border w-[200px]">
                 <div class="flex" v-if="!productImage?.name">
@@ -270,6 +279,23 @@ const deleteFile = async (url: string) => {
             </div>
             <Separator class="my-6 border-b border-b-zinc-300" />
             <div class="mb-4 md:grid md:grid-cols-3 md:gap-6">
+              <FormField v-slot="{ componentField }" name="type">
+                <FormItem>
+                  <FormLabel>Tipo de Cobrança</FormLabel>
+                  <FormControl>
+                    <FormSelect
+                      :items="productTypes"
+                      v-model="productType"
+                      label="Selecione o tipo"
+                      v-bind="componentField"
+                      :disabled="true"
+                    />
+                    <FormMessage />
+                  </FormControl>
+                </FormItem>
+              </FormField>
+            </div>
+            <div class="mb-4 md:grid md:grid-cols-3 md:gap-6">
               <FormField v-slot="{ componentField }" name="code">
                 <FormItem>
                   <FormLabel>Código</FormLabel>
@@ -288,7 +314,11 @@ const deleteFile = async (url: string) => {
                   </FormControl>
                 </FormItem>
               </FormField>
-              <FormField v-slot="{ componentField }" name="capacity">
+              <FormField
+                v-if="product?.type !== 'addon'"
+                v-slot="{ componentField }"
+                name="capacity"
+              >
                 <FormItem>
                   <FormLabel>Capacidade</FormLabel>
                   <FormControl>
@@ -297,7 +327,11 @@ const deleteFile = async (url: string) => {
                   </FormControl>
                 </FormItem>
               </FormField>
-              <FormField v-slot="{ componentField }" name="category">
+              <FormField
+                v-if="product?.type !== 'addon'"
+                v-slot="{ componentField }"
+                name="category"
+              >
                 <FormItem>
                   <FormLabel> Categoria </FormLabel>
                   <FormControl>
@@ -314,24 +348,6 @@ const deleteFile = async (url: string) => {
                   </FormLabel>
                   <FormControl>
                     <Input type="text" v-bind="componentField" />
-                    <FormMessage />
-                  </FormControl>
-                </FormItem>
-              </FormField>
-              <FormField v-slot="{ componentField }" name="type">
-                <FormItem>
-                  <FormLabel>Tipo de Cobrança</FormLabel>
-                  <FormControl>
-                    <FormSelect
-                      :items="[
-                        { label: 'Valor Fechado', value: 'contract' },
-                        { label: 'Km e Minuto', value: 'free' },
-                        { label: 'Km', value: 'free-km' },
-                      ]"
-                      v-model="productType"
-                      label="Selecione o tipo"
-                      v-bind="componentField"
-                    />
                     <FormMessage />
                   </FormControl>
                 </FormItem>
@@ -376,10 +392,15 @@ const deleteFile = async (url: string) => {
                     label="Valor Minuto Adicional"
                   />
                 </FormField>
+                <div v-if="product?.type !== 'addon'"></div>
               </div>
             </div>
             <div
-              v-if="productType === 'free' || productType === 'free-km'"
+              v-if="
+                productType === 'free' ||
+                productType === 'free-km' ||
+                productType === 'addon'
+              "
               class="p-6 border-2 border-zinc-700 rounded-md"
             >
               <h3 class="mb-4 font-bold text-lg">Editar Valores</h3>
@@ -388,10 +409,19 @@ const deleteFile = async (url: string) => {
                 <FormField v-slot="{ componentField }" name="basePrice">
                   <CurrencyInput :componentField="componentField" label="Valor Base" />
                 </FormField>
-                <FormField v-slot="{ componentField }" name="kmPrice">
+
+                <FormField
+                  v-if="productType !== 'addon'"
+                  v-slot="{ componentField }"
+                  name="kmPrice"
+                >
                   <CurrencyInput :componentField="componentField" label="Valor KM" />
                 </FormField>
-                <FormField v-slot="{ componentField }" name="minutePrice">
+                <FormField
+                  v-if="productType !== 'addon'"
+                  v-slot="{ componentField }"
+                  name="minutePrice"
+                >
                   <CurrencyInput :componentField="componentField" label="Valor Minuto" />
                 </FormField>
               </div>

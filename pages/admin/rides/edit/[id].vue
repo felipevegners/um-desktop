@@ -543,7 +543,9 @@ const showRideControls = computed(() => {
                     </div>
                   </div>
                   <div class="p-3 border border-zinc-400 bg-white rounded-md">
-                    <span class="text-muted-foreground text-sm">Valor estimado</span>
+                    <span class="text-muted-foreground text-sm">
+                      Valor estimado (atendimento + adicionais)
+                    </span>
                     <h3 class="text-lg font-bold">
                       {{ currencyFormat(ride?.estimatedPrice) }}
                     </h3>
@@ -555,7 +557,7 @@ const showRideControls = computed(() => {
                     </div>
                   </div>
                   <div
-                    class="p-3 flex flex-col items-start gap-2 border border-zinc-400 bg-white rounded-md"
+                    class="p-3 flex flex-col items-start gap-3 border border-zinc-400 bg-white rounded-md"
                   >
                     <span class="text-muted-foreground text-sm">Serviço</span>
                     <div class="flex items-center gap-2">
@@ -564,6 +566,16 @@ const showRideControls = computed(() => {
                         :type="ride?.product.name"
                       />
                       <small>{{ ride?.product.code }}</small>
+                    </div>
+                    <div v-if="ride?.billing.addons.length">
+                      <span class="text-muted-foreground text-sm">Adicionais</span>
+                      <p v-for="item in ride?.billing.addons" class="text-sm">
+                        <span class="font-bold">{{ item.code }}</span> - {{ item.name }}
+                        <span> - </span>
+                        <span class="font-bold">
+                          {{ currencyFormat(item.basePrice) }}
+                        </span>
+                      </p>
                     </div>
                   </div>
                   <div
