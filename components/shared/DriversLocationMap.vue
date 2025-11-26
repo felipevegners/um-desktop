@@ -93,7 +93,7 @@ const fetchDriversLocations = () => {
   intervalId.value = setInterval(async () => {
     await getDriversLocation();
     generateDriverMarkers();
-  }, 5000);
+  }, 30000);
 };
 
 onBeforeMount(async () => {
