@@ -22,10 +22,17 @@ const { getRidesAction } = ridesStore;
 const { loadingData, completedRides } = storeToRefs(ridesStore);
 const columnHelper = createColumnHelper<any>();
 const filteredRides = ref<any>([]);
-filteredRides.value = completedRides;
 
 onMounted(async () => {
   await getRidesAction();
+
+  filteredRides.value = completedRides.value.sort((a: any, b: any) =>
+    a.progress.finishedAt > b.progress.finishedAt
+      ? -1
+      : a.progress.finishedAt < b.progress.finishedAt
+        ? 1
+        : 0,
+  );
 });
 
 const editRide = (rideId: string) => {

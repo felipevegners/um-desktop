@@ -21,6 +21,7 @@ module.exports = withUt({
     extend: {
       colors: {
         'um-primary': '#33FFCC',
+        "um-primary-foreground": "#00926E",
         'product-easy': '#FF7233',
         'product-premium': '#2A2A2A',
         'product-gold': '#D4AF37',

@@ -18,15 +18,20 @@ import {
   Home,
   SquareMinus as IconNuxt,
   LayoutDashboard,
+  MapPin,
+  MapPinCheckIcon,
   MapPlus,
   MessageCircleMore,
   MonitorCheck,
   PlaneTakeoff,
+  Play,
   ScrollText,
   Settings,
   ShieldCheck,
   ShieldUser,
   Tickets,
+  UserCheck,
+  UserX,
 } from 'lucide-vue-next';
 import { computed, ref } from 'vue';
 
@@ -61,6 +66,11 @@ const iconComponent = computed(() => {
     CreditCard,
     Building,
     Banknote,
+    Play,
+    MapPin,
+    MapPinCheckIcon,
+    UserCheck,
+    UserX,
     Whatsapp: MessageCircleMore,
   };
   return icons[iconName.value] || null;

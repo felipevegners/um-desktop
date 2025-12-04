@@ -1,11 +1,10 @@
 <script setup lang="ts">
-import { WPP_API } from '@/config/paths';
 import { cn } from '@/lib/utils';
 import 'add-to-calendar-button';
-import { Car, LoaderCircle, Map, MessageCircleMore } from 'lucide-vue-next';
+import { Car, LoaderCircle, Map } from 'lucide-vue-next';
 import { CustomMarker, GoogleMap, Marker, Polyline } from 'vue3-google-map';
 import RideStatusFlag from '~/components/shared/RideStatusFlag.vue';
-import { polyLineCodec, sanitizePhone } from '~/lib/utils';
+import { getFirstAndLastNameString, polyLineCodec } from '~/lib/utils';
 
 const API_KEY = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
 const customIconStart = `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="#FFFFFF" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-square-dot-icon lucide-square-dot"><rect width="18" height="18" x="3" y="3" rx="2"/><circle cx="12" cy="12" r="1"/></svg>`;
@@ -48,6 +47,7 @@ const rideDriverId = ref<string>('');
 const loadingDriverLocation = ref<boolean>(false);
 const driverLocation = ref<any>({});
 const intervalId = ref<any>(null);
+const driverName = ref<any>('');
 
 await getRideByIdAction(route?.query.rideId as string);
 origin.value = ride?.value?.travel.origin;
@@ -60,8 +60,9 @@ const fetchDriverLocation = async () => {
   }
   await getDriverByIdAction(rideDriverId.value);
   if (driver.value) {
-    const hour = new Date(driver.value.location?.timestamp).getHours();
-    const minutes = new Date(driver.value.location?.timestamp).getMinutes();
+    driverName.value = getFirstAndLastNameString(driver?.value.name);
+    const hour = new Date(driver?.value.location?.timestamp).getHours() || 0;
+    const minutes = new Date(driver?.value.location?.timestamp).getMinutes() || 0;
     driverLocation.value = {
       time: `${hour}:${minutes}`,
       speed: driver?.value.location?.speed,
@@ -84,7 +85,8 @@ onMounted(() => {
   decodePolyline(ride?.value.travel.polyLineCoords);
   routePolyLine.value = ride?.value.travel.polyLineCoords;
   intervalId.value = setInterval(async () => {
-    fetchDriverLocation();
+    await fetchDriverLocation();
+    await getRideByIdAction(route?.query.rideId as string);
   }, 30000);
 });
 
@@ -172,34 +174,37 @@ const decodePolyline = (polyline: string) => {
     },
   ];
 };
-
-// TODO - transformar em ref e colocar no onBeforMount
-
-// const sanitizeDriverName = computed(() => {
-//   if (driver.value) {
-//     const splited = driver?.value.name?.split(' ');
-//     return splited[0];
-//   }
-// });
 </script>
 <template>
-  <header class="p-4 bg-zinc-900 flex items-center justify-between">
-    <div class="h-10 w-10">
-      <img src="/images/um_symbol_negative.svg" alt="Logotipo UM" />
-    </div>
-    <div class="flex flex-col items-center">
-      <small class="text-white text-center">Atendimento</small>
-      <h1 class="text-2xl font-bold text-white">
-        {{ ride?.code }}
-      </h1>
+  <header class="p-6 bg-zinc-900 flex items-start justify-between">
+    <div class="flex items-center gap-4">
+      <div class="h-12 w-12">
+        <img src="/images/um_symbol_negative.svg" alt="Logotipo UM" />
+      </div>
+      <div class="flex flex-col items-start">
+        <small class="text-muted-foreground text-center uppercase text-xs"
+          >Atendimento</small
+        >
+        <h1 class="text-xl font-bold text-white">
+          {{ ride?.code }}
+        </h1>
+      </div>
     </div>
     <RideStatusFlag :rideStatus="ride?.status" />
   </header>
+  <section
+    v-if="ride.status === 'accepted'"
+    class="p-6 flex flex-col items-center justify-center bg-black h-20"
+  >
+    <h1 class="text-um-primary">Este atendimento ainda não iniciou!</h1>
+    <h3 class="text-white">Previsão de início: {{ ride?.travel.departTime }}</h3>
+  </section>
   <section v-if="loadingData" class="min-h-[300px] flex items-center justify-center">
     <LoaderCircle class="animate-spin" />
   </section>
   <section v-else>
-    <div class="h-[600px]">
+    <SharedRideStepper :steps="ride?.progress.steps" v-if="ride.status !== 'accepted'" />
+    <div v-if="ride.status !== 'accepted'" class="h-[600px]">
       <GoogleMap
         ref="mapRef"
         :api-key="API_KEY"
@@ -231,7 +236,7 @@ const decodePolyline = (polyline: string) => {
               class="px-2 py-1 text-white rounded-md flex flex-row items-center gap-3"
               :class="driver?.location?.speed <= 5 ? 'bg-amber-600' : 'bg-zinc-900'"
             >
-              {{ driver?.name }} - {{ driverLocation.time }} -
+              {{ driverName }} - {{ driverLocation.time }} -
               {{ driverLocation?.speed && driverLocation.speed + ' Km/h' }}
               <LoaderCircle
                 v-if="loadingDriverLocation"
@@ -270,19 +275,8 @@ const decodePolyline = (polyline: string) => {
       <div class="p-6 bg-white rounded-md col-span-2 space-y-2">
         <p class="text-sm text-zinc-600">Nome</p>
         <p class="text-xl font-bold">
-          {{ ride?.driver.name }}
+          {{ driverName }}
         </p>
-        <p class="text-sm text-zinc-600">Celular</p>
-        <a
-          :href="
-            WPP_API.replace('[[phone]]', sanitizePhone(ride?.driver?.phone as string))
-          "
-          class="flex items-center gap-2 font-bold text-xl"
-          target="_blank"
-        >
-          {{ driver?.phone }}
-          <MessageCircleMore :size="18" class="text-green-500" />
-        </a>
         <p class="text-sm text-zinc-600">Veículo</p>
         <p v-if="ride?.driver.hasCarSelected" class="text-xl font-bold">
           {{ ride?.driver?.selectedCar?.model }}
@@ -302,7 +296,7 @@ const decodePolyline = (polyline: string) => {
         <p class="text-xl font-bold">
           {{ ride?.travel.originAddress }}
         </p>
-        <div class="py-2 border-y">
+        <div v-if="ride?.travel.stops.length" class="py-2 border-y">
           <p class="text-sm text-zinc-600">Paradas</p>
           <p v-for="(stop, idx) in ride?.travel?.stops" class="text-base font-bold">
             {{ idx + 1 }} - {{ stop.address }}

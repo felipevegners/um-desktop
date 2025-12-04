@@ -195,3 +195,10 @@ export const generatePassword = () => {
 
   return password;
 };
+
+export const getFirstAndLastNameString = (fullName: string) => {
+  const parts = fullName?.trim().split(/\s+/);
+  const firstName = parts && parts[0];
+  const lastName = parts?.length > 1 ? parts[parts.length - 1] : '';
+  return `${firstName} ${lastName}`;
+};
