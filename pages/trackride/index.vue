@@ -56,15 +56,13 @@ rideDriverId.value = ride?.value.driver.id;
 
 const fetchDriverLocation = async () => {
   loadingDriverLocation.value = true;
-  if (!intervalId.value) {
-  }
   await getDriverByIdAction(rideDriverId.value);
   if (driver.value) {
     driverName.value = getFirstAndLastNameString(driver?.value.name);
     const hour = new Date(driver?.value.location?.timestamp).getHours() || 0;
     const minutes = new Date(driver?.value.location?.timestamp).getMinutes() || 0;
     driverLocation.value = {
-      time: `${hour}:${minutes}`,
+      time: `${hour}:${minutes < 10 ? '0' + minutes : minutes}`,
       speed: driver?.value.location?.speed,
       lat: driver?.value.location?.latitude,
       lng: driver?.value.location?.longitude,
@@ -182,9 +180,9 @@ const decodePolyline = (polyline: string) => {
         <img src="/images/um_symbol_negative.svg" alt="Logotipo UM" />
       </div>
       <div class="flex flex-col items-start">
-        <small class="text-muted-foreground text-center uppercase text-xs"
-          >Atendimento</small
-        >
+        <small class="text-muted-foreground text-center uppercase text-xs">
+          Atendimento
+        </small>
         <h1 class="text-xl font-bold text-white">
           {{ ride?.code }}
         </h1>

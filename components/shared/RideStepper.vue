@@ -28,12 +28,6 @@ const mockedSteps = [
     status: 'future',
   },
   {
-    type: 'disembarked',
-    label: 'Passageiro Desembarcado',
-    icon: 'UserX',
-    status: 'future',
-  },
-  {
     type: 'finished',
     label: 'Finalizado',
     icon: 'MapPinCheckIcon',
