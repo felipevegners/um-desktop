@@ -717,7 +717,6 @@ const onSubmit = form.handleSubmit(async (values) => {
     },
     progress: {
       steps: [],
-      rideTracking: [],
     },
     status: 'created',
     accepted: false,
