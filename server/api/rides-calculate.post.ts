@@ -30,8 +30,8 @@ export default defineEventHandler(async (event) => {
           lng: ride.progress.finishedLocation.longitude,
         },
       ];
-      const departDate = ride.progress.startedAt;
-      const departTime = ride.travel.departTime;
+      // const departDate = ride.progress.startedAt;
+      // const departTime = ride.travel.departTime;
 
       try {
         const routeCalculation = await getRideRoutesService({
@@ -59,15 +59,57 @@ export default defineEventHandler(async (event) => {
         const finalDurationPrice = parseFloat(minutePrice) * (finalDuration / 60);
         const rideFinalPrice = finalKmPrice + finalDurationPrice;
 
+        const addonsPrice = ride.billing.addons.length
+          ? ride.billing.addons.reduce((acc: any, curr: any) => {
+              return acc + parseFloat(curr.basePrice);
+            }, 0)
+          : 0;
+
+        const rideTotalPrice = rideFinalPrice + addonsPrice;
+
         const finalPolyline = routeCalculation[0]?.polyline.encodedPolyline;
+
+        const driverFeeTax: any = await prisma.fees.findUnique({
+          where: {
+            type: 'driver_fee',
+          },
+          select: {
+            value: true,
+          },
+        });
+
+        const commissionAmmount = (rideFinalPrice * parseFloat(driverFeeTax.value)) / 100;
+
+        const commissionPayload = {
+          type: 'ride-commission',
+          ammount: commissionAmmount.toFixed(2).toString(),
+          status: 'created',
+          discounts: '0',
+          discountType: '-',
+          availableAt: '30',
+          driver: {
+            id: ride.driver.id,
+            name: ride.driver.name,
+          },
+          ride: {
+            id: ride.id,
+            code: ride.code,
+            date: new Date(ride.travel.date).toISOString(),
+          },
+        };
+
+        const rideDriverCommission = await prisma.commissions.create({
+          data: commissionPayload,
+        });
 
         const finalTravelData = {
           ...ride.travel,
+          driverCommission: rideDriverCommission?.ammount,
           finalDuration,
           finalDistance,
           totalTimeStopped,
           finalPolyline,
-          rideFinalPrice,
+          rideTotalPrice,
         };
 
         await prisma.rides.update({
@@ -75,7 +117,11 @@ export default defineEventHandler(async (event) => {
             id: ride.id,
           },
           data: {
-            rideFinalPrice: rideFinalPrice.toFixed(2),
+            billing: {
+              ...ride.billing,
+              ammount: rideTotalPrice.toFixed(2),
+            },
+            rideFinalPrice: rideTotalPrice.toFixed(2),
             travel: finalTravelData,
           },
         });

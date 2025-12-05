@@ -305,10 +305,9 @@ const form = useForm({
 });
 
 onMounted(async () => {
-  if (ride?.value.status === 'completed') {
-    handleCalculateFinalPrice();
-  }
-
+  // if (ride?.value.status === 'completed') {
+  //   handleCalculateFinalPrice();
+  // }
   driverLocationInterval.value = setInterval(async () => {
     driverData.value = {
       loading: driverData.value.loading,
@@ -515,7 +514,7 @@ const showRideControls = computed(() => {
                       <span class="text-muted-foreground text-sm">
                         Distância realizada
                       </span>
-                      <h3 class="text-lg font-bold">
+                      <h3 class="text-lg font-bold text-amber-600">
                         {{ convertMetersToDistance(ride?.travel.finalDistance) }}
                       </h3>
                     </div>
@@ -744,10 +743,22 @@ const showRideControls = computed(() => {
                     </FormItem>
                   </FormField>
                 </div>
-                <div v-else class="p-4 border border-zinc-900 rounded-md">
+                <div
+                  v-else
+                  class="p-4 border border-zinc-900 rounded-md row-span-2 h-full"
+                >
                   <span class="text-muted-foreground text-sm">Observações</span>
 
                   <p>{{ ride.travel.observations || 'Sem observações' }}</p>
+                </div>
+                <div
+                  v-if="ride.status === 'completed'"
+                  class="p-4 border border-zinc-900 rounded-md bg-amber-100"
+                >
+                  <h3>Comissão por este atendimento</h3>
+                  <h1 class="text-2xl font-bold">
+                    {{ currencyFormat(ride.travel.driverCommission) }}
+                  </h1>
                 </div>
               </div>
               <!-- PAYMENT -->

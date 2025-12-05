@@ -353,6 +353,8 @@ const calculatedEstimates = ref({
   estimatedDistance: 0,
   estimatedDuration: 0,
   estimatedPrice: '',
+  // Ride Price + Addons
+  estimatedTotalPrice: '',
 });
 
 const selectedRideAddons = ref<any>([]);
@@ -420,7 +422,7 @@ const handleRideCalculation = async () => {
       }, 0);
 
       const finalPrice = parseFloat(actualRidePrice) + calculateAddons;
-      calculatedEstimates.value.estimatedPrice = finalPrice.toFixed(2).toString();
+      calculatedEstimates.value.estimatedTotalPrice = finalPrice.toFixed(2).toString();
     }
   } catch (error) {
     toast({
@@ -649,30 +651,12 @@ const buildStaticMapUrl = () => {
   return `https://maps.googleapis.com/maps/api/staticmap?maptype=${maptype}&size=${size}${markers.join('')}${path}&key=${key}`;
 };
 
-const addOnsList = [
-  {
-    id: 'bilingual-english',
-    label: 'Atendimento Bilíngue',
-    price: '150',
-  },
-  {
-    id: 'pcd-ride',
-    label: 'Atendimento PCD',
-    price: '150',
-  },
-  {
-    id: 'airport-receptive',
-    label: 'Receptivo Aeroporto',
-    price: '250',
-  },
-] as const;
-
 const onSubmit = form.handleSubmit(async (values) => {
   const routePreviewUrl = buildStaticMapUrl();
 
   const ridePayload = {
     code: rideCode.value,
-    estimatedPrice: calculatedEstimates.value.estimatedPrice,
+    estimatedPrice: calculatedEstimates.value.estimatedTotalPrice,
     billing: {
       paymentMethod: paymentMethod.value,
       paymentUrl: paymentLinkUrl.value,
@@ -681,8 +665,8 @@ const onSubmit = form.handleSubmit(async (values) => {
         branch: values?.branch || '-',
         area: values?.area || '-',
       },
-      addons: selectedRideAddons.value,
-      ammount: calculatedEstimates.value.estimatedPrice,
+      addons: selectedRideAddons.value || [],
+      ammount: calculatedEstimates.value.estimatedTotalPrice,
       status:
         paymentMethod.value === 'corporative'
           ? 'invoice'
@@ -708,6 +692,7 @@ const onSubmit = form.handleSubmit(async (values) => {
     },
     reason: values.reason || '',
     travel: {
+      rideEstimatedPrice: calculatedEstimates.value.estimatedPrice,
       passengers: ridePassengers.value,
       //@ts-ignore
       date: values.departDate,
@@ -731,6 +716,7 @@ const onSubmit = form.handleSubmit(async (values) => {
       },
     },
     progress: {
+      steps: [],
       rideTracking: [],
     },
     status: 'created',
