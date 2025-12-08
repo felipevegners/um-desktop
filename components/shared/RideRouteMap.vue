@@ -35,10 +35,10 @@ const polylineOpts = ref<any>({
       lat: path.latitude,
       lng: path.longitude,
     })) || [],
-  geodesic: false,
+  geodesic: true,
   strokeColor: '#f0f',
-  strokeOpacity: 0.8,
-  strokeWeight: 5,
+  strokeOpacity: 0.75,
+  strokeWeight: 4,
   zIndex: 10,
 });
 
@@ -117,7 +117,7 @@ async function directions() {
                 geodesic: true,
                 strokeColor: '#000',
                 strokeOpacity: 0.8,
-                strokeWeight: 4,
+                strokeWeight: 6,
                 zIndex: 9,
                 // icons: [
                 //   {

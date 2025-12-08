@@ -22,7 +22,6 @@ export const getRideRoutesService = async (rideData: any) => {
     });
     return response;
   } catch (error) {
-    console.error('ERROR SERVICE -> ', error);
     return error;
   }
 };

@@ -308,21 +308,23 @@ onMounted(async () => {
   // if (ride?.value.status === 'completed') {
   //   handleCalculateFinalPrice();
   // }
-  driverLocationInterval.value = setInterval(async () => {
-    driverData.value = {
-      loading: driverData.value.loading,
-      location: driverData.value.location,
-      name: driverData.value.name,
-      picture: driverData.value.picture,
-    };
-    await getDriverByIdAction(ride?.value.driver.id);
-    driverData.value = {
-      loading: false,
-      location: driver?.value.location,
-      name: driver?.value.name,
-      picture: driver?.value.driverFiles.picture.url,
-    };
-  }, 10000);
+  if (ride?.value.status === 'in-progress') {
+    driverLocationInterval.value = setInterval(async () => {
+      driverData.value = {
+        loading: driverData.value.loading,
+        location: driverData.value.location,
+        name: driverData.value.name,
+        picture: driverData.value.picture,
+      };
+      await getDriverByIdAction(ride?.value.driver.id);
+      driverData.value = {
+        loading: false,
+        location: driver?.value.location,
+        name: driver?.value.name,
+        picture: driver?.value.driverFiles.picture.url,
+      };
+    }, 10000);
+  }
 });
 
 onUnmounted(() => {
@@ -417,6 +419,7 @@ const showRideControls = computed(() => {
           Editar Atendimento - #{{ ride?.code || '' }}
         </h1>
         <RideStatusFlag :ride-status="ride?.status" />
+        <!-- <Button @click="handleCalculateFinalPrice">Recalcular Atendimento</Button> -->
       </div>
       <div v-if="showRideControls" class="flex gap-6 items-center">
         <Button @click="handleCopyTrackLink" class="bg-blue-600 hover:bg-blue-700">

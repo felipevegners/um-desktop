@@ -383,11 +383,12 @@ const handleRideCalculation = async () => {
     ];
     const departDate = form.values.departDate;
     const departTime = form.values.departTime;
+    const dt = new Date(`${departDate}T${departTime}:00`);
+    const departureTime = dt.toISOString();
 
     const routeCalculation: any = await getRideRoutesService({
       locations,
-      departDate,
-      departTime,
+      departureTime,
     });
 
     routePolyLine.value = routeCalculation[0]?.polyline?.encodedPolyline;

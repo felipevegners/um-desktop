@@ -30,14 +30,13 @@ export default defineEventHandler(async (event) => {
           lng: ride.progress.finishedLocation.longitude,
         },
       ];
-      // const departDate = ride.progress.startedAt;
-      // const departTime = ride.travel.departTime;
+      const time = new Date(ride?.progress?.finishedAt);
+      time.setHours(time.getHours() + 1);
 
       try {
         const routeCalculation = await getRideRoutesService({
           locations,
-          // departDate,
-          // departTime,
+          departureTime: time.toISOString(),
         });
 
         const normalizedDuration = routeCalculation[0]?.duration.replace('s', '');

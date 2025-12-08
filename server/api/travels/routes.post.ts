@@ -1,10 +1,10 @@
 export default defineEventHandler(async (event) => {
   const body = await readBody(event);
-  const { locations, departDate, departTime } = body;
+  const { locations, departureTime } = body;
   const API_KEY = process.env.VITE_GOOGLE_MAPS_API_KEY;
   const routesUrl = 'https://routes.googleapis.com/directions/v2:computeRoutes';
   const routesMaskOptions =
-    'routes.duration,routes.distanceMeters,routes.polyline.encodedPolyline';
+    'routes.duration,routes.distanceMeters,routes.polyline.encodedPolyline,routes.legs';
 
   // Validate input
   if (!Array.isArray(locations) || locations.length < 2) {
@@ -43,12 +43,6 @@ export default defineEventHandler(async (event) => {
   const destination = toWaypoint(locations[locations.length - 1]);
   const intermediates = locations.slice(1, -1).map(toWaypoint);
 
-  let normalizedDepartTime;
-  if (departDate && departTime) {
-    const dt = new Date(`${departDate}T${departTime}:00`);
-    normalizedDepartTime = dt.toISOString();
-  }
-
   try {
     const data: any = await $fetch(routesUrl, {
       method: 'POST',
@@ -57,11 +51,12 @@ export default defineEventHandler(async (event) => {
         'X-Goog-FieldMask': routesMaskOptions,
       },
       body: {
-        origin,
-        destination,
-        intermediates,
+        origin: origin,
+        destination: destination,
+        intermediates: intermediates,
         travelMode: 'DRIVE',
-        routingPreference: 'TRAFFIC_AWARE',
+        routingPreference: 'TRAFFIC_AWARE_OPTIMAL',
+        departureTime: departureTime,
         computeAlternativeRoutes: false,
         routeModifiers: {
           avoidTolls: false,
@@ -70,12 +65,10 @@ export default defineEventHandler(async (event) => {
         },
         languageCode: 'pt-BR',
         units: 'METRIC',
-        // ...(normalizedDepartTime ? { departureTime: normalizedDepartTime } : {}),
       },
     });
     return data?.routes;
   } catch (error) {
-    console.error(error);
     throw error;
   }
 });
