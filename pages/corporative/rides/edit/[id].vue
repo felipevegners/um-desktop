@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import FormButtons from '@/components/forms/FormButtons.vue';
 import BackLink from '@/components/shared/BackLink.vue';
-import FormSelect from '@/components/shared/FormSelect.vue';
 import PaymentStatusFlag from '@/components/shared/PaymentStatusFlag.vue';
+import RideRouteMap from '@/components/shared/RideRouteMap.vue';
 import RideStatusFlag from '@/components/shared/RideStatusFlag.vue';
 import { useToast } from '@/components/ui/toast/use-toast';
 import { WPP_API } from '@/config/paths';
@@ -25,18 +25,17 @@ import {
   MessageCircleMore,
   MessageSquareWarning,
   Phone,
+  Settings,
   SquareCheck,
   SquareDot,
   SquareSquare,
   Trash,
   User,
-  UserPen,
   Users2,
   X,
 } from 'lucide-vue-next';
 import { storeToRefs } from 'pinia';
 import { useForm } from 'vee-validate';
-import RideRouteMap from '~/components/shared/RideRouteMap.vue';
 import {
   convertMetersToDistance,
   convertSecondsToTime,
@@ -48,10 +47,6 @@ import {
 definePageMeta({
   layout: 'admin',
   middleware: 'sidebase-auth',
-});
-
-useHead({
-  title: 'Backoffice - Editar Atendimento | Urban Mobi',
 });
 
 const { toast } = useToast();
@@ -67,7 +62,6 @@ const isAdmin = computed(() => {
 });
 
 const route = useRoute();
-const router = useRouter();
 const ridesStore = useRidesStore();
 const { getRideByIdAction, updateRideAction, setRideDriverAction } = ridesStore;
 const { ride, loadingData } = storeToRefs(ridesStore);
@@ -89,6 +83,10 @@ const { getProductsAction } = productsStore;
 const { products } = storeToRefs(productsStore);
 await getRideByIdAction(route?.params?.id as string);
 await getProductsAction();
+
+useHead({
+  title: `${ride?.value.status === 'completed' ? 'Visualizar' : 'Editar'} Atendimento | Urban Mobi`,
+});
 
 const editDriver = ref<boolean>(false);
 const selectedDriver = ref<any>();
@@ -145,13 +143,6 @@ onBeforeMount(async () => {
   travelDate.value = new CalendarDate(dateNumbers[0], dateNumbers[1], dateNumbers[2]);
 
   await getDriversAction();
-});
-
-const translatePaymentMethod = computed(() => {
-  const method = paymentMethods.find(
-    (method) => method.id === ride?.value.billing?.paymentMethod,
-  );
-  return method?.label;
 });
 
 const sanitizeDrivers = computed(() => {
@@ -313,9 +304,6 @@ const form = useForm({
 });
 
 onMounted(async () => {
-  // if (ride?.value.status === 'completed') {
-  //   handleCalculateFinalPrice();
-  // }
   if (ride?.value.status === 'in-progress') {
     driverLocationInterval.value = setInterval(async () => {
       driverData.value = {
@@ -340,19 +328,6 @@ onUnmounted(() => {
     clearInterval(driverLocationInterval.value);
   }
 });
-
-const handleCalculateFinalPrice = async () => {
-  try {
-    await $fetch('/api/rides-calculate', {
-      method: 'POST',
-      body: {
-        ...ride?.value,
-      },
-    });
-  } catch (error) {
-    console.error('ERROR -> ', error);
-  }
-};
 
 const onSubmit = form.handleSubmit(async (values) => {
   const ridePayload = {
@@ -411,6 +386,13 @@ const handleCopyTrackLink = async () => {
   }
 };
 
+const translatePaymentMethod = computed(() => {
+  const method = paymentMethods.find(
+    (method) => method.id === ride?.value.billing?.paymentMethod,
+  );
+  return method?.label;
+});
+
 const showRideControls = computed(() => {
   return ride?.value.status !== 'completed' && ride?.value.status !== 'cancelled';
 });
@@ -424,23 +406,31 @@ const showRideControls = computed(() => {
       <div class="flex items-center justify-center gap-4">
         <h1 class="flex items-center gap-2 text-2xl font-bold">
           <CalendarDays class="w-6 h-6" />
-          Editar Atendimento - #{{ ride?.code || '' }}
+          {{ ride.status === 'completed' ? 'Visualizar' : 'Editar' }} Atendimento - #{{
+            ride?.code || ''
+          }}
         </h1>
         <RideStatusFlag :ride-status="ride?.status" />
-        <!-- <Button @click="handleCalculateFinalPrice">Recalcular Atendimento</Button> -->
       </div>
       <div v-if="showRideControls" class="flex gap-6 items-center">
-        <Button @click="handleCopyTrackLink" class="bg-blue-600 hover:bg-blue-700">
+        <Button
+          v-if="ride.status === 'in-progress'"
+          @click="handleCopyTrackLink"
+          class="bg-blue-600 hover:bg-blue-700"
+        >
           <Link />
           Copiar Link Rastreio
         </Button>
 
         <div class="p-2 border border-zinc-950 rounded-md flex gap-6">
+          <div class="pr-2 flex items-center border-r border-zinc-950">
+            <Settings />
+          </div>
           <Button @click="toggleFinishModal">
             <Check />
             FInalizar
           </Button>
-          <Button @click="toggleCancelationModal" variant="secondary">
+          <Button @click="toggleCancelationModal" variant="destructive">
             <X />
             Cancelar
           </Button>
@@ -499,12 +489,12 @@ const showRideControls = computed(() => {
                   </div>
                   <div class="p-3 border border-zinc-400 bg-white rounded-md">
                     <span class="text-muted-foreground text-sm">
-                      Hora de embarque (estimado)
+                      Hora do embarque (estimado)
                     </span>
-                    <h3 class="text-lg font-bold">{{ ride?.travel.departTime }}H</h3>
+                    <h3 class="text-lg font-bold">{{ ride?.travel.departTime }}</h3>
                     <div v-if="ride.status === 'completed'">
                       <span class="text-muted-foreground text-sm">
-                        Hora de embarque (realizado)
+                        Hora do embarque (realizado)
                       </span>
                       <h3 class="text-lg font-bold">
                         {{
@@ -512,7 +502,7 @@ const showRideControls = computed(() => {
                             hour: '2-digit',
                             minute: '2-digit',
                           })
-                        }}H
+                        }}
                       </h3>
                     </div>
                   </div>
@@ -678,8 +668,8 @@ const showRideControls = computed(() => {
                 class="p-6 grid grid-cols-2 gap-6 items-start bg-white border border-zinc-900 rounded-md"
               >
                 <div class="flex items-start gap-4">
-                  <CarFront />
                   <div>
+                    <CarFront />
                     <h3 class="mb-6 text-sm font-bold">Dados do Motorista</h3>
                     <h2 class="font-bold text-lg">
                       {{ ride?.driver.name || 'Sem motorista' }}
@@ -698,49 +688,7 @@ const showRideControls = computed(() => {
                 <div
                   v-if="showRideControls"
                   class="flex flex-col items-start justify-center gap-6 h-full"
-                >
-                  <div v-if="editDriver" class="w-full justify-self-center">
-                    <FormField v-slot="{ componentField, value }" name="driver">
-                      <FormItem class="w-full">
-                        <FormControl>
-                          <FormSelect
-                            v-bind="componentField"
-                            :items="sanitizeDrivers"
-                            :label="'Selecione'"
-                            @on-select="setNewDriver"
-                            :disabled="!editDriver"
-                          />
-                        </FormControl>
-                      </FormItem>
-                    </FormField>
-                    <div class="space-x-2">
-                      <Button
-                        class="mt-3 bg-green-800 hover:bg-green-700"
-                        :disabled="selectedDriver.id === ride?.driver.id"
-                        @click.prevent="contactDriver"
-                      >
-                        Acionar
-                      </Button>
-                      <Button variant="ghost" @click.prevent="editDriver = false">
-                        Cancelar
-                      </Button>
-                    </div>
-                  </div>
-                  <div v-else class="flex gap-2 self-end">
-                    <Button @click.prevent="editDriver = true">
-                      <UserPen />
-                      {{ !ride?.driver.name ? 'Acionar' : 'Alterar' }}
-                    </Button>
-                    <Button
-                      v-if="ride?.driver.name"
-                      @click.prevent="handleRemoveRider"
-                      variant="destructive"
-                    >
-                      <X />
-                      Remover
-                    </Button>
-                  </div>
-                </div>
+                ></div>
                 <div
                   v-if="showRideControls"
                   class="col-span-2 p-4 border border-zinc-900 rounded-md bg-amber-100"
@@ -761,15 +709,6 @@ const showRideControls = computed(() => {
                   <span class="text-muted-foreground text-sm">Observações</span>
 
                   <p>{{ ride.travel.observations || 'Sem observações' }}</p>
-                </div>
-                <div
-                  v-if="ride.status === 'completed'"
-                  class="p-4 border border-zinc-900 rounded-md bg-amber-100"
-                >
-                  <h3>Comissão por este atendimento</h3>
-                  <h1 class="text-2xl font-bold">
-                    {{ currencyFormat(ride.travel.driverCommission) }}
-                  </h1>
                 </div>
               </div>
               <!-- PAYMENT -->
@@ -811,7 +750,7 @@ const showRideControls = computed(() => {
           </CardContent>
         </Card>
         <FormButtons
-          :cancel="'/admin/rides/open'"
+          :cancel="'/corporative/rides/open'"
           :loading="loadingSend"
           sbm-label="Salvar Atendimento"
           cnc-label="Cancelar"

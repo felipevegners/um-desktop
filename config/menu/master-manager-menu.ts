@@ -11,6 +11,7 @@ import {
 const { data } = useAuth();
 //@ts-ignore
 const { user } = data.value;
+const route = useRoute();
 
 export const masterManagerMenu = {
   title: 'Painel Gestor Master',
@@ -22,22 +23,46 @@ export const masterManagerMenu = {
   },
   navMain: [
     {
+      title: 'Atendimentos',
+      url: '',
+      icon: CalendarDays,
+      isActive: route.path.startsWith('rides'),
+      items: [
+        {
+          title: 'Abertos',
+          url: '/corporative/rides/open',
+        },
+        {
+          title: 'Realizados',
+          url: '/corporative/rides/completed',
+        },
+        {
+          title: 'Cancelados',
+          url: '/corporative/rides/cancelled',
+        },
+        {
+          title: '+ Novo agendamento',
+          url: '/corporative/rides/new',
+        },
+      ],
+    },
+    {
       title: 'Gerenciar Filiais',
       url: '#',
       icon: Building2,
-      isActive: true,
+      isActive: route.path.startsWith('branches'),
       items: [
         {
           title: 'Filiais Cadastradas',
-          url: '/admin/branches',
+          url: '/corporative/branches',
         },
         {
           title: 'Cdastrar Filial',
-          url: '/admin/branches/add',
+          url: '/corporative/branches/new',
         },
         {
           title: 'Editar Filial',
-          url: '/admin/branches/edit',
+          url: '/corporative/branches/edit',
         },
       ],
     },
@@ -45,39 +70,19 @@ export const masterManagerMenu = {
       title: 'Usuários',
       url: '#',
       icon: User,
-      isActive: false,
+      isActive: route.path.includes('accounts'),
       items: [
         {
-          title: 'Usuários cadastrados',
-          url: '/admin/users',
+          title: 'Usuários Ativos',
+          url: '/corporative/accounts/active',
         },
         {
-          title: 'Restrições de Usuários',
-          url: '/admin/users/restrictions',
-        },
-      ],
-    },
-    {
-      title: 'Atendimentos',
-      url: '',
-      icon: CalendarDays,
-      isActive: false,
-      items: [
-        {
-          title: 'Abertos',
-          url: '/admin/rides/active',
+          title: 'Usuários Inativos',
+          url: '/corporative/accounts/inactive',
         },
         {
-          title: 'Realizados',
-          url: '/admin/rides/completed',
-        },
-        {
-          title: 'Cancelados',
-          url: '/admin/rides/canceled',
-        },
-        {
-          title: '+ Novo agendamento',
-          url: '/admin/rides/new',
+          title: '+ Novo Usuário',
+          url: '/corporative/accounts/new',
         },
       ],
     },
@@ -85,15 +90,15 @@ export const masterManagerMenu = {
       title: 'Financeiro',
       url: '#',
       icon: HandCoins,
-      isActive: false,
+      isActive: route.path.includes('invoices'),
       items: [
         {
           title: 'Faturas em aberto',
-          url: '/admin/invoices/active',
+          url: '/corporative/invoices/active',
         },
         {
           title: 'Faturas canceladas',
-          url: '/admin/invoices/canceled',
+          url: '/corporative/invoices/canceled',
         },
       ],
     },
@@ -101,12 +106,12 @@ export const masterManagerMenu = {
   settings: [
     {
       name: 'Budget',
-      url: '/admin/budget',
+      url: '/corporative/budget',
       icon: Coins,
     },
     {
       name: 'Gerenciar Acessos',
-      url: '/admin/accounts',
+      url: '/corporative/accounts',
       icon: UserCog,
     },
   ],

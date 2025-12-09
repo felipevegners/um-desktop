@@ -1,11 +1,14 @@
 <script setup lang="ts">
 import { CircleUser, LogOut } from 'lucide-vue-next';
-
-import Notification from './Notification.vue';
-import ThemeSelector from './ThemeSelector.vue';
+import { rolesTypes } from '~/config/roles';
 
 const { data, signOut, status } = useAuth();
 const route = useRoute();
+
+const getUserRole = computed(() => {
+  //@ts-ignore
+  return rolesTypes[data?.value?.user?.role];
+});
 </script>
 <template>
   <header
@@ -31,10 +34,15 @@ const route = useRoute();
       <!-- <ThemeSelector /> -->
       <!-- @vue-skip -->
       <div class="flex items-center gap-6">
-        <h3 class="text-md flex items-center gap-2" v-if="data">
+        <div v-if="status === 'authenticated'" class="flex items-start gap-2">
           <CircleUser />
-          <span class="font-bold">{{ data?.user?.name }} </span>
-        </h3>
+          <div class="flex flex-col">
+            <h3 class="text-md font-bold mb-0">
+              {{ data?.user?.name }}
+            </h3>
+            <small class="text-muted-foreground text-xs">{{ getUserRole }}</small>
+          </div>
+        </div>
         <h3 class="text-md" v-else>Sua sessão expirou, faça novamente o login.</h3>
         <Button class="mr-4" variant="outline" @click="signOut">
           <LogOut class="w-5 h-5" />

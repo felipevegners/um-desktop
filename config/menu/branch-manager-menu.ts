@@ -11,6 +11,7 @@ import {
 const { data } = useAuth();
 //@ts-ignore
 const { user } = data.value;
+const route = useRoute();
 
 export const branchManagerMenu = {
   title: 'Painel Gestor Filial',
@@ -22,22 +23,46 @@ export const branchManagerMenu = {
   },
   navMain: [
     {
+      title: 'Atendimentos',
+      url: '',
+      icon: CalendarDays,
+      isActive: route.path.startsWith('rides'),
+      items: [
+        {
+          title: 'Abertos',
+          url: '/corporative/rides/active',
+        },
+        {
+          title: 'Realizados',
+          url: '/corporative/rides/completed',
+        },
+        {
+          title: 'Cancelados',
+          url: '/corporative/rides/cancelled',
+        },
+        {
+          title: '+ Novo agendamento',
+          url: '/corporative/rides/new',
+        },
+      ],
+    },
+    {
       title: 'Gerenciar Filiais',
       url: '#',
       icon: Building2,
-      isActive: true,
+      isActive: route.path.startsWith('branches'),
       items: [
         {
           title: 'Filiais Cadastradas',
-          url: '/admin/branches',
+          url: '/corporative/branches',
         },
         {
           title: 'Cdastrar Filial',
-          url: '/admin/branches/add',
+          url: '/corporative/branches/add',
         },
         {
           title: 'Editar Filial',
-          url: '/admin/branches/edit',
+          url: '/corporative/branches/edit',
         },
       ],
     },
@@ -45,39 +70,15 @@ export const branchManagerMenu = {
       title: 'Usuários',
       url: '#',
       icon: User,
-      isActive: false,
+      isActive: route.path.startsWith('accounts'),
       items: [
         {
           title: 'Usuários cadastrados',
-          url: '/admin/users',
+          url: '/corporative/accounts/active',
         },
         {
           title: 'Restrições de Usuários',
-          url: '/admin/users/restrictions',
-        },
-      ],
-    },
-    {
-      title: 'Atendimentos',
-      url: '',
-      icon: CalendarDays,
-      isActive: false,
-      items: [
-        {
-          title: 'Abertos',
-          url: '/admin/rides/active',
-        },
-        {
-          title: 'Realizados',
-          url: '/admin/rides/completed',
-        },
-        {
-          title: 'Cancelados',
-          url: '/admin/rides/canceled',
-        },
-        {
-          title: '+ Novo agendamento',
-          url: '/admin/rides/new',
+          url: '/corporative/accounts/restrictions',
         },
       ],
     },
@@ -85,15 +86,15 @@ export const branchManagerMenu = {
       title: 'Financeiro',
       url: '#',
       icon: HandCoins,
-      isActive: false,
+      isActive: route.path.startsWith('invoices'),
       items: [
         {
           title: 'Faturas em aberto',
-          url: '/admin/invoices/active',
+          url: '/corporative/invoices/active',
         },
         {
           title: 'Faturas canceladas',
-          url: '/admin/invoices/canceled',
+          url: '/corporative/invoices/canceled',
         },
       ],
     },
@@ -101,12 +102,12 @@ export const branchManagerMenu = {
   settings: [
     {
       name: 'Budget',
-      url: '/admin/budget',
+      url: '/corporative/budget',
       icon: Coins,
     },
     {
       name: 'Gerenciar Acessos',
-      url: '/admin/accounts',
+      url: '/corporative/accounts',
       icon: UserCog,
     },
   ],

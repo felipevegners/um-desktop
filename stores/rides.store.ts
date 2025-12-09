@@ -60,6 +60,19 @@ export const useRidesStore = defineStore('rides', {
         throw error;
       }
     },
+    async getRidesByContractAction(contractId: string) {
+      this.loadingData = true;
+      try {
+        const response: any = await getRidesService('');
+        const filtered = response.filter(
+          (ride: any) => ride.billing.paymentData.contract === contractId,
+        );
+        this.rides = filtered;
+        this.loadingData = false;
+      } catch (error) {
+        throw error;
+      }
+    },
     async getDriverRidesAction(driverId: string) {
       this.loadingData = true;
       try {
