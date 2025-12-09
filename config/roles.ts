@@ -12,6 +12,7 @@ export const rolesList = [
 ];
 
 export const rolesTypes: any = {
+  admin: 'Gestor Backoffice',
   'master-manager': 'Gestor Master',
   'branch-manager': 'Gestor Filial',
   'platform-admin': 'Adminstrador Filial',

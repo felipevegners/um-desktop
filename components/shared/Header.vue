@@ -34,8 +34,8 @@ const getUserRole = computed(() => {
       <!-- <ThemeSelector /> -->
       <!-- @vue-skip -->
       <div class="flex items-center gap-6">
-        <div v-if="status === 'authenticated'" class="flex items-start gap-2">
-          <CircleUser />
+        <div v-if="status === 'authenticated'" class="flex items-center gap-2">
+          <CircleUser :size="30" />
           <div class="flex flex-col">
             <h3 class="text-md font-bold mb-0">
               {{ data?.user?.name }}
