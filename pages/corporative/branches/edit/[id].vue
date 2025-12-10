@@ -19,6 +19,11 @@ useHead({
 });
 
 const { toast } = useToast();
+const { data } = useAuth();
+//@ts-ignore
+const contractId = data.value?.user.contract?.contractId;
+//@ts-ignore
+const role = data.value?.user?.role;
 
 const branchStore = useBranchesStore();
 const contractStore = useContractsStore();
@@ -52,10 +57,11 @@ const formSchema = toTypedSchema(
     state: z.string().min(2).max(50),
     phone: z.string().min(2).max(16),
     phoneExtension: z.string().min(0).max(6).optional(),
-    branchManagerName: z.string().min(2).max(50),
-    branchManagerPhone: z.string().min(2).max(50),
-    branchManagerPosition: z.string().min(2).max(50),
-    branchManagerDepartment: z.string().min(2).max(50),
+    // TODO: pass to dynamic schema
+    branchManagerName: z.string().optional(),
+    branchManagerPhone: z.string().optional(),
+    branchManagerPosition: z.string().optional(),
+    branchManagerDepartment: z.string().optional(),
     branchBudget: z.array(
       z
         .number()
@@ -129,7 +135,7 @@ const onSubmit = form.handleSubmit(async (values) => {
         <FileText class="w-6 h-6" />
         Editar: {{ branch?.fantasyName }}
       </h1>
-      <div class="flex gap-12 items-center border border-red-500">
+      <div v-if="role === 'master-manager'" class="flex gap-12 items-center">
         <div>
           <Label class="text-md font-bold"> Desativar Filial </Label>
           <div class="mt-2 flex items-center gap-3">
@@ -172,7 +178,7 @@ const onSubmit = form.handleSubmit(async (values) => {
           <Button
             type="button"
             variant="ghost"
-            @click="navigateTo('/admin/branches/active')"
+            @click="navigateTo('/corporative/branches/active')"
           >
             Cancelar
           </Button>
