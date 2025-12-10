@@ -1,5 +1,6 @@
 <script lang="ts" setup>
 import FormSelect from '@/components/shared/FormSelect.vue';
+import { rolesTypes } from '@/config/roles';
 import { useAccountStore } from '@/stores/account.store';
 import { useContractsStore } from '@/stores/contracts.store';
 import {
@@ -44,6 +45,7 @@ const calculatedBudget = ref(0);
 const contractMainBudget = ref(0);
 const selectedContract = ref<any>(null);
 const branchManagerUsersList = ref<any>([]);
+const hasManager = ref<boolean>(false);
 
 onBeforeMount(async () => {
   if (props.editMode) {
@@ -52,21 +54,25 @@ onBeforeMount(async () => {
   await getContractsAction();
 });
 
+const managerRoles = ['master-manager', 'branch-manager'];
+
 onMounted(async () => {
   await getUsersAccountsAction();
   if (props.branchData && props.branchData.manager === null) {
+    const findContractUsers = accounts.value.filter(
+      (account: any) =>
+        account.contract.contractId === props.contractId &&
+        managerRoles.includes(account.role),
+    );
+    branchManagerUsersList.value = findContractUsers.map((user: any) => {
+      return {
+        label: `${user.username} - ${rolesTypes[user.role]}`,
+        value: user.id,
+      };
+    });
+  } else {
+    hasManager.value = true;
   }
-  const findContractUsers = accounts.value.filter(
-    (account: any) =>
-      account.contract.contractId === props.contractId &&
-      account.role === 'branch-manager',
-  );
-  branchManagerUsersList.value = findContractUsers.map((user: any) => {
-    return {
-      label: `${user.username} - Gestor Filial`,
-      value: user.id,
-    };
-  });
 });
 
 const sanitizeContracts = computed(() => {
@@ -265,7 +271,7 @@ const handleGeneratePassword = () => {
   </section>
   <section class="p-6">
     <h3 v-if="editMode" class="mb-4 text-lg font-bold">3. Dados do Gestor da Filial</h3>
-    <div v-if="branchData?.manager === null" class="px-6 flex flex-col items-start">
+    <div v-if="branchData?.manager === null" class="flex flex-col items-start">
       <div class="my-4 px-4 bg-red-200">
         <small class="text-red-500">
           *Contrato ainda não possui um Gestor Master atribuído. Selecione um usuário com
@@ -288,10 +294,10 @@ const handleGeneratePassword = () => {
       </div>
     </div>
     <h3 v-if="!editMode" class="mb-4 text-lg font-bold">3. Gestor da Filial</h3>
-    <div class="mb-4 grid grid-cols-4 gap-6">
+    <div v-if="branchData?.manager !== null" class="mb-4 grid grid-cols-4 gap-6">
       <FormField v-slot="{ componentField }" name="branchManagerName">
         <FormItem>
-          <FormLabel>Nome</FormLabel>
+          <FormLabel>Nomes</FormLabel>
           <FormControl>
             <Input type="text" v-bind="componentField" :disabled="editMode" />
           </FormControl>

@@ -53,16 +53,16 @@ export const branchManagerMenu = {
       isActive: route.path.startsWith('branches'),
       items: [
         {
-          title: 'Filiais Cadastradas',
-          url: '/corporative/branches',
+          title: 'Filiais Ativas',
+          url: '/corporative/branches/active',
         },
         {
-          title: 'Cdastrar Filial',
-          url: '/corporative/branches/add',
+          title: 'Filiais Inativas',
+          url: '/corporative/branches/inactive',
         },
         {
-          title: 'Editar Filial',
-          url: '/corporative/branches/edit',
+          title: '+ Cadastrar Filial',
+          url: '/corporative/branches/new',
         },
       ],
     },

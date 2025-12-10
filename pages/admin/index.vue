@@ -57,8 +57,6 @@ const getRideMonthData = computed(() => {
     }, {}),
   ).map(([name, total]) => ({ name, total }));
 
-  console.log(result);
-
   return result;
 });
 
@@ -210,6 +208,5 @@ definePageMeta({
         </p>
       </div>
     </div>
-    <!-- <div class="min-h-[100vh] flex-1 rounded-xl bg-zinc-200 md:min-h-min" /> -->
   </div>
 </template>

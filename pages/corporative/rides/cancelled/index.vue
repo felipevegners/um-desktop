@@ -1,11 +1,12 @@
 <script setup lang="ts">
+import BackLink from '@/components/shared/BackLink.vue';
+import DataTable from '@/components/shared/DataTable.vue';
+import TableActions from '@/components/shared/TableActions.vue';
+import { useRidesStore } from '@/stores/rides.store';
 import { createColumnHelper } from '@tanstack/vue-table';
 import { CalendarX2, LoaderCircle } from 'lucide-vue-next';
 import { storeToRefs } from 'pinia';
 import { onMounted } from 'vue';
-import DataTable from '~/components/shared/DataTable.vue';
-import TableActions from '~/components/shared/TableActions.vue';
-import { useRidesStore } from '~/stores/rides.store';
 
 import { columns } from './columns';
 
@@ -66,6 +67,9 @@ const finalColumns = [
 </script>
 <template>
   <main class="p-6">
+    <header>
+      <BackLink />
+    </header>
     <section class="mb-6 flex items-center justify-between gap-6">
       <h1 class="flex items-center gap-2 text-2xl font-bold">
         <CalendarX2 :size="24" />
