@@ -69,7 +69,8 @@ const formSchema = toTypedSchema(
         .max(Number(contract?.value.mainBudget) * 100)
         .optional(),
     ),
-    status: z.string().optional(),
+    status: z.boolean(),
+    managerId: z.string(),
   }),
 );
 
@@ -95,31 +96,33 @@ const form = useForm({
     branchManagerPosition: branch?.value.manager?.position || '-',
     branchManagerDepartment: branch?.value.manager?.department || '-',
     branchBudget: [parseFloat(branch?.value.budget)],
-    status: branch?.value.status,
+    status: branch?.value.status === 'pending' ? false : true,
+    managerId: branch?.value.managerId,
   },
 });
 
 const onSubmit = form.handleSubmit(async (values) => {
+  const newBranchData = {
+    ...values,
+    branchId: branch?.value.id,
+    areas: [...ccAreas.value],
+    branchBudget: values.branchBudget.toString(),
+    enabled: branchSituation.value,
+    status: values.status === true ? 'validated' : 'pending',
+  };
   try {
-    const newBranchData = {
-      ...values,
-      branchId: branch?.value.id,
-      areas: [...ccAreas.value],
-      branchBudget: values.branchBudget.toString(),
-      enabled: branchSituation.value,
-    };
     await updateBranchAction(newBranchData);
     toast({
       title: 'Tudo pronto!',
       class: 'bg-green-600 border-0 text-white text-2xl',
-      description: `Filial cadastrada com sucesso!`,
+      description: `Filial atualizada com sucesso!`,
     });
-    navigateTo('/admin/branches/active');
+    navigateTo('/corporative/branches/active');
   } catch (error) {
     toast({
       title: 'Opss!',
       class: 'bg-red-500 border-0 text-white text-2xl',
-      description: `Ocorreu um erro ao cadastrar a Filial. Tente novamente.`,
+      description: `Ocorreu um erro ao editar a Filial. Tente novamente.`,
     });
     throw error;
   }
@@ -152,6 +155,27 @@ const onSubmit = form.handleSubmit(async (values) => {
         </Button>
       </div>
     </section>
+    <section>
+      <div
+        v-if="branch.status === 'pending'"
+        class="p-6 my-6 bg-amber-300/50 border border-amber-500 w-full rounded-md flex items-center justify-between"
+      >
+        <div>
+          <Info :size="24" class="mb-2 text-amber-700" />
+          <h3 class="mb-6 font-bold text-xl text-amber-700">Dados não validados</h3>
+          <p>
+            <span class="font-bold"> Atenção: </span>
+            O cadastro desta filial encontra-se pendente de confirmação dos dados
+            fornecidos.
+          </p>
+          <p>
+            Verifique se todos os dados desta filial estão corretos e assinale abaixo para
+            a validação do cadastro. Em caso de inconsistências, edite os dados e salve as
+            alterações.
+          </p>
+        </div>
+      </div>
+    </section>
     <section v-if="isLoadingData" class="min-h-[300px] flex items-center justify-center">
       <LoaderCircle class="w-10 h-10 animate-spin" />
     </section>
@@ -170,6 +194,25 @@ const onSubmit = form.handleSubmit(async (values) => {
             <AddressForm :form="form" />
           </BranchForm>
         </Card>
+
+        <div
+          v-if="branch.status === 'pending'"
+          class="p-6 my-6 bg-amber-300/50 border border-amber-500 hover:bg-amber-300 flex items-start gap-3 rounded-lg has-[[aria-checked=true]]:border-blue-600 has-[[aria-checked=true]]:bg-blue-50 dark:has-[[aria-checked=true]]:border-blue-900 dark:has-[[aria-checked=true]]:bg-blue-950"
+        >
+          <FormField v-slot="{ handleChange }" type="checkbox" name="status">
+            <FormItem class="flex flex-row items-center space-x-3 space-y-0">
+              <FormControl>
+                <Checkbox
+                  @update:checked="handleChange"
+                  class="data-[state=checked]:border-blue-600 data-[state=checked]:bg-blue-600 data-[state=checked]:text-white dark:data-[state=checked]:border-blue-700 dark:data-[state=checked]:bg-blue-700 w-6 h-6"
+                />
+              </FormControl>
+              <FormLabel class="font-normal">
+                Confirmo que todos os dados cadastrados estão corretos.
+              </FormLabel>
+            </FormItem>
+          </FormField>
+        </div>
         <div class="mt-6 flex gap-4">
           <Button type="submit" form="form">
             <LoaderCircle v-if="isLoadingData" class="w-5 h-5 animate-spin" />

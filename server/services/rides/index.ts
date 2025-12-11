@@ -1,17 +1,3 @@
-// export const getRideCalculationService = async (rideData: any) => {
-//   try {
-//     const response = await $fetch('/api/travels/distance', {
-//       method: 'GET',
-//       params: {
-//         ...rideData,
-//       },
-//     });
-//     return response;
-//   } catch (error) {
-//     console.error('Error -> ', error);
-//     return error;
-//   }
-// };
 export const getRideRoutesService = async (rideData: any) => {
   try {
     const response = await $fetch('/api/travels/routes', {
@@ -34,6 +20,15 @@ export const getRidesService = async (rideId: string) => {
     return await $fetch('/api/rides');
   } catch (error) {
     console.log('Error during service GET -> ', error);
+    throw error;
+  }
+};
+
+export const getContractRidesService = async (contractId: string) => {
+  try {
+    return await $fetch(`/api/rides?contractId=${contractId}`);
+  } catch (error) {
+    console.log('Error during rides by contract ID service GET -> ', error);
     throw error;
   }
 };

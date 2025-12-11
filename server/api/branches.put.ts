@@ -18,10 +18,7 @@ export default defineEventHandler(async (event) => {
     state,
     phone,
     phoneExtension,
-    branchManagerName,
-    branchManagerPhone,
-    branchManagerPosition,
-    branchManagerDepartment,
+    managerId,
     branchBudget,
     areas,
     status,
@@ -50,6 +47,14 @@ export default defineEventHandler(async (event) => {
         areas,
         status,
         enabled,
+        manager: {
+          connect: {
+            id: managerId,
+          },
+        },
+      },
+      include: {
+        manager: true,
       },
     });
 
@@ -62,6 +67,20 @@ export default defineEventHandler(async (event) => {
           connect: {
             id: branchId,
           },
+        },
+      },
+    });
+
+    await prisma.accounts.update({
+      where: {
+        id: managerId,
+      },
+      data: {
+        contract: {
+          contractId: contract,
+          name: `${branchCode} - ${name}`,
+          branchId: branchId,
+          area: 'all',
         },
       },
     });

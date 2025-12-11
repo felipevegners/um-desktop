@@ -52,10 +52,10 @@ const formSchema = toTypedSchema(
     state: z.string().min(2).max(50),
     phone: z.string().min(2).max(16),
     phoneExtension: z.string().min(0).max(6).optional(),
-    branchManagerName: z.string().min(2).max(50),
-    branchManagerPhone: z.string().min(2).max(50),
-    branchManagerPosition: z.string().min(2).max(50),
-    branchManagerDepartment: z.string().min(2).max(50),
+    branchManagerName: z.string().min(2).max(50).optional(),
+    branchManagerPhone: z.string().min(2).max(50).optional(),
+    branchManagerPosition: z.string().min(2).max(50).optional(),
+    branchManagerDepartment: z.string().min(2).max(50).optional(),
     branchBudget: z.array(
       z
         .number()
@@ -64,6 +64,7 @@ const formSchema = toTypedSchema(
         .optional(),
     ),
     status: z.string().optional(),
+    managerId: z.string(),
   }),
 );
 
@@ -90,18 +91,19 @@ const form = useForm({
     branchManagerDepartment: branch?.value.manager?.department || '-',
     branchBudget: [parseFloat(branch?.value.budget)],
     status: branch?.value.status,
+    managerId: branch?.value.managerId,
   },
 });
 
 const onSubmit = form.handleSubmit(async (values) => {
+  const newBranchData = {
+    ...values,
+    branchId: branch?.value.id,
+    areas: [...ccAreas.value],
+    branchBudget: values.branchBudget.toString(),
+    enabled: branchSituation.value,
+  };
   try {
-    const newBranchData = {
-      ...values,
-      branchId: branch?.value.id,
-      areas: [...ccAreas.value],
-      branchBudget: values.branchBudget.toString(),
-      enabled: branchSituation.value,
-    };
     await updateBranchAction(newBranchData);
     toast({
       title: 'Tudo pronto!',

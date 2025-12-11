@@ -33,7 +33,7 @@ export const masterManagerMenu = {
           url: '/corporative/rides/open',
         },
         {
-          title: 'Realizados',
+          title: 'Finalizados',
           url: '/corporative/rides/completed',
         },
         {

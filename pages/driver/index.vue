@@ -10,7 +10,7 @@ definePageMeta({
 const { data } = useAuth();
 
 const driverStore = useDriverStore();
-const { createNewDriverAction, getDriverByIdAction } = driverStore;
+const { getDriverByIdAction } = driverStore;
 const { driver } = storeToRefs(driverStore);
 
 onBeforeMount(async () => {

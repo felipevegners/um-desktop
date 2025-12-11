@@ -21,7 +21,7 @@ const contractId = data.value?.user.contract?.contractId;
 
 const ridesStore = useRidesStore();
 const { getRidesByContractAction } = ridesStore;
-const { rides } = storeToRefs(ridesStore);
+const { rides, loadingData } = storeToRefs(ridesStore);
 
 const contractStore = useContractsStore();
 const { getContractByIdAction } = contractStore;
@@ -33,11 +33,11 @@ onMounted(async () => {
   await getContractByIdAction(contractId);
   await getRidesByContractAction(contractId);
   contractRidesList.value = rides?.value.filter(
-    (ride: any) => ride.status !== 'cancelled' && ride.status !== 'completed',
+    (ride: any) => ride.status !== 'cancelled',
   );
 
-  if (contractRidesList.value.length >= 3) {
-    contractRidesList.value = contractRidesList?.value.slice(-3).reverse();
+  if (contractRidesList.value.length >= 4) {
+    contractRidesList.value = contractRidesList?.value.slice(-4).reverse();
   }
 });
 
@@ -92,12 +92,15 @@ const userName = computed(() => {
       </div>
     </div>
     <div class="grid auto-rows-min gap-4 md:grid-cols-3">
-      <div class="p-6 rounded-xl bg-muted/90 h-full">
+      <div class="p-6 flex flex-col rounded-xl bg-muted/90 h-full">
         <p class="font-bold text-lg">
           <CalendarDays class="mb-2" :size="32" />
           Atendimentos recentes
         </p>
-        <ul class="mt-6">
+        <div v-if="loadingData" class="flex items-center justify-center h-full">
+          <LoaderCircle :size="48" class="animate-spin" />
+        </div>
+        <ul v-else class="mt-6 flex-1">
           <li
             v-for="(ride, index) in contractRidesList"
             :key="index"

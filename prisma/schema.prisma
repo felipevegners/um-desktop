@@ -143,10 +143,20 @@ model Products {
   updatedAt     DateTime? @updatedAt()
 }
 
+type Billing {
+  paymentData PaymentData?
+}
+
+type PaymentData {
+  contract String
+  branch   String?
+  area     String?
+}
+
 model Rides {
   id             String    @id @default(auto()) @map("_id") @db.ObjectId
   code           String?
-  billing        Json?
+  billing        Billing   @map("billing")
   user           Json?
   product        Json?
   reason         Json?

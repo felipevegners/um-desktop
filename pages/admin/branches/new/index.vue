@@ -118,7 +118,7 @@ const onSubmit = form.handleSubmit(async (values) => {
       <div class="mt-6 flex gap-4">
         <Button type="submit" form="form">
           <LoaderCircle v-if="isLoadingData" class="w-5 h-5 animate-spin" />
-          Cadastrar
+          Cadastrar Filial
         </Button>
         <Button
           type="button"

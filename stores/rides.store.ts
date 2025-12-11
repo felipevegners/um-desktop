@@ -1,5 +1,6 @@
 import {
   createRideService,
+  getContractRidesService,
   getRidesService,
   updateRideService,
 } from '@/server/services/rides';
@@ -63,11 +64,8 @@ export const useRidesStore = defineStore('rides', {
     async getRidesByContractAction(contractId: string) {
       this.loadingData = true;
       try {
-        const response: any = await getRidesService('');
-        const filtered = response.filter(
-          (ride: any) => ride.billing.paymentData.contract === contractId,
-        );
-        this.rides = filtered;
+        const response: any = await getContractRidesService(contractId);
+        this.rides = response;
         this.loadingData = false;
       } catch (error) {
         throw error;

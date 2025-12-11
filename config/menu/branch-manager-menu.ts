@@ -33,7 +33,7 @@ export const branchManagerMenu = {
           url: '/corporative/rides/active',
         },
         {
-          title: 'Realizados',
+          title: 'Finalizados',
           url: '/corporative/rides/completed',
         },
         {

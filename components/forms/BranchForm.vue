@@ -5,15 +5,26 @@ import { useAccountStore } from '@/stores/account.store';
 import { useContractsStore } from '@/stores/contracts.store';
 import {
   Info,
+  InfoIcon,
   Plus,
   SlidersHorizontal,
   Trash,
-  User,
+  UserCog,
+  UserPen,
+  UserPlus,
   WandSparkles,
+  X,
 } from 'lucide-vue-next';
 import { vMaska } from 'maska/vue';
 import { storeToRefs } from 'pinia';
 import { currencyFormat, generatePassword } from '~/lib/utils';
+
+const route = useRoute();
+const { data } = useAuth();
+//@ts-ignore
+const contractId = data.value?.user.contract?.contractId;
+//@ts-ignore
+const role = data.value?.user?.role;
 
 const contractsStore = useContractsStore();
 const { getContractsAction, getContractByIdAction } = contractsStore;
@@ -46,6 +57,7 @@ const contractMainBudget = ref(0);
 const selectedContract = ref<any>(null);
 const branchManagerUsersList = ref<any>([]);
 const hasManager = ref<boolean>(false);
+const showNewManagerSelect = ref<boolean>(false);
 
 onBeforeMount(async () => {
   if (props.editMode) {
@@ -56,20 +68,24 @@ onBeforeMount(async () => {
 
 const managerRoles = ['master-manager', 'branch-manager'];
 
+const generateManagerList = () => {
+  const findContractUsers = accounts.value.filter(
+    (account: any) =>
+      account.contract.contractId === props.contractId &&
+      managerRoles.includes(account.role),
+  );
+  branchManagerUsersList.value = findContractUsers.map((user: any) => {
+    return {
+      label: `${user.username} - ${rolesTypes[user.role]}`,
+      value: user.id,
+    };
+  });
+};
+
 onMounted(async () => {
   await getUsersAccountsAction();
   if (props.branchData && props.branchData.manager === null) {
-    const findContractUsers = accounts.value.filter(
-      (account: any) =>
-        account.contract.contractId === props.contractId &&
-        managerRoles.includes(account.role),
-    );
-    branchManagerUsersList.value = findContractUsers.map((user: any) => {
-      return {
-        label: `${user.username} - ${rolesTypes[user.role]}`,
-        value: user.id,
-      };
-    });
+    generateManagerList();
   } else {
     hasManager.value = true;
   }
@@ -83,6 +99,27 @@ const sanitizeContracts = computed(() => {
       value: contract.id,
     };
   });
+});
+
+const generateEditAccountUrl = computed(() => {
+  let url = '';
+  switch (true) {
+    case role === 'master-manager' || role === 'branch-manager':
+      url = 'corporative-accounts-edit-id';
+      break;
+    case role === 'admin':
+      url = 'admin-accounts-edit-id';
+      break;
+    default:
+      url = 'admin-accounts-edit-id';
+  }
+
+  return url;
+});
+
+const targetAccountPath = computed(() => {
+  const parentBase = route.path.split('/')[1]; // e.g., 'corporative'
+  return `/${parentBase}/accounts/new`;
 });
 
 const addRow = () => {
@@ -155,6 +192,21 @@ const handleGeneratePassword = () => {
     });
   }
 };
+
+const handleChangeManager = () => {
+  generateManagerList();
+  showNewManagerSelect.value = true;
+};
+
+const handleCancelChangeManager = () => {
+  props.form.setValues({
+    branchManagerName: props.branchData.manager?.username,
+    branchManagerPhone: props.branchData.manager?.phone,
+    branchManagerPosition: props.branchData.manager?.position,
+    branchManagerDepartment: props.branchData.manager?.department,
+  });
+  showNewManagerSelect.value = false;
+};
 </script>
 <template>
   <section class="mb-6 px-6 flex items-center justify-between">
@@ -176,10 +228,10 @@ const handleGeneratePassword = () => {
         </FormItem>
       </FormField>
     </div>
-    <div v-if="editMode">
+    <div v-if="editMode && role === 'admin'">
       <FormField v-slot="{ componentField }" name="status">
         <FormItem class="grid grid-cols-2 items-center gap-4">
-          <FormLabel class="font-bold">Status do Contrato</FormLabel>
+          <FormLabel class="font-bold">Status do Cadastro</FormLabel>
           <FormControl>
             <FormSelect
               v-bind="componentField"
@@ -270,94 +322,129 @@ const handleGeneratePassword = () => {
     </div>
   </section>
   <section class="p-6">
-    <h3 v-if="editMode" class="mb-4 text-lg font-bold">3. Dados do Gestor da Filial</h3>
-    <div v-if="branchData?.manager === null" class="flex flex-col items-start">
-      <div class="my-4 px-4 bg-red-200">
-        <small class="text-red-500">
-          *Contrato ainda não possui um Gestor Master atribuído. Selecione um usuário com
-          perfil Gestor Master na lista abaixo.
-        </small>
+    <div v-if="editMode" class="mb-4 flex flex-row items-center gap-3">
+      <h3 class="text-lg font-bold">3. Dados do Gestor da Filial</h3>
+      <Button
+        v-if="branchData?.manager !== null && !showNewManagerSelect"
+        type="button"
+        variant="destructive"
+        class="my-4"
+        @click="handleChangeManager"
+      >
+        <UserPen />
+        Alterar Gestor
+      </Button>
+    </div>
+
+    <h3 v-if="!editMode" class="mb-4 text-lg font-bold">3. Gestor da Filial</h3>
+
+    <div v-else class="col-span-4 p-6 border border-zinc-900 rounded-md">
+      <!-- se não tiver gestor atribuido -->
+      <div
+        v-if="branchData?.manager === null || showNewManagerSelect"
+        class="flex flex-col items-start gap-6"
+      >
+        <div
+          v-if="!showNewManagerSelect"
+          class="p-2 flex items-center gap-3 bg-red-200 rounded-md border border-red-500"
+        >
+          <InfoIcon class="text-red-500" />
+          <small class="text-red-500">
+            Esta filial ainda não possui um
+            <span class="font-bold">Gestor de Filial</span> atribuído. Selecione um
+            usuário com perfil Gestor de Filial na lista abaixo ou adicione um novo
+            usuário.
+          </small>
+        </div>
+
+        <!-- Seletor de Gestor -->
+        <div class="grid grid-cols-4 gap-6 w-full">
+          <FormField v-slot="{ componentField }" name="managerId">
+            <FormItem class="col-span-1">
+              <FormLabel class="font-bold">Selecionar Gestor da Filial</FormLabel>
+              <FormDescription class="text-xs">
+                *Caso o usuário não esteja listado, adicione um novo.
+              </FormDescription>
+              <FormControl>
+                <FormSelect
+                  v-bind="componentField"
+                  :items="branchManagerUsersList"
+                  label="Selecione"
+                />
+              </FormControl>
+            </FormItem>
+          </FormField>
+          <div class="flex items-end gap-4">
+            <Button
+              type="button"
+              @click.prevent="
+                () =>
+                  navigateTo(targetAccountPath, {
+                    open: {
+                      target: '_blank',
+                    },
+                  })
+              "
+            >
+              <UserPlus />
+              Adicionar novo usuário
+            </Button>
+            <Button
+              v-if="showNewManagerSelect"
+              type="button"
+              variant="ghost"
+              @click.prevent="handleCancelChangeManager"
+            >
+              <X />
+              Cancelar
+            </Button>
+          </div>
+        </div>
+        <!-- -- -->
       </div>
-      <div class="grid grid-cols-4 gap-6 w-full">
-        <FormField v-slot="{ componentField }" name="managerId">
-          <FormItem class="col-span-1">
-            <FormLabel class="font-bold">Selecionar Gestor da Filial</FormLabel>
+
+      <div
+        v-if="!showNewManagerSelect && branchData?.manager !== null"
+        class="mb-4 grid grid-cols-4 gap-6"
+      >
+        <FormField v-slot="{ componentField }" name="branchManagerName">
+          <FormItem>
+            <FormLabel>Nome</FormLabel>
             <FormControl>
-              <FormSelect
+              <Input type="text" v-bind="componentField" :disabled="editMode" />
+            </FormControl>
+          </FormItem>
+        </FormField>
+        <FormField v-slot="{ componentField }" name="branchManagerPhone">
+          <FormItem>
+            <FormLabel>Celular</FormLabel>
+            <FormControl>
+              <Input
+                type="text"
                 v-bind="componentField"
-                :items="branchManagerUsersList"
-                label="Selecione"
+                v-maska="'(##) #####-####'"
+                :disabled="editMode"
               />
             </FormControl>
           </FormItem>
         </FormField>
-      </div>
-    </div>
-    <h3 v-if="!editMode" class="mb-4 text-lg font-bold">3. Gestor da Filial</h3>
-    <div v-if="branchData?.manager !== null" class="mb-4 grid grid-cols-4 gap-6">
-      <FormField v-slot="{ componentField }" name="branchManagerName">
-        <FormItem>
-          <FormLabel>Nomes</FormLabel>
-          <FormControl>
-            <Input type="text" v-bind="componentField" :disabled="editMode" />
-          </FormControl>
-        </FormItem>
-      </FormField>
-      <FormField v-slot="{ componentField }" name="branchManagerPhone">
-        <FormItem>
-          <FormLabel>Celular</FormLabel>
-          <FormControl>
-            <Input
-              type="text"
-              v-bind="componentField"
-              v-maska="'(##) #####-####'"
-              :disabled="editMode"
-            />
-          </FormControl>
-        </FormItem>
-      </FormField>
-      <FormField v-slot="{ componentField }" name="branchManagerPosition">
-        <FormItem>
-          <FormLabel>Cargo</FormLabel>
-          <FormControl>
-            <Input type="text" v-bind="componentField" :disabled="editMode" />
-          </FormControl>
-        </FormItem>
-      </FormField>
-      <FormField v-slot="{ componentField }" name="branchManagerDepartment">
-        <FormItem>
-          <FormLabel>Departamento</FormLabel>
-          <FormControl>
-            <Input type="text" v-bind="componentField" :disabled="editMode" />
-          </FormControl>
-        </FormItem>
-      </FormField>
-      <div class="col-span-4 p-6 border border-zinc-900 rounded-md">
-        <p class="font-bold">Dados de Acesso</p>
-        <div v-if="editMode">
-          <p class="flex gap-1 items-center text-muted-foreground text-sm">
-            <Info :size="14" />
-            Para editar os dados de acesso (Nome, Email e Senha) do Gestor da Filial
-            clique no botão abaixo
-          </p>
-          <Button
-            type="button"
-            class="my-4"
-            @click="
-              navigateTo(
-                {
-                  name: 'admin-accounts-edit-id',
-                  params: { id: managerId },
-                },
-                { open: { target: '_blank' } },
-              )
-            "
-          >
-            <User />
-            Editar Conta de Usuário
-          </Button>
-        </div>
-        <div v-else>
+        <FormField v-slot="{ componentField }" name="branchManagerPosition">
+          <FormItem>
+            <FormLabel>Cargo</FormLabel>
+            <FormControl>
+              <Input type="text" v-bind="componentField" :disabled="editMode" />
+            </FormControl>
+          </FormItem>
+        </FormField>
+        <FormField v-slot="{ componentField }" name="branchManagerDepartment">
+          <FormItem>
+            <FormLabel>Departamento</FormLabel>
+            <FormControl>
+              <Input type="text" v-bind="componentField" :disabled="editMode" />
+            </FormControl>
+          </FormItem>
+        </FormField>
+        <div v-if="!editMode" class="col-span-3">
           <p class="flex gap-1 items-center text-muted-foreground text-sm">
             <Info :size="14" />
             O Gestor da Filial usará os dados abaixo para acessar a plataforma
@@ -373,7 +460,7 @@ const handleGeneratePassword = () => {
             </FormField>
             <FormField v-slot="{ componentField }" name="password">
               <FormItem>
-                <FormLabel>Senha Temporária</FormLabel>
+                <FormLabel>Senha</FormLabel>
                 <FormControl>
                   <Input type="text" v-bind="componentField" maxlength="8" />
                 </FormControl>
@@ -389,6 +476,23 @@ const handleGeneratePassword = () => {
           </div>
         </div>
       </div>
+      <Button
+        v-if="editMode && branchData?.manager !== null && !showNewManagerSelect"
+        type="button"
+        class="my-4"
+        @click="
+          navigateTo(
+            {
+              name: generateEditAccountUrl,
+              params: { id: managerId },
+            },
+            { open: { target: '_blank' } },
+          )
+        "
+      >
+        <UserCog />
+        Editar Dados do Gestor
+      </Button>
     </div>
   </section>
   <section class="p-6">
@@ -450,7 +554,7 @@ const handleGeneratePassword = () => {
       </h2>
     </div>
   </section>
-  <section class="p-6">
+  <section v-if="managerRoles.includes(role)" class="p-6">
     <h3 class="mb-4 text-lg font-bold">5. Gerenciar Centros de Custo</h3>
     <div class="p-6 rounded-md bg-zinc-100">
       <h3 class="mb-4 font-bold">Centro de Custo / Áreas Cadastradas</h3>

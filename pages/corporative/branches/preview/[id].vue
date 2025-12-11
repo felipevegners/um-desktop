@@ -35,7 +35,7 @@ await getBranchByIdAction(route?.params?.id as string);
       <Button
         @click="
           navigateTo({
-            name: 'admin-branches-edit-id',
+            name: 'corporative-branches-edit-id',
             //@ts-ignore
             params: { id: branch?.id },
           })
@@ -131,12 +131,16 @@ await getBranchByIdAction(route?.params?.id as string);
             </p>
           </div>
           <div class="p-6 bg-white rounded-md">
+            <!-- <div>
+              <pre>{{ branch.areas }}</pre>
+            </div> -->
             <p class="text-sm text-zinc-600">Centros de Custo</p>
             <p v-for="area in branch?.areas" :key="area.areaCode" class="my-2">
               <span
                 class="mr-2 px-2 py-1 uppercase text-white text-center rounded-md text-sm bg-zinc-900"
-                >{{ area.areaCode }}</span
               >
+                {{ area.areaCode }}
+              </span>
               <span>{{ area.areaName }}</span>
             </p>
           </div>
@@ -146,10 +150,10 @@ await getBranchByIdAction(route?.params?.id as string);
               {{ branch?.manager?.username }}
             </p>
             <p>
-              {{ branch?.managerInfo?.position }} -
-              {{ branch?.managerInfo?.department }}
+              {{ branch?.manager?.position }} -
+              {{ branch?.manager?.department }}
             </p>
-            <p>{{ branch?.manager?.email }} - {{ branch?.managerInfo?.phone }}</p>
+            <p>{{ branch?.manager?.email }} - {{ branch?.manager?.phone }}</p>
           </div>
         </div>
       </Card>
