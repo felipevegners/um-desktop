@@ -336,7 +336,6 @@ await getUsersAccountsAction();
             {{ contract.additionalInfo }}
           </div>
         </div>
-        <!-- <pre>{{ contract }}</pre> -->
       </Card>
     </section>
   </main>

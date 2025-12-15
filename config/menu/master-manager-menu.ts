@@ -3,9 +3,9 @@ import {
   CalendarDays,
   Coins,
   HandCoins,
+  Handshake,
   Headset,
   User,
-  UserCog,
 } from 'lucide-vue-next';
 
 const { data } = useAuth();
@@ -43,6 +43,18 @@ export const masterManagerMenu = {
         {
           title: '+ Novo agendamento',
           url: '/corporative/rides/new',
+        },
+      ],
+    },
+    {
+      title: 'Gerenciar Contrato',
+      url: '#',
+      icon: Handshake,
+      isActive: route.path.startsWith('contracts'),
+      items: [
+        {
+          title: 'Contrato Ativo',
+          url: '/corporative/contracts/edit',
         },
       ],
     },
@@ -94,11 +106,13 @@ export const masterManagerMenu = {
       items: [
         {
           title: 'Faturas em aberto',
-          url: '/corporative/invoices/active',
+          // url: '/corporative/invoices/active',
+          url: '#',
         },
         {
           title: 'Faturas canceladas',
-          url: '/corporative/invoices/canceled',
+          // url: '/corporative/invoices/canceled',
+          url: '#',
         },
       ],
     },
@@ -106,14 +120,15 @@ export const masterManagerMenu = {
   settings: [
     {
       name: 'Budget',
-      url: '/corporative/budget',
+      // url: '/corporative/budget',
+      url: '#',
       icon: Coins,
     },
-    {
-      name: 'Gerenciar Acessos',
-      url: '/corporative/accounts',
-      icon: UserCog,
-    },
+    // {
+    //   name: 'Gerenciar Acessos',
+    //   url: '/corporative/accounts',
+    //   icon: UserCog,
+    // },
   ],
   sac: [
     {

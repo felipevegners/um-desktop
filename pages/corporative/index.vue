@@ -78,8 +78,10 @@ const userName = computed(() => {
     >
       <div class="p-10 flex items-center justify-between h-full">
         <div class="flex flex-col gap-2">
-          <h2 class="text-white">Olá, {{ userName }}</h2>
-          <h1 class="font-bold text-white text-2xl">Seja bem vindo a Urban Mobi!</h1>
+          <h2 class="text-white">Olá, {{ userName }}!</h2>
+          <h1 class="font-bold text-white text-2xl">
+            Você está no painel de controle da Urban Mobi!
+          </h1>
         </div>
         <Button
           type="button"

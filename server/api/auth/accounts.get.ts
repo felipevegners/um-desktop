@@ -1,12 +1,14 @@
 import { prisma } from '~/utils/prisma';
 
 type AccountId = {
-  id: string;
+  id?: string;
   email?: string;
+  contractId?: string;
 };
 export default defineEventHandler(async (event) => {
   const query = getQuery<AccountId>(event);
   const accountId = query.id;
+  const contractId = query.contractId;
   const accountEmail = query.email;
 
   if (accountEmail?.includes('@')) {
@@ -36,6 +38,13 @@ export default defineEventHandler(async (event) => {
       password: true,
     },
   });
+
+  if (contractId) {
+    const filterContractAccounts = accounts.filter(
+      (account: any) => account?.contract?.contractId === contractId,
+    );
+    return filterContractAccounts;
+  }
 
   return accounts;
 });

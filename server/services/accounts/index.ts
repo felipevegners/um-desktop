@@ -16,6 +16,15 @@ export const getUsersAccountsService = async (
   }
 };
 
+export const getUsersByContractIdService = async (contractId: string) => {
+  try {
+    return await $fetch(`/api/auth/accounts?contractId=${contractId}`);
+  } catch (error) {
+    console.log('Error -> ', error);
+    return error;
+  }
+};
+
 export const createUserAccountService = async (accountData: any) => {
   try {
     return await $fetch('/api/auth/accounts', {

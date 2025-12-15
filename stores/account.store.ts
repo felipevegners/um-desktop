@@ -2,6 +2,7 @@ import {
   createUserAccountService,
   deleteUserAccountService,
   getUsersAccountsService,
+  getUsersByContractIdService,
   updateUserAccountService,
 } from '@/server/services/accounts';
 import { defineStore } from 'pinia';
@@ -73,6 +74,18 @@ export const useAccountStore = defineStore('accounts', {
       try {
         const data = await getUsersAccountsService(accountId, '');
         this.account = data as any;
+      } catch (error) {
+        console.log('Error durging user register -> ', error);
+        throw error;
+      } finally {
+        this.isLoading = false;
+      }
+    },
+    async getUsersAccountsByContractIdAction(contractId: string) {
+      this.isLoading = true;
+      try {
+        const data = await getUsersByContractIdService(contractId);
+        this.accounts = data as any;
       } catch (error) {
         console.log('Error durging user register -> ', error);
         throw error;
