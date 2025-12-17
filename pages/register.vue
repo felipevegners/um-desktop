@@ -106,83 +106,24 @@ const onSubmit = form.handleSubmit(async (values) => {
     },
   };
 
-  try {
-    const newAccount: any = await registerUserAccountAction(accountData);
+  const newAccount: any = await registerUserAccountAction(accountData);
 
-    const driverData = {
-      id: newAccount.id,
-      name: newAccount.username,
-      email: newAccount.email,
-      phone: newAccount.phone,
-      document: '',
-      driverLicense: '',
-      licenseExpiration: '',
-      licenseCategory: '',
-      driverFiles: {
-        picture: {
-          name: '',
-          url: '',
-        },
-        cnhCopy: {
-          name: '',
-          url: '',
-        },
-        addressCopy: {
-          name: '',
-          url: '',
-        },
-        bankCopy: {
-          name: '',
-          url: '',
-        },
-      },
-      address: {
-        zipcode: '',
-        streetName: '',
-        streetNumber: '',
-        complement: '-',
-        neighborhood: '',
-        city: '',
-        state: '',
-      },
-      actuationArea: '',
-      driverCars: [
-        {
-          carModel: '',
-          carColor: '',
-          carPlate: '',
-          carYear: '',
-          carDocumentFile: {
-            name: '',
-            url: '',
-          },
-        },
-      ],
-      rating: [],
-      history: [],
-      outsideActuation: true,
-      scheduleOpen: true,
-      status: 'pending',
-      enabled: true,
-    };
-    if (newAccountType.value === 'platform-driver') {
-      await createNewDriverAction(driverData);
-    }
-  } catch (error) {
-    toast({
-      title: 'Opss!',
-      class: 'bg-red-500 border-0 text-white text-2xl',
-      description: `Ocorreu um erro ao criar a sua conta. Tente novamente.`,
-    });
-    throw error;
-  } finally {
+  if (newAccount.success) {
     toast({
       title: 'Tudo pronto!',
       class: 'bg-green-600 border-0 text-white text-2xl',
       description:
         'Conta de Usuário cadastrado com sucesso. Acesse seu e-mail para prosseguir!',
     });
-    navigateTo('/registersuccess');
+    setTimeout(() => {
+      navigateTo('/registersuccess');
+    }, 1000);
+  } else {
+    toast({
+      title: 'Opss!',
+      class: 'bg-red-500 border-0 text-white text-2xl',
+      description: newAccount.error,
+    });
   }
 });
 </script>
@@ -424,6 +365,7 @@ const onSubmit = form.handleSubmit(async (values) => {
               :disabled="!form.values.acceptTerms"
               class="mt-4 w-full h-[48px] bg-um-primary hover:bg-gradient-to-t from-um-primary to-black/20 text-black uppercase font-bold"
               type="submit"
+              variant="ghost"
             >
               <LoaderCircle v-if="isLoadingSend" class="animate-spin" :size="24" />
               Criar conta

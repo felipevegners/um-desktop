@@ -73,6 +73,51 @@ export default defineEventHandler(async (event) => {
     // Sending email verification
     await mailer.sendEmail(email, `${url}?token=${token}`);
 
+    if (newAccount && role === 'platform-driver') {
+      const newDriverData = {
+        name: newAccount?.username,
+        email: newAccount?.email,
+        phone: newAccount?.phone as string,
+        document: newAccount?.document,
+        driverLicense: '',
+        licenseCategory: '',
+        licenseExpiration: '',
+        address: {
+          driverCars: [],
+        },
+        actuationArea: '',
+        offers: [],
+        driverFiles: {
+          picture: {
+            name: '',
+            url: '',
+          },
+          cnhCopy: {
+            name: '',
+            url: '',
+          },
+          addressCopy: {
+            name: '',
+            url: '',
+          },
+          bankCopy: {
+            name: '',
+            url: '',
+          },
+        },
+        rating: ['1'],
+        history: [],
+        status: 'pending',
+        enabled: true,
+      };
+      await prisma.drivers.create({
+        data: {
+          id: newAccount.id,
+          ...newDriverData,
+        },
+      });
+    }
+
     return newAccount;
   } catch (error) {
     // Handle Prisma-specific errors

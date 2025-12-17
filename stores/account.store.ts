@@ -97,7 +97,7 @@ export const useAccountStore = defineStore('accounts', {
       this.isLoadingSend = true;
       try {
         const newAccount = await createUserAccountService(accountData);
-        return newAccount;
+        return { success: true, data: newAccount };
       } catch (error: any) {
         const message = error?.data?.message || error?.message || 'Erro desconhecido';
         return {

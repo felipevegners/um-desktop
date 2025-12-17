@@ -133,7 +133,7 @@ export const confirEmailTemplate = `
                                 Agora vamos confirmar seu endereço de e-mail.</h2>
 
                               <p style="margin: 0; margin-bottom: 30px; color: #000000; font-family: 'Open Sans', 'Helvetica Neue', 'Helvetica', Helvetica, Arial, sans-serif; font-size: 16px; font-weight: 300;">
-                                <span style="font-weight: bold; font-size: 18px;">Olá, ["name"].</span>
+                                <span style="font-weight: bold; font-size: 18px;">Olá, ["name"]!</span>
                                 <br> Clicando no link abaixo você confirma seu e-mail e seu cadastro na Urban Mobi.
                               </p>
                             </td>
@@ -148,7 +148,7 @@ export const confirEmailTemplate = `
                                         <tbody>
                                           <tr>
                                             <td align="center" bgcolor="#33ffcc" style="box-sizing: border-box; padding: 0; font-family: 'Open Sans', 'Helvetica Neue', 'Helvetica', Helvetica, Arial, sans-serif; font-size: 16px; vertical-align: top; background-color: #33ffcc; border-radius: 8px; text-align: center;" valign="top">
-                                            <a href="["link"]" style="box-sizing: border-box; border-color: #33ffcc; font-weight: bold; text-decoration: none; display: inline-block; margin: 0; color: #000000; background-color: #33ffcc; border: solid 1px #33ffcc; border-radius: 8px; cursor: pointer; font-size: 14px; padding: 12px 45px;" target="_blank">Confirmar endereço de E-mail</a>
+                                            <a href="["link"]" style="box-sizing: border-box; border-color: #33ffcc; font-weight: bold; text-decoration: none; display: inline-block; margin: 0; color: #000000; background-color: #33ffcc; border: solid 1px #33ffcc; border-radius: 8px; cursor: pointer; font-size: 14px; padding: 12px 45px;" target="_blank">Confirmar meu endereço de e-mail</a>
                                             </td>
                                           </tr>
                                         </tbody>

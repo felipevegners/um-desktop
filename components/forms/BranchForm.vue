@@ -338,6 +338,79 @@ const handleCancelChangeManager = () => {
 
     <h3 v-if="!editMode" class="mb-4 text-lg font-bold">3. Gestor da Filial</h3>
 
+    <div
+      v-if="!showNewManagerSelect && branchData?.manager !== null"
+      class="mb-4 grid grid-cols-4 gap-6"
+    >
+      <FormField v-slot="{ componentField }" name="branchManagerName">
+        <FormItem>
+          <FormLabel>Nome</FormLabel>
+          <FormControl>
+            <Input type="text" v-bind="componentField" :disabled="editMode" />
+          </FormControl>
+        </FormItem>
+      </FormField>
+      <FormField v-slot="{ componentField }" name="branchManagerPhone">
+        <FormItem>
+          <FormLabel>Celular</FormLabel>
+          <FormControl>
+            <Input
+              type="text"
+              v-bind="componentField"
+              v-maska="'(##) #####-####'"
+              :disabled="editMode"
+            />
+          </FormControl>
+        </FormItem>
+      </FormField>
+      <FormField v-slot="{ componentField }" name="branchManagerPosition">
+        <FormItem>
+          <FormLabel>Cargo</FormLabel>
+          <FormControl>
+            <Input type="text" v-bind="componentField" :disabled="editMode" />
+          </FormControl>
+        </FormItem>
+      </FormField>
+      <FormField v-slot="{ componentField }" name="branchManagerDepartment">
+        <FormItem>
+          <FormLabel>Departamento</FormLabel>
+          <FormControl>
+            <Input type="text" v-bind="componentField" :disabled="editMode" />
+          </FormControl>
+        </FormItem>
+      </FormField>
+      <div v-if="!editMode" class="col-span-3">
+        <div class="mt-6 grid grid-cols-3 gap-6 items-end">
+          <FormField v-slot="{ componentField }" name="branchManagerEmail">
+            <FormItem class="relative">
+              <FormLabel>E-mail de Acesso</FormLabel>
+              <FormControl>
+                <Input type="email" v-bind="componentField" />
+              </FormControl>
+            </FormItem>
+          </FormField>
+          <FormField v-slot="{ componentField }" name="password">
+            <FormItem>
+              <FormLabel>Senha</FormLabel>
+              <FormControl>
+                <Input type="text" v-bind="componentField" maxlength="8" />
+              </FormControl>
+            </FormItem>
+          </FormField>
+          <Button class="mb-1 px-2 max-w-[140px]" @click.prevent="handleGeneratePassword">
+            <WandSparkles class="w-6 h-6" />
+            Gerar Senha
+          </Button>
+        </div>
+      </div>
+      <div class="col-span-3">
+        <p class="flex gap-1 items-center text-muted-foreground text-sm">
+          <Info :size="14" />
+          O Gestor da Filial usará os dados acima para acessar a plataforma
+        </p>
+      </div>
+    </div>
+
     <div v-else class="col-span-4 p-6 border border-zinc-900 rounded-md">
       <!-- se não tiver gestor atribuido -->
       <div

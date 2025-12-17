@@ -103,7 +103,7 @@ const getContractData = (value: string) => {
   selectedBranches.value = filtered.branches;
   contractBranches.value = filtered.branches.map((branch: any) => {
     return {
-      label: `${branch.branchCode} - ${branch.name}`,
+      label: `${branch.branchCode} - ${branch.fantasyName}`,
       value: branch.id,
     };
   });
@@ -117,10 +117,11 @@ const getBranchAreas = (value: string) => {
   const selectedBranch = selectedBranches.value.find(
     (branch: any) => branch.id === value,
   );
-  branchAreas.value = selectedBranch.areas.map((area: any) => {
+
+  branchAreas.value = selectedBranch.areas?.map((area: any) => {
     return {
-      label: `${area.areaCode} - ${area.areaName}`,
-      value: area.areaCode,
+      label: `${area.areaCode !== '' ? area.areaCode : '000'} - ${area.areaName !== '' ? area.areaName : 'Todas'}`,
+      value: area.areaCode !== '' ? area.areaCode : 'all',
     };
   });
   setTimeout(() => {
