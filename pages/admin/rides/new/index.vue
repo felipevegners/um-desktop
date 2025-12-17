@@ -653,6 +653,8 @@ const buildStaticMapUrl = () => {
 };
 
 const onSubmit = form.handleSubmit(async (values) => {
+  loadingGenerateRide.value = true;
+
   const routePreviewUrl = buildStaticMapUrl();
 
   const ridePayload = {
@@ -729,26 +731,23 @@ const onSubmit = form.handleSubmit(async (values) => {
       dispatchDate: new Date().toLocaleDateString('pt-BR').padStart(10, '0'),
     },
   };
-
-  try {
-    loadingGenerateRide.value = true;
-    await createRideAction(ridePayload);
-  } catch (error) {
-    toast({
-      title: 'Oops!',
-      description: `Ocorreu um erro ao criar o agendamento. Tente novamente.`,
-      variant: 'destructive',
-    });
-  } finally {
-    loadingGenerateRide.value = false;
+  const result = await createRideAction(ridePayload);
+  if (result?.success) {
     toast({
       title: 'Tudo pronto!',
       class: 'bg-green-600 border-0 text-white text-2xl',
-      description: `Agendamento cadastrado com sucesso!`,
+      description: `Atendimento cadastrado com sucesso!`,
     });
+    loadingGenerateRide.value = false;
     setTimeout(() => {
       navigateTo('/admin/rides/open');
-    }, 1500);
+    }, 1000);
+  } else {
+    toast({
+      title: 'Oops!',
+      description: result.error,
+      variant: 'destructive',
+    });
   }
 });
 </script>
@@ -1209,7 +1208,7 @@ const onSubmit = form.handleSubmit(async (values) => {
                         </p>
                       </div>
                     </div>
-                    <div>
+                    <div v-if="selectedRideAddons.length">
                       <small class="font-bold">Serviços opcionais</small>
                       <p v-for="item in selectedRideAddons" class="text-sm">
                         <span class="font-bold">{{ item.code }}</span> - {{ item.name }}

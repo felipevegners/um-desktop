@@ -58,26 +58,33 @@ model Contracts {
   branches            Branches[]
 }
 
+type allowedProducts {
+  id   String
+  name String?
+  code String?
+}
+
 model Branches {
-  id             String     @id @default(auto()) @map("_id") @db.ObjectId
-  branchCode     String?
-  name           String?
-  fantasyName    String?
-  document       String?    @unique
-  address        Json?
-  phone          String?
-  phoneExtension String?
-  areas          Json?
-  manager        Accounts?  @relation(fields: [managerId], references: [id])
-  managerId      String?    @db.ObjectId
-  managerInfo    Json?
-  budget         String?
-  status         String?
-  enabled        Boolean?
-  contract       Contracts? @relation(fields: [contractId], references: [id])
-  contractId     String?    @db.ObjectId
-  createdAt      DateTime?  @default(now())
-  updatedAt      DateTime?  @updatedAt()
+  id              String     @id @default(auto()) @map("_id") @db.ObjectId
+  branchCode      String?
+  name            String?
+  fantasyName     String?
+  document        String?    @unique
+  address         Json?
+  phone           String?
+  phoneExtension  String?
+  areas           Json?
+  manager         Accounts?  @relation(fields: [managerId], references: [id])
+  managerId       String?    @db.ObjectId
+  managerInfo     Json?
+  budget          String?
+  allowedProducts Json?      @map("allowedProducts")
+  status          String?
+  enabled         Boolean?
+  contract        Contracts? @relation(fields: [contractId], references: [id])
+  contractId      String?    @db.ObjectId
+  createdAt       DateTime?  @default(now())
+  updatedAt       DateTime?  @updatedAt()
 }
 
 model Customers {
@@ -144,7 +151,13 @@ model Products {
 }
 
 type Billing {
-  paymentData PaymentData?
+  paymentMethod String?
+  paymentUrl    String?
+  addons        Json?
+  ammount       String?
+  status        String?
+  installments  Int?
+  paymentData   PaymentData?
 }
 
 type PaymentData {

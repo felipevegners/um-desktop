@@ -8,6 +8,7 @@ defineOptions({
 defineProps<{
   label: string;
   componentField: any;
+  styles?: any;
 }>();
 
 // const maskedValue = ref('');
@@ -26,6 +27,7 @@ defineProps<{
         data-maska-tokens="9:[0-9]:repeated"
         data-maska-reversed
         class="relative pl-9"
+        :class="styles"
       />
       <FormMessage />
     </FormControl>

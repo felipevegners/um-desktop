@@ -5,13 +5,18 @@ export default defineEventHandler(async (event) => {
   try {
     const newRide = await prisma.rides.create({ data: payload });
     return newRide;
-  } catch (error) {
+  } catch (error: any) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
+      if (error.code === 'P2025') {
+        handlePrismaError(error, ErrorMessages.Ride.create.duplicate);
+      }
       if (error.code === 'P2002') {
-        console.log('Error Prisma -> ', error.message);
-        return new Error(error.message);
+        handlePrismaError(error, ErrorMessages.Ride.create.duplicate);
       }
     }
-    throw error;
+    if (error instanceof Prisma.PrismaClientValidationError) {
+      handlePrismaError(error, ErrorMessages.Ride.create.validation);
+    }
+    handlePrismaError(error, ErrorMessages.Ride.create.generic);
   }
 });

@@ -95,9 +95,15 @@ export const useRidesStore = defineStore('rides', {
     async createRideAction(rideData: any) {
       this.loadingData = true;
       try {
-        return await createRideService(rideData);
-      } catch (error) {
-        throw error;
+        const result = await createRideService(rideData);
+        return { success: true, data: result };
+      } catch (error: any) {
+        const message = error?.data?.message || error?.message || 'Erro desconhecido';
+        return {
+          success: false,
+          error: message,
+          statusCode: error?.statusCode || 500,
+        };
       } finally {
         this.loadingData = false;
       }

@@ -5,9 +5,10 @@ import AvatarEdit from '@/components/shared/AvatarEdit.vue';
 import BackLink from '@/components/shared/BackLink.vue';
 import ChangeMasterManager from '@/components/shared/ChangeMasterManager.vue';
 import { toTypedSchema } from '@vee-validate/zod';
-import { FileText, LoaderCircle } from 'lucide-vue-next';
+import { FileText, Info, LoaderCircle } from 'lucide-vue-next';
 import { useForm } from 'vee-validate';
 import * as z from 'zod';
+import CurrencyInput from '~/components/shared/CurrencyInput.vue';
 import { currencyFormat, generatePassword } from '~/lib/utils';
 
 definePageMeta({
@@ -51,6 +52,26 @@ const customerLogoImage = reactive({
 const handleInactivateProduct = (product: any) => {
   console.log('--->', contract?.value.products);
 };
+
+const handleAllowProduct = ({ branch, product }: any) => {
+  const currentBranch = contract?.value.branches.findIndex(
+    (item: any) => item.id === branch.id,
+  );
+  const findAllowedProduct = contract?.value.branches[
+    currentBranch
+  ].allowedProducts.findIndex((item: any) => item.id === product.id);
+
+  if (findAllowedProduct === -1) {
+    contract?.value.branches[currentBranch].allowedProducts.push({
+      id: product.id,
+      name: product.name,
+      code: product.code,
+    });
+  } else {
+    contract?.value.branches[currentBranch].allowedProducts.splice(findAllowedProduct, 1);
+  }
+};
+
 const schema = toTypedSchema(
   z.object({
     name: z.string().min(2, 'Insira o nome').max(100),
@@ -256,7 +277,7 @@ const form = useForm({
                 <div class="my-3 px-4 py-2 border border-zinc-950 rounded-md">
                   <h3 class="mt-2 font-bold">Disponibilidade por Filial</h3>
                   <h5 class="text-muted-foreground">
-                    Selecione quais filiais poderão solicitar atendimento por tipo de
+                    Selecione quais filiais poderão solicitar atendimento utilizando este
                     produto.
                   </h5>
                   <section class="flex flex-row gap-6">
@@ -266,20 +287,100 @@ const form = useForm({
                         class="flex items-center gap-3"
                       >
                         <Checkbox
-                          @update:checked=""
-                          class="data-[state=checked]:border-blue-600 data-[state=checked]:bg-blue-600 data-[state=checked]:text-white dark:data-[state=checked]:border-blue-700 dark:data-[state=checked]:bg-blue-700 w-6 h-6"
+                          @update:checked="handleAllowProduct({ branch, product })"
+                          :checked="
+                            !!branch.allowedProducts.find(
+                              (item: any) => item.id === product.id,
+                            )
+                          "
+                          class="data-[state=checked]:border-zinc-950 data-[state=checked]:bg-zinc-950 data-[state=checked]:text-white dark:data-[state=checked]:border-blue-700 dark:data-[state=checked]:bg-blue-700 w-6 h-6"
                         />
                         <p>
                           <span class="font-bold"> {{ branch.branchCode }} - </span>
-                          {{ branch.fantasyName }} - {{ branch.id }}
+                          {{ branch.fantasyName }}
                         </p>
                       </li>
                     </ul>
-                    <!-- <pre>{{ contract.branches }}</pre> -->
                   </section>
                 </div>
               </li>
             </ul>
+          </CardContent>
+        </Card>
+        <Card class="bg-zinc-200">
+          <CardHeader>
+            <h2 class="text-2xl font-bold">4. Budget</h2>
+            <h5 class="text-muted-foreground">
+              Aqui você gerencia o budget mensal do contrato e a distribuição por filial.
+            </h5>
+          </CardHeader>
+          <CardContent>
+            <FormField v-slot="{ componentField }" name="mainBudget">
+              <FormItem class="max-w-[350px]">
+                <FormControl>
+                  <CurrencyInput
+                    :componentField="componentField"
+                    label="Budget do Contrato"
+                    :styles="'text-2xl p-6 pl-10 font-bold'"
+                  />
+                </FormControl>
+                <FormMessage class="absolute" />
+              </FormItem>
+            </FormField>
+
+            <ul class="mt-6 space-y-6">
+              <li
+                v-for="branch in contract.branches"
+                class="p-4 flex items-center justify-between border border-zinc-950 rounded-md bg-white"
+              >
+                <p>
+                  <span class="font-bold"> {{ branch.branchCode }} - </span>
+                  {{ branch.fantasyName }}
+                </p>
+                <Input type="text" v-model="branch.budget" />
+                <h1 class="text-2xl font-bold">{{ currencyFormat(branch.budget) }}</h1>
+              </li>
+            </ul>
+
+            <!-- <FormField v-slot="{ componentField, value }" name="branchBudget">
+              <FormItem>
+                <FormLabel class="mb-10 flex items-center justify-between">
+                  <span>Budget da Filial</span>
+                  <span>Saldo do Budget do Contrato</span>
+                </FormLabel>
+                <FormControl>
+                  <Slider
+                    :model-value="componentField.modelValue"
+                    :default-value="[0]"
+                    :max="contractMainBudget"
+                    :min="0"
+                    :step="1000"
+                    :name="componentField.name"
+                    @update:model-value="componentField['onUpdate:modelValue']"
+                    @input="calculateBudgetRest(value)"
+                    class="mt-4"
+                    :class="`${calculatedBudget < 0 ? 'bg-red-600' : ''}`"
+                  />
+                  <FormDescription class="flex items-center justify-between gap-2">
+                    <span class="my-2 font-bold text-2xl text-black">
+                      {{ currencyFormat(value?.[0]) }}
+                    </span>
+                    <div class="flex flex-col items-end">
+                      <span
+                        class="my-2 font-bold text-2xl text-black"
+                        :class="`${calculatedBudget < 0 ? 'text-red-600' : ''}`"
+                      >
+                        {{ currencyFormat(calculatedBudget.toString()) }}
+                      </span>
+                      <span v-if="calculatedBudget < 0" class="text-red-600">
+                        Você entrou no limite extra do Budget
+                      </span>
+                    </div>
+                  </FormDescription>
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            </FormField> -->
           </CardContent>
         </Card>
       </section>
