@@ -148,7 +148,6 @@ const compileBudget = (value: string) => {
   } else {
     showBudgetControl.value = true;
     const contract = contracts?.value.find((contract: any) => contract.id === value);
-    console.log(contract);
     selectedContract.value = contract;
     const { branches, mainBudget } = contract;
     contractMainBudget.value = parseFloat(mainBudget);
@@ -276,6 +275,7 @@ const handleCancelChangeManager = () => {
         </FormField>
         <Button
           v-if="selectedContract !== null"
+          type="button"
           class="relative bottom-[3px] max-w-[180px]"
           @click.prevent="setDocumentFromHQ"
         >
@@ -448,17 +448,7 @@ const handleCancelChangeManager = () => {
             </FormItem>
           </FormField>
           <div class="flex items-end gap-4">
-            <Button
-              type="button"
-              @click.prevent="
-                () =>
-                  navigateTo(targetAccountPath, {
-                    open: {
-                      target: '_blank',
-                    },
-                  })
-              "
-            >
+            <Button type="button" @click.prevent="() => navigateTo(targetAccountPath)">
               <UserPlus />
               Adicionar novo usuário
             </Button>

@@ -99,7 +99,7 @@ export const confirEmailTemplate = `
 	<![endif]-->
 </head>
 
-<body style="font-size: 16px; background-color: #000000; margin: 0; padding: 0; font-family: 'Open Sans', 'Helvetica Neue', 'Helvetica', Helvetica, Arial, sans-serif; -webkit-text-size-adjust: 100%; line-height: 1.5; -ms-text-size-adjust: 100%; -webkit-font-smoothing: antialiased; height: 100% !important; width: 100% !important;">
+<body style="font-size: 16px; background-color: #000000; margin: 0; padding: 16px; font-family: 'Open Sans', 'Helvetica Neue', 'Helvetica', Helvetica, Arial, sans-serif; -webkit-text-size-adjust: 100%; line-height: 1.5; -ms-text-size-adjust: 100%; -webkit-font-smoothing: antialiased; height: 100% !important; width: 100% !important;">
   <table bgcolor="#000000" class="body" style="box-sizing: border-box; border-spacing: 0; mso-table-rspace: 0pt; mso-table-lspace: 0pt; width: 100%; background-color: #000000; border-collapse: separate !important;" width="100%">
     <tbody>
       <tr>
@@ -111,9 +111,9 @@ export const confirEmailTemplate = `
                 <tbody>
                   <tr>
                     <td align="center" class="align-center" style="box-sizing: border-box; padding: 0; font-family: 'Open Sans', 'Helvetica Neue', 'Helvetica', Helvetica, Arial, sans-serif; font-size: 16px; vertical-align: top; text-align: left;" valign="top">
-                      <span class="sg-image" data-imagelibrary="http://cdn.mcauto-images-production.sendgrid.net/bcf3e99e4ff99531/a88127be-7ce1-40cf-8251-e029fb82f96e/260x47.png">
+                      <span class="sg-image" data-imagelibrary="http://cdn.mcauto-images-production.sendgrid.net/46608c2999d44d7b/767f453f-66cc-4ae8-8fe8-9ccd7da83039/249x66.png">
                         <a href="https://www.urbanmobi.com.br" style="box-sizing: border-box; color: #000000; font-weight: 400; text-decoration: none;" target="_blank">
-                          <img alt="Urban Mobi" height="28" src="http://cdn.mcauto-images-production.sendgrid.net/bcf3e99e4ff99531/a88127be-7ce1-40cf-8251-e029fb82f96e/260x47.png" style="max-width: 200px; border-style: none; width: 160px; height: auto;" width="160"></a></span>
+                          <img alt="Urban Mobi" height="28" src="http://cdn.mcauto-images-production.sendgrid.net/46608c2999d44d7b/767f453f-66cc-4ae8-8fe8-9ccd7da83039/249x66.png" style="max-width: 200px; border-style: none; width: 160px; height: auto;" width="160"></a></span>
                     </td>
                   </tr>
                 </tbody>
@@ -129,12 +129,16 @@ export const confirEmailTemplate = `
                         <tbody>
                           <tr>
                             <td style="box-sizing: border-box; padding: 0; font-family: 'Open Sans', 'Helvetica Neue', 'Helvetica', Helvetica, Arial, sans-serif; font-size: 16px; vertical-align: top;" valign="top">
-                              <h2 style="margin: 0; margin-bottom: 30px; font-family: 'Open Sans', 'Helvetica Neue', 'Helvetica', Helvetica, Arial, sans-serif; font-weight: 300; line-height: 1.5; font-size: 24px; color: #000000 !important;">Falta pouco!<br>
-                                Agora vamos confirmar seu endereço de e-mail.</h2>
+                              <h2 style="margin: 0; margin-bottom: 30px; font-family: 'Open Sans', 'Helvetica Neue', 'Helvetica', Helvetica, Arial, sans-serif; font-weight: 300; line-height: 1.5; font-size: 24px; color: #000000 !important; text-align: center;">Olá, seja bem vindo à Urban Mobi.</h2>
 
-                              <p style="margin: 0; margin-bottom: 30px; color: #000000; font-family: 'Open Sans', 'Helvetica Neue', 'Helvetica', Helvetica, Arial, sans-serif; font-size: 16px; font-weight: 300;">
-                                <span style="font-weight: bold; font-size: 18px;">Olá, ["name"]!</span>
-                                <br> Clicando no link abaixo você confirma seu e-mail e seu cadastro na Urban Mobi.
+                              <p style="margin: 0; margin-bottom: 30px; color: #000000; font-family: 'Open Sans', 'Helvetica Neue', 'Helvetica', Helvetica, Arial, sans-serif; font-size: 16px; font-weight: 300; text-align: center;">
+                                Clique no botão abaixo para confirmar seu e-mail e ativar sua conta.
+                                
+                              </p>
+                              <p style="margin: 0; margin-bottom: 30px; color: #000000; font-family: 'Open Sans', 'Helvetica Neue', 'Helvetica', Helvetica, Arial, sans-serif; font-size: 16px; font-weight: 300; text-align: center;">
+                                <span style="font-family: 'Open Sans', 'Helvetica Neue', 'Helvetica', Helvetica, Arial, sans-serif; font-size: 16px;">Endereço de e-mail cadastrado:</span>
+                                <br>
+                                <span style="font-weight: bold; font-size: 18px;">["name"]</span>
                               </p>
                             </td>
                           </tr>
@@ -148,7 +152,7 @@ export const confirEmailTemplate = `
                                         <tbody>
                                           <tr>
                                             <td align="center" bgcolor="#33ffcc" style="box-sizing: border-box; padding: 0; font-family: 'Open Sans', 'Helvetica Neue', 'Helvetica', Helvetica, Arial, sans-serif; font-size: 16px; vertical-align: top; background-color: #33ffcc; border-radius: 8px; text-align: center;" valign="top">
-                                            <a href="["link"]" style="box-sizing: border-box; border-color: #33ffcc; font-weight: bold; text-decoration: none; display: inline-block; margin: 0; color: #000000; background-color: #33ffcc; border: solid 1px #33ffcc; border-radius: 8px; cursor: pointer; font-size: 14px; padding: 12px 45px;" target="_blank">Confirmar meu endereço de e-mail</a>
+                                              <a href="[" link"]" style="box-sizing: border-box; border-color: #33ffcc; font-weight: bold; text-decoration: none; display: inline-block; margin: 0; color: #000000; background-color: #33ffcc; border: solid 1px #33ffcc; border-radius: 8px; cursor: pointer; font-size: 14px; padding: 12px 45px;" target="_blank">Confirmar meu endereço de e-mail</a>
                                             </td>
                                           </tr>
                                         </tbody>
@@ -171,7 +175,10 @@ export const confirEmailTemplate = `
               <table style="box-sizing: border-box; width: 100%; border-spacing: 0; mso-table-rspace: 0pt; mso-table-lspace: 0pt; font-size: 12px; border-collapse: separate !important;" width="100%">
                 <tbody>
                   <tr style="font-size: 12px;">
-                    <td align="center" class="align-center" style="box-sizing: border-box; font-family: 'Open Sans', 'Helvetica Neue', 'Helvetica', Helvetica, Arial, sans-serif; vertical-align: top; font-size: 12px; text-align: center; padding: 20px 0;" valign="top"><span class="sg-image" data-imagelibrary="http://cdn.mcauto-images-production.sendgrid.net/bcf3e99e4ff99531/a88127be-7ce1-40cf-8251-e029fb82f96e/260x47.png" style="float: none; display: block; text-align: center;"><a href="https://www.urbanmobi.com.br" style="box-sizing: border-box; color: #6b6b6b; font-weight: 400; text-decoration: none; font-size: 12px;" target="_blank"><img alt="Urban Mobi" height="16" src="http://cdn.mcauto-images-production.sendgrid.net/bcf3e99e4ff99531/a88127be-7ce1-40cf-8251-e029fb82f96e/260x47.png" style="max-width: 100%; border-style: none; font-size: 12px; width: 89px; height: 16px;" width="89"></a></span>
+                    <td align="center" class="align-center" style="box-sizing: border-box; font-family: 'Open Sans', 'Helvetica Neue', 'Helvetica', Helvetica, Arial, sans-serif; vertical-align: top; font-size: 12px; text-align: center; padding: 20px 0;" valign="top"><span class="sg-image" data-imagelibrary="http://cdn.mcauto-images-production.sendgrid.net/46608c2999d44d7b/767f453f-66cc-4ae8-8fe8-9ccd7da83039/249x66.png" style="float: none; display: block; text-align: center;">
+
+                        <a href="https://www.urbanmobi.com.br" style="box-sizing: border-box; color: #6b6b6b; font-weight: 400; text-decoration: none; font-size: 12px;" target="_blank">
+                          <img alt="Urban Mobi" width="123" height="32" src="http://cdn.mcauto-images-production.sendgrid.net/46608c2999d44d7b/767f453f-66cc-4ae8-8fe8-9ccd7da83039/249x66.png" style="max-width: 100%; border-style: none; font-size: 12px;"></a></span>
 
                       <p class="tagline" style="color: #6b6b6b; font-family: 'Open Sans', 'Helvetica Neue', 'Helvetica', Helvetica, Arial, sans-serif; font-size: 12px; font-weight: 400; margin-bottom: 5px; margin: 10px 0 20px;">Enviado com segurança por SendGrid.</p>
 

@@ -22,6 +22,7 @@ useHead({
 });
 
 const { toast } = useToast();
+const router = useRouter();
 
 const accountStore = useAccountStore();
 const { registerUserAccountAction } = accountStore;
@@ -142,10 +143,10 @@ const onSubmit = form.handleSubmit(async (values) => {
     position: values.position,
     department: values.department,
     contract: {
-      contractId: values.contract || '-',
-      name: contractName.value || '-',
-      branchId: values.branch || '-',
-      area: values.area || '-',
+      contractId: values.contract || null,
+      name: contractName.value || null,
+      branchId: values.branch || null,
+      area: values.area || null,
     },
     avatar: {
       name: '',
@@ -168,7 +169,7 @@ const onSubmit = form.handleSubmit(async (values) => {
       class: 'bg-green-600 border-0 text-white text-2xl',
       description: 'Conta de Usuário cadastrado com sucesso!',
     });
-    navigateTo('/admin/accounts/active');
+    router.back();
   }
 });
 

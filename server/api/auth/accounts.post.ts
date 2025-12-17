@@ -53,25 +53,21 @@ export default defineEventHandler(async (event) => {
       },
     });
 
-    // Getting request object
-    const req = event.node.req;
-
-    // Get the host URL
-    const protocol = req.headers['x-forwarded-proto'] || 'http';
-    const host = req.headers.host;
-    const url = `${protocol}://${host}/validateaccount`;
-
-    // Generating token
-    const token = await tokenGenerator.generate(
-      newAccount as any,
-      process.env.JWT_SECRET as string,
-      {
-        expiresIn: '1d',
-      },
-    );
-
-    // Sending email verification
-    await mailer.sendEmail(email, `${url}?token=${token}`);
+    if (newAccount && role === 'branch-manager') {
+      await prisma.branches.update({
+        where: {
+          //@ts-ignore
+          id: newAccount?.contract?.branchId,
+        },
+        data: {
+          manager: {
+            connect: {
+              id: newAccount.id,
+            },
+          },
+        },
+      });
+    }
 
     if (newAccount && role === 'platform-driver') {
       const newDriverData = {
@@ -117,6 +113,26 @@ export default defineEventHandler(async (event) => {
         },
       });
     }
+
+    // Getting request object
+    const req = event.node.req;
+
+    // Get the host URL
+    const protocol = req.headers['x-forwarded-proto'] || 'http';
+    const host = req.headers.host;
+    const url = `${protocol}://${host}/validateaccount`;
+
+    // Generating token
+    const token = await tokenGenerator.generate(
+      newAccount as any,
+      process.env.JWT_SECRET as string,
+      {
+        expiresIn: '1d',
+      },
+    );
+
+    // Sending email verification
+    await mailer.sendEmail(email, `${url}?token=${token}`);
 
     return newAccount;
   } catch (error) {
