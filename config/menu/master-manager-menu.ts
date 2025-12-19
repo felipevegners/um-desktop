@@ -1,12 +1,4 @@
-import {
-  Building2,
-  CalendarDays,
-  Coins,
-  HandCoins,
-  Handshake,
-  Headset,
-  User,
-} from 'lucide-vue-next';
+import { Building2, CalendarDays, Handshake, Headset } from 'lucide-vue-next';
 
 const { data } = useAuth();
 //@ts-ignore
@@ -78,58 +70,58 @@ export const masterManagerMenu = {
         },
       ],
     },
-    {
-      title: 'Usuários',
-      url: '#',
-      icon: User,
-      isActive: route.path.includes('accounts'),
-      items: [
-        {
-          title: 'Usuários Ativos',
-          url: '/corporative/accounts/active',
-        },
-        {
-          title: 'Usuários Inativos',
-          url: '/corporative/accounts/inactive',
-        },
-        {
-          title: '+ Novo Usuário',
-          url: '/corporative/accounts/new',
-        },
-      ],
-    },
-    {
-      title: 'Financeiro',
-      url: '#',
-      icon: HandCoins,
-      isActive: route.path.includes('invoices'),
-      items: [
-        {
-          title: 'Faturas em aberto',
-          // url: '/corporative/invoices/active',
-          url: '#',
-        },
-        {
-          title: 'Faturas canceladas',
-          // url: '/corporative/invoices/canceled',
-          url: '#',
-        },
-      ],
-    },
-  ],
-  settings: [
-    {
-      name: 'Budget',
-      // url: '/corporative/budget',
-      url: '#',
-      icon: Coins,
-    },
     // {
-    //   name: 'Gerenciar Acessos',
-    //   url: '/corporative/accounts',
-    //   icon: UserCog,
+    //   title: 'Usuários',
+    //   url: '#',
+    //   icon: User,
+    //   isActive: route.path.includes('accounts'),
+    //   items: [
+    //     {
+    //       title: 'Usuários Ativos',
+    //       url: '/corporative/accounts/active',
+    //     },
+    //     {
+    //       title: 'Usuários Inativos',
+    //       url: '/corporative/accounts/inactive',
+    //     },
+    //     {
+    //       title: '+ Novo Usuário',
+    //       url: '/corporative/accounts/new',
+    //     },
+    //   ],
+    // },
+    // {
+    //   title: 'Financeiro',
+    //   url: '#',
+    //   icon: HandCoins,
+    //   isActive: route.path.includes('invoices'),
+    //   items: [
+    //     {
+    //       title: 'Faturas em aberto',
+    //       // url: '/corporative/invoices/active',
+    //       url: '#',
+    //     },
+    //     {
+    //       title: 'Faturas canceladas',
+    //       // url: '/corporative/invoices/canceled',
+    //       url: '#',
+    //     },
+    //   ],
     // },
   ],
+  // settings: [
+  //   {
+  //     name: 'Budget',
+  //     // url: '/corporative/budget',
+  //     url: '#',
+  //     icon: Coins,
+  //   },
+  //   // {
+  //   //   name: 'Gerenciar Acessos',
+  //   //   url: '/corporative/accounts',
+  //   //   icon: UserCog,
+  //   // },
+  // ],
   sac: [
     {
       name: 'Fale Conosco',

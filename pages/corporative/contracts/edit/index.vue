@@ -1,15 +1,30 @@
 <script setup lang="ts">
 import { useContractsStore } from '#imports';
+import { useAccountStore } from '#imports';
 import CompanyForm from '@/components/forms/CompanyForm.vue';
+import FormButtons from '@/components/forms/FormButtons.vue';
 import AvatarEdit from '@/components/shared/AvatarEdit.vue';
 import BackLink from '@/components/shared/BackLink.vue';
 import ChangeMasterManager from '@/components/shared/ChangeMasterManager.vue';
+import CurrencyInput from '@/components/shared/CurrencyInput.vue';
+import { rolesTypes } from '@/config/roles';
 import { toTypedSchema } from '@vee-validate/zod';
-import { FileText, Info, LoaderCircle } from 'lucide-vue-next';
+import {
+  Check,
+  Download,
+  Edit,
+  File,
+  FileText,
+  LoaderCircle,
+  Save,
+  Trash,
+  User,
+  View,
+  X,
+} from 'lucide-vue-next';
 import { useForm } from 'vee-validate';
 import * as z from 'zod';
-import CurrencyInput from '~/components/shared/CurrencyInput.vue';
-import { currencyFormat, generatePassword } from '~/lib/utils';
+import { currencyFormat, dateFormat } from '~/lib/utils';
 
 definePageMeta({
   layout: 'admin',
@@ -26,9 +41,56 @@ const { contract, isLoading } = storeToRefs(contractsStore);
 
 const accountsStore = useAccountStore();
 const { getUsersAccountsByContractIdAction } = accountsStore;
-const { accounts } = storeToRefs(accountsStore);
+// Define the Account type to ensure correct typing
+type Account = {
+  id: string;
+  username: string;
+  email?: string;
+  role?: string;
+  status?: string;
+  enabled?: boolean;
+  createdAt?: string;
+  avatar?: {
+    url: string;
+    name: string;
+  };
+  contract: {
+    restrictions?: Array<string>;
+  };
+};
+
+const { accounts } = storeToRefs(accountsStore) as { accounts: Ref<Account[]> };
 
 const contractProducts = ref([]);
+const contractRemainBudget = ref(0);
+const calculatedBudget = ref(0);
+const branchBudgetValues = reactive({} as Record<string, any>);
+const pendingBranchValues = reactive({} as Record<string, any>);
+const editingBranches = reactive({} as Record<string, boolean>);
+const isClient = ref(false);
+
+const userRestrictions = [
+  {
+    id: 'week',
+    label: 'Semanal',
+  },
+  {
+    id: 'weekend',
+    label: 'Fins de Semana',
+  },
+  {
+    id: 'night',
+    label: 'Atendimento Noturno',
+  },
+  {
+    id: 'vacations',
+    label: 'Férias',
+  },
+] as const;
+
+onMounted(() => {
+  isClient.value = true;
+});
 
 const fetchContractData = async () => {
   await getContractByIdAction(contractId);
@@ -36,6 +98,24 @@ const fetchContractData = async () => {
 };
 
 await fetchContractData();
+
+const initBranchBudgets = () => {
+  (contract?.value?.branches || []).forEach((b: any) => {
+    // Slider expects an array (single-thumb: [value]) so store as array
+    const arr = [parseFloat(b.budget) || 0];
+    branchBudgetValues[b.id] = arr;
+    pendingBranchValues[b.id] = [...arr];
+    editingBranches[b.id] = false;
+  });
+  contractRemainBudget.value = parseFloat(contract?.value?.mainBudget) || 0;
+  const sum = Object.values(branchBudgetValues).reduce((s, v) => {
+    const val = Array.isArray(v) ? Number(v[0] || 0) : Number(v || 0);
+    return s + (isNaN(val) ? 0 : val);
+  }, 0);
+  contractRemainBudget.value -= sum;
+};
+
+initBranchBudgets();
 
 const fetchContractUsersData = async () => {
   await getUsersAccountsByContractIdAction(contractId);
@@ -51,6 +131,80 @@ const customerLogoImage = reactive({
 
 const handleInactivateProduct = (product: any) => {
   console.log('--->', contract?.value.products);
+};
+
+// commit a branch budget change (save)
+const commitBranchBudget = (branchId: any) => {
+  const v = pendingBranchValues[branchId];
+  const numeric = Array.isArray(v) ? Number(v[0] || 0) : Number(v || 0);
+  // commit to branchBudgetValues (array)
+  branchBudgetValues[branchId] = [numeric];
+
+  // update contract model
+  const idx = contract?.value?.branches?.findIndex((b: any) => b.id === branchId);
+  if (
+    idx !== -1 &&
+    idx !== undefined &&
+    contract &&
+    contract.value &&
+    contract.value.branches &&
+    contract.value.branches[idx]
+  ) {
+    contract.value.branches[idx].budget = String(numeric);
+  }
+
+  // recompute remaining budget from committed values
+  const sum = Object.values(branchBudgetValues).reduce((s, v) => {
+    const val = Array.isArray(v) ? Number(v[0] || 0) : Number(v || 0);
+    return s + (isNaN(val) ? 0 : val);
+  }, 0);
+  contractRemainBudget.value = (parseFloat(contract?.value?.mainBudget) || 0) - sum;
+  calculatedBudget.value = contractRemainBudget.value;
+
+  editingBranches[branchId] = false;
+};
+
+// cancel editing (revert pending values)
+const cancelEdit = (branchId: any) => {
+  pendingBranchValues[branchId] = branchBudgetValues[branchId]
+    ? [...branchBudgetValues[branchId]]
+    : [
+        parseFloat(
+          contract?.value?.branches?.find((b: any) => b.id === branchId)?.budget,
+        ) || 0,
+      ];
+  editingBranches[branchId] = false;
+};
+
+// while editing, update pending and compute preview remaining
+const calculatePreviewRest = (branchId: any, value: any) => {
+  const numeric = Array.isArray(value) ? Number(value[0] || 0) : Number(value || 0);
+  pendingBranchValues[branchId] = [numeric];
+
+  // compute sum of committed values except current branch, plus this pending
+  const sum = Object.keys(branchBudgetValues).reduce((s, key) => {
+    if (key === branchId) return s;
+    const v = branchBudgetValues[key];
+    const val = Array.isArray(v) ? Number(v[0] || 0) : Number(v || 0);
+    return s + (isNaN(val) ? 0 : val);
+  }, 0);
+  const total = sum + numeric;
+  contractRemainBudget.value = (parseFloat(contract?.value?.mainBudget) || 0) - total;
+  calculatedBudget.value = contractRemainBudget.value;
+};
+
+const sliderMax = (branchId: any, branch?: any) => {
+  const main = parseFloat(contract?.value?.mainBudget) || 0;
+  // sum committed values for other branches (exclude current branch)
+  const sumOthers = Object.keys(branchBudgetValues).reduce((s, key) => {
+    if (key === branchId) return s;
+    const v = branchBudgetValues[key];
+    const val = Array.isArray(v) ? Number(v[0] || 0) : Number(v || 0);
+    return s + (isNaN(val) ? 0 : val);
+  }, 0);
+  // maximum absolute value this branch can take is mainBudget - sumOthers
+  const max = Math.max(0, main - sumOthers);
+  return max;
 };
 
 const handleAllowProduct = ({ branch, product }: any) => {
@@ -71,6 +225,24 @@ const handleAllowProduct = ({ branch, product }: any) => {
     contract?.value.branches[currentBranch].allowedProducts.splice(findAllowedProduct, 1);
   }
 };
+
+const userNameInitials = (name: string) => {
+  const splited = name.split(' ').splice(0, 2);
+  return splited.map((word: string) => word[0]).join('');
+};
+
+// Toggle restriction for a user account
+function toggleRestriction(account: Account, restrictionId: string) {
+  if (!account.contract.restrictions) {
+    account.contract.restrictions = [];
+  }
+  const idx = account.contract.restrictions.indexOf(restrictionId);
+  if (idx === -1) {
+    account.contract.restrictions.push(restrictionId);
+  } else {
+    account.contract.restrictions.splice(idx, 1);
+  }
+}
 
 const schema = toTypedSchema(
   z.object({
@@ -143,6 +315,14 @@ const form = useForm({
         Gerenciar Contrato - {{ contract.customerName }}
       </h1>
       <div class="flex gap-10 items-center">
+        <Button>
+          <Download />
+          Baixar Contrato PDF
+        </Button>
+        <Button>
+          <File />
+          Termos do Contrato
+        </Button>
         <div>
           <Label class="text-md font-bold"> Desativar Contrato </Label>
           <div class="mt-2 flex items-center gap-3">
@@ -162,20 +342,26 @@ const form = useForm({
     <form v-else @submit.prevent="" @keydown.enter.prevent="true">
       <section class="space-y-6">
         <Card class="bg-zinc-200">
-          <CardHeader>
-            <h2 class="text-2xl font-bold">1. Dados da Matriz</h2>
-          </CardHeader>
-          <CardContent>
-            <div class="mb-6 flex flex-col gap-4">
-              <p class="font-bold">Logo</p>
-              <AvatarEdit
-                v-model="customerLogoImage"
-                uploadUrl="customerLogo"
-                type="customer-logo"
-              />
-            </div>
-            <CompanyForm :loading="isLoading" :isEditing="true" :form="form" />
-          </CardContent>
+          <Accordion type="single" class="w-full flex flex-col gap-6" collapsible>
+            <AccordionItem value="0">
+              <AccordionTrigger class="px-6 hover:no-underline">
+                <h2 class="text-2xl font-bold">1. Dados da Matriz</h2>
+              </AccordionTrigger>
+              <AccordionContent>
+                <CardContent>
+                  <div class="mb-6 flex flex-col gap-4">
+                    <p class="font-bold">Logo</p>
+                    <AvatarEdit
+                      v-model="customerLogoImage"
+                      uploadUrl="customerLogo"
+                      type="customer-logo"
+                    />
+                  </div>
+                  <CompanyForm :loading="isLoading" :isEditing="true" :form="form" />
+                </CardContent>
+              </AccordionContent>
+            </AccordionItem>
+          </Accordion>
         </Card>
         <Card class="bg-zinc-200">
           <CardHeader>
@@ -315,75 +501,233 @@ const form = useForm({
             </h5>
           </CardHeader>
           <CardContent>
-            <FormField v-slot="{ componentField }" name="mainBudget">
-              <FormItem class="max-w-[350px]">
-                <FormControl>
-                  <CurrencyInput
-                    :componentField="componentField"
-                    label="Budget do Contrato"
-                    :styles="'text-2xl p-6 pl-10 font-bold'"
-                  />
-                </FormControl>
-                <FormMessage class="absolute" />
-              </FormItem>
-            </FormField>
+            <div class="flex gap-4">
+              <FormField v-slot="{ componentField }" name="mainBudget">
+                <FormItem class="max-w-[250px]">
+                  <FormControl>
+                    <CurrencyInput
+                      :componentField="componentField"
+                      label="Budget do Contrato"
+                      :styles="'text-2xl p-6 pl-10 font-bold'"
+                    />
+                  </FormControl>
+                  <FormMessage class="absolute" />
+                </FormItem>
+              </FormField>
+
+              <div class="space-y-2">
+                <Label class="text-sm font-medium">Budget Não Alocado</Label>
+                <h2
+                  class="mt-2 p-2 text-2xl font-bold text-green-600"
+                  :class="contractRemainBudget === 0 && 'text-red-600'"
+                >
+                  {{ currencyFormat(contractRemainBudget.toString()) }}
+                </h2>
+              </div>
+            </div>
 
             <ul class="mt-6 space-y-6">
               <li
                 v-for="branch in contract.branches"
+                :key="branch.id"
                 class="p-4 flex items-center justify-between border border-zinc-950 rounded-md bg-white"
               >
                 <p>
                   <span class="font-bold"> {{ branch.branchCode }} - </span>
                   {{ branch.fantasyName }}
                 </p>
-                <Input type="text" v-model="branch.budget" />
-                <h1 class="text-2xl font-bold">{{ currencyFormat(branch.budget) }}</h1>
+                <div class="flex items-center gap-3 w-1/2">
+                  <div class="flex-1">
+                    <template v-if="isClient && editingBranches[branch.id]">
+                      <Slider
+                        :defaultValue="pendingBranchValues[branch.id]"
+                        v-model="pendingBranchValues[branch.id]"
+                        @update:model-value="
+                          (value: number[] | undefined) =>
+                            calculatePreviewRest(branch.id, value)
+                        "
+                        :max="sliderMax(branch.id, branch)"
+                        :min="0"
+                        :step="1000"
+                        class="w-full"
+                      />
+                    </template>
+                  </div>
+                </div>
+                <div class="flex items-center gap-4">
+                  <h1 class="text-2xl font-bold">
+                    {{
+                      currencyFormat(
+                        (editingBranches[branch.id]
+                          ? Array.isArray(pendingBranchValues[branch.id])
+                            ? pendingBranchValues[branch.id][0]
+                            : pendingBranchValues[branch.id]
+                          : Array.isArray(branchBudgetValues[branch.id])
+                            ? branchBudgetValues[branch.id][0]
+                            : branchBudgetValues[branch.id]) || branch.budget,
+                      )
+                    }}
+                  </h1>
+                  <Button
+                    v-if="!editingBranches[branch.id]"
+                    @click.prevent="
+                      ((editingBranches[branch.id] = true),
+                      (pendingBranchValues[branch.id] = branchBudgetValues[branch.id]
+                        ? [...branchBudgetValues[branch.id]]
+                        : [parseFloat(branch.budget) || 0]))
+                    "
+                  >
+                    <Edit />
+                    Alterar
+                  </Button>
+                  <template v-else>
+                    <Button
+                      size="icon"
+                      @click.prevent="commitBranchBudget(branch.id)"
+                      title="Salvar Budget"
+                    >
+                      <Save />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      @click.prevent="cancelEdit(branch.id)"
+                      title="Cancelar"
+                    >
+                      <X />
+                    </Button>
+                  </template>
+                </div>
               </li>
             </ul>
-
-            <!-- <FormField v-slot="{ componentField, value }" name="branchBudget">
-              <FormItem>
-                <FormLabel class="mb-10 flex items-center justify-between">
-                  <span>Budget da Filial</span>
-                  <span>Saldo do Budget do Contrato</span>
-                </FormLabel>
-                <FormControl>
-                  <Slider
-                    :model-value="componentField.modelValue"
-                    :default-value="[0]"
-                    :max="contractMainBudget"
-                    :min="0"
-                    :step="1000"
-                    :name="componentField.name"
-                    @update:model-value="componentField['onUpdate:modelValue']"
-                    @input="calculateBudgetRest(value)"
-                    class="mt-4"
-                    :class="`${calculatedBudget < 0 ? 'bg-red-600' : ''}`"
-                  />
-                  <FormDescription class="flex items-center justify-between gap-2">
-                    <span class="my-2 font-bold text-2xl text-black">
-                      {{ currencyFormat(value?.[0]) }}
-                    </span>
-                    <div class="flex flex-col items-end">
-                      <span
-                        class="my-2 font-bold text-2xl text-black"
-                        :class="`${calculatedBudget < 0 ? 'text-red-600' : ''}`"
+          </CardContent>
+        </Card>
+        <Card class="bg-zinc-200">
+          <CardHeader>
+            <h2 class="text-2xl font-bold">5. Usuários ativos</h2>
+            <h5 class="text-muted-foreground">
+              Aqui você gerencia todos os usuários do contrato e as permissões de cada um.
+            </h5>
+          </CardHeader>
+          <CardContent>
+            <ul v-if="accounts && accounts.length > 0" class="flex gap-6 flex-wrap">
+              <li
+                class="flex flex-col items-start flex-1"
+                v-for="account in accounts"
+                :key="account?.id"
+              >
+                <Card class="md:min-w-[250px] w-full">
+                  <div class="p-2 flex flex-row items-end justify-end">
+                    <Button
+                      v-if="
+                        account.role === 'master-manager' ||
+                        account.role === 'branch-manager' ||
+                        account.role === 'admin'
+                      "
+                      title="Remover usuário"
+                      variant="ghost"
+                      size="icon"
+                      @click.prevent=""
+                      class="hover:bg-red-500 hover:text-white rounded-lg"
+                    >
+                      <Trash />
+                    </Button>
+                  </div>
+                  <CardHeader class="flex items-center">
+                    <Avatar class="h-20 w-20 mb-6 border-4 border-zinc-950">
+                      <AvatarImage :src="account?.avatar?.url || ''" />
+                      <AvatarFallback
+                        class="text-3xl font-medium text-muted-foreground/30"
                       >
-                        {{ currencyFormat(calculatedBudget.toString()) }}
-                      </span>
-                      <span v-if="calculatedBudget < 0" class="text-red-600">
-                        Você entrou no limite extra do Budget
-                      </span>
+                        {{ userNameInitials(account?.username as string) }}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div class="flex flex-col items-center">
+                      <h2 class="font-bold text-xl">{{ account?.username }}</h2>
+                      <small class="text-muted-foreground">
+                        {{ account?.email }}
+                      </small>
+                      <small>{{ rolesTypes[account?.role as string] }} </small>
                     </div>
-                  </FormDescription>
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            </FormField> -->
+                  </CardHeader>
+                  <CardContent class="flex flex-col justify-start gap-6">
+                    <div class="grid grid-cols-3 gap-4">
+                      <div
+                        class="flex flex-col items-center p-1 border border-zinc-900 rounded-md"
+                      >
+                        <small class="text-[10px] text-muted-foreground uppercase">
+                          Cadastrado
+                        </small>
+                        <span class="font-bold text-xs">
+                          {{ dateFormat(account?.createdAt) }}
+                        </span>
+                      </div>
+                      <div
+                        class="flex flex-col items-center p-1 border border-zinc-900 rounded-md"
+                      >
+                        <span class="text-[10px] text-muted-foreground uppercase">
+                          Status
+                        </span>
+                        <span class="font-bold text-sm">
+                          {{ account?.status === 'pending' ? 'Pendente' : 'Validado' }}
+                        </span>
+                      </div>
+                      <div
+                        class="flex flex-col items-center p-1 border border-zinc-900 rounded-md"
+                      >
+                        <span class="text-[10px] text-muted-foreground uppercase">
+                          Ativo
+                        </span>
+                        <span class="font-bold text-sm">
+                          {{ account?.enabled ? 'Sim' : 'Não' }}
+                        </span>
+                      </div>
+                    </div>
+                    <Button
+                      type="button"
+                      @click="
+                        navigateTo({
+                          name: 'corporative-accounts-edit-id',
+                          params: {
+                            id: account?.id,
+                          },
+                        })
+                      "
+                    >
+                      <User />
+                      Editar Usuário
+                    </Button>
+                    <Separator />
+                    <h3 class="font-bold text-lg">Restrições de Atendimento</h3>
+                    <ul class="space-y-3">
+                      <li
+                        v-for="restriction in userRestrictions"
+                        :key="restriction.id"
+                        class="flex items-center gap-2"
+                      >
+                        <Checkbox
+                          :checked="
+                            account?.contract.restrictions?.includes(restriction.id)
+                          "
+                          @update:checked="toggleRestriction(account, restriction.id)"
+                        />
+                        <label :for="restriction.id">{{ restriction.label }}</label>
+                      </li>
+                    </ul>
+                  </CardContent>
+                </Card>
+              </li>
+            </ul>
+            <p v-else class="text-muted-foreground">Nenhum usuário cadastrado.</p>
           </CardContent>
         </Card>
       </section>
+      <FormButtons
+        :cancel="'/corporative'"
+        :loading="false"
+        sbm-label="Salvar Contrato"
+        cnc-label="Cancelar"
+      />
     </form>
   </main>
 </template>
