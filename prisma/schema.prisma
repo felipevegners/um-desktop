@@ -10,6 +10,14 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+type AccountContractData {
+  contractId   String
+  name         String?
+  branchId     String?
+  area         String?
+  restrictions Json?
+}
+
 model Accounts {
   id             String      @id @default(auto()) @map("_id") @db.ObjectId
   username       String

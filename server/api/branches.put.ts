@@ -1,4 +1,4 @@
-import { Prisma, prisma } from '~/utils/prisma';
+import { Prisma, prisma } from '@/utils/prisma';
 
 export default defineEventHandler(async (event) => {
   const payload = await readBody(event);
@@ -23,6 +23,7 @@ export default defineEventHandler(async (event) => {
     areas,
     status,
     enabled,
+    allowedProducts,
   } = payload;
   try {
     await prisma.branches.update({
@@ -47,6 +48,7 @@ export default defineEventHandler(async (event) => {
         areas,
         status,
         enabled,
+        allowedProducts,
         manager: {
           connect: {
             id: managerId,

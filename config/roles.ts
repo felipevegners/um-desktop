@@ -20,3 +20,22 @@ export const rolesTypes: any = {
   'platform-user': 'Usuário UM',
   'platform-driver': 'Motorista UM',
 };
+
+export const userRestrictions = [
+  {
+    id: 'week',
+    label: 'Semanal',
+  },
+  {
+    id: 'weekend',
+    label: 'Fins de Semana',
+  },
+  {
+    id: 'night',
+    label: 'Atendimento Noturno',
+  },
+  {
+    id: 'vacations',
+    label: 'Férias',
+  },
+] as const;
