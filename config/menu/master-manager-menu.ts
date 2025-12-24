@@ -1,4 +1,4 @@
-import { Building2, CalendarDays, Handshake, Headset } from 'lucide-vue-next';
+import { Building2, CalendarDays, Handshake, Headset, User } from 'lucide-vue-next';
 
 const { data } = useAuth();
 //@ts-ignore
@@ -33,7 +33,7 @@ export const masterManagerMenu = {
           url: '/corporative/rides/cancelled',
         },
         {
-          title: '+ Novo agendamento',
+          title: '+ Novo Atendimento',
           url: '/corporative/rides/new',
         },
       ],
@@ -70,26 +70,26 @@ export const masterManagerMenu = {
         },
       ],
     },
-    // {
-    //   title: 'Usuários',
-    //   url: '#',
-    //   icon: User,
-    //   isActive: route.path.includes('accounts'),
-    //   items: [
-    //     {
-    //       title: 'Usuários Ativos',
-    //       url: '/corporative/accounts/active',
-    //     },
-    //     {
-    //       title: 'Usuários Inativos',
-    //       url: '/corporative/accounts/inactive',
-    //     },
-    //     {
-    //       title: '+ Novo Usuário',
-    //       url: '/corporative/accounts/new',
-    //     },
-    //   ],
-    // },
+    {
+      title: 'Usuários',
+      url: '#',
+      icon: User,
+      isActive: route.path.includes('accounts'),
+      items: [
+        {
+          title: 'Usuários Ativos',
+          url: '/corporative/accounts/active',
+        },
+        {
+          title: 'Usuários Inativos',
+          url: '/corporative/accounts/inactive',
+        },
+        {
+          title: '+ Novo Usuário',
+          url: '/corporative/accounts/new',
+        },
+      ],
+    },
     // {
     //   title: 'Financeiro',
     //   url: '#',

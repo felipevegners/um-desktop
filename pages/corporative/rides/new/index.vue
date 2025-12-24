@@ -48,20 +48,6 @@ useHead({
   title: 'Backoffice - Novo Atendimento | Urban Mobi',
 });
 
-const contractsStore = useContractsStore();
-const branchesStore = useBranchesStore();
-const accountStore = useAccountStore();
-const ridesStore = useRidesStore();
-const productsStore = useProductsStore();
-const { getContractByIdAction } = contractsStore;
-const { contract } = storeToRefs(contractsStore);
-const { getUsersAccountsAction } = accountStore;
-const { accounts } = storeToRefs(accountStore);
-const { createRideAction, getRidesAction, loadingData } = ridesStore;
-const { rides } = storeToRefs(ridesStore);
-const { getProductsAction } = productsStore;
-const { products } = storeToRefs(productsStore);
-
 const API_KEY = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
 const customIconStart = `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="#FFFFFF" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-square-dot-icon lucide-square-dot"><rect width="18" height="18" x="3" y="3" rx="2"/><circle cx="12" cy="12" r="1"/></svg>`;
 const customIconStop = `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="#FFFFFF" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-square-pause-icon lucide-square-pause"><rect width="18" height="18" x="3" y="3" rx="2"/><line x1="10" x2="10" y1="15" y2="9"/><line x1="14" x2="14" y1="15" y2="9"/></svg>`;
@@ -71,6 +57,20 @@ const { toast } = useToast();
 const { data } = useAuth();
 //@ts-ignore
 const contractId = data.value?.user.contract?.contractId;
+
+const contractsStore = useContractsStore();
+const branchesStore = useBranchesStore();
+const accountStore = useAccountStore();
+const ridesStore = useRidesStore();
+const productsStore = useProductsStore();
+const { getContractByIdAction } = contractsStore;
+const { contract } = storeToRefs(contractsStore);
+const { getUsersAccountsByContractIdAction } = accountStore;
+const { accounts } = storeToRefs(accountStore);
+const { createRideAction, getRidesAction, loadingData } = ridesStore;
+const { rides } = storeToRefs(ridesStore);
+const { getProductsAction } = productsStore;
+const { products } = storeToRefs(productsStore);
 
 const rideCode = ref('');
 const loadingProducts = ref<boolean>(false);
@@ -140,18 +140,10 @@ const markers = ref<any>([]);
 const showRenderedMap = ref<boolean>(false);
 
 onBeforeMount(async () => {
-  await getUsersAccountsAction();
-  const filteredUsers = accounts.value.filter(
-    (user: any) =>
-      user.enabled === true &&
-      user.role !== 'admin' &&
-      user.role !== 'platform-driver' &&
-      user.emailConfirmed === true &&
-      user.contract.contractId === contractId,
-  );
-  availableUsers.value = filteredUsers.map((user: any) => {
+  await getUsersAccountsByContractIdAction(contractId);
+  availableUsers.value = accounts?.value.map((user: any) => {
     return {
-      label: user.username,
+      label: ` ${user.username}`,
       value: user.id,
     };
   });
@@ -251,58 +243,33 @@ const setSelectedUser = async (user: any) => {
     role: userData?.role,
   };
 
-  if (userData.role === 'platform-user') {
-    try {
-      showAvailableProducts.value = true;
-      loadingProducts.value = true;
+  try {
+    showAvailableProducts.value = true;
+    loadingProducts.value = true;
+    await getContractByIdAction(userData.contract.contractId);
+    availableProducts.value = contract?.value.products.sort(
+      (a: Product, b: Product) =>
+        ['EASY', 'PREMIUM', 'GOLD', 'BLINDADO', 'VAN'].indexOf(a.name) -
+        ['EASY', 'PREMIUM', 'GOLD', 'BLINDADO', 'VAN'].indexOf(b.name),
+    );
+    contractBranches.value = contract?.value.branches;
+    contractBranchesList.value = contract?.value.branches.map((branch: any) => {
+      return {
+        label: `${branch.branchCode} - ${branch.name}`,
+        value: branch.id,
+      };
+    });
 
-      const regularProducts = products.value.filter(
-        (product: Product) => product.type !== 'addon',
-      );
-      availableProducts.value = regularProducts.sort(
-        (a: Product, b: Product) =>
-          ['EASY', 'PREMIUM', 'GOLD', 'BLINDADO', 'VAN'].indexOf(a.name) -
-          ['EASY', 'PREMIUM', 'GOLD', 'BLINDADO', 'VAN'].indexOf(b.name),
-      );
-      loadingProducts.value = false;
-      paymentMethodList.value = paymentMethods.filter(
-        (method) => method.value !== 'corporative',
-      );
-    } catch (error) {
-      toast({
-        title: 'Opss!',
-        class: 'bg-red-500 border-0 text-white text-2xl',
-        description: `Erro ao buscar os produtos. Tente novamente.`,
-      });
-    }
-  } else if (userData.contract.contractId !== '-') {
-    try {
-      showAvailableProducts.value = true;
-      loadingProducts.value = true;
-      await getContractByIdAction(userData.contract.contractId);
-      availableProducts.value = contract?.value.products.sort(
-        (a: Product, b: Product) =>
-          ['EASY', 'PREMIUM', 'GOLD', 'BLINDADO', 'VAN'].indexOf(a.name) -
-          ['EASY', 'PREMIUM', 'GOLD', 'BLINDADO', 'VAN'].indexOf(b.name),
-      );
-      contractBranches.value = contract?.value.branches;
-      contractBranchesList.value = contract?.value.branches.map((branch: any) => {
-        return {
-          label: `${branch.branchCode} - ${branch.name}`,
-          value: branch.id,
-        };
-      });
-      loadingProducts.value = false;
-      paymentMethodList.value = paymentMethods.filter(
-        (method) => method.value === 'corporative',
-      );
-    } catch (error) {
-      toast({
-        title: 'Opss!',
-        class: 'bg-red-500 border-0 text-white text-2xl',
-        description: `Erro ao buscar os produtos do contracto. Tente novamente.`,
-      });
-    }
+    loadingProducts.value = false;
+    paymentMethodList.value = paymentMethods.filter(
+      (method) => method.value === 'corporative',
+    );
+  } catch (error) {
+    toast({
+      title: 'Opss!',
+      class: 'bg-red-500 border-0 text-white text-2xl',
+      description: `Erro ao buscar os produtos do contracto. Tente novamente.`,
+    });
   }
 };
 
@@ -991,19 +958,21 @@ const onSubmit = form.handleSubmit(async (values) => {
                       >
                         <FormField name="waypoint">
                           <FormItem class="w-full">
-                            <FormLabel class="mt-0">Parada {{ index + 1 }}</FormLabel>
+                            <FormLabel class="mt-0"
+                              >Parada {{ Number(index) + 1 }}</FormLabel
+                            >
                             <FormControl>
                               <div class="flex items-center gap-2">
                                 <SquareSquare />
                                 <GMapAutocomplete
                                   placeholder="Insira a parada"
-                                  @place_changed="setWaypoints($event, index)"
+                                  @place_changed="setWaypoints($event, index as any)"
                                   :value="waypoint.address"
                                   class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                                 />
                                 <Button
                                   type="button"
-                                  @click.prevent="removeWaypointRow(index)"
+                                  @click.prevent="removeWaypointRow(index as any)"
                                   size="icon"
                                 >
                                   <X />
@@ -1154,23 +1123,6 @@ const onSubmit = form.handleSubmit(async (values) => {
                     />
                     <Polyline :options="ridePath" />
                   </GoogleMap>
-                  <!-- <NuxtImg
-                    :src="buildStaticMapUrl()"
-                    alt="Mapa da rota"
-                    width="800"
-                    height="600"
-                    loading="lazy"
-                    class="p-4 bg-white rounded-md border border-zinc-900 w-full h-auto"
-                    v-slot="{ src, isLoaded, imgAttrs }"
-                    :custom="true"
-                  >
-                    <LoaderCircle
-                      v-if="!isLoaded"
-                      :size="48"
-                      class="animate-spin self-center justify-self-center"
-                    />
-                    <img v-else :src="src" v-bind="imgAttrs" />
-                  </NuxtImg> -->
                 </div>
                 <div class="w-full space-y-6">
                   <h3 class="text-lg font-bold">Resumo</h3>
@@ -1190,7 +1142,7 @@ const onSubmit = form.handleSubmit(async (values) => {
                       v-if="routeWaypoints"
                       v-for="(waypoint, index) in routeWaypoints"
                     >
-                      <small class="font-bold">Parada {{ index + 1 }}</small>
+                      <small class="font-bold">Parada {{ Number(index) + 1 }}</small>
                       <p>{{ waypoint.address }}</p>
                     </div>
                     <div>

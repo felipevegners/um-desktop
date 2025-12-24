@@ -17,15 +17,22 @@ export type Account = {
   };
   contract: {
     restrictions?: Array<string>;
+    branchId: string;
   };
 };
-defineProps<{
+const props = defineProps<{
   account: Account;
+  branches: any;
 }>();
 
 const userNameInitials = (name: string) => {
   const splited = name.split(' ').splice(0, 2);
   return splited.map((word: string) => word[0]).join('');
+};
+
+const findUserBranchNameAndCode = (branchId: string) => {
+  const branch = props.branches.find((branch: any) => branch.id === branchId);
+  return branch ? `${branch.branchCode} - ${branch.fantasyName}` : 'N/A';
 };
 
 const toggleRestriction = (account: Account, restrictionId: string) => {
@@ -78,7 +85,12 @@ const toggleRestriction = (account: Account, restrictionId: string) => {
           <small class="text-muted-foreground">
             {{ account?.email }}
           </small>
-          <small>{{ rolesTypes[account?.role as string] }} </small>
+          <small class="my-4 py-0.5 px-2 bg-zinc-950 rounded-md text-white">
+            {{ rolesTypes[account?.role as string] }}
+          </small>
+          <p class="font-bold">
+            {{ findUserBranchNameAndCode(account?.contract?.branchId) }}
+          </p>
         </div>
       </CardHeader>
       <CardContent class="flex flex-col justify-start gap-6">
@@ -99,7 +111,10 @@ const toggleRestriction = (account: Account, restrictionId: string) => {
           </div>
           <div class="flex flex-col items-center p-1 border border-zinc-900 rounded-md">
             <span class="text-[10px] text-muted-foreground uppercase"> Ativo </span>
-            <span class="font-bold text-sm">
+            <span
+              class="font-bold text-sm"
+              :class="account?.enabled ? 'text-green-600' : 'text-red-600'"
+            >
               {{ account?.enabled ? 'Sim' : 'Não' }}
             </span>
           </div>
