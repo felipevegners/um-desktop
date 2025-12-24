@@ -292,27 +292,33 @@ const onSubmit = form.handleSubmit(async (values) => {
       contractData,
     });
 
-    contract?.value.branches.forEach(async (branch: any) => {
-      const { id, ...restBranch } = branch;
+    // Update all branches first, wait until all complete to avoid race conditions
+    if (contract?.value?.branches && contract.value.branches.length) {
+      const branchPromises = contract.value.branches.map((branch: any) => {
+        const { id, ...restBranch } = branch;
+        const branchPayload = {
+          branchId: id,
+          contract: contract?.value.id,
+          branchBudget: branch.budget,
+          ...restBranch,
+        };
+        return updateBranchAction(branchPayload);
+      });
+      await Promise.all(branchPromises);
+    }
 
-      const branchPayload = {
-        branchId: id,
-        contract: contract?.value.id,
-        branchBudget: branch.budget,
-        ...restBranch,
-      };
-      await updateBranchAction(branchPayload);
-    });
-
-    accounts?.value.forEach(async (account: Account) => {
-      const { id, ...restAccount } = account;
-
-      const accountPayload = {
-        accountId: id,
-        ...restAccount,
-      };
-      await updateUserAccountAction(accountPayload);
-    });
+    // After branches are done, update accounts
+    if (accounts?.value && accounts.value.length) {
+      const accountPromises = accounts.value.map((account: Account) => {
+        const { id, ...restAccount } = account;
+        const accountPayload = {
+          accountId: id,
+          ...restAccount,
+        };
+        return updateUserAccountAction(accountPayload);
+      });
+      await Promise.all(accountPromises);
+    }
 
     toast({
       title: 'Tudo pronto!',
@@ -320,7 +326,8 @@ const onSubmit = form.handleSubmit(async (values) => {
       description: 'Contrato atualizado com sucesso!',
     });
     loadingUpdate.value = false;
-    navigateTo('/corporative');
+    window.location.reload();
+    // navigateTo('/corporative/contracts/edit');
   } catch (error) {
     loadingUpdate.value = false;
     toast({
@@ -693,6 +700,7 @@ const onSubmit = form.handleSubmit(async (values) => {
         :loading="loadingUpdate"
         sbm-label="Salvar Alterações"
         cnc-label="Cancelar"
+        :disabled="!!Object.values(editingBranches).some(Boolean)"
       />
     </form>
   </main>
