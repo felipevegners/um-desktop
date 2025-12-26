@@ -85,7 +85,10 @@ export const useAccountStore = defineStore('accounts', {
       this.isLoading = true;
       try {
         const data = await getUsersByContractIdService(contractId);
-        this.accounts = data as any;
+        this.accounts = (data as any).filter((account: any) => account.enabled === true);
+        this.inactiveAccounts = (data as any).filter(
+          (account: any) => account.enabled === false,
+        );
       } catch (error) {
         console.log('Error durging user register -> ', error);
         throw error;

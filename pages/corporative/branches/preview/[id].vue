@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import BackLink from '@/components/shared/BackLink.vue';
-import { Edit, FileText, LoaderCircle } from 'lucide-vue-next';
+import { AlertCircle, Edit, FileText, LoaderCircle } from 'lucide-vue-next';
 import { storeToRefs } from 'pinia';
 import { currencyFormat, dateFormat } from '~/lib/utils';
 import { useBranchesStore } from '~/stores/branches.store';
@@ -15,6 +15,14 @@ const { branch, isLoadingData } = storeToRefs(store);
 
 const route = useRoute();
 await getBranchByIdAction(route?.params?.id as string);
+
+const showBranchAreas = computed(() => {
+  return (
+    branch.value.areas &&
+    branch.value.areas.length > 0 &&
+    branch.value.areas.some((area: any) => area.areaCode && area.areaName)
+  );
+});
 </script>
 <template>
   <main class="p-6">
@@ -29,7 +37,7 @@ await getBranchByIdAction(route?.params?.id as string);
           class="px-2 text-white font-bold text-lg uppercase rounded-md"
           :class="`${branch?.enabled ? 'bg-green-600' : 'bg-red-600'}`"
         >
-          {{ branch?.enabled ? 'Ativo' : 'Inativo' }}
+          {{ branch?.enabled ? 'Ativa' : 'Inativa' }}
         </p>
       </h1>
       <Button
@@ -95,28 +103,36 @@ await getBranchByIdAction(route?.params?.id as string);
               </p>
             </div>
             <div class="p-6 bg-white rounded-md">
-              <p class="text-sm text-zinc-600">Status</p>
+              <p class="text-sm text-zinc-600">Status do Cadastro</p>
               <p
                 class="mt-2 p-2 block rounded-md text-white text-center"
-                :class="`${branch.status === 'validated' ? 'bg-green-500' : 'bg-yellow-500'}`"
+                :class="`${branch.status === 'validated' ? 'bg-green-500' : 'bg-amber-500'}`"
               >
                 {{ branch?.status === 'validated' ? 'Validado' : 'Pendente' }}
               </p>
+              <small v-if="branch.status === 'pending'" class="text-amber-700">
+                *Ainda existem dados não validados
+              </small>
             </div>
             <div class="p-6 bg-white rounded-md col-span-4">
               <p class="text-sm text-zinc-600">Endereço</p>
-              <p class="text-xl font-bold">
-                {{ branch?.address?.streetName }},
-                {{ branch?.address?.streetNumber }}
-                {{
-                  branch?.address?.complement !== '-' ? branch?.address?.complement : ''
-                }}
-              </p>
-              <p>
-                {{ branch?.address?.neighborhood }}, {{ branch?.address?.city }},
-                {{ branch?.address?.state }},
-                {{ branch?.address?.zipcode }}
-              </p>
+              <div v-if="branch.address?.zipcode">
+                <p class="text-xl font-bold">
+                  {{ branch?.address?.streetName }},
+                  {{ branch?.address?.streetNumber }}
+                  {{
+                    branch?.address?.complement !== '-' ? branch?.address?.complement : ''
+                  }}
+                </p>
+                <p>
+                  {{ branch?.address?.neighborhood }}, {{ branch?.address?.city }},
+                  {{ branch?.address?.state }},
+                  {{ branch?.address?.zipcode }}
+                </p>
+              </div>
+              <div v-else>
+                <p>Não cadastrado</p>
+              </div>
             </div>
           </div>
         </div>
@@ -131,17 +147,22 @@ await getBranchByIdAction(route?.params?.id as string);
             </p>
           </div>
           <div class="p-6 bg-white rounded-md">
-            <!-- <div>
-              <pre>{{ branch.areas }}</pre>
-            </div> -->
             <p class="text-sm text-zinc-600">Centros de Custo</p>
-            <p v-for="area in branch?.areas" :key="area.areaCode" class="my-2">
+            <p
+              v-if="showBranchAreas"
+              v-for="area in branch?.areas"
+              :key="area.areaCode"
+              class="my-2"
+            >
               <span
                 class="mr-2 px-2 py-1 uppercase text-white text-center rounded-md text-sm bg-zinc-900"
               >
                 {{ area.areaCode }}
               </span>
               <span>{{ area.areaName }}</span>
+            </p>
+            <p v-else class="my-6 self-center text-amber-700 text-xs">
+              *Nenhum CC cadastrado
             </p>
           </div>
           <div class="p-6 bg-white rounded-md col-span-3">
@@ -154,6 +175,16 @@ await getBranchByIdAction(route?.params?.id as string);
               {{ branch?.manager?.department }}
             </p>
             <p>{{ branch?.manager?.email }} - {{ branch?.manager?.phone }}</p>
+            <div
+              v-if="!branch?.manager.enabled"
+              class="mt-4 px-1.5 py-2 flex items-center gap-2 bg-amber-200 rounded-md"
+            >
+              <AlertCircle :size="20" class="text-amber-700" />
+              <small class="text-xs text-amber-700">
+                A conta deste usuário está <strong>inativa</strong> e sem acesso ao
+                gerenciamento desta Filial. Reative ou altere o usuário gestor da filial.
+              </small>
+            </div>
           </div>
         </div>
       </Card>

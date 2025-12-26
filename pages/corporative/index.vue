@@ -16,8 +16,6 @@ import { currencyFormat, sanitizeRideDate } from '~/lib/utils';
 const { data } = useAuth();
 //@ts-ignore
 const contractId = data.value?.user.contract?.contractId;
-//@ts-ignore
-// const role = data.value?.user?.role;
 
 const ridesStore = useRidesStore();
 const { getRidesByContractAction } = ridesStore;

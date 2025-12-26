@@ -184,6 +184,7 @@ const onSubmit = form.handleSubmit(async (values) => {
         <Card class="py-6 bg-zinc-200">
           <BranchForm
             :editMode="true"
+            :internalUsage="true"
             :branchData="branch"
             :managerId="branch?.manager?.id || '-'"
             :contractId="branch?.contractId"

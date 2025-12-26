@@ -1,6 +1,6 @@
 import { Button } from '@/components/ui/button';
 import { createColumnHelper } from '@tanstack/vue-table';
-import { ArrowUpDown, MessageCircleMore } from 'lucide-vue-next';
+import { ArrowUpDown } from 'lucide-vue-next';
 import { WPP_API } from '~/config/paths';
 import { dateFormat, sanitizePhone } from '~/lib/utils';
 
@@ -57,6 +57,13 @@ export const columns = [
       );
     },
   }),
+  columnHelper.accessor('role', {
+    header: () => h('div', { class: 'text-center' }, 'Nível de Permissão'),
+    cell: ({ row }) => {
+      //@ts-ignore
+      return h('div', { class: 'text-center font-medium' }, Roles[row.getValue('role')]);
+    },
+  }),
   columnHelper.accessor('contract', {
     header: () => h('div', { class: 'text-left' }, 'Empresa'),
     cell: ({ row }) => {
@@ -66,13 +73,6 @@ export const columns = [
         { class: 'capitilize' },
         data.contract?.name ? data.contract.name : '-',
       );
-    },
-  }),
-  columnHelper.accessor('role', {
-    header: () => h('div', { class: 'text-center' }, 'Nível de Permissão'),
-    cell: ({ row }) => {
-      //@ts-ignore
-      return h('div', { class: 'text-center font-medium' }, Roles[row.getValue('role')]);
     },
   }),
   columnHelper.accessor('createdAt', {
@@ -98,21 +98,6 @@ export const columns = [
           }`,
         },
         status === 'validated' ? 'Validado' : 'Pendente',
-      );
-    },
-  }),
-  columnHelper.accessor('emailConfirmed', {
-    header: () => h('div', { class: 'text-left' }, 'E-mail Confirmado'),
-    cell: ({ row }) => {
-      const status = row.getValue('emailConfirmed');
-      return h(
-        'div',
-        {
-          class: `mx-auto px-2 flex items-center justify-center h-6 rounded-full text-white text-xs w-fit ${
-            status === true ? 'bg-green-600' : 'bg-red-500'
-          }`,
-        },
-        status === true ? 'Sim' : 'Não',
       );
     },
   }),

@@ -3,6 +3,8 @@ import { rolesTypes, userRestrictions } from '@/config/roles';
 import { Edit } from 'lucide-vue-next';
 import { dateFormat } from '~/lib/utils';
 
+const { data } = useAuth();
+
 export type Account = {
   id: string;
   username: string;
@@ -32,7 +34,7 @@ const userNameInitials = (name: string) => {
 
 const findUserBranchNameAndCode = (branchId: string) => {
   const branch = props.branches.find((branch: any) => branch.id === branchId);
-  return branch ? `${branch.branchCode} - ${branch.fantasyName}` : 'N/A';
+  return branch ? `${branch.branchCode} - ${branch.fantasyName}` : 'Todas as filiais';
 };
 
 const toggleRestriction = (account: Account, restrictionId: string) => {
@@ -50,7 +52,13 @@ const toggleRestriction = (account: Account, restrictionId: string) => {
 <template>
   <li class="flex flex-col items-start flex-1" :key="account?.id">
     <Card class="md:min-w-[250px] w-full">
-      <div class="p-2 flex flex-row items-end justify-end">
+      <div class="p-2 flex flex-row items-center justify-end gap-4">
+        <span
+          v-if="data?.user?.name === account?.username"
+          class="py-0.5 px-1.5 rounded-md bg-blue-600 text-white text-xs"
+        >
+          Sua conta
+        </span>
         <Button
           v-if="
             account.role === 'master-manager' ||

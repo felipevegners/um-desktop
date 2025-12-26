@@ -12,10 +12,10 @@ const props = defineProps<{
     :data="props.data"
     :categories="['total']"
     :show-legend="false"
-    :type="'grouped'"
+    :type="'stacked'"
     class="p-4 h-[360px] bg-white"
     :margin="{ top: 20 }"
-    :show-grid-line="false"
+    :show-grid-line="true"
     :y-formatter="
       (tick, i) => {
         return typeof tick === 'number' ? `${tick}` : '';

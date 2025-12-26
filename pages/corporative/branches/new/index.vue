@@ -18,10 +18,14 @@ definePageMeta({
   layout: 'admin',
 });
 useHead({
-  title: 'Backoffice - Adicionar Nova Filial | Urban Mobi',
+  title: 'Cadastrar Nova Filial | Urban Mobi',
 });
 
 const { toast } = useToast();
+const { data } = useAuth();
+//@ts-ignore
+const contractId = data.value?.user?.contract.contractId;
+
 const isLoadingAddress = ref<boolean>(false);
 const ccAreas = reactive([{ areaCode: '', areaName: '' }]);
 
@@ -41,19 +45,24 @@ const formSchema = toTypedSchema(
     state: z.string().min(2).max(50),
     phone: z.string().min(2).max(16),
     phoneExtension: z.string().min(0).max(6).optional(),
-    branchManagerName: z.string().min(2).max(50),
-    branchManagerPhone: z.string().min(2).max(50),
-    branchManagerPosition: z.string().min(2).max(50),
-    branchManagerDepartment: z.string().min(2).max(50),
-    branchManagerEmail: z.string().min(2).max(50),
+    branchManagerName: z.string().min(2).max(50).optional(),
+    branchManagerPhone: z.string().min(2).max(50).optional(),
+    branchManagerPosition: z.string().min(2).max(50).optional(),
+    branchManagerDepartment: z.string().min(2).max(50).optional(),
+    branchManagerEmail: z.string().min(2).max(50).optional(),
     branchBudget: z.array(z.number().min(0).max(190000)).optional(),
-    password: z.string().min(6, 'A senha deve conter no mínimo 6 caracteres').max(8),
+    password: z
+      .string()
+      .min(6, 'A senha deve conter no mínimo 6 caracteres')
+      .max(8)
+      .optional(),
   }),
 );
 
 const form = useForm({
   validationSchema: formSchema,
   initialValues: {
+    contract: contractId,
     branchBudget: [0],
   },
 });
@@ -73,7 +82,7 @@ const onSubmit = form.handleSubmit(async (values) => {
       description: `Filial cadastrada com sucesso!`,
     });
     setTimeout(() => {
-      navigateTo('/admin/branches/active');
+      navigateTo('/corporative/branches/active');
     }, 1000);
   } else {
     if (result.statusCode === 409) {
@@ -105,7 +114,9 @@ const onSubmit = form.handleSubmit(async (values) => {
       <section class="py-6 bg-zinc-200 rounded-md">
         <div class="flex flex-col gap-10">
           <BranchForm
-            :editMode="false"
+            :editMode="true"
+            :internalUsage="true"
+            :contractId="contractId"
             :loading="isLoadingAddress"
             v-model="ccAreas"
             :disabledFields="!!form.values.contract"
@@ -123,13 +134,14 @@ const onSubmit = form.handleSubmit(async (values) => {
         <Button
           type="button"
           variant="ghost"
-          @click="navigateTo('/admin/branches/active')"
+          @click="navigateTo('/corporative/branches/active')"
         >
           Cancelar
         </Button>
       </div>
     </form>
   </main>
+  <pre>{{ form.errors }}</pre>
 </template>
 
 <style scoped></style>

@@ -110,7 +110,7 @@ const finalColumns = [
         <Building2 class="w-6 h-6" />
         Gerenciar Filiais Ativas
       </h1>
-      <Button @click="navigateTo('/admin/branches/new')">
+      <Button @click="navigateTo('/corporative/branches/new')">
         <Plus class="w-4 h-4" /> Nova Filial
       </Button>
     </section>

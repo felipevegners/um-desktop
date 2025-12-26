@@ -32,7 +32,7 @@ const { contract, isLoading } = storeToRefs(contractsStore);
 
 const accountsStore = useAccountStore();
 const { getUsersAccountsByContractIdAction, updateUserAccountAction } = accountsStore;
-const { accounts } = storeToRefs(accountsStore) as { accounts: Ref<Account[]> };
+const { accounts, inactiveAccounts } = storeToRefs(accountsStore);
 
 const branchesStore = useBranchesStore();
 const { updateBranchAction } = branchesStore;
@@ -77,7 +77,7 @@ initBranchBudgets();
 
 const fetchContractUsersData = async () => {
   await getUsersAccountsByContractIdAction(contractId);
-  // accounts.value = accounts.value.filter((acc: Account) => acc.role !== 'master-manager');
+  accounts.value.push(...(inactiveAccounts.value || []));
 };
 
 await fetchContractUsersData();

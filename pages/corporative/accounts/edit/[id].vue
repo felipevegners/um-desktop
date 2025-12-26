@@ -24,6 +24,7 @@ defineOptions({
 
 const route = useRoute();
 const { toast } = useToast();
+const { data } = useAuth();
 
 const accountSituation = ref<boolean>(false);
 const loadingDelete = ref<boolean>(false);
@@ -183,7 +184,7 @@ const onSubmit = form.handleSubmit(async (values) => {
       class: 'bg-green-600 border-0 text-white text-2xl',
       description: 'Conta de Usuário alterada com sucesso!',
     });
-    navigateTo('/admin/accounts/active');
+    navigateTo('/corporative/accounts/active');
   }
 });
 </script>
@@ -224,7 +225,7 @@ const onSubmit = form.handleSubmit(async (values) => {
       <form @submit="onSubmit" @keydown.enter.prevent="true">
         <Card class="bg-zinc-200">
           <CardHeader class="gap-6">
-            <div class="p-4 flex items-center justify-between">
+            <div class="p-4 flex items-start justify-between">
               <div class="md:max-w-[250px] w-full">
                 <h3 class="mb-4 text-lg font-bold">Tipo de acesso</h3>
                 <FormField v-slot="{ componentField }" name="role">
@@ -240,8 +241,16 @@ const onSubmit = form.handleSubmit(async (values) => {
                 </FormField>
               </div>
               <div>
-                <h4 class="mb-4 font-bold">Status</h4>
-                <FormField v-slot="{ componentField }" name="status">
+                <h4 class="mb-2 font-bold">Status</h4>
+                <span
+                  :class="`mx-auto px-2 flex items-center justify-center h-6 rounded-full text-white text-xs w-fit ${
+                    account?.status === 'validated' ? 'bg-green-600' : 'bg-amber-500'
+                  }`"
+                >
+                  {{ account?.status === 'validated' ? 'Validado' : 'Pendente' }}
+                </span>
+
+                <!-- <FormField v-slot="{ componentField }" name="status">
                   <FormItem>
                     <FormControl>
                       <FormSelect
@@ -254,7 +263,7 @@ const onSubmit = form.handleSubmit(async (values) => {
                       />
                     </FormControl>
                   </FormItem>
-                </FormField>
+                </FormField> -->
               </div>
             </div>
           </CardHeader>
@@ -267,7 +276,16 @@ const onSubmit = form.handleSubmit(async (values) => {
                 <p>Contrato</p>
                 <h3 class="text-lg font-bold">{{ contractName }}</h3>
               </div>
-              <h3 class="mb-4 text-lg font-bold">Dados do usuário</h3>
+              <h3 class="mb-4 text-lg font-bold">
+                Dados do usuário
+                <span
+                  v-if="data?.user?.name === account?.username"
+                  class="ml-2 py-0.5 px-1.5 rounded-md bg-blue-600 text-white text-xs"
+                >
+                  Sua conta
+                </span>
+              </h3>
+
               <div class="md:grid md:grid-cols-4 gap-6">
                 <FormField v-slot="{ componentField }" name="userName">
                   <FormItem>

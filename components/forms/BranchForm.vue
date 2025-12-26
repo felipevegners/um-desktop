@@ -42,6 +42,7 @@ const props = defineProps<{
   actualBranchBudget?: any;
   branchData?: any;
   form?: any;
+  internalUsage?: boolean;
 }>();
 
 const ccAreasModel = defineModel<any>({
@@ -54,7 +55,7 @@ const showBudgetControl = ref<boolean>(false);
 const contractRemainBudget = ref(0);
 const calculatedBudget = ref(0);
 const contractMainBudget = ref(0);
-const selectedContract = ref<any>(null);
+const selectedContract = ref<any>({});
 const branchManagerUsersList = ref<any>([]);
 const hasManager = ref<boolean>(false);
 const showNewManagerSelect = ref<boolean>(false);
@@ -88,6 +89,10 @@ onMounted(async () => {
     generateManagerList();
   } else {
     hasManager.value = true;
+  }
+  if (props.internalUsage || props.editMode) {
+    compileBudget(props.contractId as string);
+    generateManagerList();
   }
 });
 
@@ -138,11 +143,16 @@ const calculateBudgetRest = (value: any) => {
 const compileBudget = (value: string) => {
   if (props.editMode) {
     showBudgetControl.value = true;
+    selectedContract.value = contract?.value;
     const remainBudget = contract?.value.branches.reduce(
       (acc: any, curr: any) => acc - parseFloat(curr.budget),
       contract?.value.mainBudget,
     );
-    contractRemainBudget.value = remainBudget + parseFloat(props.actualBranchBudget);
+    if (!props.actualBranchBudget) {
+      contractRemainBudget.value = remainBudget;
+    } else {
+      contractRemainBudget.value = remainBudget + parseFloat(props.actualBranchBudget);
+    }
     calculatedBudget.value = remainBudget;
     contractMainBudget.value = parseFloat(contract?.value.mainBudget);
   } else {
@@ -209,9 +219,18 @@ const handleCancelChangeManager = () => {
 </script>
 <template>
   <section class="mb-6 px-6 flex items-center justify-between">
-    <div class="md:max-w-[350px]">
-      <h3 v-if="editMode" class="mb-4 text-lg font-bold">1. Contrato vinculado</h3>
-      <h3 v-else class="mb-4 text-lg font-bold">1. Selecione o Contrato a vincular</h3>
+    <div v-if="editMode" class="w-full">
+      <h3 class="mb-4 text-lg font-bold">1. Contrato vinculado</h3>
+      <h1
+        class="p-4 font-bold bg-white text-black text-2xl border border-zinc-950 rounded-md w-full"
+      >
+        {{
+          `${selectedContract && selectedContract?.customerName} - ${selectedContract && selectedContract?.customer?.document}`
+        }}
+      </h1>
+    </div>
+    <div v-else class="md:max-w-[350px]">
+      <h3 class="mb-4 text-lg font-bold">1. Selecione o Contrato a vincular</h3>
       <FormField v-slot="{ componentField }" name="contract">
         <FormItem>
           <FormLabel v-if="!editMode">Contrato</FormLabel>
@@ -325,7 +344,7 @@ const handleCancelChangeManager = () => {
     <div v-if="editMode" class="mb-4 flex flex-row items-center gap-3">
       <h3 class="text-lg font-bold">3. Dados do Gestor da Filial</h3>
       <Button
-        v-if="branchData?.manager !== null && !showNewManagerSelect"
+        v-if="branchData?.manager !== null && !showNewManagerSelect && !internalUsage"
         type="button"
         variant="destructive"
         class="my-4"
@@ -337,9 +356,8 @@ const handleCancelChangeManager = () => {
     </div>
 
     <h3 v-if="!editMode" class="mb-4 text-lg font-bold">3. Gestor da Filial</h3>
-
     <div
-      v-if="!showNewManagerSelect && branchData?.manager !== null"
+      v-if="!showNewManagerSelect && branchData?.manager !== null && !internalUsage"
       class="mb-4 grid grid-cols-4 gap-6"
     >
       <FormField v-slot="{ componentField }" name="branchManagerName">
@@ -414,7 +432,7 @@ const handleCancelChangeManager = () => {
     <div v-else class="col-span-4 p-6 border border-zinc-900 rounded-md">
       <!-- se não tiver gestor atribuido -->
       <div
-        v-if="branchData?.manager === null || showNewManagerSelect"
+        v-if="branchData?.manager === null || showNewManagerSelect || internalUsage"
         class="flex flex-col items-start gap-6"
       >
         <div
@@ -467,7 +485,7 @@ const handleCancelChangeManager = () => {
       </div>
 
       <div
-        v-if="!showNewManagerSelect && branchData?.manager !== null"
+        v-if="!showNewManagerSelect && branchData?.manager !== null && !internalUsage"
         class="mb-4 grid grid-cols-4 gap-6"
       >
         <FormField v-slot="{ componentField }" name="branchManagerName">
@@ -540,7 +558,12 @@ const handleCancelChangeManager = () => {
         </div>
       </div>
       <Button
-        v-if="editMode && branchData?.manager !== null && !showNewManagerSelect"
+        v-if="
+          editMode &&
+          branchData?.manager !== null &&
+          !showNewManagerSelect &&
+          !internalUsage
+        "
         type="button"
         class="my-4"
         @click="
@@ -571,7 +594,7 @@ const handleCancelChangeManager = () => {
             <Slider
               :model-value="componentField.modelValue"
               :default-value="[0]"
-              :max="contractMainBudget"
+              :max="internalUsage && editMode ? contractRemainBudget : contractMainBudget"
               :min="0"
               :step="1000"
               :name="componentField.name"
@@ -646,7 +669,7 @@ const handleCancelChangeManager = () => {
         <div class="py-3 flex items-center">
           <div class="mt-2 flex gap-2 items-center">
             <Trash
-              v-if="index > 0"
+              v-if="Number(index) > 0"
               @click.prevent="removeRow(index)"
               class="w-5 h-5 text-zinc-800 cursor-pointer hover:text-red-600"
             />
