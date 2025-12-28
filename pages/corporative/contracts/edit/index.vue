@@ -397,12 +397,7 @@ const onSubmit = form.handleSubmit(async (values) => {
           </Accordion>
         </Card>
         <Card class="bg-zinc-200">
-          <Accordion
-            type="single"
-            class="w-full flex flex-col gap-6"
-            collapsible
-            default-value="1"
-          >
+          <Accordion type="single" class="w-full flex flex-col gap-6" collapsible>
             <AccordionItem value="1">
               <AccordionTrigger class="px-6 hover:no-underline">
                 <h2 class="flex items-center gap-2 text-2xl font-bold">
@@ -458,12 +453,7 @@ const onSubmit = form.handleSubmit(async (values) => {
           </Accordion>
         </Card>
         <Card class="bg-zinc-200" id="budget">
-          <Accordion
-            type="single"
-            class="w-full flex flex-col gap-6"
-            collapsible
-            default-value="3"
-          >
+          <Accordion type="single" class="w-full flex flex-col gap-6" collapsible>
             <AccordionItem value="3">
               <AccordionTrigger class="px-6 hover:no-underline">
                 <h2 class="flex items-center gap-2 text-2xl font-bold">

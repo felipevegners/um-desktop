@@ -73,6 +73,7 @@ const onSubmit = form.handleSubmit(async (values) => {
     areas: [...ccAreas],
     branchBudget: values?.branchBudget?.toString(),
     usedBudget: '0',
+    allowedProducts: [],
   };
   const result = await createBranchAction(newBranchData);
 
