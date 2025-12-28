@@ -63,6 +63,7 @@ const onSubmit = form.handleSubmit(async (values) => {
     ...values,
     areas: [...ccAreas],
     branchBudget: values?.branchBudget?.toString(),
+    usedBudget: '0',
   };
   const result = await createBranchAction(newBranchData);
 

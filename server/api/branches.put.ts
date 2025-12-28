@@ -20,11 +20,14 @@ export default defineEventHandler(async (event) => {
     phoneExtension,
     managerId,
     branchBudget,
+    usedBudget,
     areas,
     status,
     enabled,
     allowedProducts,
   } = payload;
+
+  console.log('--->', managerId);
   try {
     await prisma.branches.update({
       where: { id: branchId },
@@ -45,6 +48,7 @@ export default defineEventHandler(async (event) => {
         phone,
         phoneExtension,
         budget: branchBudget,
+        usedBudget,
         areas,
         status,
         enabled,
@@ -56,7 +60,7 @@ export default defineEventHandler(async (event) => {
         },
       },
       include: {
-        manager: true,
+        manager: managerId ? true : false,
       },
     });
 
@@ -88,11 +92,16 @@ export default defineEventHandler(async (event) => {
     });
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
+      if (error.code === 'P2025') {
+        handlePrismaError(error, ErrorMessages.Branch.update.notFound);
+      }
       if (error.code === 'P2002') {
-        console.log('Error Prisma -> ', error.message);
-        throw error;
+        handlePrismaError(error, ErrorMessages.Branch.update.duplicate);
       }
     }
-    throw error;
+    if (error instanceof Prisma.PrismaClientValidationError) {
+      handlePrismaError(error, ErrorMessages.Branch.update.validation);
+    }
+    handlePrismaError(error, ErrorMessages.Branch.update.generic);
   }
 });

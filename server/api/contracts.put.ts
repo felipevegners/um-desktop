@@ -79,11 +79,17 @@ export default defineEventHandler(async (event) => {
       });
     } catch (error) {
       if (error instanceof Prisma.PrismaClientKnownRequestError) {
+        if (error.code === 'P2025') {
+          handlePrismaError(error, ErrorMessages.Contract.update.notFound);
+        }
         if (error.code === 'P2002') {
-          console.log('Error Prisma -> ', error.message);
+          handlePrismaError(error, ErrorMessages.Contract.update.duplicate);
         }
       }
-      throw error;
+      if (error instanceof Prisma.PrismaClientValidationError) {
+        handlePrismaError(error, ErrorMessages.Contract.update.validation);
+      }
+      handlePrismaError(error, ErrorMessages.Contract.update.generic);
     }
   }
 });

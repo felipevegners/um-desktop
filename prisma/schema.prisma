@@ -86,6 +86,7 @@ model Branches {
   managerId       String?    @db.ObjectId
   managerInfo     Json?
   budget          String?
+  usedBudget      String?
   allowedProducts Json?      @map("allowedProducts")
   status          String?
   enabled         Boolean?

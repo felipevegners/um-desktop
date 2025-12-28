@@ -54,6 +54,11 @@ const getRideMonthData = computed(() => {
   return result;
 });
 
+const calculateBranchRemainingBudget = (branch: any) => {
+  const total = branch.budget - branch.usedBudget;
+  return currencyFormat(total.toString());
+};
+
 definePageMeta({
   layout: 'admin',
   middleware: 'sidebase-auth',
@@ -62,6 +67,13 @@ definePageMeta({
 const userName = computed(() => {
   //@ts-expect-error
   if (data) return data?.value.user?.name;
+});
+
+const contractRemainBudget = computed(() => {
+  if (contract?.value) {
+    return contract?.value.mainBudget - contract.value.usedBudget;
+  }
+  return 0;
 });
 </script>
 
@@ -139,24 +151,59 @@ const userName = computed(() => {
         </p>
         <DashBarChart :data="getRideMonthData" />
       </div>
-      <div class="p-6 flex flex-col rounded-xl bg-muted/90">
-        <p class="mb-6 font-bold text-lg">
+      <div class="p-6 flex flex-col rounded-xl bg-muted/90 gap-6">
+        <p class="font-bold text-lg">
           <Coins class="mb-2" :size="32" />
           Budget
         </p>
         <div v-if="isLoading" class="flex items-center justify-center flex-1">
           <LoaderCircle class="text-zinc-950 animate-spin" :size="48" />
         </div>
-        <div v-else class="flex flex-col gap-10">
+        <div v-else class="flex flex-col">
           <div>
             <small class="text-muted-foreground">Budget total / mensal</small>
             <h1 class="text-5xl font-bold">{{ currencyFormat(contract?.mainBudget) }}</h1>
           </div>
-          <!-- <div>
-            <small class="text-muted-foreground">Budget filial A</small>
-            <h1 class="text-5xl font-bold">{{ currencyFormat(contract?.mainBudget) }}</h1>
-          </div> -->
+          <div>
+            <small class="text-muted-foreground">Budget disponível</small>
+            <h1
+              class="text-2xl font-bold"
+              :class="contract?.availableBudget > 0 ? 'text-green-600' : 'text-red-600'"
+            >
+              {{ currencyFormat(contract?.availableBudget) }}
+            </h1>
+          </div>
         </div>
+        <div v-for="branch in contract?.branches" :key="branch.id">
+          <div class="border border-zinc-950 rounded-lg bg-muted/80 p-4 mt-4 pt-1">
+            <small class="mb-6 font-bold"> {{ branch.fantasyName }}</small>
+            <div class="flex justify-between gap-2">
+              <div>
+                <small class="text-muted-foreground">Alocado</small>
+                <h1 class="text-xl font-bold">{{ currencyFormat(branch.budget) }}</h1>
+              </div>
+              <div>
+                <small class="text-muted-foreground">Utilizado</small>
+                <h1 class="text-xl font-bold">
+                  {{ currencyFormat(branch.usedBudget) }}
+                </h1>
+              </div>
+              <div>
+                <small class="text-muted-foreground">Restante</small>
+                <h1 class="text-xl font-bold text-amber-600">
+                  {{ calculateBranchRemainingBudget(branch) }}
+                </h1>
+              </div>
+            </div>
+          </div>
+        </div>
+        <Button
+          type="button"
+          class="mt-6 p-6 w-full"
+          @click="navigateTo({ path: '/corporative/contracts/edit/', hash: '#budget' })"
+        >
+          Gerenciar Budget
+        </Button>
       </div>
     </div>
   </div>

@@ -218,7 +218,6 @@ const schema = toTypedSchema(
 
 const form = useForm({
   validationSchema: schema,
-  keepValuesOnUnmount: true,
   initialValues: {
     document: contract?.value?.customer?.document,
     name: contract?.value?.customer?.name,
@@ -376,7 +375,10 @@ const onSubmit = form.handleSubmit(async (values) => {
           <Accordion type="single" class="w-full flex flex-col gap-6" collapsible>
             <AccordionItem value="0">
               <AccordionTrigger class="px-6 hover:no-underline">
-                <h2 class="text-2xl font-bold">1. Dados da Matriz</h2>
+                <h2 class="flex items-center gap-2 text-2xl font-bold">
+                  <Edit />
+                  Dados da Matriz
+                </h2>
               </AccordionTrigger>
               <AccordionContent>
                 <CardContent>
@@ -395,10 +397,18 @@ const onSubmit = form.handleSubmit(async (values) => {
           </Accordion>
         </Card>
         <Card class="bg-zinc-200">
-          <Accordion type="single" class="w-full flex flex-col gap-6" collapsible>
+          <Accordion
+            type="single"
+            class="w-full flex flex-col gap-6"
+            collapsible
+            default-value="1"
+          >
             <AccordionItem value="1">
               <AccordionTrigger class="px-6 hover:no-underline">
-                <h2 class="text-2xl font-bold">2. Gestor Master do Contrato</h2>
+                <h2 class="flex items-center gap-2 text-2xl font-bold">
+                  <Edit />
+                  Gestor Master do Contrato
+                </h2>
               </AccordionTrigger>
               <AccordionContent>
                 <CardContent>
@@ -422,7 +432,10 @@ const onSubmit = form.handleSubmit(async (values) => {
           <Accordion type="single" class="w-full flex flex-col gap-6" collapsible>
             <AccordionItem value="2">
               <AccordionTrigger class="px-6 hover:no-underline">
-                <h2 class="text-2xl font-bold">3. Produtos contratados</h2>
+                <h2 class="flex items-center gap-2 text-2xl font-bold">
+                  <Edit />
+                  Produtos contratados
+                </h2>
               </AccordionTrigger>
               <AccordionContent>
                 <CardContent>
@@ -432,7 +445,7 @@ const onSubmit = form.handleSubmit(async (values) => {
                   </h5>
                   <ul class="space-y-6">
                     <ContractProductEdit
-                      v-for="product in contract.products"
+                      v-for="product in contract?.products"
                       :key="product.id"
                       :contract="contract"
                       :product="product"
@@ -444,11 +457,19 @@ const onSubmit = form.handleSubmit(async (values) => {
             </AccordionItem>
           </Accordion>
         </Card>
-        <Card class="bg-zinc-200">
-          <Accordion type="single" class="w-full flex flex-col gap-6" collapsible>
+        <Card class="bg-zinc-200" id="budget">
+          <Accordion
+            type="single"
+            class="w-full flex flex-col gap-6"
+            collapsible
+            default-value="3"
+          >
             <AccordionItem value="3">
               <AccordionTrigger class="px-6 hover:no-underline">
-                <h2 class="text-2xl font-bold">4. Budget</h2>
+                <h2 class="flex items-center gap-2 text-2xl font-bold">
+                  <Edit />
+                  Budget
+                </h2>
               </AccordionTrigger>
               <AccordionContent>
                 <CardContent>
@@ -568,7 +589,10 @@ const onSubmit = form.handleSubmit(async (values) => {
           <Accordion type="single" class="w-full flex flex-col gap-6" collapsible>
             <AccordionItem value="4">
               <AccordionTrigger class="px-6 hover:no-underline">
-                <h2 class="text-2xl font-bold">5. Usuários ativos</h2>
+                <h2 class="flex items-center gap-2 text-2xl font-bold">
+                  <Edit />
+                  Usuários ativos
+                </h2>
               </AccordionTrigger>
               <AccordionContent>
                 <CardContent>

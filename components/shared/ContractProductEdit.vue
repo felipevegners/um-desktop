@@ -81,11 +81,11 @@ defineProps<{
       </h5>
       <section class="flex flex-row gap-6">
         <ul class="my-6 space-y-4">
-          <li v-for="branch in contract.branches" class="flex items-center gap-3">
+          <li v-for="branch in contract?.branches" class="flex items-center gap-3">
             <Checkbox
               @update:checked="handleAllowProduct({ branch, product })"
               :checked="
-                !!branch.allowedProducts.find((item: any) => item.id === product.id)
+                !!branch?.allowedProducts?.find((item: any) => item.id === product.id)
               "
               class="data-[state=checked]:border-zinc-950 data-[state=checked]:bg-zinc-950 data-[state=checked]:text-white dark:data-[state=checked]:border-blue-700 dark:data-[state=checked]:bg-blue-700 w-6 h-6"
             />

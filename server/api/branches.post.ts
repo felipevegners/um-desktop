@@ -25,6 +25,7 @@ export default defineEventHandler(async (event) => {
     branchManagerDepartment,
     branchManagerEmail,
     branchBudget,
+    usedBudget,
     password,
     areas,
   } = payload;
@@ -48,6 +49,7 @@ export default defineEventHandler(async (event) => {
         phone,
         phoneExtension,
         budget: branchBudget,
+        usedBudget: usedBudget,
         areas,
         status: 'pending',
         enabled: true,
