@@ -96,6 +96,10 @@ onBeforeMount(async () => {
       ['EASY', 'PREMIUM', 'GOLD', 'BLINDADO', 'VAN'].indexOf(a.name) -
       ['EASY', 'PREMIUM', 'GOLD', 'BLINDADO', 'VAN'].indexOf(b.name),
   );
+
+  availableProducts.value = availableProducts.value.filter(
+    (product: Product) => product.type !== 'addon',
+  );
 });
 
 const isCorpAccount = computed(() => {
@@ -251,11 +255,12 @@ const decodePolyline = (polyline: string) => {
   ];
 };
 
-const calculatedTravel = ref({
-  travelDistance: '',
-  travelTime: '',
-  travelPrice: '',
-  arrivalTime: '',
+const calculatedEstimates = ref({
+  estimatedDistance: '0',
+  estimatedDuration: 0,
+  estimatedPrice: '',
+  // Ride Price + Addons
+  estimatedTotalPrice: '',
 });
 
 const getRideCalculation = async () => {
@@ -281,21 +286,21 @@ const getRideCalculation = async () => {
 
     if (selectedProduct.value.type === 'contract') {
       const ridePrice = parseFloat(basePrice.toFixed(2));
-      calculatedTravel.value.travelPrice = ridePrice.toFixed(2).toString();
+      calculatedEstimates.value.estimatedPrice = ridePrice.toFixed(2).toString();
       showContractProductAlert.value = true;
     } else {
       const ridePrice =
         basePrice +
         parseFloat(distance.toFixed(2)) * parseFloat(selectedProduct?.value.kmPrice) +
         duration * parseFloat(selectedProduct?.value.minutePrice);
-      calculatedTravel.value.travelPrice = ridePrice.toFixed(2).toString();
+      calculatedEstimates.value.estimatedPrice = ridePrice.toFixed(2).toString();
     }
 
-    calculatedTravel.value.travelDistance = convertMetersToDistance(
+    calculatedEstimates.value.estimatedDistance = convertMetersToDistance(
       routeCalculation[0].distanceMeters,
     );
     //@ts-ignore
-    calculatedTravel.value.travelTime = convertSecondsToTime(duration);
+    calculatedEstimates.value.travelTime = convertSecondsToTime(duration);
   } catch (error) {
     toast({
       title: 'Opss!',
@@ -444,12 +449,13 @@ const showPaymentSection = async () => {
 
     if (paymentMethod.value === 'corporative' && form.values.area && form.values.branch) {
       onSubmit();
-    } else {
-      form.setErrors({
-        area: 'Obrigatório!',
-        branch: 'Obrigatório!',
-      });
     }
+    // else {
+    //   form.setErrors({
+    //     area: 'Obrigatório!',
+    //     branch: 'Obrigatório!',
+    //   });
+    // }
   } else {
     const targetElement = document.getElementById('ride-info');
     targetElement?.scrollIntoView({
@@ -467,7 +473,7 @@ const showPaymentSection = async () => {
 const onSubmit = form.handleSubmit(async (values) => {
   const ridePayload = {
     code: rideCode.value,
-    price: calculatedTravel.value.travelPrice,
+    price: calculatedEstimates.value.estimatedPrice,
     billing: {
       paymentMethod: paymentMethod.value,
       paymentUrl: paymentCheckouUrl.value,
@@ -476,7 +482,7 @@ const onSubmit = form.handleSubmit(async (values) => {
         branch: values?.branch || '-',
         area: values?.area || '-',
       },
-      ammount: calculatedTravel.value.travelPrice,
+      ammount: calculatedEstimates.value.estimatedPrice,
       status: paymentMethod.value === 'corporative' ? 'invoice' : paymentStatus.value,
       installments: 0,
     },
@@ -511,8 +517,8 @@ const onSubmit = form.handleSubmit(async (values) => {
         lng: destinationCoords.value.lng,
       },
       stops: waypointLocationDetails.value || [],
-      distance: calculatedTravel.value.travelDistance,
-      duration: calculatedTravel.value.travelTime,
+      distance: calculatedEstimates.value.estimatedDistance,
+      duration: calculatedEstimates.value.estimatedDuration,
       polyLineCoors: routePolyLine.value,
     },
     status: 'created',
@@ -776,7 +782,9 @@ const handleCieloCheckoutCreated = (result: {
                     >
                       <FormField name="waypoint">
                         <FormItem class="w-full">
-                          <FormLabel class="mt-0">Parada {{ index + 1 }}</FormLabel>
+                          <FormLabel class="mt-0"
+                            >Parada {{ Number(index) + 1 }}</FormLabel
+                          >
                           <FormControl>
                             <div class="flex items-center gap-2">
                               <SquareSquare />
@@ -788,7 +796,7 @@ const handleCieloCheckoutCreated = (result: {
                               />
                               <Button
                                 type="button"
-                                @click.prevent="removeWaypointRow(index)"
+                                @click.prevent="removeWaypointRow(Number(index))"
                                 size="icon"
                               >
                                 <X />
@@ -917,7 +925,7 @@ const handleCieloCheckoutCreated = (result: {
                     v-if="waypointLocationDetails"
                     v-for="(waypoint, index) in waypointLocationDetails"
                   >
-                    <small class="font-bold">Parada {{ index + 1 }}</small>
+                    <small class="font-bold">Parada {{ Number(index) + 1 }}</small>
                     <p>{{ waypoint.address }}</p>
                   </div>
                   <div>
@@ -942,11 +950,11 @@ const handleCieloCheckoutCreated = (result: {
                     </div>
                     <div>
                       <small class="font-bold">Distância</small>
-                      <p>{{ calculatedTravel.travelDistance }}</p>
+                      <p>{{ calculatedEstimates.estimatedDistance }}</p>
                     </div>
                     <div>
                       <small class="font-bold">Duração</small>
-                      <p>{{ calculatedTravel.travelTime }}</p>
+                      <p>{{ calculatedEstimates.estimatedDuration }}</p>
                     </div>
                   </div>
                   <div
@@ -982,7 +990,7 @@ const handleCieloCheckoutCreated = (result: {
                       {{ showContractProductAlert ? 'Total Estimado' : 'Total' }}
                     </p>
                     <p class="font-bold text-3xl">
-                      {{ currencyFormat(calculatedTravel?.travelPrice) }}
+                      {{ currencyFormat(calculatedEstimates?.estimatedPrice) }}
                     </p>
                     <small v-if="showContractProductAlert" class="text-muted-foreground"
                       >* O valor total desse serviço será definido pelo motorista ao
@@ -1057,7 +1065,7 @@ const handleCieloCheckoutCreated = (result: {
                   </ul>
                 </div>
                 <Button
-                  v-if="paymentMethod && calculatedTravel.travelPrice"
+                  v-if="paymentMethod && calculatedEstimates.estimatedPrice"
                   type="button"
                   class="py-8 w-full uppercase"
                   @click.prevent="showPaymentSection"
@@ -1084,7 +1092,7 @@ const handleCieloCheckoutCreated = (result: {
         <DialogTitle class="mb-6">Efetuar Pagamento - Crédito À Vista</DialogTitle>
       </DialogHeader>
       <StripeCheckout
-        :amount="calculatedTravel?.travelPrice || 1.0"
+        :amount="calculatedEstimates?.estimatedPrice || 1.0"
         currency="brl"
         :metadata="{ id: userData.id, name: userData.name }"
         @paymentComplete="handlePaymentComplete"
@@ -1105,7 +1113,7 @@ const handleCieloCheckoutCreated = (result: {
         :rideData="{
           code: rideCode,
           selectedProduct: selectedProduct,
-          calculatedTravel: calculatedTravel,
+          calculatedEstimates: calculatedEstimates,
           userData: userData,
           originAddress: originLocationDetails.address,
           destinationAddress: destinationLocationDetails.address,

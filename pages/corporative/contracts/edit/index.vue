@@ -10,7 +10,19 @@ import ContractUserCard from '@/components/shared/ContractUserCard.vue';
 import CurrencyInput from '@/components/shared/CurrencyInput.vue';
 import { useToast } from '@/components/ui/toast';
 import { toTypedSchema } from '@vee-validate/zod';
-import { Download, Edit, File, FileText, LoaderCircle, Save, X } from 'lucide-vue-next';
+import {
+  Car,
+  Download,
+  File,
+  FileText,
+  HandCoins,
+  Handshake,
+  LoaderCircle,
+  Save,
+  UserCog,
+  Users,
+  X,
+} from 'lucide-vue-next';
 import { useForm } from 'vee-validate';
 import * as z from 'zod';
 import ContractProductEdit from '~/components/shared/ContractProductEdit.vue';
@@ -25,6 +37,7 @@ const { data } = useAuth();
 //@ts-expect-error
 const { contractId } = data?.value?.user?.contract;
 const { toast } = useToast();
+const route = useRoute();
 
 const contractsStore = useContractsStore();
 const { getContractByIdAction, updateContractAction } = contractsStore;
@@ -45,6 +58,10 @@ const pendingBranchValues = reactive({} as Record<string, any>);
 const editingBranches = reactive({} as Record<string, boolean>);
 const isClient = ref(false);
 const loadingUpdate = ref(false);
+const showAccordion = ref<string | null>(route.hash ? route.hash.replace('#', '') : null);
+
+// ref to the CurrencyInput component to access exposed `unmaskedValue`
+const mainBudgetInput = ref<any>(null);
 
 onMounted(() => {
   isClient.value = true;
@@ -246,6 +263,27 @@ const form = useForm({
   },
 });
 
+// keep contractRemainBudget in sync when main budget changes
+watch(
+  () => mainBudgetInput?.value?.unmaskedValue?.value ?? form.values.mainBudget,
+  (newVal) => {
+    const raw = newVal ?? 0;
+    const rawStr = typeof raw === 'number' ? String(raw) : String(raw);
+    const numericMain =
+      (rawStr.replace(/\./g, '').replace(',', '')
+        ? Number(rawStr.replace(/\./g, '').replace(',', '')) / 100
+        : 0) || 0;
+
+    const sum = Object.values(branchBudgetValues).reduce((s, v) => {
+      const val = Array.isArray(v) ? Number(v[0] || 0) : Number(v || 0);
+      return s + (isNaN(val) ? 0 : val);
+    }, 0);
+
+    contractRemainBudget.value = numericMain - sum;
+    calculatedBudget.value = contractRemainBudget.value;
+  },
+);
+
 const onSubmit = form.handleSubmit(async (values) => {
   loadingUpdate.value = true;
   const payloadIds = {
@@ -276,9 +314,15 @@ const onSubmit = form.handleSubmit(async (values) => {
 
   // CONTRACT PAYLOAD
   const { id, customerId, managerId, managerName, ...restContract } = contract?.value;
+  // Prefer the unmasked value exposed by the CurrencyInput component when available
+  const rawMainBudget =
+    mainBudgetInput?.value?.unmaskedValue?.value ?? values?.mainBudget ?? '';
+  const rawMainBudgetStr =
+    typeof rawMainBudget === 'number' ? String(rawMainBudget) : rawMainBudget;
   const contractData = {
     ...restContract,
     availableBudget: contractRemainBudget.value.toString(),
+    mainBudget: (rawMainBudgetStr.replace('.', '').replace(',', '') / 100).toString(),
   };
 
   try {
@@ -323,7 +367,6 @@ const onSubmit = form.handleSubmit(async (values) => {
     });
     loadingUpdate.value = false;
     window.location.reload();
-    // navigateTo('/corporative/contracts/edit');
   } catch (error) {
     loadingUpdate.value = false;
     toast({
@@ -341,7 +384,7 @@ const onSubmit = form.handleSubmit(async (values) => {
     </header>
     <section class="mb-10 flex items-center justify-between">
       <h1 class="flex items-center gap-2 text-2xl font-bold">
-        <FileText class="w-6 h-6" />
+        <Handshake />
         Gerenciar Contrato
       </h1>
       <div class="flex gap-10 items-center">
@@ -371,12 +414,17 @@ const onSubmit = form.handleSubmit(async (values) => {
     </section>
     <form v-else @submit.prevent="onSubmit" @keydown.enter.prevent="true">
       <section class="space-y-6">
-        <Card class="bg-zinc-200">
-          <Accordion type="single" class="w-full flex flex-col gap-6" collapsible>
-            <AccordionItem value="0">
+        <Card class="bg-zinc-200" id="customer">
+          <Accordion
+            type="single"
+            class="w-full flex flex-col gap-6"
+            collapsible
+            :default-value="showAccordion || undefined"
+          >
+            <AccordionItem value="customer">
               <AccordionTrigger class="px-6 hover:no-underline">
                 <h2 class="flex items-center gap-2 text-2xl font-bold">
-                  <Edit />
+                  <FileText />
                   Dados da Matriz
                 </h2>
               </AccordionTrigger>
@@ -396,12 +444,17 @@ const onSubmit = form.handleSubmit(async (values) => {
             </AccordionItem>
           </Accordion>
         </Card>
-        <Card class="bg-zinc-200">
-          <Accordion type="single" class="w-full flex flex-col gap-6" collapsible>
-            <AccordionItem value="1">
+        <Card class="bg-zinc-200" id="master-manager">
+          <Accordion
+            type="single"
+            class="w-full flex flex-col gap-6"
+            collapsible
+            :default-value="showAccordion || undefined"
+          >
+            <AccordionItem value="master-manager">
               <AccordionTrigger class="px-6 hover:no-underline">
                 <h2 class="flex items-center gap-2 text-2xl font-bold">
-                  <Edit />
+                  <UserCog />
                   Gestor Master do Contrato
                 </h2>
               </AccordionTrigger>
@@ -423,12 +476,17 @@ const onSubmit = form.handleSubmit(async (values) => {
             </AccordionItem>
           </Accordion>
         </Card>
-        <Card class="bg-zinc-200">
-          <Accordion type="single" class="w-full flex flex-col gap-6" collapsible>
-            <AccordionItem value="2">
+        <Card class="bg-zinc-200" id="products">
+          <Accordion
+            type="single"
+            class="w-full flex flex-col gap-6"
+            collapsible
+            :default-value="showAccordion || undefined"
+          >
+            <AccordionItem value="products">
               <AccordionTrigger class="px-6 hover:no-underline">
                 <h2 class="flex items-center gap-2 text-2xl font-bold">
-                  <Edit />
+                  <Car :size="28" />
                   Produtos contratados
                 </h2>
               </AccordionTrigger>
@@ -453,11 +511,16 @@ const onSubmit = form.handleSubmit(async (values) => {
           </Accordion>
         </Card>
         <Card class="bg-zinc-200" id="budget">
-          <Accordion type="single" class="w-full flex flex-col gap-6" collapsible>
-            <AccordionItem value="3">
+          <Accordion
+            type="single"
+            class="w-full flex flex-col gap-6"
+            collapsible
+            :default-value="showAccordion || undefined"
+          >
+            <AccordionItem value="budget">
               <AccordionTrigger class="px-6 hover:no-underline">
                 <h2 class="flex items-center gap-2 text-2xl font-bold">
-                  <Edit />
+                  <HandCoins />
                   Budget
                 </h2>
               </AccordionTrigger>
@@ -472,6 +535,7 @@ const onSubmit = form.handleSubmit(async (values) => {
                       <FormItem class="max-w-[250px]">
                         <FormControl>
                           <CurrencyInput
+                            ref="mainBudgetInput"
                             :componentField="componentField"
                             label="Budget do Contrato"
                             :styles="'text-2xl p-6 pl-10 font-bold'"
@@ -547,7 +611,6 @@ const onSubmit = form.handleSubmit(async (values) => {
                               : [parseFloat(branch.budget) || 0]))
                           "
                         >
-                          <Edit />
                           Alterar
                         </Button>
                         <template v-else>
@@ -555,6 +618,7 @@ const onSubmit = form.handleSubmit(async (values) => {
                             size="icon"
                             @click.prevent="commitBranchBudget(branch.id)"
                             title="Salvar Budget"
+                            class="bg-blue-600 hover:bg-blue-700"
                           >
                             <Save />
                           </Button>
@@ -575,12 +639,17 @@ const onSubmit = form.handleSubmit(async (values) => {
             </AccordionItem>
           </Accordion>
         </Card>
-        <Card class="bg-zinc-200">
-          <Accordion type="single" class="w-full flex flex-col gap-6" collapsible>
-            <AccordionItem value="4">
+        <Card class="bg-zinc-200" id="users">
+          <Accordion
+            type="single"
+            class="w-full flex flex-col gap-6"
+            collapsible
+            :default-value="showAccordion || undefined"
+          >
+            <AccordionItem value="users">
               <AccordionTrigger class="px-6 hover:no-underline">
                 <h2 class="flex items-center gap-2 text-2xl font-bold">
-                  <Edit />
+                  <Users />
                   Usuários ativos
                 </h2>
               </AccordionTrigger>

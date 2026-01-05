@@ -11,10 +11,10 @@ defineProps<{
   styles?: any;
 }>();
 
-// const maskedValue = ref('');
-// const unmaskedValue = ref('');
+const maskedValue = ref('');
+const unmaskedValue = ref('');
 
-// defineExpose({ unmaskedValue });
+defineExpose({ unmaskedValue });
 </script>
 <template>
   <FormItem class="relative">

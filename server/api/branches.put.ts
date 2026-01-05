@@ -27,7 +27,6 @@ export default defineEventHandler(async (event) => {
     allowedProducts,
   } = payload;
 
-  console.log('--->', managerId);
   try {
     await prisma.branches.update({
       where: { id: branchId },

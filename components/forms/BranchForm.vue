@@ -344,7 +344,7 @@ const handleCancelChangeManager = () => {
     <div v-if="editMode" class="mb-4 flex flex-row items-center gap-3">
       <h3 class="text-lg font-bold">3. Dados do Gestor da Filial</h3>
       <Button
-        v-if="branchData?.manager !== null && !showNewManagerSelect && !internalUsage"
+        v-if="branchData?.manager !== null && !showNewManagerSelect && internalUsage"
         type="button"
         variant="destructive"
         class="my-4"
@@ -357,7 +357,7 @@ const handleCancelChangeManager = () => {
 
     <h3 v-if="!editMode" class="mb-4 text-lg font-bold">3. Gestor da Filial</h3>
     <div
-      v-if="!showNewManagerSelect && branchData?.manager !== null && !internalUsage"
+      v-if="!showNewManagerSelect && branchData?.manager !== null && internalUsage"
       class="mb-4 grid grid-cols-4 gap-6"
     >
       <FormField v-slot="{ componentField }" name="branchManagerName">
@@ -421,7 +421,7 @@ const handleCancelChangeManager = () => {
           </Button>
         </div>
       </div>
-      <div class="col-span-3">
+      <div v-if="!editMode" class="col-span-3">
         <p class="flex gap-1 items-center text-muted-foreground text-sm">
           <Info :size="14" />
           O Gestor da Filial usará os dados acima para acessar a plataforma

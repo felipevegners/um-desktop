@@ -26,9 +26,10 @@ const contractId = data.value?.user.contract?.contractId;
 const role = data.value?.user?.role;
 
 const branchStore = useBranchesStore();
-const contractStore = useContractsStore();
 const { getBranchByIdAction, deleteBranchAction, updateBranchAction } = branchStore;
 const { branch, isLoadingData } = storeToRefs(branchStore);
+
+const contractStore = useContractsStore();
 const { getContractByIdAction } = contractStore;
 const { contract } = storeToRefs(contractStore);
 
