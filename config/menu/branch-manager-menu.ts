@@ -30,7 +30,7 @@ export const branchManagerMenu = {
       items: [
         {
           title: 'Abertos',
-          url: '/corporative/rides/active',
+          url: '/corporative/rides/open',
         },
         {
           title: 'Finalizados',
