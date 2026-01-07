@@ -15,6 +15,7 @@ import { useRidesStore } from '@/stores/rides.store';
 import { CalendarDate, DateFormatter } from '@internationalized/date';
 import {
   Banknote,
+  Calculator,
   CalendarDays,
   CarFront,
   Check,
@@ -349,8 +350,19 @@ const handleCalculateFinalPrice = async () => {
         ...ride?.value,
       },
     });
+    toast({
+      title: 'Tudo pronto!',
+      class: 'bg-green-600 border-0 text-white text-2xl hover:text-white',
+      description: `Atendimento recalculado com sucesso!`,
+    });
+    window.location.reload();
   } catch (error) {
     console.error('ERROR -> ', error);
+    toast({
+      title: 'Oops!',
+      description: `Ocorreu um erro ao recalcular o valor final do atendimento. Tente novamente.`,
+      variant: 'destructive',
+    });
   }
 };
 
@@ -378,19 +390,18 @@ const onSubmit = form.handleSubmit(async (values) => {
   };
   try {
     await updateRideAction(ridePayload);
-  } catch (error) {
-    toast({
-      title: 'Oops!',
-      description: `Ocorreu um erro ao editar o atendimento. Tente novamente.`,
-      variant: 'destructive',
-    });
-  } finally {
     toast({
       title: 'Tudo pronto!',
       class: 'bg-green-600 border-0 text-white text-2xl hover:text-white',
       description: `Atendimento alterado com sucesso!`,
     });
     navigateTo('/admin/rides/open');
+  } catch (error) {
+    toast({
+      title: 'Oops!',
+      description: `Ocorreu um erro ao editar o atendimento. Tente novamente.`,
+      variant: 'destructive',
+    });
   }
 });
 
@@ -421,14 +432,17 @@ const showRideControls = computed(() => {
       <BackLink />
     </header>
     <section class="mb-10 flex items-center justify-between">
-      <div class="flex items-center justify-center gap-4">
+      <div class="flex items-center justify-between gap-4">
         <h1 class="flex items-center gap-2 text-2xl font-bold">
           <CalendarDays class="w-6 h-6" />
           Editar Atendimento - #{{ ride?.code || '' }}
         </h1>
         <RideStatusFlag :ride-status="ride?.status" />
-        <!-- <Button @click="handleCalculateFinalPrice">Recalcular Atendimento</Button> -->
       </div>
+      <Button v-if="ride.status === 'completed'" @click="handleCalculateFinalPrice">
+        <Calculator />
+        Recalcular Atendimento
+      </Button>
       <div v-if="showRideControls" class="flex gap-6 items-center">
         <Button @click="handleCopyTrackLink" class="bg-blue-600 hover:bg-blue-700">
           <Link />
@@ -623,7 +637,7 @@ const showRideControls = computed(() => {
                       <div class="flex items-center gap-2">
                         <SquareSquare :size="16" />
                         <span class="text-muted-foreground text-sm">
-                          Parada {{ index + 1 }}
+                          Parada {{ Number(index) + 1 }}
                         </span>
                       </div>
                       <p class="font-bold text-lg">{{ stop.address }}</p>

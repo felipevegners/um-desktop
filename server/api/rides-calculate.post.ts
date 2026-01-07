@@ -31,7 +31,7 @@ export default defineEventHandler(async (event) => {
         },
       ];
       const time = new Date(ride?.progress?.finishedAt);
-      time.setHours(time.getHours() + 1);
+      time.setHours(time.getHours() + 3);
 
       try {
         const routeCalculation = await getRideRoutesService({
@@ -58,7 +58,7 @@ export default defineEventHandler(async (event) => {
         const finalDurationPrice = parseFloat(minutePrice) * (finalDuration / 60);
         const rideFinalPrice = finalKmPrice + finalDurationPrice;
 
-        const addonsPrice = ride.billing.addons.length
+        const addonsPrice = ride?.billing?.addons?.length
           ? ride.billing.addons.reduce((acc: any, curr: any) => {
               return acc + parseFloat(curr.basePrice);
             }, 0)
@@ -78,32 +78,45 @@ export default defineEventHandler(async (event) => {
         });
 
         const commissionAmmount = (rideFinalPrice * parseFloat(driverFeeTax.value)) / 100;
-
-        const commissionPayload = {
-          type: 'ride-commission',
-          ammount: commissionAmmount.toFixed(2).toString(),
-          status: 'created',
-          discounts: '0',
-          discountType: '-',
-          availableAt: '30',
-          driver: {
-            id: ride.driver.id,
-            name: ride.driver.name,
-          },
-          ride: {
-            id: ride.id,
-            code: ride.code,
-            date: new Date(ride.travel.date).toISOString(),
-          },
-        };
-
-        const rideDriverCommission = await prisma.commissions.create({
-          data: commissionPayload,
+        const allCommissions = await prisma.commissions.findMany();
+        const existingRideCommission = allCommissions.find((commission) => {
+          // @ts-ignore
+          return commission.ride?.id === ride.id;
         });
+
+        const rideDriverCommission = async () => {
+          if (!existingRideCommission) {
+            const commissionPayload = {
+              type: 'ride-commission',
+              ammount: commissionAmmount.toFixed(2).toString(),
+              status: 'created',
+              discounts: '0',
+              discountType: '-',
+              availableAt: '30',
+              driver: {
+                id: ride.driver.id,
+                name: ride.driver.name,
+              },
+              ride: {
+                id: ride.id,
+                code: ride.code,
+                date: new Date(ride.travel.date).toISOString(),
+              },
+            };
+
+            const addCommission = await prisma.commissions.create({
+              data: commissionPayload,
+            });
+
+            return addCommission.ammount;
+          } else {
+            return existingRideCommission.ammount;
+          }
+        };
 
         const finalTravelData = {
           ...ride.travel,
-          driverCommission: rideDriverCommission?.ammount,
+          driverCommission: await rideDriverCommission(),
           finalDuration,
           finalDistance,
           totalTimeStopped,
