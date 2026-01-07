@@ -5,6 +5,7 @@ import AddressForm from '@/components/forms/AddressForm.vue';
 import FormButtons from '@/components/forms/FormButtons.vue';
 import AvatarEdit from '@/components/shared/AvatarEdit.vue';
 import { useToast } from '@/components/ui/toast/use-toast';
+import { driverOffersList } from '@/config/drivers';
 import { toTypedSchema } from '@vee-validate/zod';
 import {
   Car,
@@ -67,7 +68,20 @@ const driverSituation = ref<boolean>(false);
 const driverCars = ref<any>();
 const driverFiles = ref<any>();
 
-driverCars.value = driver?.value.driverCars || [];
+driverCars.value = driver?.value.driverCars.length
+  ? driver.value.driverCars
+  : [
+      {
+        carModel: '',
+        carColor: '',
+        carPlate: '',
+        carYear: '',
+        carDocumentFile: {
+          name: '',
+          url: '',
+        },
+      },
+    ];
 driverFiles.value = {
   picture: {
     name: driver?.value.driverFiles?.picture?.name,
@@ -120,6 +134,9 @@ const driverSchema = toTypedSchema(
     actuationArea: z.string().min(2).max(200),
     scheduleOpen: z.boolean(),
     outsideActuation: z.boolean(),
+    driverOffers: z.array(z.string()).refine((value) => value.some((item) => item), {
+      message: 'You have to select at least one item.',
+    }),
   }),
 );
 
@@ -136,6 +153,7 @@ const driversForm = useForm({
     state: driver?.value.address?.state,
     scheduleOpen: driver?.value.scheduleOpen,
     outsideActuation: driver?.value.outsideActuation,
+    driverOffers: driver?.value?.offers,
   },
 });
 
@@ -150,6 +168,7 @@ const onSubmit = driversForm.handleSubmit(async (values) => {
     licenseExpiration: values.licenseExpiration,
     licenseCategory: values.licenseCategory,
     driverCars: driverCars.value,
+    offers: values.driverOffers,
     driverFiles: {
       ...driverFiles.value,
       picture: driverProfilePicture,
@@ -324,7 +343,7 @@ const onSubmit = driversForm.handleSubmit(async (values) => {
               <div class="mb-4 w-full md:grid md:grid-cols-4 gap-8">
                 <FormField v-slot="{ componentField }" name="actuationArea">
                   <FormItem class="col-span-1">
-                    <FormLabel>Área de atuação</FormLabel>
+                    <FormLabel>Área de atuação (KMs)</FormLabel>
                     <FormControl>
                       <Input type="text" v-bind="componentField" />
                     </FormControl>
@@ -332,6 +351,35 @@ const onSubmit = driversForm.handleSubmit(async (values) => {
                   </FormItem>
                 </FormField>
               </div>
+            </section>
+            <section>
+              <h2 class="mt-4 mb-6 text-lg font-bold">Atributos / Diferenciais</h2>
+              <FormField name="driverOffers">
+                <FormItem>
+                  <FormField
+                    v-for="item in driverOffersList"
+                    v-slot="{ value, handleChange }"
+                    :key="item.id"
+                    type="checkbox"
+                    :value="item.id"
+                    :unchecked-value="false"
+                    name="driverOffers"
+                  >
+                    <FormItem class="flex flex-row items-start space-x-3 space-y-0">
+                      <FormControl>
+                        <Checkbox
+                          @update:checked="handleChange"
+                          :checked="value.includes(item.id)"
+                        />
+                      </FormControl>
+                      <FormLabel class="font-normal">
+                        {{ item.label }}
+                      </FormLabel>
+                    </FormItem>
+                  </FormField>
+                  <FormMessage />
+                </FormItem>
+              </FormField>
             </section>
             <section class="my-10">
               <h2 class="mb-4 text-lg font-bold flex items-center gap-2">

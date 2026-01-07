@@ -51,7 +51,20 @@ const driverSituation = ref<boolean>(false);
 const driverCars = ref<any>();
 const driverFiles = ref<any>();
 
-driverCars.value = driver?.value.driverCars || [];
+driverCars.value = driver?.value.driverCars.length
+  ? driver.value.driverCars
+  : [
+      {
+        carModel: '',
+        carColor: '',
+        carPlate: '',
+        carYear: '',
+        carDocumentFile: {
+          name: '',
+          url: '',
+        },
+      },
+    ];
 driverFiles.value = driver?.value.driverFiles || {};
 driverSituation.value = driver?.value.enabled;
 
@@ -362,7 +375,7 @@ const onSubmit = driversForm.handleSubmit(async (values) => {
                       <FormControl>
                         <Checkbox
                           @update:checked="handleChange"
-                          :checked="value.includes(item.id)"
+                          :checked="value?.includes(item.id)"
                         />
                       </FormControl>
                       <FormLabel class="font-normal">

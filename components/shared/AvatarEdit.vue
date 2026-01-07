@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { useToast } from '@/components/ui/toast/use-toast';
 import { cn } from '@/lib/utils';
-import { CircleX, LoaderCircle, Paperclip } from 'lucide-vue-next';
+import { LoaderCircle, Trash } from 'lucide-vue-next';
 import { ref } from 'vue';
 import { useFilesStore } from '~/stores/files.store';
 
@@ -61,14 +61,14 @@ const imageSrc = computed(() => {
 </script>
 <template>
   <div
-    class="p-2 pb-4 w-[200px] flex flex-col items-center justify-center gap-2 border border-zinc-300 rounded-md bg-white"
+    class="p-2 pb-4 w-[250px] flex flex-col items-center justify-center gap-2 border border-zinc-300 rounded-md bg-white"
   >
     <NuxtImg
       :src="imageSrc"
       loading="lazy"
       :class="
         cn(
-          type === 'profile-picture' && 'w-[200px] h-[240px] object-cover bg-white',
+          type === 'profile-picture' && 'w-[250px] object-cover bg-white',
           type === 'customer-logo' && 'p-4 w-full h-[180px] object-fit bg-white',
         )
       "
@@ -120,10 +120,10 @@ const imageSrc = computed(() => {
           }"
         />
       </div>
-      <div v-if="avatarFile?.name !== ''" class="flex flex-col gap-2 items-center w-full">
-        <small>Editar Arquivo:</small>
+      <div v-else class="flex flex-col gap-2 items-center w-full">
+        <small>Alterar imagem</small>
         <div class="flex gap-2 items-center justify-center">
-          <Paperclip class="w-4 h-4 text-zinc-500" />
+          <!-- <Paperclip class="w-4 h-4 text-zinc-500" /> -->
           <div class="px-4 py-0 border border-dashed border-zinc-500 rounded-md bg-white">
             <a
               class="underline"
@@ -135,7 +135,7 @@ const imageSrc = computed(() => {
             </a>
           </div>
           <LoaderCircle v-if="loadingDeleteImage" class="w-4 h-4 animate-spin" />
-          <CircleX
+          <Trash
             v-else
             class="w-4 h-4 text-zinc-500 hover:text-red-500 cursor-pointer"
             @click.prevent="deleteFile(avatarFile?.url)"

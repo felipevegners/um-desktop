@@ -1,9 +1,9 @@
 <script setup lang="ts">
 import { useToast } from '@/components/ui/toast/use-toast';
+import { useFilesStore } from '@/stores/files.store';
 import { CircleX, LoaderCircle, Paperclip, Plus, Trash } from 'lucide-vue-next';
 import { vMaska } from 'maska/vue';
 import { storeToRefs } from 'pinia';
-import { useFilesStore } from '~/stores/files.store';
 
 const { toast } = useToast();
 
@@ -159,7 +159,10 @@ const removeRow = (index: any) => {
                         <CircleX
                           class="w-5 h-5 text-zinc-500 hover:text-red-500 cursor-pointer"
                           @click.prevent="
-                            deleteFile(modelValue[index]?.carDocumentFile.url, index)
+                            deleteFile(
+                              modelValue[index]?.carDocumentFile.url,
+                              Number(index),
+                            )
                           "
                         />
                       </TooltipTrigger>
@@ -180,7 +183,7 @@ const removeRow = (index: any) => {
           <Tooltip>
             <TooltipTrigger as-child>
               <Trash
-                v-if="index > 0"
+                v-if="Number(index) > 0"
                 @click.prevent="removeRow(index)"
                 class="mb-2 mr-2 w-5 h-5 text-zinc-800 cursor-pointer hover:text-red-600"
               />

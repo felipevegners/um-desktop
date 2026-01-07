@@ -150,7 +150,6 @@ const { startUpload } = useUploadThing('driverFiles', {
 });
 const onSubmit = driversForm.handleSubmit(async (values) => {
   const files = [values?.picture, values?.cnhCopy, values?.addressCopy, values?.bankCopy];
-  console.log('FILES -> ', files);
   isLoadingSend.value = true;
   if (files.includes(undefined)) {
     toast({
@@ -304,7 +303,8 @@ const onSubmit = driversForm.handleSubmit(async (values) => {
                     </div>
                   </FormControl>
                   <small class="text-muted-foreground">
-                    *A senha deve conter de 6 a 8 caracteres</small
+                    *A senha deve conter de 6 a 8 caracteres
+                  </small>
                   >
                   <FormMessage class="text-xs" />
                 </FormItem>
