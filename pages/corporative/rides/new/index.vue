@@ -331,6 +331,10 @@ const calculatedEstimates = ref({
 });
 
 const selectedRideAddons = ref<any>([]);
+const rideExtraKms = ref<number>(0);
+const rideExtraHours = ref<number>(0);
+const rideExtraKmPrice = ref<string>('');
+const rideExtraHourPrice = ref<string>('');
 
 const handleRideCalculation = async () => {
   const validateForm = await form.validate();
@@ -371,8 +375,28 @@ const handleRideCalculation = async () => {
     const distance = routeCalculation[0].distanceMeters / 1000;
 
     if (selectedProduct.value.type === 'contract') {
-      const ridePrice = parseFloat(basePrice.toFixed(2));
+      let ridePrice = parseFloat(basePrice.toFixed(2));
+
+      if (distance > selectedProduct.value.includedKms) {
+        const extraKms = distance - selectedProduct.value.includedKms;
+        const diffPrice = extraKms * parseFloat(selectedProduct?.value.kmPrice);
+        rideExtraKmPrice.value = diffPrice.toFixed(2).toString();
+
+        rideExtraKms.value = extraKms;
+        ridePrice += diffPrice;
+      }
+      if (duration > selectedProduct.value.includedHours * 60) {
+        const extraMinutes = duration - selectedProduct.value.includedHours * 60;
+        const extraHours = Math.ceil(extraMinutes / 60);
+        const diffPriceDuration =
+          extraHours * parseFloat(selectedProduct?.value.minutePrice) * 60;
+        rideExtraHourPrice.value = diffPriceDuration.toFixed(2).toString();
+
+        rideExtraHours.value = extraHours;
+        ridePrice += diffPriceDuration;
+      }
       calculatedEstimates.value.estimatedPrice = ridePrice.toFixed(2).toString();
+      calculatedEstimates.value.estimatedTotalPrice = ridePrice.toFixed(2).toString();
       showContractProductAlert.value = true;
     } else {
       const ridePrice =
@@ -380,6 +404,7 @@ const handleRideCalculation = async () => {
         distance * parseFloat(selectedProduct?.value.kmPrice) +
         duration * parseFloat(selectedProduct?.value.minutePrice);
       calculatedEstimates.value.estimatedPrice = ridePrice.toFixed(2).toString();
+      calculatedEstimates.value.estimatedTotalPrice = ridePrice.toFixed(2).toString();
     }
 
     calculatedEstimates.value.estimatedDistance = routeCalculation[0].distanceMeters;
@@ -390,7 +415,6 @@ const handleRideCalculation = async () => {
       const filteredAddons = addonProducts.value.filter((item: Product) =>
         form.values.rideAddons.includes(item.id),
       );
-      console.log('caiu aqui -> ', filteredAddons);
       selectedRideAddons.value = filteredAddons;
       const calculateAddons = filteredAddons?.reduce((acc: any, curr: any) => {
         return acc + parseFloat(curr.basePrice);
@@ -1184,9 +1208,9 @@ const onSubmit = form.handleSubmit(async (values) => {
                     </div>
                     <div
                       v-if="showContractProductAlert"
-                      class="p-4 bg-amber-100 rounded-md border border-zinc-900"
+                      class="p-4 bg-amber-200 rounded-md border border-amber-900"
                     >
-                      <h3 class="mb-2 font-bold uppercase">Importante:</h3>
+                      <h3 class="mb-2 font-bold uppercase text-amber-700">Importante</h3>
                       <p>
                         O Serviço
                         <span class="font-bold">{{ selectedProduct.name }}</span> é
@@ -1194,66 +1218,93 @@ const onSubmit = form.handleSubmit(async (values) => {
                         Confira abaixo as franquias inclusas neste serviço.
                       </p>
                     </div>
-                    <div class="p-4 border-t border-zinc-900">
-                      <div v-if="showContractProductAlert" class="mb-4">
-                        <p class="text-sm flex items-center justify-between gap-2">
-                          <span class="font-bold"> Franquia de Km </span>
-                          <span
-                            class="mx-2 flex-1 border-b border-dashed border-zinc-400"
-                          />
-                          <span class="font-bold">
-                            {{ selectedProduct.includedKms }} KM
-                          </span>
-                        </p>
-                        <p class="text-sm flex items-center justify-between gap-2">
-                          <span class="font-bold"> Franquia de Horas </span>
-                          <span
-                            class="mx-2 flex-1 border-b border-dashed border-zinc-400"
-                          />
-                          <span class="font-bold">
-                            {{ selectedProduct.includedHours }} Hs
-                          </span>
-                        </p>
-                      </div>
-
-                      <div class="mb-4 flex items-center">
-                        <p class="flex justify-between text-sm w-full">
-                          <span class="font-bold">
-                            Atendimento - {{ selectedProduct.name }}
-                          </span>
-                          <span
-                            class="relative bottom-2 mx-2 flex-1 border-b border-dashed border-zinc-400"
-                          />
-                          <span class="font-bold">
-                            {{ currencyFormat(calculatedEstimates.estimatedPrice) }}
-                          </span>
-                        </p>
-                      </div>
-
-                      <div v-if="selectedRideAddons.length">
-                        <small class="font-bold text-muted-foreground"
-                          >Serviços opcionais</small
+                    <div class="p-4">
+                      <h2 class="mb-3 pb-3 border-b border-zinc-400 font-bold">
+                        Descrição dos Valores
+                      </h2>
+                      <div v-if="showContractProductAlert">
+                        <p
+                          class="flex items-center justify-between gap-2 py-2 border-b border-zinc-200"
                         >
+                          <span> Serviço à Disposição </span>
+                          <span class="font-bold">
+                            {{ currencyFormat(selectedProduct.basePrice) }}
+                          </span>
+                        </p>
+                        <p
+                          class="flex items-center justify-between gap-2 py-2 border-b border-zinc-200"
+                        >
+                          <span> Franquia de KM Inclusa </span>
+                          <span class="font-bold">
+                            {{ selectedProduct.includedKms }}
+                          </span>
+                        </p>
+                        <p
+                          class="flex items-center justify-between gap-2 py-2 border-b border-zinc-200"
+                        >
+                          <span> Franquia de Horas Inclusas </span>
+                          <span class="font-bold">
+                            {{ selectedProduct.includedHours }}
+                          </span>
+                        </p>
+                        <p
+                          v-if="rideExtraKms > selectedProduct.includedKms"
+                          class="flex items-center justify-between gap-2 py-2 border-b border-zinc-200"
+                        >
+                          <span> KM Excedente </span>
+                          <span class="font-bold text-amber-700">
+                            {{ rideExtraKms.toFixed(2) }}
+                          </span>
+                        </p>
+                        <p
+                          v-if="rideExtraKms > selectedProduct.includedKms"
+                          class="flex items-center justify-between gap-2 py-2 border-b border-zinc-200"
+                        >
+                          <span> Valor KM Excedente </span>
+                          <span class="font-bold text-amber-700">
+                            {{ currencyFormat(rideExtraKmPrice) }}
+                          </span>
+                        </p>
+                        <p
+                          v-if="rideExtraHours > 0"
+                          class="flex items-center justify-between gap-2 py-2 border-b border-zinc-200"
+                        >
+                          <span> Hora Excedente </span>
+                          <span class="font-bold text-amber-700">
+                            {{ rideExtraHours }}
+                          </span>
+                        </p>
+                        <p
+                          v-if="rideExtraHours > 0"
+                          class="flex items-center justify-between gap-2 py-2 border-b border-zinc-200"
+                        >
+                          <span> Valor Hora Excedente </span>
+                          <span class="font-bold text-amber-700">
+                            {{ currencyFormat(rideExtraHourPrice) }}
+                          </span>
+                        </p>
+                      </div>
+                      <div v-if="form.values.rideAddons.length">
+                        <h2 class="mt-3 pb-3 border-b border-zinc-400 font-bold">
+                          Adicionais
+                        </h2>
                         <p
                           v-for="item in selectedRideAddons"
-                          class="flex justify-between text-sm w-full"
+                          class="flex items-center justify-between gap-2 py-2 border-b border-zinc-200"
                         >
-                          <span class="font-bold">{{ item.code }} - {{ item.name }}</span>
-                          <span
-                            class="relative bottom-2 mx-2 flex-1 border-b border-dashed border-zinc-400"
-                          />
+                          <span>{{ item.name }}</span>
                           <span class="font-bold">
                             {{ currencyFormat(item.basePrice) }}
                           </span>
                         </p>
                       </div>
-                      <p class="mt-4 font-bold">Total estimado*</p>
+                      <p class="mt-4 font-bold">*Total estimado</p>
                       <p class="font-bold text-3xl">
                         {{ currencyFormat(calculatedEstimates?.estimatedTotalPrice) }}
                       </p>
-                      <small class="text-muted-foreground text-[12px] leading-[0rem]">
-                        * O valor total final desse serviço será calculado ao término do
-                        atendimento.
+                      <small class="text-muted-foreground text-[11px]">
+                        * O valor total final do serviço será calculado ao término do
+                        atendimento, podendo ou não haver acréscimos no valor.
                       </small>
                     </div>
                   </div>

@@ -439,10 +439,27 @@ const showRideControls = computed(() => {
         </h1>
         <RideStatusFlag :ride-status="ride?.status" />
       </div>
-      <Button v-if="ride.status === 'completed'" @click="handleCalculateFinalPrice">
-        <Calculator />
-        Recalcular Atendimento
-      </Button>
+      <div v-if="ride.status === 'completed'" class="flex items-center self-end gap-4">
+        <Button
+          v-if="
+            ride?.rideFinalPrice === 'NaN' ||
+            ride?.rideFinalPrice === null ||
+            ride?.rideFinalPrice === ''
+          "
+          @click="handleCalculateFinalPrice"
+        >
+          <Calculator />
+          Recalcular Atendimento
+        </Button>
+        <Button
+          v-if="isAdmin"
+          variant="destructive"
+          @click="showDeleteConfirmationModal = true"
+        >
+          <Trash />
+          Excluir
+        </Button>
+      </div>
       <div v-if="showRideControls" class="flex gap-6 items-center">
         <Button @click="handleCopyTrackLink" class="bg-blue-600 hover:bg-blue-700">
           <Link />

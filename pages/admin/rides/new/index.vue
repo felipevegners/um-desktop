@@ -358,6 +358,10 @@ const calculatedEstimates = ref({
 });
 
 const selectedRideAddons = ref<any>([]);
+const rideExtraKms = ref<number>(0);
+const rideExtraHours = ref<number>(0);
+const rideExtraKmPrice = ref<string>('');
+const rideExtraHourPrice = ref<string>('');
 
 const handleRideCalculation = async () => {
   const validateForm = await form.validate();
@@ -398,8 +402,28 @@ const handleRideCalculation = async () => {
     const distance = routeCalculation[0].distanceMeters / 1000;
 
     if (selectedProduct.value.type === 'contract') {
-      const ridePrice = parseFloat(basePrice.toFixed(2));
+      let ridePrice = parseFloat(basePrice.toFixed(2));
+
+      if (distance > selectedProduct.value.includedKms) {
+        const extraKms = distance - selectedProduct.value.includedKms;
+        const diffPrice = extraKms * parseFloat(selectedProduct?.value.kmPrice);
+        rideExtraKmPrice.value = diffPrice.toFixed(2).toString();
+
+        rideExtraKms.value = extraKms;
+        ridePrice += diffPrice;
+      }
+      if (duration > selectedProduct.value.includedHours * 60) {
+        const extraMinutes = duration - selectedProduct.value.includedHours * 60;
+        const extraHours = Math.ceil(extraMinutes / 60);
+        const diffPriceDuration =
+          extraHours * parseFloat(selectedProduct?.value.minutePrice) * 60;
+        rideExtraHourPrice.value = diffPriceDuration.toFixed(2).toString();
+
+        rideExtraHours.value = extraHours;
+        ridePrice += diffPriceDuration;
+      }
       calculatedEstimates.value.estimatedPrice = ridePrice.toFixed(2).toString();
+      calculatedEstimates.value.estimatedTotalPrice = ridePrice.toFixed(2).toString();
       showContractProductAlert.value = true;
     } else {
       const ridePrice =
@@ -407,6 +431,7 @@ const handleRideCalculation = async () => {
         distance * parseFloat(selectedProduct?.value.kmPrice) +
         duration * parseFloat(selectedProduct?.value.minutePrice);
       calculatedEstimates.value.estimatedPrice = ridePrice.toFixed(2).toString();
+      calculatedEstimates.value.estimatedTotalPrice = ridePrice.toFixed(2).toString();
     }
 
     calculatedEstimates.value.estimatedDistance = routeCalculation[0].distanceMeters;
@@ -790,10 +815,10 @@ const onSubmit = form.handleSubmit(async (values) => {
                       </FormControl>
                     </FormItem>
                   </FormField>
-                  <div v-if="showAvailableProducts" class="lg:max-w-lg">
+                  <div v-if="showAvailableProducts" class="lg:max-w-2xl">
                     <LoaderCircle v-if="loadingProducts" class="animate-spin" />
                     <div v-else>
-                      <label class="text-sm font-medium">Selecione o Serviço UM*</label>
+                      <label class="text-sm font-medium">Selecione o Serviço*</label>
                       <ul class="mt-2 flex justify-evenly gap-4 flex-wrap">
                         <li
                           class="w-full"
@@ -826,15 +851,28 @@ const onSubmit = form.handleSubmit(async (values) => {
                                 </div>
                                 <div class="ml-4 flex flex-col items-center">
                                   <small class="text-xs">Base</small>
-                                  <small>R$ {{ product.basePrice }}</small>
+                                  <small>{{ currencyFormat(product.basePrice) }}</small>
                                 </div>
                                 <div class="flex flex-col items-center">
                                   <small class="text-xs">Km</small>
-                                  <small>R$ {{ product.kmPrice }}</small>
+                                  <small>{{ currencyFormat(product.kmPrice) }}</small>
                                 </div>
                                 <div class="flex flex-col items-center">
                                   <small class="text-xs">Min.</small>
-                                  <small>R$ {{ product.minutePrice }}</small>
+                                  <small>{{ currencyFormat(product.minutePrice) }}</small>
+                                </div>
+                                <div
+                                  v-if="product.type === 'contract'"
+                                  class="flex flex-row items-center gap-3"
+                                >
+                                  <div class="flex flex-col items-center">
+                                    <small class="text-xs">KM</small>
+                                    <small>{{ product.includedKms }}</small>
+                                  </div>
+                                  <div class="flex flex-col items-center">
+                                    <small class="text-xs">Horas</small>
+                                    <small>{{ product.includedHours }}</small>
+                                  </div>
                                 </div>
                               </div>
                             </div>
@@ -969,19 +1007,21 @@ const onSubmit = form.handleSubmit(async (values) => {
                       >
                         <FormField name="waypoint">
                           <FormItem class="w-full">
-                            <FormLabel class="mt-0">Parada {{ index + 1 }}</FormLabel>
+                            <FormLabel class="mt-0"
+                              >Parada {{ Number(index) + 1 }}</FormLabel
+                            >
                             <FormControl>
                               <div class="flex items-center gap-2">
                                 <SquareSquare />
                                 <GMapAutocomplete
                                   placeholder="Insira a parada"
-                                  @place_changed="setWaypoints($event, index)"
+                                  @place_changed="setWaypoints($event, Number(index))"
                                   :value="waypoint.address"
                                   class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                                 />
                                 <Button
                                   type="button"
-                                  @click.prevent="removeWaypointRow(index)"
+                                  @click.prevent="removeWaypointRow(Number(index))"
                                   size="icon"
                                 >
                                   <X />
@@ -1168,7 +1208,7 @@ const onSubmit = form.handleSubmit(async (values) => {
                       v-if="routeWaypoints"
                       v-for="(waypoint, index) in routeWaypoints"
                     >
-                      <small class="font-bold">Parada {{ index + 1 }}</small>
+                      <small class="font-bold">Parada {{ Number(index) + 1 }}</small>
                       <p>{{ waypoint.address }}</p>
                     </div>
                     <div>
@@ -1208,21 +1248,12 @@ const onSubmit = form.handleSubmit(async (values) => {
                         </p>
                       </div>
                     </div>
-                    <div v-if="selectedRideAddons.length">
-                      <small class="font-bold">Serviços opcionais</small>
-                      <p v-for="item in selectedRideAddons" class="text-sm">
-                        <span class="font-bold">{{ item.code }}</span> - {{ item.name }}
-                        <span> ---------------------- </span>
-                        <span class="font-bold">
-                          {{ currencyFormat(item.basePrice) }}
-                        </span>
-                      </p>
-                    </div>
+
                     <div
                       v-if="showContractProductAlert"
-                      class="p-4 bg-amber-100 rounded-md border border-zinc-900"
+                      class="p-4 bg-amber-200 rounded-md border border-amber-900"
                     >
-                      <h3 class="mb-2 font-bold uppercase">Importante:</h3>
+                      <h3 class="mb-2 font-bold uppercase text-amber-700">Importante</h3>
                       <p>
                         O Serviço
                         <span class="font-bold">{{ selectedProduct.name }}</span> é
@@ -1230,30 +1261,93 @@ const onSubmit = form.handleSubmit(async (values) => {
                         Confira abaixo as franquias inclusas neste serviço.
                       </p>
                     </div>
-                    <div class="p-4 border-t border-zinc-900">
+                    <div class="p-4">
+                      <h2 class="mb-3 pb-3 border-b border-zinc-400 font-bold">
+                        Descrição dos Valores
+                      </h2>
                       <div v-if="showContractProductAlert">
-                        <p class="flex items-center gap-2 py-2 border-b border-zinc-200">
-                          <Gauge :size="18" />
-                          Franquia de KMs: ..............
-                          <span class="font-bold"
-                            >{{ selectedProduct.includedKms }} KM</span
-                          >
+                        <p
+                          class="flex items-center justify-between gap-2 py-2 border-b border-zinc-200"
+                        >
+                          <span> Serviço à Disposição </span>
+                          <span class="font-bold">
+                            {{ currencyFormat(selectedProduct.basePrice) }}
+                          </span>
                         </p>
-                        <p class="flex items-center gap-2 py-2 border-b border-zinc-200">
-                          <Clock :size="18" />
-                          Franquia de Horas: ............
-                          <span class="font-bold"
-                            >{{ selectedProduct.includedHours }} Hs</span
-                          >
+                        <p
+                          class="flex items-center justify-between gap-2 py-2 border-b border-zinc-200"
+                        >
+                          <span> Franquia de KM Inclusa </span>
+                          <span class="font-bold">
+                            {{ selectedProduct.includedKms }}
+                          </span>
+                        </p>
+                        <p
+                          class="flex items-center justify-between gap-2 py-2 border-b border-zinc-200"
+                        >
+                          <span> Franquia de Horas Inclusas </span>
+                          <span class="font-bold">
+                            {{ selectedProduct.includedHours }}
+                          </span>
+                        </p>
+                        <p
+                          v-if="rideExtraKms > selectedProduct.includedKms"
+                          class="flex items-center justify-between gap-2 py-2 border-b border-zinc-200"
+                        >
+                          <span> KM Excedente </span>
+                          <span class="font-bold text-amber-700">
+                            {{ rideExtraKms.toFixed(2) }}
+                          </span>
+                        </p>
+                        <p
+                          v-if="rideExtraKms > selectedProduct.includedKms"
+                          class="flex items-center justify-between gap-2 py-2 border-b border-zinc-200"
+                        >
+                          <span> Valor KM Excedente </span>
+                          <span class="font-bold text-amber-700">
+                            {{ currencyFormat(rideExtraKmPrice) }}
+                          </span>
+                        </p>
+                        <p
+                          v-if="rideExtraHours > 0"
+                          class="flex items-center justify-between gap-2 py-2 border-b border-zinc-200"
+                        >
+                          <span> Hora Excedente </span>
+                          <span class="font-bold text-amber-700">
+                            {{ rideExtraHours }}
+                          </span>
+                        </p>
+                        <p
+                          v-if="rideExtraHours > 0"
+                          class="flex items-center justify-between gap-2 py-2 border-b border-zinc-200"
+                        >
+                          <span> Valor Hora Excedente </span>
+                          <span class="font-bold text-amber-700">
+                            {{ currencyFormat(rideExtraHourPrice) }}
+                          </span>
                         </p>
                       </div>
-                      <p class="mt-4 font-bold">Total estimado*</p>
+                      <div v-if="form.values.rideAddons.length">
+                        <h2 class="mt-3 pb-3 border-b border-zinc-400 font-bold">
+                          Adicionais
+                        </h2>
+                        <p
+                          v-for="item in selectedRideAddons"
+                          class="flex items-center justify-between gap-2 py-2 border-b border-zinc-200"
+                        >
+                          <span>{{ item.name }}</span>
+                          <span class="font-bold">
+                            {{ currencyFormat(item.basePrice) }}
+                          </span>
+                        </p>
+                      </div>
+                      <p class="mt-4 font-bold">*Total estimado</p>
                       <p class="font-bold text-3xl">
-                        {{ currencyFormat(calculatedEstimates?.estimatedPrice) }}
+                        {{ currencyFormat(calculatedEstimates?.estimatedTotalPrice) }}
                       </p>
-                      <small class="text-muted-foreground text-[10px]">
-                        * O valor total final desse serviço será calculado ao término do
-                        atendimento, podendo haver ou não acréscimos neste valor.
+                      <small class="text-muted-foreground text-[11px]">
+                        * O valor total final do serviço será calculado ao término do
+                        atendimento, podendo ou não haver acréscimos no valor.
                       </small>
                     </div>
                   </div>
