@@ -41,13 +41,24 @@ const columnVisibility = ref<VisibilityState>({});
 const rowSelection = ref({});
 const expanded = ref<ExpandedState>({});
 
-const props = defineProps<{
+const emit = defineEmits<{
+  'update:selectedRows': [rows: TData[]];
+}>();
+
+interface TableProps {
   columns: ColumnDef<TData, TValue>[];
   data: TData[];
-  sortby: string;
+  sortby?: string;
   columnPin?: string[];
   filterBy?: string;
-}>();
+  showFilter?: boolean;
+  showColumnSelect?: boolean;
+}
+
+const props = withDefaults(defineProps<TableProps>(), {
+  showColumnSelect: true,
+  showFilter: true,
+});
 
 const table = useVueTable({
   get data() {
@@ -62,12 +73,10 @@ const table = useVueTable({
   getFilteredRowModel: getFilteredRowModel(),
   getExpandedRowModel: getExpandedRowModel(),
   onSortingChange: (updaterOrValue) => valueUpdater(updaterOrValue, sorting),
-  onColumnFiltersChange: (updaterOrValue) =>
-    valueUpdater(updaterOrValue, columnFilters),
+  onColumnFiltersChange: (updaterOrValue) => valueUpdater(updaterOrValue, columnFilters),
   onColumnVisibilityChange: (updaterOrValue) =>
     valueUpdater(updaterOrValue, columnVisibility),
-  onRowSelectionChange: (updaterOrValue) =>
-    valueUpdater(updaterOrValue, rowSelection),
+  onRowSelectionChange: (updaterOrValue) => valueUpdater(updaterOrValue, rowSelection),
   onExpandedChange: (updaterOrValue) => valueUpdater(updaterOrValue, expanded),
   state: {
     get sorting() {
@@ -90,18 +99,29 @@ const table = useVueTable({
     },
   },
 });
+
+// Watch for changes in row selection and emit selected rows
+watch(
+  () => rowSelection.value,
+  () => {
+    const selectedRows = table.getSelectedRowModel().rows.map((row) => row.original);
+    emit('update:selectedRows', selectedRows);
+  },
+  { deep: true },
+);
 </script>
 
 <template>
   <div class="w-full">
-    <div class="flex gap-2 items-center py-4">
+    <div v-if="showFilter && showColumnSelect" class="flex gap-2 items-center py-4">
       <Input
+        v-if="showFilter"
         class="max-w-sm"
         :placeholder="`Filtrar por ${filterBy}`"
-        :model-value="table.getColumn(sortby)?.getFilterValue() as string"
-        @update:model-value="table.getColumn(sortby)?.setFilterValue($event)"
+        :model-value="table.getColumn(sortby as string)?.getFilterValue() as string"
+        @update:model-value="table.getColumn(sortby as string)?.setFilterValue($event)"
       />
-      <DropdownMenu>
+      <DropdownMenu v-if="showColumnSelect">
         <DropdownMenuTrigger as-child>
           <Button variant="outline" class="ml-auto">
             <Settings2 />
@@ -130,10 +150,7 @@ const table = useVueTable({
     <div class="rounded-md border">
       <Table>
         <TableHeader>
-          <TableRow
-            v-for="headerGroup in table.getHeaderGroups()"
-            :key="headerGroup.id"
-          >
+          <TableRow v-for="headerGroup in table.getHeaderGroups()" :key="headerGroup.id">
             <TableHead
               v-for="header in headerGroup.headers"
               :key="header.id"
@@ -168,9 +185,7 @@ const table = useVueTable({
                       {
                         'sticky bg-background/95': cell.column.getIsPinned(),
                       },
-                      cell.column.getIsPinned() === 'left'
-                        ? 'left-0'
-                        : 'right-0',
+                      cell.column.getIsPinned() === 'left' ? 'left-0' : 'right-0',
                     )
                   "
                 >
@@ -199,8 +214,8 @@ const table = useVueTable({
 
     <div class="flex items-center justify-end space-x-2 py-4">
       <div class="flex-1 text-sm text-muted-foreground">
-        <!-- {{ table.getFilteredSelectedRowModel().rows.length }} of
-        {{ table.getFilteredRowModel().rows.length }} linha(s) selecionadas -->
+        {{ table.getSelectedRowModel().rows.length }} de
+        {{ table.getFilteredRowModel().rows.length }} resultado(s) selecionados
       </div>
       <div class="space-x-2">
         <Button

@@ -2,6 +2,7 @@
 import DashBarChart from '@/components/shared/DashBarChart.vue';
 import RideStatusFlag from '@/components/shared/RideStatusFlag.vue';
 import { useCommissionsStore } from '@/stores/commissions.store';
+import { useFeeStore } from '@/stores/fees.store';
 import { useRidesStore } from '@/stores/rides.store';
 import {
   BanknoteIcon,
@@ -24,11 +25,16 @@ const commissionsStore = useCommissionsStore();
 const { getCommissionsAction } = commissionsStore;
 const { commissions } = storeToRefs(commissionsStore);
 
+const feeStore = useFeeStore();
+const { getFeeByTypeAction } = feeStore;
+const { fee } = storeToRefs(feeStore);
+
 const { data } = useAuth();
 
 const allRides = ref<any>([]);
 const accumulatedCommissions = ref<any>(0);
 const loadingRides = ref<boolean>(false);
+const totalRevenue = ref<string>('');
 
 const userName = computed(() => {
   //@ts-expect-error
@@ -38,6 +44,7 @@ const userName = computed(() => {
 onMounted(async () => {
   await getCommissionsAction();
   await getRidesAction();
+  await getFeeByTypeAction('driver_fee');
   loadingRides.value = true;
   if (rides?.value.length >= 3) {
     allRides.value = rides?.value.slice(-4).reverse();
@@ -60,8 +67,34 @@ const getRideMonthData = computed(() => {
   return result;
 });
 
-const calculateRidePrices = computed(() => {
-  const total = rides?.value.reduce((acc: any, curr: any) => {
+const calculateOpenRidePrices = computed(() => {
+  const filteredRides = rides?.value.filter(
+    (ride: any) => ride.status !== 'completed' && ride.status !== 'cancelled',
+  );
+  const total = filteredRides.reduce((acc: any, curr: any) => {
+    const ammount = curr.billing.ammount !== 'NaN' ? parseFloat(curr.billing.ammount) : 0;
+    return acc + ammount;
+  }, 0);
+
+  return total.toString();
+});
+const calculateFinishedRideAmmount = computed(() => {
+  const filteredRides = rides?.value.filter((ride: any) => ride.status === 'completed');
+  const total = filteredRides?.reduce((acc: any, curr: any) => {
+    const ammount = curr.billing.ammount !== 'NaN' ? parseFloat(curr.billing.ammount) : 0;
+    return acc + ammount;
+  }, 0);
+
+  const totalCommissions = (total * Number(fee.value.value)) / 100;
+  const totalNetRevenue = total - totalCommissions;
+  totalRevenue.value = totalNetRevenue.toString();
+
+  return total.toString();
+});
+
+const calculateCancelledRideAmmount = computed(() => {
+  const filteredRides = rides?.value.filter((ride: any) => ride.status === 'cancelled');
+  const total = filteredRides?.reduce((acc: any, curr: any) => {
     const ammount = curr.billing.ammount !== 'NaN' ? parseFloat(curr.billing.ammount) : 0;
     return acc + ammount;
   }, 0);
@@ -109,6 +142,51 @@ definePageMeta({
       </div>
     </div>
     <div class="grid auto-rows-min gap-4 md:grid-cols-3">
+      <div class="col-span-2 p-6 flex flex-col rounded-xl bg-muted/90">
+        <p class="mb-6 font-bold text-lg">
+          <Receipt class="mb-2" :size="32" />
+          Faturamento Totais
+        </p>
+
+        <div class="flex-grow flex items-start justify-center">
+          <div
+            v-if="calculateOpenRidePrices !== ''"
+            class="flex flex-wrap items-start gap-6"
+          >
+            <div class="p-3">
+              <span class="text-sm text-muted-foreground">Atendimentos em Aberto</span>
+              <h1 class="text-6xl font-bold">
+                {{ currencyFormat(calculateOpenRidePrices) }}
+              </h1>
+            </div>
+            <div class="p-3">
+              <span class="text-sm text-muted-foreground">Atendimentos Finalizados</span>
+              <h1 class="text-6xl font-bold">
+                {{ currencyFormat(calculateFinishedRideAmmount) }}
+              </h1>
+            </div>
+            <div class="p-3">
+              <span class="text-sm text-muted-foreground">Atendimentos Cancelados</span>
+              <h1 class="text-6xl font-bold">
+                {{ currencyFormat(calculateCancelledRideAmmount) }}
+              </h1>
+            </div>
+            <div class="p-3">
+              <span class="text-sm text-muted-foreground">Repasse Motoristas</span>
+              <h1 class="text-6xl font-bold">
+                {{ currencyFormat(calculateTotalCommissions) }}
+              </h1>
+            </div>
+            <div class="p-3">
+              <span class="text-sm text-muted-foreground">Receita Bruta</span>
+              <h1 class="text-6xl font-bold text-green-800">
+                {{ currencyFormat(totalRevenue) }}
+              </h1>
+            </div>
+          </div>
+          <p v-else class="text-muted-foreground">Não há dados no momento.</p>
+        </div>
+      </div>
       <div class="p-6 rounded-xl bg-muted/90 h-full">
         <p class="font-bold text-lg">
           <CalendarDays class="mb-2" :size="32" />
@@ -157,19 +235,6 @@ definePageMeta({
           Atendimentos por mês
         </p>
         <DashBarChart :data="getRideMonthData" />
-      </div>
-      <div class="p-6 flex flex-col rounded-xl bg-muted/90">
-        <p class="mb-6 font-bold text-lg">
-          <Receipt class="mb-2" :size="32" />
-          Faturado Total - Atendimentos
-        </p>
-
-        <div class="flex-grow flex items-center justify-center">
-          <h1 v-if="calculateRidePrices !== ''" class="text-6xl font-bold">
-            {{ currencyFormat(calculateRidePrices) }}
-          </h1>
-          <p v-else class="text-muted-foreground">Não há dados no momento.</p>
-        </div>
       </div>
       <div class="p-6 flex flex-col rounded-xl bg-muted/90">
         <p class="mb-6 font-bold text-lg">

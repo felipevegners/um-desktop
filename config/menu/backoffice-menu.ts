@@ -139,7 +139,7 @@ export const backofficeMenu = {
       items: [
         {
           title: 'Faturas em aberto',
-          url: '#',
+          url: '/admin/finances/invoices/open',
         },
         {
           title: 'Balanço',
@@ -148,6 +148,10 @@ export const backofficeMenu = {
         {
           title: 'Canceladas',
           url: '#',
+        },
+        {
+          title: '+ Gerar Nova Fatura',
+          url: '/admin/finances/invoices/new',
         },
         {
           title: 'Pagamento Motoristas',
