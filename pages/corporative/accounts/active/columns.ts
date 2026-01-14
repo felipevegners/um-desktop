@@ -58,23 +58,23 @@ export const columns = [
     },
   }),
   columnHelper.accessor('role', {
-    header: () => h('div', { class: 'text-center' }, 'Nível de Permissão'),
+    header: () => h('div', { class: 'text-left' }, 'Nível de Permissão'),
     cell: ({ row }) => {
       //@ts-ignore
-      return h('div', { class: 'text-center font-medium' }, Roles[row.getValue('role')]);
+      return h('div', { class: 'text-left' }, Roles[row.getValue('role')]);
     },
   }),
-  columnHelper.accessor('contract', {
-    header: () => h('div', { class: 'text-left' }, 'Empresa'),
-    cell: ({ row }) => {
-      const data: any = row.original;
-      return h(
-        'div',
-        { class: 'capitilize' },
-        data.contract?.name ? data.contract.name : '-',
-      );
-    },
-  }),
+  // columnHelper.accessor('contract', {
+  //   header: () => h('div', { class: 'text-left' }, 'Empresa'),
+  //   cell: ({ row }) => {
+  //     const data: any = row.original;
+  //     return h(
+  //       'div',
+  //       { class: 'capitilize' },
+  //       data.contract?.name ? data.contract.name : '-',
+  //     );
+  //   },
+  // }),
   columnHelper.accessor('createdAt', {
     header: () => h('div', { class: 'text-left' }, 'Data Cadastro'),
     cell: ({ row }) => {

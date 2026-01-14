@@ -68,10 +68,10 @@ export const branchManagerMenu: any = {
           title: 'Usuários Inativos',
           url: '/corporative/accounts/inactive',
         },
-        // {
-        //   title: 'Restrições de Usuários',
-        //   url: '#',
-        // },
+        {
+          title: '+ Novo Usuário',
+          url: '/corporative/accounts/new',
+        },
       ],
     },
     {

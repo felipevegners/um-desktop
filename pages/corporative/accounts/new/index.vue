@@ -26,6 +26,10 @@ const router = useRouter();
 const { data } = useAuth();
 //@ts-expect-error
 const { contractId } = data?.value?.user?.contract;
+//@ts-ignore
+const role = data?.value?.user?.role;
+//@ts-ignore
+const userBranches = data.value?.user?.contract?.branches;
 
 const accountStore = useAccountStore();
 const { registerUserAccountAction } = accountStore;
@@ -85,25 +89,54 @@ const getContractData = () => {
   loadingBranches.value = true;
   contractName.value = contract?.value.customerName;
   selectedBranches.value = contract?.value.branches;
-  contractBranches.value = contract?.value.branches.map((branch: any) => {
-    return {
-      label: `${branch.branchCode} - ${branch.fantasyName}`,
-      value: branch.id,
-    };
-  });
+
+  if (role === 'master-manager') {
+    const filteredBranches = contract?.value.branches.filter(
+      (branch: any) => branch.contractId === contractId,
+    );
+    contractBranches.value = filteredBranches?.map((branch: any) => {
+      return {
+        label: `${branch.branchCode} - ${branch.fantasyName}`,
+        value: branch.id,
+      };
+    });
+  }
+  if (role === 'branch-manager') {
+    const filteredBranches = contract?.value.branches.filter((item: any) =>
+      userBranches.some((filterItem: any) => filterItem.id === item.id),
+    );
+    contractBranches.value = filteredBranches?.map((branch: any) => {
+      return {
+        label: `${branch.branchCode} - ${branch.fantasyName}`,
+        value: branch.id,
+      };
+    });
+  }
   setTimeout(() => {
     loadingBranches.value = false;
   }, 500);
 };
 
-onMounted(() => {
+onMounted(async () => {
   getContractData();
-  rolesSelectList.value = rolesList.filter(
-    (role) =>
-      role.value !== 'admin' &&
-      role.value !== 'platform-user' &&
-      role.value !== 'platform-driver',
-  );
+  if (role === 'master-manager') {
+    rolesSelectList.value = rolesList.filter(
+      (role) =>
+        role.value !== 'admin' &&
+        role.value !== 'platform-user' &&
+        role.value !== 'platform-driver',
+    );
+  }
+  if (role === 'branch-manager') {
+    rolesSelectList.value = rolesList.filter(
+      (role) =>
+        role.value !== 'admin' &&
+        role.value !== 'platform-user' &&
+        role.value !== 'platform-driver' &&
+        role.value !== 'branch-manager' &&
+        role.value !== 'master-manager',
+    );
+  }
 });
 
 const getBranchAreas = (value: string) => {

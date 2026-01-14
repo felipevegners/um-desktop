@@ -275,6 +275,7 @@ const onSubmit = form.handleSubmit(async (values) => {
                         v-bind="componentField"
                         :items="rolesSelectList"
                         :label="'Selecione'"
+                        :disabled="true"
                       />
                     </FormControl>
                   </FormItem>
@@ -407,7 +408,11 @@ const onSubmit = form.handleSubmit(async (values) => {
                 </div>
               </div>
               <div
-                v-if="contract?.branches?.length && role === 'master-manager'"
+                v-if="
+                  contract?.branches?.length &&
+                  account.role === 'branch-manager' &&
+                  role === 'master-manager'
+                "
                 class="mt-4 p-4 mb-6 w-full bg-white rounded-md"
               >
                 <p>Filiais Gerenciadas por este usuário</p>

@@ -109,13 +109,13 @@ const finalColumns = [
 </script>
 <template>
   <main class="p-6">
-    <section class="mb-10 flex items-center justify-between gap-4">
+    <section class="mb-10 flex items-center gap-4">
       <div class="flex items-center gap-4">
         <UserPen :size="32" />
         <h1 class="font-bold text-black text-3xl">Usuários Ativos</h1>
       </div>
       <Button @click="navigateTo('/corporative/accounts/new')">
-        <Plus class="w-4 h-4" /> Criar Usuário
+        <Plus class="w-4 h-4" /> Novo Usuário
       </Button>
     </section>
     <section v-if="isLoading" class="min-h-[300px] flex items-center justify-center">
