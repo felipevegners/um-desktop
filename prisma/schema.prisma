@@ -101,7 +101,7 @@ model Customers {
   status         String?
   name           String?
   fantasyName    String?
-  document       String?     @unique
+  document       String?
   address        Json?
   phone          String?
   phoneExtension String?
