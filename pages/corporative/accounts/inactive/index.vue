@@ -13,12 +13,18 @@ const { toast } = useToast();
 const { data } = useAuth();
 //@ts-expect-error
 const { contractId } = data?.value?.user?.contract;
+//@ts-ignore
+const role = data?.value?.user.role;
+//@ts-ignore
+const userBranches = data.value?.user?.contract?.branches;
 
 const columnHelper = createColumnHelper<any>();
 
 const accountStore = useAccountStore();
 const { getUsersAccountsByContractIdAction, deleteUserAccountAction } = accountStore;
 const { isLoading, inactiveAccounts } = storeToRefs(accountStore);
+
+const userAllowedAccounts = ref<any>([]);
 
 definePageMeta({
   layout: 'admin',
@@ -28,8 +34,20 @@ useHead({
   title: 'Contas de Usuário Inativas | Urban Mobi',
 });
 
-onBeforeMount(async () => {
+onMounted(async () => {
   await getUsersAccountsByContractIdAction(contractId);
+  if (role === 'master-manager') {
+    userAllowedAccounts.value = inactiveAccounts.value;
+  }
+  if (role === 'branch-manager') {
+    const filterBranchAccounts = inactiveAccounts.value.filter((account) =>
+      userBranches.some(
+        //@ts-ignore
+        (filterItem: any) => filterItem.id === account?.contract?.branchId,
+      ),
+    );
+    userAllowedAccounts.value = filterBranchAccounts;
+  }
 });
 
 const loadingDelete = ref<boolean>(false);
@@ -106,7 +124,7 @@ const finalColumns = [
     <section v-else>
       <DataTable
         :columns="finalColumns"
-        :data="inactiveAccounts"
+        :data="userAllowedAccounts"
         sortby="username"
         :column-pin="['username']"
         filterBy="nome de usuário"

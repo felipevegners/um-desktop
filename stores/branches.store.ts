@@ -1,10 +1,11 @@
-import { defineStore } from 'pinia';
 import {
   createBranchService,
   deleteBranchService,
+  getBranchesByContractIdService,
   getBranchesService,
   updateBranchService,
-} from '~/server/services/branches';
+} from '@/server/services/branches';
+import { defineStore } from 'pinia';
 
 export interface IBranchState {
   branches: any[];
@@ -42,6 +43,19 @@ export const useBranchesStore = defineStore('braches', {
       try {
         const response = await getBranchesService(branchId);
         this.branch = response as any;
+      } catch (error) {
+        console.error('Error from GET by ID store --> ', error);
+        throw error;
+      } finally {
+        this.isLoadingData = false;
+      }
+    },
+
+    async getBranchByContractIdAction(contractId: string) {
+      this.isLoadingData = true;
+      try {
+        const response = await getBranchesByContractIdService(contractId);
+        this.branches = response as any;
       } catch (error) {
         console.error('Error from GET by ID store --> ', error);
         throw error;

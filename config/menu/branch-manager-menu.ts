@@ -1,19 +1,11 @@
-import {
-  Building2,
-  CalendarDays,
-  Coins,
-  HandCoins,
-  Headset,
-  User,
-  UserCog,
-} from 'lucide-vue-next';
+import { Building2, CalendarDays, HandCoins, Headset, User } from 'lucide-vue-next';
 
 const { data } = useAuth();
 //@ts-ignore
 const { user } = data.value;
 const route = useRoute();
 
-export const branchManagerMenu = {
+export const branchManagerMenu: any = {
   title: 'Painel Gestor Filial',
   user: {
     name: user.username,
@@ -60,10 +52,6 @@ export const branchManagerMenu = {
           title: 'Filiais Inativas',
           url: '/corporative/branches/inactive',
         },
-        {
-          title: '+ Cadastrar Filial',
-          url: '/corporative/branches/new',
-        },
       ],
     },
     {
@@ -73,13 +61,17 @@ export const branchManagerMenu = {
       isActive: route.path.startsWith('accounts'),
       items: [
         {
-          title: 'Usuários cadastrados',
+          title: 'Usuários Ativos',
           url: '/corporative/accounts/active',
         },
         {
-          title: 'Restrições de Usuários',
-          url: '/corporative/accounts/restrictions',
+          title: 'Usuários Inativos',
+          url: '/corporative/accounts/inactive',
         },
+        // {
+        //   title: 'Restrições de Usuários',
+        //   url: '#',
+        // },
       ],
     },
     {
@@ -89,27 +81,27 @@ export const branchManagerMenu = {
       isActive: route.path.startsWith('invoices'),
       items: [
         {
-          title: 'Faturas em aberto',
-          url: '/corporative/invoices/active',
+          title: 'Faturas em Aberto',
+          url: '#',
         },
-        {
-          title: 'Faturas canceladas',
-          url: '/corporative/invoices/canceled',
-        },
+        // {
+        //   title: 'Faturas canceladas',
+        //   url: '#',
+        // },
       ],
     },
   ],
   settings: [
-    {
-      name: 'Budget',
-      url: '/corporative/budget',
-      icon: Coins,
-    },
-    {
-      name: 'Gerenciar Acessos',
-      url: '/corporative/accounts',
-      icon: UserCog,
-    },
+    // {
+    //   name: 'Budget',
+    //   url: '/corporative/budget',
+    //   icon: Coins,
+    // },
+    // {
+    //   name: 'Gerenciar Acessos',
+    //   url: '/corporative/accounts',
+    //   icon: UserCog,
+    // },
   ],
   sac: [
     {

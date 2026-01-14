@@ -20,6 +20,8 @@ const { data } = useAuth();
 //@ts-ignore
 const contractId = data.value?.user.contract?.contractId;
 //@ts-ignore
+const userBranches = data.value?.user.contract?.branches;
+//@ts-ignore
 const role = data.value?.user?.role;
 
 definePageMeta({
@@ -32,9 +34,20 @@ useHead({
 
 onMounted(async () => {
   await getRidesByContractAction(contractId);
-  contractRidesList.value = rides?.value.filter(
-    (ride: any) => ride.status !== 'cancelled' && ride.status !== 'completed',
-  );
+  if (role === 'master-manager') {
+    contractRidesList.value = rides?.value.filter(
+      (ride: any) => ride.status !== 'cancelled' && ride.status !== 'completed',
+    );
+  } else {
+    contractRidesList.value = rides?.value.filter((ride: any) =>
+      userBranches.some(
+        (filterItem: any) =>
+          filterItem.id === ride.billing.paymentData.branch &&
+          ride.status !== 'cancelled' &&
+          ride.status !== 'completed',
+      ),
+    );
+  }
 });
 
 const viewRide = (rideId: string) => {

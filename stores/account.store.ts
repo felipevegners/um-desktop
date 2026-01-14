@@ -7,7 +7,9 @@ import {
 } from '@/server/services/accounts';
 import { defineStore } from 'pinia';
 
-export type Account = {};
+export type Account = {
+  contract: any;
+};
 export interface IAccountsState {
   isLoadingSend: boolean;
   isLoading: boolean;
@@ -33,6 +35,7 @@ export const useAccountStore = defineStore('accounts', {
         contract: {
           contractId: '',
           branchId: '',
+          branches: [],
           area: '',
           name: '',
         },
@@ -47,6 +50,8 @@ export const useAccountStore = defineStore('accounts', {
         },
         status: '',
         enabled: true,
+        emailConfirmed: false,
+        acceptTerms: false,
       },
       isLoadingSend: false,
       isLoading: false,

@@ -11,14 +11,20 @@ import { columns } from './columns';
 
 const { toast } = useToast();
 const { data } = useAuth();
-//@ts-expect-error
+//@ts-ignore
 const { contractId } = data?.value?.user?.contract;
+//@ts-ignore
+const role = data?.value?.user.role;
+//@ts-ignore
+const userBranches = data.value?.user?.contract?.branches;
 
 const columnHelper = createColumnHelper<any>();
 
 const accountStore = useAccountStore();
 const { deleteUserAccountAction, getUsersAccountsByContractIdAction } = accountStore;
 const { isLoading, accounts } = storeToRefs(accountStore);
+
+const userAllowedAccounts = ref<any>([]);
 
 definePageMeta({
   layout: 'admin',
@@ -28,8 +34,20 @@ useHead({
   title: 'Contas de Usuário Ativas | Urban Mobi',
 });
 
-onBeforeMount(async () => {
+onMounted(async () => {
   await getUsersAccountsByContractIdAction(contractId);
+  if (role === 'master-manager') {
+    userAllowedAccounts.value = accounts.value;
+  }
+  if (role === 'branch-manager') {
+    const filterBranchAccounts = accounts.value.filter((account) =>
+      userBranches.some(
+        //@ts-ignore
+        (filterItem: any) => filterItem.id === account?.contract?.branchId,
+      ),
+    );
+    userAllowedAccounts.value = filterBranchAccounts;
+  }
 });
 
 const loadingDelete = ref<boolean>(false);
@@ -106,7 +124,7 @@ const finalColumns = [
     <section v-else>
       <DataTable
         :columns="finalColumns"
-        :data="accounts"
+        :data="userAllowedAccounts"
         sortby="username"
         :column-pin="['username']"
         filterBy="nome de usuário"

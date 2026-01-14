@@ -24,6 +24,23 @@ export const columns: any = [
     cell: ({ row }: any) =>
       h('div', { class: 'capitalize font-bold' }, row.getValue('code')),
   }),
+  columnHelper.accessor('user', {
+    enablePinning: true,
+    header: ({ column }) => {
+      return h(
+        Button,
+        {
+          variant: 'ghost',
+          class: 'pl-0',
+          onClick: () => column.toggleSorting(column.getIsSorted() === 'asc'),
+        },
+        () => ['Usuário', h(ArrowUpDown, { class: 'ml-2 h-4 w-4' })],
+      );
+    },
+    cell: ({ row }: any) =>
+      h('div', { class: 'capitalize font-bold' }, row.getValue('user').name),
+  }),
+
   columnHelper.display({
     id: 'originAddress',
     enableHiding: false,

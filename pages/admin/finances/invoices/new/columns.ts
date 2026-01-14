@@ -34,10 +34,12 @@ export const columns: any = [
     enableHiding: false,
   },
   columnHelper.accessor('code', {
+    meta: 'Código',
     header: () => h('div', { class: 'text-left' }, 'Código'),
     cell: ({ row }) => h('div', { class: 'capitalize text-xs' }, row.getValue('code')),
   }),
   columnHelper.accessor('user', {
+    meta: 'Usuário',
     enablePinning: true,
     header: ({ column }) => {
       return h(
@@ -55,6 +57,7 @@ export const columns: any = [
   }),
   columnHelper.display({
     id: 'routeDateTime',
+    meta: 'Rota/Data/Hora',
     enableHiding: false,
     header: () => h('div', { class: 'text-left' }, 'Rota/Data/Hora'),
     cell: ({ row }) => {
@@ -87,8 +90,8 @@ export const columns: any = [
       return h('div', { class: 'font-bold' }, currencyFormat(data.billing.ammount));
     },
   }),
-  columnHelper.accessor('billing', {
-    header: () => h('div', { class: 'text-left' }, 'Pagamento'),
+  columnHelper.accessor('payment', {
+    header: () => h('div', { class: 'text-left' }, 'Tipo Pagamento'),
     cell: ({ row }) => {
       const data = row.original;
       return h(PaymentStatusFlag, {

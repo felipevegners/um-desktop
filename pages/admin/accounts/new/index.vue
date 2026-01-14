@@ -76,6 +76,8 @@ const formSchema = toTypedSchema(
     contract: z.string().optional(),
     branch: z.string().optional(),
     area: z.string().optional(),
+    emailConfirmed: z.boolean().optional(),
+    acceptTerms: z.boolean().optional(),
   }),
 );
 
@@ -147,11 +149,14 @@ const onSubmit = form.handleSubmit(async (values) => {
       name: contractName.value || null,
       branchId: values.branch || null,
       area: values.area || null,
+      branches: [],
     },
     avatar: {
       name: '',
       url: '',
     },
+    acceptTerms: false,
+    emailConfirmed: false,
   };
 
   try {

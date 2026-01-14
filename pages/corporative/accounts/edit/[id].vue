@@ -25,12 +25,15 @@ defineOptions({
 const route = useRoute();
 const { toast } = useToast();
 const { data } = useAuth();
+//@ts-ignore
+const role = data.value?.user?.role;
 
 const accountSituation = ref<boolean>(false);
 const loadingDelete = ref<boolean>(false);
 const viewPassword = ref<boolean>(true);
 const contractName = ref<any>(null);
 const rolesSelectList = ref<Array<{ label: string; value: string }>>(rolesList);
+const userManagerBranches = ref<any>([]);
 
 const contractsStore = useContractsStore();
 const { getContractByIdAction } = contractsStore;
@@ -61,6 +64,19 @@ onMounted(async () => {
   if (contractRoles.includes(account.value.role)) {
     await getContractByIdAction(account.value.contract.contractId);
     contractName.value = contract?.value.customerName;
+  }
+
+  // Initialize userManagerBranches from user's existing branches data
+  if (
+    account.value.contract?.branches &&
+    Array.isArray(account.value.contract.branches)
+  ) {
+    // User already has branches array in the payload
+    userManagerBranches.value = account.value.contract.branches.map((branch: any) => ({
+      id: branch.id,
+      branchCode: branch.branchCode,
+      fantasyName: branch.fantasyName,
+    }));
   }
 
   rolesSelectList.value = rolesList.filter(
@@ -145,6 +161,29 @@ const handleGeneratePassword = () => {
   }
 };
 
+const handleUserBranches = (checked: boolean, branch: any) => {
+  if (checked) {
+    // Add branch to the array if checked
+    const branchExists = userManagerBranches.value.some((b: any) => b.id === branch.id);
+    if (!branchExists) {
+      userManagerBranches.value.push({
+        id: branch.id,
+        branchCode: branch.branchCode,
+        fantasyName: branch.fantasyName,
+      });
+    }
+  } else {
+    // Remove branch from the array if unchecked
+    userManagerBranches.value = userManagerBranches.value.filter(
+      (b: any) => b.id !== branch.id,
+    );
+  }
+};
+
+const isBranchSelected = (branchId: string) => {
+  return userManagerBranches.value.some((b: any) => b.id === branchId);
+};
+
 const onSubmit = form.handleSubmit(async (values) => {
   const accountData = {
     accountId: account?.value.id,
@@ -161,6 +200,7 @@ const onSubmit = form.handleSubmit(async (values) => {
       contractId: values.contract,
       name: contractName.value,
       branchId: values.branch,
+      branches: userManagerBranches.value,
       area: values.area,
     },
     avatar: {
@@ -249,21 +289,6 @@ const onSubmit = form.handleSubmit(async (values) => {
                 >
                   {{ account?.status === 'validated' ? 'Validado' : 'Pendente' }}
                 </span>
-
-                <!-- <FormField v-slot="{ componentField }" name="status">
-                  <FormItem>
-                    <FormControl>
-                      <FormSelect
-                        v-bind="componentField"
-                        :items="[
-                          { label: 'Validado', value: 'validated' },
-                          { label: 'Pendente', value: 'pending' },
-                        ]"
-                        :label="'Selecione'"
-                      />
-                    </FormControl>
-                  </FormItem>
-                </FormField> -->
               </div>
             </div>
           </CardHeader>
@@ -380,6 +405,27 @@ const onSubmit = form.handleSubmit(async (values) => {
                     Gerar Senha
                   </Button>
                 </div>
+              </div>
+              <div
+                v-if="contract?.branches?.length && role === 'master-manager'"
+                class="mt-4 p-4 mb-6 w-full bg-white rounded-md"
+              >
+                <p>Filiais Gerenciadas por este usuário</p>
+                <ul class="my-4 flex items-center gap-4">
+                  <li
+                    v-for="branch in contract.branches"
+                    :key="branch.id"
+                    class="p-3 border border-zinc-950 rounded-md flex items-center gap-3"
+                  >
+                    <Checkbox
+                      :checked="isBranchSelected(branch.id)"
+                      @update:checked="(checked) => handleUserBranches(checked, branch)"
+                    />
+                    <p class="font-bold text-xl">
+                      {{ branch.branchCode }} - {{ branch.fantasyName }}
+                    </p>
+                  </li>
+                </ul>
               </div>
             </div>
           </CardContent>

@@ -57,6 +57,13 @@ const { toast } = useToast();
 const { data } = useAuth();
 //@ts-ignore
 const contractId = data.value?.user.contract?.contractId;
+//@ts-ignore
+const userBranches = data.value?.user.contract?.branches;
+//@ts-ignore
+const role = data.value?.user?.role;
+
+//@ts-ignore
+const name = data.value?.user?.name;
 
 const contractsStore = useContractsStore();
 const branchesStore = useBranchesStore();
@@ -141,12 +148,28 @@ const showRenderedMap = ref<boolean>(false);
 
 onBeforeMount(async () => {
   await getUsersAccountsByContractIdAction(contractId);
-  availableUsers.value = accounts?.value.map((user: any) => {
-    return {
-      label: ` ${user.username}`,
-      value: user.id,
-    };
-  });
+
+  if (role === 'branch-manager') {
+    const filteredAccounts = accounts?.value.filter((user: any) =>
+      userBranches.some((branch: any) => branch.id === user.contract.branchId),
+    );
+    availableUsers.value = filteredAccounts.map((user: any) => {
+      const findBranch = userBranches.find(
+        (branch: any) => branch.id === user.contract.branchId,
+      );
+      return {
+        label: ` ${user.username} - ${findBranch.fantasyName}`,
+        value: user.id,
+      };
+    });
+  } else {
+    availableUsers.value = accounts?.value.map((user: any) => {
+      return {
+        label: ` ${user.username}`,
+        value: user.id,
+      };
+    });
+  }
 
   await getProductsAction();
   addonProducts.value = products.value.filter(
@@ -786,7 +809,7 @@ const onSubmit = form.handleSubmit(async (values) => {
                 >
                   1
                 </span>
-                Selecione o Usuário e o Serviço UM
+                Selecione o Usuário e o Serviço
               </CardTitle>
               <div class="lg:mx-w-lg">
                 <!-- COLUNA DE DADOS -->

@@ -2,12 +2,21 @@
 import BackLink from '@/components/shared/BackLink.vue';
 import FormSelect from '@/components/shared/FormSelect.vue';
 import { Button } from '@/components/ui/button';
+import { Checkbox } from '@/components/ui/checkbox';
 import { useToast } from '@/components/ui/toast';
 import { rolesList } from '@/config/roles';
 import { useAccountStore } from '@/stores/account.store';
 import { useContractsStore } from '@/stores/contracts.store';
 import { toTypedSchema } from '@vee-validate/zod';
-import { Eye, EyeOff, LoaderCircle, Trash, UserPen, WandSparkles } from 'lucide-vue-next';
+import {
+  Eye,
+  EyeOff,
+  LoaderCircle,
+  Mail,
+  Trash,
+  UserPen,
+  WandSparkles,
+} from 'lucide-vue-next';
 import { vMaska } from 'maska/vue';
 import { storeToRefs } from 'pinia';
 import { useForm } from 'vee-validate';
@@ -29,6 +38,7 @@ const accountSituation = ref<boolean>(false);
 const loadingDelete = ref<boolean>(false);
 const viewPassword = ref<boolean>(true);
 const contractName = ref<any>(null);
+const userManagerBranches = ref<any>([]);
 
 const contractsStore = useContractsStore();
 const { getContractByIdAction } = contractsStore;
@@ -56,9 +66,22 @@ const contractRoles = [
 ];
 
 onMounted(async () => {
-  if (contractRoles.includes(account.value.role)) {
+  if (contractRoles?.includes(account.value.role)) {
     await getContractByIdAction(account.value.contract.contractId);
     contractName.value = contract?.value.customerName;
+
+    // Initialize userManagerBranches from user's existing branches data
+    if (
+      account.value.contract?.branches &&
+      Array.isArray(account.value.contract.branches)
+    ) {
+      // User already has branches array in the payload
+      userManagerBranches.value = account.value.contract.branches.map((branch: any) => ({
+        id: branch.id,
+        branchCode: branch.branchCode,
+        fantasyName: branch.fantasyName,
+      }));
+    }
   }
 });
 
@@ -108,6 +131,8 @@ const formSchema = toTypedSchema(
     contract: z.any().optional(),
     branch: z.any().optional(),
     area: z.any().optional(),
+    emailConfirmed: z.boolean().optional(),
+    acceptTerms: z.boolean().optional(),
   }),
 );
 
@@ -124,6 +149,8 @@ const form = useForm({
     branch: account?.value.contract?.branchId,
     area: account?.value.contract?.area,
     status: account?.value.status,
+    emailConfirmed: account?.value.emailConfirmed ? account?.value.emailConfirmed : false,
+    acceptTerms: account?.value.acceptTerms ? account?.value.acceptTerms : false,
   },
 });
 
@@ -134,6 +161,31 @@ const handleGeneratePassword = () => {
       newPassword: randomPassword,
     });
   }
+};
+
+const handleUserBranches = (checked: boolean, branch: any) => {
+  if (checked) {
+    // Add branch to the array if checked
+    const branchExists = userManagerBranches.value.some((b: any) => b.id === branch.id);
+    if (!branchExists) {
+      userManagerBranches.value.push({
+        id: branch.id,
+        branchCode: branch.branchCode,
+        fantasyName: branch.fantasyName,
+      });
+    }
+  } else {
+    // Remove branch from the array if unchecked
+    userManagerBranches.value = userManagerBranches.value.filter(
+      (b: any) => b.id !== branch.id,
+    );
+  }
+  // eslint-disable-next-line no-console
+  console.log('Selected branches:', userManagerBranches.value);
+};
+
+const isBranchSelected = (branchId: string) => {
+  return userManagerBranches.value.some((b: any) => b.id === branchId);
 };
 
 const onSubmit = form.handleSubmit(async (values) => {
@@ -152,16 +204,25 @@ const onSubmit = form.handleSubmit(async (values) => {
       contractId: values.contract,
       name: contractName.value,
       branchId: values.branch,
+      branches: userManagerBranches.value,
       area: values.area,
     },
     avatar: {
       name: '',
       url: '',
     },
+    emailConfirmed: values.emailConfirmed,
+    acceptTerms: values.acceptTerms,
   };
 
   try {
     await updateUserAccountAction(accountData);
+    toast({
+      title: 'Tudo pronto!',
+      class: 'bg-green-600 border-0 text-white text-2xl',
+      description: 'Conta de Usuário alterada com sucesso!',
+    });
+    navigateTo('/admin/accounts/active');
   } catch (error) {
     toast({
       title: 'Opss!',
@@ -169,15 +230,13 @@ const onSubmit = form.handleSubmit(async (values) => {
       description: `Ocorreu um erro ao editar o usuário. Tente novamente.`,
     });
     throw error;
-  } finally {
-    toast({
-      title: 'Tudo pronto!',
-      class: 'bg-green-600 border-0 text-white text-2xl',
-      description: 'Conta de Usuário alterada com sucesso!',
-    });
-    navigateTo('/admin/accounts/active');
   }
 });
+
+const handleConfirmEmail = async () => {
+  form.setFieldValue('emailConfirmed', true);
+  await onSubmit();
+};
 </script>
 <template>
   <main class="p-6">
@@ -202,7 +261,7 @@ const onSubmit = form.handleSubmit(async (values) => {
           </div>
         </div>
         <Button variant="destructive" @click="deleteUserAccount">
-          <Trash class="w-4 h-4" /> Excluir Usuário
+          <Trash /> Excluir Usuário
         </Button>
       </div>
     </section>
@@ -216,7 +275,7 @@ const onSubmit = form.handleSubmit(async (values) => {
       <form @submit="onSubmit" @keydown.enter.prevent="true">
         <Card class="bg-zinc-200">
           <CardHeader class="gap-6">
-            <div class="p-4 flex items-center justify-between">
+            <div class="flex items-center justify-between">
               <div class="md:max-w-[250px] w-full">
                 <h3 class="mb-4 text-lg font-bold">Tipo de acesso</h3>
                 <FormField v-slot="{ componentField }" name="role">
@@ -231,8 +290,9 @@ const onSubmit = form.handleSubmit(async (values) => {
                   </FormItem>
                 </FormField>
               </div>
-              <div>
-                <h4 class="mb-4 font-bold">Status</h4>
+
+              <div class="md:w-[250px]">
+                <h4 class="mb-4 font-bold">Cadastro</h4>
                 <FormField v-slot="{ componentField }" name="status">
                   <FormItem>
                     <FormControl>
@@ -248,12 +308,27 @@ const onSubmit = form.handleSubmit(async (values) => {
                   </FormItem>
                 </FormField>
               </div>
+              <div class="p-3 flex items-center gap-6 bg-white rounded-md">
+                <div class="flex flex-col gap-2">
+                  <span class="text-muted-foreground">Email confirmado</span>
+                  <h3
+                    class="px-2 text-white w-fit uppercase rounded-md"
+                    :class="form.values.emailConfirmed ? ' bg-green-600' : 'bg-red-600'"
+                  >
+                    {{ form.values.emailConfirmed ? 'Sim' : 'Não' }}
+                  </h3>
+                </div>
+                <Button v-if="!form.values.emailConfirmed" @click="handleConfirmEmail">
+                  <Mail class="w-4 h-4" />
+                  Validar E-mail
+                </Button>
+              </div>
             </div>
           </CardHeader>
           <CardContent>
             <div class="p-4 border border-zinc-900 rounded-md">
               <div
-                v-if="contractRoles.includes(account.role)"
+                v-if="contractRoles?.includes(account.role)"
                 class="p-4 mb-6 w-full bg-white rounded-md"
               >
                 <p>Contrato</p>
@@ -354,6 +429,27 @@ const onSubmit = form.handleSubmit(async (values) => {
                     Gerar Senha
                   </Button>
                 </div>
+              </div>
+              <div
+                v-if="contract?.branches?.length && account.role === 'branch-manager'"
+                class="mt-4 p-4 mb-6 w-full bg-white rounded-md"
+              >
+                <p>Filiais Gerenciadas por este usuário</p>
+                <ul class="my-4 flex items-center gap-4">
+                  <li
+                    v-for="branch in contract.branches"
+                    :key="branch.id"
+                    class="p-3 border border-zinc-950 rounded-md flex items-center gap-3"
+                  >
+                    <Checkbox
+                      :checked="isBranchSelected(branch.id)"
+                      @update:checked="(checked) => handleUserBranches(checked, branch)"
+                    />
+                    <p class="font-bold text-xl">
+                      {{ branch.branchCode }} - {{ branch.fantasyName }}
+                    </p>
+                  </li>
+                </ul>
               </div>
             </div>
           </CardContent>

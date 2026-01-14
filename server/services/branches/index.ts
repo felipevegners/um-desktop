@@ -9,6 +9,14 @@ export const getBranchesService = async (branchId?: string) => {
   }
 };
 
+export const getBranchesByContractIdService = async (contractId?: string) => {
+  try {
+    return await $fetch(`/api/branches?contractId=${contractId}`);
+  } catch (error) {
+    return error;
+  }
+};
+
 export const createBranchService = async (branchData?: any) => {
   try {
     return await $fetch('/api/branches', {

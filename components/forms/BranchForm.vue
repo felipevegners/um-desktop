@@ -6,6 +6,7 @@ import { useContractsStore } from '@/stores/contracts.store';
 import {
   Info,
   InfoIcon,
+  LoaderCircle,
   Plus,
   SlidersHorizontal,
   Trash,
@@ -28,7 +29,7 @@ const role = data.value?.user?.role;
 
 const contractsStore = useContractsStore();
 const { getContractsAction, getContractByIdAction } = contractsStore;
-const { contracts, contract } = storeToRefs(contractsStore);
+const { contracts, contract, isLoading } = storeToRefs(contractsStore);
 
 const accountsStore = useAccountStore();
 const { getUsersAccountsAction } = accountsStore;
@@ -221,13 +222,14 @@ const handleCancelChangeManager = () => {
   <section class="mb-6 px-6 flex items-center justify-between">
     <div v-if="editMode" class="w-full">
       <h3 class="mb-4 text-lg font-bold">1. Contrato vinculado</h3>
-      <h1
-        class="p-4 font-bold bg-white text-black text-2xl border border-zinc-950 rounded-md w-full"
-      >
-        {{
-          `${selectedContract && selectedContract?.customerName} - ${selectedContract && selectedContract?.customer?.document}`
-        }}
-      </h1>
+      <div class="p-4 bg-white border border-zinc-950 rounded-md">
+        <LoaderCircle v-if="isLoading" class="animate-spin" />
+        <h1 v-else class="font-bold text-2xl">
+          {{
+            `${selectedContract && selectedContract?.customerName} - ${selectedContract && selectedContract?.customer?.document}`
+          }}
+        </h1>
+      </div>
     </div>
     <div v-else class="md:max-w-[350px]">
       <h3 class="mb-4 text-lg font-bold">1. Selecione o Contrato a vincular</h3>

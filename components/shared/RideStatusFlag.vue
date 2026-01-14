@@ -2,9 +2,10 @@
 defineOptions({
   name: 'RideStatusFlag',
 });
-const props = defineProps({
-  rideStatus: null,
-});
+const props = defineProps<{
+  rideStatus: null;
+  size?: string;
+}>();
 
 const rideStatusTranslate = {
   created: 'Agendado',
@@ -23,7 +24,7 @@ const renderRideStatus = computed(() => {
 </script>
 <template>
   <span
-    :class="`py-1 px-2 flex items-center justify-center rounded-md text-[9px] uppercase w-fit  
+    :class="`py-1 px-2 flex items-center justify-center rounded-md uppercase w-fit  
     ${
       rideStatus === 'created'
         ? 'bg-blue-600 text-white'
@@ -38,7 +39,9 @@ const renderRideStatus = computed(() => {
                 : rideStatus === 'refused'
                   ? 'bg-red-600 text-white'
                   : 'bg-amber-400 text-black'
-    }`"
+    }
+    ${size && size === 'large' ? 'font-bold text-sm' : 'text-[9px]'}
+    `"
   >
     {{ renderRideStatus }}
   </span>

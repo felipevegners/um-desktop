@@ -99,27 +99,29 @@ const menuData = generateMenu(user.role);
           </SidebarMenu>
         </SidebarGroup>
         <SidebarSeparator class="border-b border-zinc-700" />
-        <SidebarGroup>
-          <SidebarGroupLabel class="text-[#33ffcc] text-md">
-            Configurações
-          </SidebarGroupLabel>
-          <SidebarMenu>
-            <SidebarMenuItem v-for="item in menuData.settings" :key="item.name">
-              <SidebarMenuButton as-child>
-                <!-- @vue-skip -->
-                <NuxtLink
-                  :to="item.url"
-                  :class="`${item?.active ? 'text-um-primary' : 'text-white'}`"
-                  exact-active-class="text-um-primary"
-                >
-                  <component :is="item.icon" />
-                  <span>{{ item.name }}</span>
-                </NuxtLink>
-              </SidebarMenuButton>
-            </SidebarMenuItem>
-          </SidebarMenu>
-        </SidebarGroup>
-        <SidebarSeparator class="border-b border-zinc-700" />
+        <div v-if="menuData?.settings?.length > 0">
+          <SidebarGroup>
+            <SidebarGroupLabel class="text-[#33ffcc] text-md">
+              Configurações
+            </SidebarGroupLabel>
+            <SidebarMenu>
+              <SidebarMenuItem v-for="item in menuData.settings" :key="item.name">
+                <SidebarMenuButton as-child>
+                  <!-- @vue-skip -->
+                  <NuxtLink
+                    :to="item.url"
+                    :class="`${item?.active ? 'text-um-primary' : 'text-white'}`"
+                    exact-active-class="text-um-primary"
+                  >
+                    <component :is="item.icon" />
+                    <span>{{ item.name }}</span>
+                  </NuxtLink>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+            </SidebarMenu>
+          </SidebarGroup>
+          <SidebarSeparator class="border-b border-zinc-700" />
+        </div>
         <!-- @vue-skip -->
         <SidebarGroup v-if="menuData.sac">
           <SidebarGroupLabel class="text-[#33ffcc] text-md"> SAC </SidebarGroupLabel>

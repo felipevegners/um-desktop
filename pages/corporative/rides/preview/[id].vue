@@ -11,6 +11,7 @@ import {
   SquareCheck,
   SquareDot,
   SquareSquare,
+  User,
   X,
 } from 'lucide-vue-next';
 import { storeToRefs } from 'pinia';
@@ -242,11 +243,33 @@ const travelEndTimeCalc = (time1: any, time2: any) => {
     </section>
     <section v-else class="mt-6">
       <Card class="p-6 bg-zinc-200">
+        <div class="mb-10">
+          <div class="mb-6 flex items-center gap-2">
+            <User />
+            <h3 class="font-bold text-xl">Dados do Usuário</h3>
+          </div>
+          <div class="flex items-center gap-10 bg-white p-4 rounded-md">
+            <div>
+              <p class="text-sm text-zinc-600">Nome</p>
+              <h1 class="text-2xl font-bold">{{ ride?.user.name }}</h1>
+            </div>
+            <div>
+              <p class="text-sm text-zinc-600">Telefone</p>
+              <h1 class="text-2xl font-bold">{{ ride?.user.phone }}</h1>
+            </div>
+            <div>
+              <p class="text-sm text-zinc-600">E-mail</p>
+              <h1 class="text-2xl font-bold">{{ ride?.user.email }}</h1>
+            </div>
+          </div>
+        </div>
+        <Separator class="my-6 border-b border-zinc-300" />
+
         <div>
           <div class="mb-6 flex items-center gap-2">
             <Map />
-            <h3 class="text-sm font-bold">Dados do atendimento</h3>
-            <RideStatusFlag :ride-status="ride?.status" />
+            <h3 class="font-bold text-xl">Dados do atendimento</h3>
+            <RideStatusFlag :ride-status="ride?.status" size="large" />
           </div>
           <div class="mb-6 md:grid md:grid-cols-5 md:gap-6">
             <div class="p-4 col-span-3 row-span-4 bg-white rounded-md">
@@ -355,7 +378,7 @@ const travelEndTimeCalc = (time1: any, time2: any) => {
                 v-for="(stop, index) in ride?.travel.stops"
                 class="mt-3"
               >
-                <p class="font-normal">Parada {{ index + 1 }}</p>
+                <p class="font-normal">Parada {{ Number(index) + 1 }}</p>
                 <p class="text-xl font-bold flex items-center gap-2">
                   <SquareSquare />
                   {{ stop.address }}
@@ -376,7 +399,7 @@ const travelEndTimeCalc = (time1: any, time2: any) => {
         </div>
         <Separator class="my-6 border-b border-zinc-300" />
         <section>
-          <h2 class="mb-4 text-2xl font-bold">Dados do Motorista</h2>
+          <h2 class="mb-4 text-xl font-bold">Dados do Motorista</h2>
           <div class="md:grid md:grid-cols-4 md:gap-6">
             <div class="p-6 bg-white rounded-md col-span-2 space-y-2">
               <p class="text-sm text-zinc-600">Nome</p>
@@ -400,7 +423,7 @@ const travelEndTimeCalc = (time1: any, time2: any) => {
         </section>
         <Separator class="my-6 border-b border-zinc-300" />
         <section>
-          <h2 class="mb-4 text-2xl font-bold">Agendado por</h2>
+          <h2 class="mb-4 text-xl font-bold">Solicitante</h2>
           <div class="md:grid md:grid-cols-3 md:gap-6">
             <div class="p-6 bg-white rounded-md space-y-2">
               <p class="text-sm text-zinc-600">Nome</p>

@@ -7,6 +7,7 @@ import {
   ChartArea,
   Coins,
   ExternalLink,
+  Inbox,
   LoaderCircle,
 } from 'lucide-vue-next';
 import DashBarChart from '~/components/shared/DashBarChart.vue';
@@ -16,6 +17,10 @@ import { currencyFormat, sanitizeRideDate } from '~/lib/utils';
 const { data } = useAuth();
 //@ts-ignore
 const contractId = data.value?.user.contract?.contractId;
+//@ts-ignore
+const userBranches = data.value?.user.contract?.branches;
+//@ts-ignore
+const role = data.value?.user?.role;
 
 const ridesStore = useRidesStore();
 const { getRidesByContractAction } = ridesStore;
@@ -26,13 +31,31 @@ const { getContractByIdAction } = contractStore;
 const { contract, isLoading } = storeToRefs(contractStore);
 
 const contractRidesList = ref<any>([]);
+const userAllowedBranches = ref<any>([]);
 
 onMounted(async () => {
   await getContractByIdAction(contractId);
   await getRidesByContractAction(contractId);
-  contractRidesList.value = rides?.value.filter(
-    (ride: any) => ride.status !== 'cancelled',
-  );
+
+  if (role === 'master-manager') {
+    contractRidesList.value = rides?.value.filter(
+      (ride: any) => ride.status !== 'cancelled',
+    );
+    userAllowedBranches.value = contract?.value.branches;
+  } else {
+    contractRidesList.value = rides?.value.filter((ride: any) =>
+      userBranches.some(
+        (filterItem: any) =>
+          filterItem.id === ride.billing.paymentData.branch &&
+          ride.status !== 'cancelled',
+      ),
+    );
+
+    const filterUserBranches = contract?.value.branches.filter((item: any) =>
+      userBranches.some((filterItem: any) => filterItem.id === item.id),
+    );
+    userAllowedBranches.value = filterUserBranches;
+  }
 
   if (contractRidesList.value.length >= 4) {
     contractRidesList.value = contractRidesList?.value.slice(-4).reverse();
@@ -44,14 +67,18 @@ const getRideMonthData = computed(() => {
     return new Date(ride.travel.date).toLocaleString('pt-BR', { month: 'long' });
   });
 
-  const result = Object.entries(
-    months.reduce((acc: any, str: any) => {
-      acc[str] = (acc[str] || 0) + 1;
-      return acc;
-    }, {}),
-  ).map(([name, total]) => ({ name, total }));
+  if (months.length) {
+    const result = Object.entries(
+      months.reduce((acc: any, str: any) => {
+        acc[str] = (acc[str] || 0) + 1;
+        return acc;
+      }, {}),
+    ).map(([name, total]) => ({ name, total }));
 
-  return result;
+    return result;
+  } else {
+    return [];
+  }
 });
 
 const calculateBranchRemainingBudget = (branch: any) => {
@@ -78,11 +105,7 @@ const contractRemainBudget = computed(() => {
 </script>
 
 <template>
-  <div class="p-6">
-    <div class="flex gap-6 items-center"></div>
-    <h1 class="text-2xl font-bold">Dashboard Corporativo</h1>
-  </div>
-  <div class="flex flex-1 flex-col gap-4 p-6 pt-0">
+  <div class="my-6 flex flex-1 flex-col gap-4 p-6 pt-0">
     <div
       class="h-[240px] rounded-xl bg-[url('/images/dashboard_banner_background.jpg')] bg-no-repeat bg-cover bg-center"
     >
@@ -90,7 +113,7 @@ const contractRemainBudget = computed(() => {
         <div class="flex flex-col gap-2">
           <h2 class="text-white">Olá, {{ userName }}!</h2>
           <h1 class="font-bold text-white text-2xl">
-            Você está no painel de controle da Urban Mobi!
+            Você está no painel de gestão da Urban Mobi!
           </h1>
         </div>
         <Button
@@ -104,53 +127,6 @@ const contractRemainBudget = computed(() => {
       </div>
     </div>
     <div class="grid auto-rows-min gap-4 md:grid-cols-3">
-      <div class="p-6 flex flex-col rounded-xl bg-muted/90 h-full">
-        <p class="font-bold text-lg">
-          <CalendarDays class="mb-2" :size="32" />
-          Atendimentos recentes
-        </p>
-        <div v-if="loadingData" class="flex items-center justify-center h-full">
-          <LoaderCircle :size="48" class="animate-spin" />
-        </div>
-        <ul v-else class="mt-6 flex-1">
-          <li
-            v-for="(ride, index) in contractRidesList"
-            :key="index"
-            class="py-4 flex items-center justify-between gap-3 border-b border-zinc-300 last-of-type:border-b-0"
-          >
-            <p class="text-sm font-bold flex items-center">
-              {{ ride.code }}
-              <Button
-                type="button"
-                size="icon"
-                variant="link"
-                @click="navigateTo(`/personal/rides/preview/${ride.id}`)"
-              >
-                <ExternalLink :size="16" />
-              </Button>
-            </p>
-            <small>
-              {{ ride?.user.name }} |
-              {{ sanitizeRideDate(ride.travel.date) }}
-            </small>
-            <RideStatusFlag :ride-status="ride.status" />
-          </li>
-        </ul>
-        <Button
-          type="button"
-          class="mt-6 p-6 w-full"
-          @click="navigateTo('/corporative/rides/open')"
-        >
-          Ver Todos
-        </Button>
-      </div>
-      <div class="p-6 rounded-xl bg-muted/90">
-        <p class="mb-6 font-bold text-lg">
-          <ChartArea class="mb-2" :size="32" />
-          Atendimentos por mês
-        </p>
-        <DashBarChart :data="getRideMonthData" />
-      </div>
       <div class="p-6 flex flex-col rounded-xl bg-muted/90 gap-6">
         <p class="font-bold text-lg">
           <Coins class="mb-2" :size="32" />
@@ -174,7 +150,7 @@ const contractRemainBudget = computed(() => {
             </h1>
           </div>
         </div>
-        <div v-for="branch in contract?.branches" :key="branch.id">
+        <div v-for="branch in userAllowedBranches" :key="branch.id">
           <div class="border border-zinc-950 rounded-lg bg-muted/80 p-4 mt-4 pt-1">
             <small class="mb-6 font-bold"> {{ branch.fantasyName }}</small>
             <div class="flex justify-between gap-2">
@@ -198,12 +174,69 @@ const contractRemainBudget = computed(() => {
           </div>
         </div>
         <Button
+          v-if="role === 'master-manager'"
           type="button"
           class="mt-6 p-6 w-full"
           @click="navigateTo({ path: '/corporative/contracts/edit/', hash: '#budget' })"
         >
           Gerenciar Budget
         </Button>
+      </div>
+      <div class="p-6 flex flex-col rounded-xl bg-muted/90 h-full">
+        <p class="font-bold text-lg">
+          <CalendarDays class="mb-2" :size="32" />
+          Atendimentos recentes
+        </p>
+        <div v-if="loadingData" class="flex items-center justify-center h-full">
+          <LoaderCircle :size="48" class="animate-spin" />
+        </div>
+        <ul v-else-if="contractRidesList.length > 0" class="mt-6 flex-1">
+          <li
+            v-for="(ride, index) in contractRidesList"
+            :key="index"
+            class="py-4 flex items-center justify-between gap-3 border-b border-zinc-300 last-of-type:border-b-0"
+          >
+            <p class="text-sm font-bold flex items-center">
+              {{ ride.code }}
+              <Button
+                type="button"
+                size="icon"
+                variant="link"
+                @click="navigateTo(`/personal/rides/preview/${ride.id}`)"
+              >
+                <ExternalLink :size="16" />
+              </Button>
+            </p>
+            <small>
+              {{ ride?.user.name }} |
+              {{ sanitizeRideDate(ride.travel.date) }}
+            </small>
+            <RideStatusFlag :ride-status="ride.status" />
+          </li>
+        </ul>
+        <div v-else class="flex flex-col items-center justify-center h-full">
+          <Inbox class="text-muted-foreground" :size="32" />
+          <p class="text-muted-foreground">Nenhum atendimento recente</p>
+        </div>
+        <Button
+          v-if="contractRidesList.length > 0"
+          type="button"
+          class="mt-6 p-6 w-full"
+          @click="navigateTo('/corporative/rides/open')"
+        >
+          Ver Todos
+        </Button>
+      </div>
+      <div class="p-6 flex flex-col rounded-xl bg-muted/90 h-full">
+        <p class="mb-6 font-bold text-lg">
+          <ChartArea class="mb-2" :size="32" />
+          Atendimentos por mês
+        </p>
+        <DashBarChart v-if="getRideMonthData.length" :data="getRideMonthData" />
+        <div v-else class="flex flex-col items-center justify-center h-full">
+          <Inbox class="text-muted-foreground" :size="32" />
+          <p class="text-muted-foreground">Nenhum atendimento no período</p>
+        </div>
       </div>
     </div>
   </div>

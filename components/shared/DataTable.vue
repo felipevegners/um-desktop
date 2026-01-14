@@ -213,7 +213,10 @@ watch(
     </div>
 
     <div class="flex items-center justify-end space-x-2 py-4">
-      <div class="flex-1 text-sm text-muted-foreground">
+      <div
+        v-if="table.getSelectedRowModel().rows.length > 0"
+        class="flex-1 text-sm text-muted-foreground"
+      >
         {{ table.getSelectedRowModel().rows.length }} de
         {{ table.getFilteredRowModel().rows.length }} resultado(s) selecionados
       </div>

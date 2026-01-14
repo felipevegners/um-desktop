@@ -13,6 +13,10 @@ import { columns } from './columns';
 const { data } = useAuth();
 //@ts-ignore
 const contractId = data.value?.user.contract?.contractId;
+//@ts-ignore
+const role = data.value?.user?.role;
+//@ts-ignore
+const userBranches = data.value?.user?.contract?.branches;
 
 definePageMeta({
   layout: 'admin',
@@ -26,14 +30,25 @@ const ridesStore = useRidesStore();
 const { getRidesByContractAction } = ridesStore;
 const { loadingData, cancelledRides } = storeToRefs(ridesStore);
 const columnHelper = createColumnHelper<any>();
+const filteredRides = ref<any>([]);
 
 onMounted(async () => {
   await getRidesByContractAction(contractId);
+  if (role === 'branch-manager') {
+    filteredRides.value = cancelledRides?.value.filter((ride: any) =>
+      userBranches
+        .some((filterItem: any) => filterItem.id === ride.billing.paymentData.branch)
+        .sort((a: any, b: any) =>
+          a.progress.finishedAt > b.progress.finishedAt
+            ? -1
+            : a.progress.finishedAt < b.progress.finishedAt
+              ? 1
+              : 0,
+        ),
+    );
+  }
+  filteredRides.value = cancelledRides;
 });
-
-const filteredRides = ref<any>([]);
-
-filteredRides.value = cancelledRides;
 
 const editRide = (rideId: string) => {
   navigateTo({

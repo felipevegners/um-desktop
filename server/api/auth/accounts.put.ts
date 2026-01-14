@@ -26,6 +26,8 @@ export default defineEventHandler(async (event) => {
     document,
     birthDate,
     address,
+    acceptTerms,
+    emailConfirmed,
   } = body;
 
   const userAccount = await prisma.accounts.findUnique({
@@ -63,6 +65,8 @@ export default defineEventHandler(async (event) => {
         document,
         birthDate,
         address,
+        acceptTerms,
+        emailConfirmed,
       },
     });
   } catch (error: any) {

@@ -16,9 +16,12 @@ const contractId = data.value?.user.contract?.contractId;
 //@ts-ignore
 const role = data.value?.user?.role;
 
+//@ts-ignore
+const userBranches = data.value?.user?.contract?.branches;
+
 const columnHelper = createColumnHelper<any>();
 const store = useBranchesStore();
-const { getBranchesAction, deleteBranchAction } = store;
+const { getBranchesAction, deleteBranchAction, getBranchByContractIdAction } = store;
 const { branches, isLoadingData } = storeToRefs(store);
 
 const loadingDelete = ref<boolean>(false);
@@ -34,10 +37,17 @@ useHead({
 });
 
 onMounted(async () => {
-  await getBranchesAction();
-  contractBranches.value = branches.value.filter(
-    (branch) => branch.contractId === contractId,
-  );
+  await getBranchByContractIdAction(contractId);
+  if (role === 'master-manager') {
+    contractBranches.value = branches.value.filter(
+      (branch) => branch.contractId === contractId,
+    );
+  }
+  if (role === 'branch-manager') {
+    contractBranches.value = branches.value.filter((item) =>
+      userBranches.some((filterItem: any) => filterItem.id === item.id),
+    );
+  }
 });
 
 const viewBranch = (value: string) => {
