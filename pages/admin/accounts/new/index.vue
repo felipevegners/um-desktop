@@ -2,6 +2,7 @@
 import BackLink from '@/components/shared/BackLink.vue';
 import FormSelect from '@/components/shared/FormSelect.vue';
 import { Button } from '@/components/ui/button';
+import Input from '@/components/ui/input/Input.vue';
 import { useToast } from '@/components/ui/toast/use-toast';
 import { rolesList } from '@/config/roles';
 import { useAccountStore } from '@/stores/account.store';
@@ -9,9 +10,13 @@ import { useContractsStore } from '@/stores/contracts.store';
 import { toTypedSchema } from '@vee-validate/zod';
 import { Eye, EyeOff, LoaderCircle, UserPen, WandSparkles } from 'lucide-vue-next';
 import { vMaska } from 'maska/vue';
+import Papa from 'papaparse';
 import { useForm } from 'vee-validate';
 import * as z from 'zod';
+import DataTable from '~/components/shared/DataTable.vue';
 import { generatePassword } from '~/lib/utils';
+
+import { columns } from './columns';
 
 definePageMeta({
   layout: 'admin',
@@ -42,6 +47,11 @@ const loadingAreas = ref(false);
 const selectedBranches = ref<any>([]);
 const branchAreas = ref<any>([]);
 const showForm = ref(false);
+
+const importedUserData = ref<any>([]);
+const importedUserDataErrors = ref<any>([]);
+const loadingImportingUserData = ref<boolean>(false);
+
 const revealPassword = () => {
   viewPassword.value = !viewPassword.value;
 };
@@ -159,22 +169,27 @@ const onSubmit = form.handleSubmit(async (values) => {
     emailConfirmed: false,
   };
 
-  try {
-    await registerUserAccountAction(accountData);
-  } catch (error) {
+  const result = await registerUserAccountAction(accountData);
+  if (result?.success) {
     toast({
-      title: 'Opss!',
-      class: 'bg-red-500 border-0 text-white text-2xl',
-      description: `Ocorreu um erro ao cadastrar a Conta de Usuário. Tente novamente.`,
-    });
-    throw error;
-  } finally {
-    toast({
-      title: 'Tudo pronto!',
+      title: 'Sucesso!',
       class: 'bg-green-600 border-0 text-white text-2xl',
-      description: 'Conta de Usuário cadastrado com sucesso!',
+      description: `Conta de Usuário cadastrado com sucesso!`,
     });
-    router.back();
+    setTimeout(() => {
+      navigateTo('/admin/accounts/active');
+    }, 1000);
+  } else {
+    if (result.statusCode === 409) {
+      //@ts-ignore
+      document.querySelector("input[name='userEmail']").focus();
+      form.setFieldError('userEmail', 'Já existe uma conta vinculada a este e-mail!');
+    }
+    toast({
+      title: 'Erro ao criar nova conta de usuário:',
+      description: result.error,
+      variant: 'destructive',
+    });
   }
 });
 
@@ -186,6 +201,30 @@ const handleGeneratePassword = () => {
     });
   }
 };
+
+const handleFileUpload = (event: any) => {
+  loadingImportingUserData.value = true;
+  const file = event.target.files[0];
+  if (!file) return; // Exit if no file is selected
+
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    const csvString: any = e?.target?.result;
+    const parsedResult = Papa.parse(csvString, {
+      header: true, // Use the first row as object keys
+      skipEmptyLines: true, // Ignore blank rows
+    });
+
+    importedUserData.value = parsedResult.data;
+    importedUserDataErrors.value = parsedResult.errors;
+  };
+  // reader.onerror = (e) => {
+  //   console.error('Error reading file:', e);
+  //   // Implement user-facing error messages here.
+  // };
+  reader.readAsText(file);
+  loadingImportingUserData.value = false;
+};
 </script>
 <template>
   <main class="p-6">
@@ -194,7 +233,30 @@ const handleGeneratePassword = () => {
     </header>
     <section class="mb-10 flex items-center gap-4">
       <UserPen :size="32" />
-      <h1 class="font-bold text-black text-3xl">Criar Usuário</h1>
+      <h1 class="font-bold text-black text-3xl">Criar Novo Usuário</h1>
+    </section>
+    <section class="mb-10">
+      <Card class="bg-zinc-200">
+        <CardHeader>
+          <CardTitle>
+            <h3 class="mb-4 text-lg font-bold">Importar Dados CSV</h3>
+          </CardTitle>
+          <CardContent>
+            <Input type="file" @change="handleFileUpload" accept=".csv" class="mb-4" />
+            <div>
+              <LoaderCircle v-if="loadingImportingUserData" class="animate-spin" />
+              <DataTable
+                v-if="importedUserData.length > 0 && !loadingImportingUserData"
+                :data="importedUserData"
+                :columns="columns"
+                :show-column-select="false"
+                :show-filter="false"
+                class="bg-white"
+              />
+            </div>
+          </CardContent>
+        </CardHeader>
+      </Card>
     </section>
     <section>
       <form @submit="onSubmit" @keydown.enter.prevent="true">

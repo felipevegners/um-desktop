@@ -377,7 +377,7 @@ const onSubmit = form.handleSubmit(async (values) => {
       date: values.departDate,
       departTime: values.departTime,
     },
-    status: selectedDriver.value.name ? 'pending' : ride?.value.status,
+    status: ride?.value.status,
     driver: {
       id: selectedDriver.value.id,
       name: selectedDriver.value.name,

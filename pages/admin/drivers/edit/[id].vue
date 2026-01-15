@@ -51,8 +51,8 @@ const driverSituation = ref<boolean>(false);
 const driverCars = ref<any>();
 const driverFiles = ref<any>();
 
-driverCars.value = driver?.value.driverCars.length
-  ? driver.value.driverCars
+driverCars.value = driver?.value.driverCars?.length
+  ? driver?.value.driverCars
   : [
       {
         carModel: '',

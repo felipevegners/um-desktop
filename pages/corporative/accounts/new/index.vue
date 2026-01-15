@@ -180,21 +180,27 @@ const onSubmit = form.handleSubmit(async (values) => {
     },
   };
 
-  try {
-    await registerUserAccountAction(accountData);
+  const result = await registerUserAccountAction(accountData);
+  if (result?.success) {
     toast({
-      title: 'Tudo pronto!',
+      title: 'Sucesso!',
       class: 'bg-green-600 border-0 text-white text-2xl',
-      description: 'Conta de Usuário cadastrado com sucesso!',
+      description: `Conta de Usuário cadastrado com sucesso!`,
     });
-    router.back();
-  } catch (error) {
+    setTimeout(() => {
+      navigateTo('/corporative/accounts/active');
+    }, 1000);
+  } else {
+    if (result.statusCode === 409) {
+      //@ts-ignore
+      document.querySelector("input[name='userEmail']").focus();
+      form.setFieldError('userEmail', 'Já existe uma conta vinculada a este e-mail!');
+    }
     toast({
-      title: 'Opss!',
-      class: 'bg-red-500 border-0 text-white text-2xl',
-      description: `Ocorreu um erro ao cadastrar a Conta de Usuário. Tente novamente.`,
+      title: 'Erro ao criar nova conta de usuário:',
+      description: result.error,
+      variant: 'destructive',
     });
-    throw error;
   }
 });
 
