@@ -15,15 +15,42 @@ const Roles = {
 export const columns = [
   columnHelper.accessor('nome', {
     header: () => h('div', { class: 'text-left' }, 'Nome'),
-    cell: ({ row }) => h('div', { class: 'lowecase' }, row.getValue('nome')),
+    cell: ({ row }) => {
+      const data = row.original;
+      return h(
+        'div',
+        {
+          class: data.nome === '' ? 'px-2 text-red-500 bg-red-100' : 'lowercase',
+        },
+        data.nome === '' ? '* campo vazio *' : data.nome,
+      );
+    },
   }),
   columnHelper.accessor('email', {
     header: () => h('div', { class: 'text-left' }, 'E-mail'),
-    cell: ({ row }) => h('div', { class: 'lowecase' }, row.getValue('email')),
+    cell: ({ row }) => {
+      const data = row.original;
+      return h(
+        'div',
+        {
+          class: data.email === '' ? 'px-2 text-red-500 bg-red-100' : 'lowercase',
+        },
+        data.email === '' ? '* campo vazio *' : data.email,
+      );
+    },
   }),
   columnHelper.accessor('telefone', {
     header: () => h('div', { class: 'text-left' }, 'Telefone'),
-    cell: ({ row }) => h('div', { class: 'lowecase' }, row.getValue('telefone')),
+    cell: ({ row }) => {
+      const data = row.original;
+      return h(
+        'div',
+        {
+          class: data.telefone === '' ? 'px-2 text-red-500 bg-red-100' : 'lowercase',
+        },
+        data.telefone === '' ? '* campo vazio *' : data.telefone,
+      );
+    },
   }),
   columnHelper.accessor('cargo', {
     header: () => h('div', { class: 'text-left' }, 'Cargo'),

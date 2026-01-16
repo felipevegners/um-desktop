@@ -659,7 +659,10 @@ const onSubmit = form.handleSubmit(async (values) => {
                     Aqui você gerencia todos os usuários do contrato e as permissões de
                     cada um.
                   </h5>
-                  <ul v-if="accounts && accounts.length > 0" class="flex gap-6 flex-wrap">
+                  <ul
+                    v-if="accounts && accounts.length > 0"
+                    class="md:grid md:grid-cols-3 flex flex-wrap gap-6"
+                  >
                     <ContractUserCard
                       v-for="account in accounts"
                       :account="account"

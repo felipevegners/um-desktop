@@ -3,7 +3,7 @@ import BackLink from '@/components/shared/BackLink.vue';
 import FormSelect from '@/components/shared/FormSelect.vue';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/components/ui/toast';
-import { rolesList } from '@/config/roles';
+import { rolesList, userRestrictions } from '@/config/roles';
 import { useAccountStore } from '@/stores/account.store';
 import { useContractsStore } from '@/stores/contracts.store';
 import { toTypedSchema } from '@vee-validate/zod';
@@ -197,6 +197,7 @@ const onSubmit = form.handleSubmit(async (values) => {
     position: values.position,
     department: values.department,
     contract: {
+      ...account.value.contract,
       contractId: values.contract,
       name: contractName.value,
       branchId: values.branch,
@@ -227,6 +228,18 @@ const onSubmit = form.handleSubmit(async (values) => {
     navigateTo('/corporative/accounts/active');
   }
 });
+
+const toggleRestriction = (account: Account, restrictionId: string) => {
+  if (!account.contract.restrictions) {
+    account.contract.restrictions = [];
+  }
+  const idx = account.contract.restrictions.indexOf(restrictionId);
+  if (idx === -1) {
+    account.contract.restrictions.push(restrictionId);
+  } else {
+    account.contract.restrictions.splice(idx, 1);
+  }
+};
 </script>
 <template>
   <main class="p-6">
@@ -429,6 +442,22 @@ const onSubmit = form.handleSubmit(async (values) => {
                     <p class="font-bold text-xl">
                       {{ branch.branchCode }} - {{ branch.fantasyName }}
                     </p>
+                  </li>
+                </ul>
+              </div>
+              <div v-if="role === 'master-manager' || role === 'branch-manager'">
+                <h3 class="my-4 font-bold text-lg">Restrições de Atendimento</h3>
+                <ul class="space-y-3">
+                  <li
+                    v-for="restriction in userRestrictions"
+                    :key="restriction.id"
+                    class="flex items-center gap-2"
+                  >
+                    <Checkbox
+                      :checked="account?.contract?.restrictions?.includes(restriction.id)"
+                      @update:checked="toggleRestriction(account, restriction.id)"
+                    />
+                    <label :for="restriction.id">{{ restriction.label }}</label>
                   </li>
                 </ul>
               </div>

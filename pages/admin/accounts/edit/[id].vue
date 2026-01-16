@@ -4,7 +4,7 @@ import FormSelect from '@/components/shared/FormSelect.vue';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { useToast } from '@/components/ui/toast';
-import { rolesList } from '@/config/roles';
+import { rolesList, userRestrictions } from '@/config/roles';
 import { useAccountStore } from '@/stores/account.store';
 import { useContractsStore } from '@/stores/contracts.store';
 import { toTypedSchema } from '@vee-validate/zod';
@@ -201,6 +201,7 @@ const onSubmit = form.handleSubmit(async (values) => {
     position: values.position,
     department: values.department,
     contract: {
+      ...account.value.contract,
       contractId: values.contract,
       name: contractName.value,
       branchId: values.branch,
@@ -236,6 +237,18 @@ const onSubmit = form.handleSubmit(async (values) => {
 const handleConfirmEmail = async () => {
   form.setFieldValue('emailConfirmed', true);
   await onSubmit();
+};
+
+const toggleRestriction = (account: Account, restrictionId: string) => {
+  if (!account.contract.restrictions) {
+    account.contract.restrictions = [];
+  }
+  const idx = account.contract.restrictions.indexOf(restrictionId);
+  if (idx === -1) {
+    account.contract.restrictions.push(restrictionId);
+  } else {
+    account.contract.restrictions.splice(idx, 1);
+  }
 };
 </script>
 <template>
@@ -451,6 +464,20 @@ const handleConfirmEmail = async () => {
                   </li>
                 </ul>
               </div>
+              <h3 class="my-4 font-bold text-lg">Restrições de Atendimento</h3>
+              <ul class="space-y-3">
+                <li
+                  v-for="restriction in userRestrictions"
+                  :key="restriction.id"
+                  class="flex items-center gap-2"
+                >
+                  <Checkbox
+                    :checked="account?.contract?.restrictions?.includes(restriction.id)"
+                    @update:checked="toggleRestriction(account, restriction.id)"
+                  />
+                  <label :for="restriction.id">{{ restriction.label }}</label>
+                </li>
+              </ul>
             </div>
           </CardContent>
         </Card>

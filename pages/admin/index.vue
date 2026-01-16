@@ -7,10 +7,8 @@ import { useRidesStore } from '@/stores/rides.store';
 import {
   BanknoteIcon,
   CalendarDays,
-  CalendarPlus,
   ChartArea,
   ExternalLink,
-  FileText,
   LoaderCircle,
   Receipt,
 } from 'lucide-vue-next';
@@ -118,12 +116,12 @@ definePageMeta({
 </script>
 
 <template>
-  <div class="p-6">
+  <!-- <div class="p-6">
     <div class="flex gap-6 items-center"></div>
     <h1 class="text-2xl font-bold">Dashboard Backoffice</h1>
-  </div>
+  </div> -->
   <div class="flex flex-1 flex-col gap-4 p-6 pt-0">
-    <div
+    <!-- <div
       class="h-[240px] rounded-xl bg-[url('/images/dashboard_banner_background.jpg')] bg-no-repeat bg-cover bg-center"
     >
       <div class="p-10 flex items-center justify-between h-full">
@@ -140,12 +138,12 @@ definePageMeta({
           Gerar Atendimento
         </Button>
       </div>
-    </div>
+    </div> -->
     <div class="grid auto-rows-min gap-4 md:grid-cols-3">
-      <div class="col-span-2 p-6 flex flex-col rounded-xl bg-muted/90">
+      <div class="col-span-3 p-6 flex flex-col rounded-xl bg-muted/90">
         <p class="mb-6 font-bold text-lg">
           <Receipt class="mb-2" :size="32" />
-          Faturamento Totais
+          Faturamento - Totais
         </p>
 
         <div class="flex-grow flex items-start justify-center">
@@ -187,7 +185,7 @@ definePageMeta({
           <p v-else class="text-muted-foreground">Não há dados no momento.</p>
         </div>
       </div>
-      <div class="p-6 rounded-xl bg-muted/90 h-full">
+      <div class="p-6 col-span-2 rounded-xl bg-muted/90 h-full">
         <p class="font-bold text-lg">
           <CalendarDays class="mb-2" :size="32" />
           Atendimentos recentes
@@ -214,9 +212,10 @@ definePageMeta({
                 </Button>
               </p>
               <small>
-                {{ ride?.user.name }} |
+                {{ ride?.user.name }} -
                 {{ sanitizeRideDate(ride.travel.date) }}
               </small>
+              <small> {{ ride?.driver.name }}</small>
               <RideStatusFlag :ride-status="ride.status" />
             </li>
           </ul>
@@ -266,12 +265,12 @@ definePageMeta({
           Ver Todos
         </Button>
       </div>
-      <div class="p-6 flex flex-col rounded-xl bg-muted/90">
+      <!-- <div class="p-6 flex flex-col rounded-xl bg-muted/90">
         <p class="mb-6 font-bold text-lg">
           <FileText class="mb-2" :size="32" />
           Contratos Ativos
         </p>
-      </div>
+      </div> -->
     </div>
   </div>
 </template>

@@ -59,12 +59,13 @@ const toggleRestriction = (account: Account, restrictionId: string) => {
         >
           Sua conta
         </span>
-        <Button
-          v-if="
+        <!-- v-if="
             account.role === 'master-manager' ||
             account.role === 'branch-manager' ||
+            account.role === 'branch-manager' ||
             account.role === 'admin'
-          "
+          " -->
+        <Button
           title="Editar usuário"
           variant="ghost"
           size="icon"

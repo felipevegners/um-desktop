@@ -36,6 +36,7 @@ export const useAccountStore = defineStore('accounts', {
           contractId: '',
           branchId: '',
           branches: [],
+          restrictions: ['week'],
           area: '',
           name: '',
         },
