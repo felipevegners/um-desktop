@@ -791,7 +791,7 @@ const showRideControls = computed(() => {
                 >
                   <span class="text-muted-foreground text-sm">Observações</span>
 
-                  <p>{{ ride.travel.observations || 'Sem observações' }}</p>
+                  <p>{{ ride.observations || 'Sem observações' }}</p>
                 </div>
                 <div
                   v-if="ride.status === 'completed'"

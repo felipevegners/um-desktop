@@ -13,24 +13,40 @@ export default defineEventHandler(async (event) => {
     });
 
     if (ride) {
-      const stopsLocations = ride?.progress?.stops?.map((stop: any) => {
-        return {
-          lat: stop.location.latitude,
-          lng: stop.location.longitude,
-        };
-      });
-      const locations = [
-        {
-          lat: ride.progress.startLocation.latitude,
-          lng: ride.progress.startLocation.longitude,
-        },
-        ...stopsLocations,
-        {
-          lat: ride.progress.finishedLocation.latitude,
-          lng: ride.progress.finishedLocation.longitude,
-        },
-      ];
-      const time = new Date(ride?.progress?.finishedAt);
+      const stopsLocations =
+        ride?.progress?.stops?.map((stop: any) => {
+          return {
+            lat: stop.location.latitude,
+            lng: stop.location.longitude,
+          };
+        }) || [];
+      const locations = ride?.progress.startLocation
+        ? [
+            {
+              lat: ride.progress.startLocation.latitude,
+              lng: ride.progress.startLocation.longitude,
+            },
+            ...stopsLocations,
+            {
+              lat: ride.progress.finishedLocation.latitude,
+              lng: ride.progress.finishedLocation.longitude,
+            },
+          ]
+        : [
+            {
+              lat: ride?.travel.origin.lat,
+              lng: ride?.travel.origin.lng,
+            },
+            ...stopsLocations,
+            {
+              lat: ride?.travel.destination.lat,
+              lng: ride?.travel.destination.lng,
+            },
+          ];
+      const time =
+        ride?.progress?.finishedAt! == ''
+          ? new Date(ride?.progress?.finishedAt)
+          : new Date();
       time.setHours(time.getHours() + 3);
 
       try {
@@ -124,6 +140,8 @@ export default defineEventHandler(async (event) => {
           rideTotalPrice,
         };
 
+        // console.log('FINAL TRAVEL DATA ->', finalTravelData);
+
         await prisma.rides.update({
           where: {
             id: ride.id,
@@ -135,6 +153,12 @@ export default defineEventHandler(async (event) => {
             },
             rideFinalPrice: rideTotalPrice.toFixed(2),
             travel: finalTravelData,
+            progress: ride?.progress.startLocation
+              ? ride.progress
+              : {
+                  ...ride.progress,
+                  finishedAt: time.toISOString(),
+                },
           },
         });
 
