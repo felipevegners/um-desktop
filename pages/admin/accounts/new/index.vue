@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import BackLink from '@/components/shared/BackLink.vue';
 import DataTable from '@/components/shared/DataTable.vue';
+import DownloadCsvTemplate from '@/components/shared/DownloadCsvTemplate.vue';
 import FormSelect from '@/components/shared/FormSelect.vue';
 import { Button } from '@/components/ui/button';
 import Input from '@/components/ui/input/Input.vue';
@@ -22,7 +23,6 @@ import { vMaska } from 'maska/vue';
 import Papa from 'papaparse';
 import { useForm } from 'vee-validate';
 import * as z from 'zod';
-import DownloadCsvTemplate from '~/components/shared/DownloadCsvTemplate.vue';
 import { generatePassword } from '~/lib/utils';
 
 import { columns } from './columns';

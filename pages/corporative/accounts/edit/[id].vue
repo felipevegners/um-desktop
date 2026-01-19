@@ -7,7 +7,7 @@ import { rolesList, userRestrictions } from '@/config/roles';
 import { useAccountStore } from '@/stores/account.store';
 import { useContractsStore } from '@/stores/contracts.store';
 import { toTypedSchema } from '@vee-validate/zod';
-import { Eye, EyeOff, LoaderCircle, Trash, UserPen, WandSparkles } from 'lucide-vue-next';
+import { Eye, EyeOff, LoaderCircle, UserPen, WandSparkles } from 'lucide-vue-next';
 import { vMaska } from 'maska/vue';
 import { storeToRefs } from 'pinia';
 import { useForm } from 'vee-validate';
@@ -91,27 +91,29 @@ const revealPassword = () => {
   viewPassword.value = !viewPassword.value;
 };
 
-const deleteUserAccount = async () => {
-  loadingDelete.value = true;
-  try {
-    await deleteUserAccountAction(route.params.id as string);
-  } catch (error) {
-    toast({
-      title: 'Opss!',
-      class: 'bg-red-500 border-0 text-white text-2xl',
-      description: `Ocorreu um erro ao remover a conta de usuário. Tente novamente.`,
-    });
-    throw error;
-  } finally {
-    loadingDelete.value = false;
-    toast({
-      title: 'Tudo pronto!',
-      class: 'bg-green-600 border-0 text-white text-2xl',
-      description: `Conta de Usuário removida com sucesso!`,
-    });
-    await getUsersAccountsAction();
-  }
-};
+// const deleteUserAccount = async () => {
+//   loadingDelete.value = true;
+//   try {
+//     await deleteUserAccountAction(route.params.id as string);
+//     loadingDelete.value = false;
+//     toast({
+//       title: 'Tudo pronto!',
+//       class: 'bg-green-600 border-0 text-white text-2xl',
+//       description: `Conta de Usuário removida com sucesso!`,
+//     });
+//     await getUsersAccountsAction();
+//     setTimeout(() => {
+//       navigateTo('/corporative/accounts/active');
+//     }, 1000);
+//   } catch (error) {
+//     toast({
+//       title: 'Opss!',
+//       class: 'bg-red-500 border-0 text-white text-2xl',
+//       description: `Ocorreu um erro ao remover a conta de usuário. Tente novamente.`,
+//     });
+//     throw error;
+//   }
+// };
 
 const formSchema = toTypedSchema(
   z.object({
@@ -263,9 +265,9 @@ const toggleRestriction = (account: Account, restrictionId: string) => {
             <Label class="text-sm text-zinc-500"> Ativo </Label>
           </div>
         </div>
-        <Button variant="destructive" @click="deleteUserAccount">
+        <!-- <Button variant="destructive" @click="deleteUserAccount">
           <Trash class="w-4 h-4" /> Excluir Usuário
-        </Button>
+        </Button> -->
       </div>
     </section>
     <section
