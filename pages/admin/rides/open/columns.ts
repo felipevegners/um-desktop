@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { WPP_API } from '@/config/paths';
 import { createColumnHelper } from '@tanstack/vue-table';
 import { ArrowUpDown, MessageCircleMore } from 'lucide-vue-next';
-import { sanitizePhone, sanitizeRideDate } from '~/lib/utils';
+import { currencyFormat, sanitizePhone, sanitizeRideDate } from '~/lib/utils';
 
 const columnHelper = createColumnHelper<any>();
 
@@ -75,6 +75,13 @@ export const columns: any = [
     },
   }),
   columnHelper.accessor('billing', {
+    header: () => h('div', { class: 'text-left' }, 'Valor'),
+    cell: ({ row }) => {
+      const data = row.original;
+      return h('span', { class: 'text-xs' }, currencyFormat(data.billing.ammount));
+    },
+  }),
+  columnHelper.accessor('billing', {
     header: () => h('div', { class: 'text-left' }, 'Pagamento'),
     cell: ({ row }) => {
       const data = row.original;
@@ -87,9 +94,9 @@ export const columns: any = [
   columnHelper.accessor('status', {
     header: () => h('div', { class: 'text-left' }, 'Status'),
     cell: ({ row }) => {
-      const status = row.getValue('status');
+      const data = row.original;
       return h(RideStatusFlag, {
-        rideStatus: status,
+        rideStatus: data.status,
       });
     },
   }),

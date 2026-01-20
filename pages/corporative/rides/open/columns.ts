@@ -86,17 +86,11 @@ export const columns: any = [
       );
     },
   }),
-  columnHelper.accessor('estimatedPrice', {
+  columnHelper.accessor('billing', {
     header: () => h('div', { class: 'text-left' }, 'Valor'),
     cell: ({ row }) => {
       const data = row.original;
-      return h(
-        'div',
-        {
-          class: `capitalize font-bold ${data?.billing?.status === 'paid' ? 'text-green-600' : data.billing.status === 'invoice' ? 'text-amber-600' : 'text-red-600'}`,
-        },
-        currencyFormat(row.getValue('estimatedPrice') + ' ' + data.billing.status),
-      );
+      return h('span', { class: 'text-xs' }, currencyFormat(data.billing.ammount));
     },
   }),
   columnHelper.accessor('billing', {
@@ -113,8 +107,9 @@ export const columns: any = [
     header: () => h('div', { class: 'text-left' }, 'Status'),
     cell: ({ row }) => {
       const status = row.getValue('status');
+      const data = row.original;
       return h(RideStatusFlag, {
-        rideStatus: status,
+        rideStatus: data.status,
       });
     },
   }),

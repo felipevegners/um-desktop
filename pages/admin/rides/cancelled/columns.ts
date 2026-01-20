@@ -1,5 +1,3 @@
-import PaymentStatusFlag from '@/components/shared/PaymentStatusFlag.vue';
-import RideStatusFlag from '@/components/shared/RideStatusFlag.vue';
 import { Button } from '@/components/ui/button';
 import { WPP_API } from '@/config/paths';
 import { createColumnHelper } from '@tanstack/vue-table';
@@ -66,13 +64,11 @@ export const columns: any = [
       );
     },
   }),
-  columnHelper.accessor('status', {
-    header: () => h('div', { class: 'text-left' }, 'Status'),
+  columnHelper.accessor('billing', {
+    header: () => h('div', { class: 'text-left' }, 'Valor'),
     cell: ({ row }) => {
-      const status = row.getValue('status');
-      return h(RideStatusFlag, {
-        rideStatus: status,
-      });
+      const data = row.original;
+      return h('span', { class: 'text-xs' }, currencyFormat(data.billing.ammount));
     },
   }),
 ];

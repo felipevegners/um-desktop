@@ -1,11 +1,11 @@
 <script setup lang="ts">
+import DataTable from '@/components/shared/DataTable.vue';
+import RidesTotalsDash from '@/components/shared/RidesTotalsDash.vue';
+import TableActions from '@/components/shared/TableActions.vue';
+import { useRidesStore } from '@/stores/rides.store';
 import { createColumnHelper } from '@tanstack/vue-table';
 import { CalendarCheck2, LoaderCircle } from 'lucide-vue-next';
 import { storeToRefs } from 'pinia';
-import { onMounted } from 'vue';
-import DataTable from '~/components/shared/DataTable.vue';
-import TableActions from '~/components/shared/TableActions.vue';
-import { useRidesStore } from '~/stores/rides.store';
 
 import { columns } from './columns';
 
@@ -23,7 +23,7 @@ const { loadingData, completedRides } = storeToRefs(ridesStore);
 const columnHelper = createColumnHelper<any>();
 const filteredRides = ref<any>([]);
 
-onMounted(async () => {
+onBeforeMount(async () => {
   await getRidesAction();
 
   filteredRides.value = completedRides.value.sort((a: any, b: any) =>
@@ -77,6 +77,7 @@ const finalColumns = [
       <LoaderCircle class="w-10 h-10 animate-spin" />
     </section>
     <section v-else>
+      <RidesTotalsDash :rides="completedRides" />
       <DataTable
         :columns="finalColumns"
         :data="filteredRides"

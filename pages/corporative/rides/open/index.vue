@@ -1,12 +1,13 @@
 <script setup lang="ts">
+import DataTable from '@/components/shared/DataTable.vue';
+import RidesTotalsDash from '@/components/shared/RidesTotalsDash.vue';
+import TableActions from '@/components/shared/TableActions.vue';
 import { Button } from '@/components/ui/button';
+import { useRidesStore } from '@/stores/rides.store';
 import { createColumnHelper } from '@tanstack/vue-table';
 import { CalendarClock, LoaderCircle, Plus } from 'lucide-vue-next';
 import { storeToRefs } from 'pinia';
 import { onMounted } from 'vue';
-import DataTable from '~/components/shared/DataTable.vue';
-import TableActions from '~/components/shared/TableActions.vue';
-import { useRidesStore } from '~/stores/rides.store';
 
 import { columns } from './columns';
 
@@ -104,10 +105,10 @@ const finalColumns = [
     <header>
       <SharedBackLink />
     </header>
-    <section class="mb-6 flex items-center gap-6">
+    <section class="mb-6 flex items-center justify-between gap-6">
       <h1 class="flex items-center gap-2 text-2xl font-bold">
         <CalendarClock :size="24" />
-        Atendimentos Agendados
+        Atendimentos Abertos
       </h1>
       <Button @click="navigateTo('/corporative/rides/new')">
         <Plus class="w-4 h-4" />Novo Atendimento
@@ -117,6 +118,7 @@ const finalColumns = [
       <LoaderCircle class="w-10 h-10 animate-spin" />
     </section>
     <section v-else>
+      <RidesTotalsDash :rides="contractRidesList" />
       <DataTable
         :columns="finalColumns"
         :data="contractRidesList"

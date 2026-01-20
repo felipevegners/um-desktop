@@ -1,11 +1,12 @@
 <script setup lang="ts">
+import BackLink from '@/components/shared/BackLink.vue';
+import DataTable from '@/components/shared/DataTable.vue';
+import RidesTotalsDash from '@/components/shared/RidesTotalsDash.vue';
+import TableActions from '@/components/shared/TableActions.vue';
+import { useRidesStore } from '@/stores/rides.store';
 import { createColumnHelper } from '@tanstack/vue-table';
 import { CalendarCheck2, LoaderCircle } from 'lucide-vue-next';
 import { storeToRefs } from 'pinia';
-import { onMounted } from 'vue';
-import DataTable from '~/components/shared/DataTable.vue';
-import TableActions from '~/components/shared/TableActions.vue';
-import { useRidesStore } from '~/stores/rides.store';
 
 import { columns } from './columns';
 
@@ -31,7 +32,7 @@ const { loadingData, completedRides } = storeToRefs(ridesStore);
 const columnHelper = createColumnHelper<any>();
 const filteredRides = ref<any>([]);
 
-onMounted(async () => {
+onBeforeMount(async () => {
   await getRidesByContractAction(contractId);
   if (role === 'branch-manager') {
     filteredRides.value = completedRides?.value.filter((ride: any) =>
@@ -87,6 +88,9 @@ const finalColumns = [
 </script>
 <template>
   <main class="p-6">
+    <header>
+      <BackLink />
+    </header>
     <section class="mb-6 flex items-center justify-between gap-6">
       <h1 class="flex items-center gap-2 text-2xl font-bold">
         <CalendarCheck2 :size="24" />
@@ -97,6 +101,7 @@ const finalColumns = [
       <LoaderCircle class="w-10 h-10 animate-spin" />
     </section>
     <section v-else>
+      <RidesTotalsDash :rides="filteredRides" />
       <DataTable
         :columns="finalColumns"
         :data="filteredRides"

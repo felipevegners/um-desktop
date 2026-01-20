@@ -26,9 +26,13 @@ export const useRidesStore = defineStore('rides', {
   getters: {
     openRides({ rides }) {
       if (rides.length > 0)
-        return rides.filter(
-          (ride: any) => ride.status !== 'completed' && ride.status !== 'cancelled',
-        );
+        return rides
+          .filter(
+            (ride: any) => ride.status !== 'completed' && ride.status !== 'cancelled',
+          )
+          .sort((a: any, b: any) => {
+            return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+          });
     },
     completedRides({ rides }) {
       if (rides.length > 0)
