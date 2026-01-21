@@ -49,11 +49,10 @@ const handleDateRangeUpdate = (value: any) => {
 </script>
 
 <template>
-  <div class="flex flex-col gap-2">
+  <div class="flex flex-col gap-3">
     <Label class="text-sm text-zinc-950 dark:text-white" for="date-picker-range">
       Selecione o período
     </Label>
-    <!-- :default-value="props.modelValue || undefined" -->
     <DateRangePickerRoot
       id="date-picker-range"
       locale="pt-br"
@@ -61,7 +60,7 @@ const handleDateRangeUpdate = (value: any) => {
     >
       <DateRangePickerField
         v-slot="{ segments }"
-        class="flex select-none bg-white items-center rounded-lg text-center border shadow-sm p-1 data-[invalid]:border-red-500"
+        class="flex select-none bg-white items-center rounded-md text-center border shadow-sm px-2 py-1 data-[invalid]:border-red-500"
       >
         <template v-for="item in segments.start" :key="item.part">
           <DateRangePickerInput
@@ -85,7 +84,7 @@ const handleDateRangeUpdate = (value: any) => {
           <DateRangePickerInput
             v-if="item.part === 'literal'"
             :part="item.part"
-            type="end"
+            type="start"
           >
             {{ item.value }}
           </DateRangePickerInput>
@@ -93,16 +92,16 @@ const handleDateRangeUpdate = (value: any) => {
             v-else
             :part="item.part"
             class="rounded-md p-0.5 focus:outline-none focus:shadow-[0_0_0_2px] focus:shadow-black data-[placeholder]:text-zinc-950"
-            type="end"
+            type="start"
           >
             {{ item.value }}
           </DateRangePickerInput>
         </template>
 
         <DateRangePickerTrigger
-          class="ml-4 focus:shadow-[0_0_0_2px] focus:shadow-black focus:outline-none rounded p-1"
+          class="focus:shadow-[0_0_0_2px] focus:shadow-black focus:outline-none rounded-md"
         >
-          <CalendarDays />
+          <CalendarDays class="ml-2" />
         </DateRangePickerTrigger>
       </DateRangePickerField>
 

@@ -52,12 +52,14 @@ interface TableProps {
   columnPin?: string[];
   filterBy?: string;
   showFilter?: boolean;
+  showPagination?: boolean;
   showColumnSelect?: boolean;
 }
 
 const props = withDefaults(defineProps<TableProps>(), {
   showColumnSelect: true,
   showFilter: true,
+  showPagination: true,
 });
 
 const table = useVueTable({
@@ -68,7 +70,8 @@ const table = useVueTable({
     return props.columns;
   },
   getCoreRowModel: getCoreRowModel(),
-  getPaginationRowModel: getPaginationRowModel(),
+  //@ts-ignore
+  getPaginationRowModel: props.showPagination ? getPaginationRowModel() : null,
   getSortedRowModel: getSortedRowModel(),
   getFilteredRowModel: getFilteredRowModel(),
   getExpandedRowModel: getExpandedRowModel(),
@@ -220,7 +223,7 @@ watch(
         {{ table.getSelectedRowModel().rows.length }} de
         {{ table.getFilteredRowModel().rows.length }} resultado(s) selecionados
       </div>
-      <div class="space-x-2">
+      <div v-if="showPagination" class="space-x-2">
         <Button
           variant="outline"
           size="sm"
