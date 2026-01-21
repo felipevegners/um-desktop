@@ -2,6 +2,7 @@ import { withUt } from 'uploadthing/tw';
 
 const animate = require('tailwindcss-animate');
 const plugin = require('tailwindcss/plugin');
+const { blackA, grass, gray, green } = require('@radix-ui/colors');
 
 /** @type {import('tailwindcss').Config} */
 module.exports = withUt({
@@ -20,8 +21,12 @@ module.exports = withUt({
     },
     extend: {
       colors: {
+        ...blackA,
+        ...grass,
+        ...gray,
+        ...green,
         'um-primary': '#33FFCC',
-        "um-primary-foreground": "#00926E",
+        'um-primary-foreground': '#00926E',
         'product-easy': '#FF7233',
         'product-premium': '#2A2A2A',
         'product-gold': '#D4AF37',

@@ -157,6 +157,10 @@ export const backofficeMenu = {
           title: 'Pagamento Motoristas',
           url: '/admin/finances/commissions',
         },
+        {
+          title: 'Relatórios',
+          url: '/admin/finances/reports',
+        },
       ],
     },
   ],

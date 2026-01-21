@@ -70,8 +70,11 @@ export const columns = [
     cell: ({ row }) => {
       const data = row.original;
       const calculated = parseFloat(data.ammount) - parseFloat(data.discounts);
-      const total = Math.ceil(calculated);
-      return h('div', { class: 'text-left font-bold' }, currencyFormat(total.toString()));
+      return h(
+        'div',
+        { class: 'text-left font-bold' },
+        currencyFormat(calculated.toString()),
+      );
     },
   }),
   columnHelper.accessor('createdAt', {

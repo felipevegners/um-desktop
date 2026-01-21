@@ -204,7 +204,7 @@ const contactDriver = async () => {
   navigateTo(url, { external: true, open: { target: '_blank' } });
 };
 
-const handleRemoveRider = async () => {
+const handleRemoveDriver = async () => {
   const payload = {
     ...ride?.value,
     status: 'created',
@@ -222,6 +222,7 @@ const handleRemoveRider = async () => {
   } finally {
     loadingRemoveDriver.value = false;
     editDriver.value = false;
+    selectedDriver.value = {};
     await getRideByIdAction(route?.params?.id as string);
   }
 };
@@ -314,9 +315,6 @@ const form = useForm({
 });
 
 onMounted(async () => {
-  // if (ride?.value.status === 'completed') {
-  //   handleCalculateFinalPrice();
-  // }
   if (ride?.value.status === 'in-progress') {
     driverLocationInterval.value = setInterval(async () => {
       driverData.value = {
@@ -750,7 +748,7 @@ const showRideControls = computed(() => {
                         :disabled="selectedDriver.id === ride?.driver.id"
                         @click.prevent="contactDriver"
                       >
-                        Acionar
+                        Acionar Motorista
                       </Button>
                       <Button variant="ghost" @click.prevent="editDriver = false">
                         Cancelar
@@ -760,11 +758,13 @@ const showRideControls = computed(() => {
                   <div v-else class="flex gap-2 self-end">
                     <Button @click.prevent="editDriver = true">
                       <UserPen />
-                      {{ !ride?.driver.name ? 'Acionar' : 'Alterar' }}
+                      {{
+                        !ride?.driver.name ? 'Selecionar Motorista' : 'Alterar Motorista'
+                      }}
                     </Button>
                     <Button
                       v-if="ride?.driver.name"
-                      @click.prevent="handleRemoveRider"
+                      @click.prevent="handleRemoveDriver"
                       variant="destructive"
                     >
                       <X />
@@ -773,7 +773,6 @@ const showRideControls = computed(() => {
                   </div>
                 </div>
                 <div
-                  v-if="showRideControls"
                   class="col-span-2 p-4 border border-zinc-900 rounded-md bg-amber-100"
                 >
                   <FormField v-slot="{ componentField }" name="observations">
@@ -784,14 +783,6 @@ const showRideControls = computed(() => {
                       </FormControl>
                     </FormItem>
                   </FormField>
-                </div>
-                <div
-                  v-else
-                  class="p-4 border border-zinc-900 rounded-md row-span-2 h-full"
-                >
-                  <span class="text-muted-foreground text-sm">Observações</span>
-
-                  <p>{{ ride.observations || 'Sem observações' }}</p>
                 </div>
                 <div
                   v-if="ride.status === 'completed'"

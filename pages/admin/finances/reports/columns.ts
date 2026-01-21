@@ -1,3 +1,4 @@
+import RideStatusFlag from '@/components/shared/RideStatusFlag.vue';
 import { Button } from '@/components/ui/button';
 import { WPP_API } from '@/config/paths';
 import { createColumnHelper } from '@tanstack/vue-table';
@@ -99,12 +100,21 @@ export const columns: any = [
       );
     },
   }),
-  columnHelper.accessor('updatedAt', {
-    header: () => h('div', { class: 'text-left' }, 'Cancelado em'),
+  columnHelper.accessor('status', {
+    header: () => h('div', { class: 'text-left' }, 'Status'),
     cell: ({ row }) => {
       const data = row.original;
-      const sanitizeDate = data?.updatedAt
-        ? new Date(data?.updatedAt).toLocaleDateString('pt-BR')
+      return h(RideStatusFlag, {
+        rideStatus: data.status,
+      });
+    },
+  }),
+  columnHelper.accessor('finishedAt', {
+    header: () => h('div', { class: 'text-left' }, 'Finalizado em'),
+    cell: ({ row }) => {
+      const data = row.original;
+      const sanitizeDate = data?.progress?.finishedAt
+        ? new Date(data?.progress?.finishedAt).toLocaleDateString('pt-BR')
         : '-';
       return h('div', { class: 'capitalize text-xs' }, sanitizeDate);
     },
