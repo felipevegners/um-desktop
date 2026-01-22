@@ -589,8 +589,9 @@ const showRideControls = computed(() => {
                           </p>
                           <span
                             class="block w-fit my-2 px-1 pt-1 pb-0.5 bg-white font-mono font-bold text-xl uppercase border border-zinc-950 rounded-md"
-                            >{{ ride?.driver.selectedCar.plate }}</span
                           >
+                            {{ ride?.driver.selectedCar.plate }}
+                          </span>
                         </div>
                         <div
                           v-if="!ride?.accepted && ride?.driver.name"

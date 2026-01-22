@@ -276,12 +276,23 @@ const decodePolyline = (polyline: string) => {
           {{ driverName }}
         </p>
         <p class="text-sm text-zinc-600">Veículo</p>
-        <p v-if="ride?.driver.hasCarSelected" class="text-xl font-bold">
-          {{ ride?.driver?.selectedCar?.model }}
-        </p>
+        <div v-if="ride?.driver.hasCarSelected">
+          <p class="text-xl font-bold">
+            {{ ride?.driver?.selectedCar?.model }} -
+            {{ ride?.driver?.selectedCar?.color }}
+          </p>
+          <span
+            class="block w-fit my-2 px-1 pt-1 pb-0.5 bg-white font-mono font-bold text-xl uppercase border border-zinc-950 rounded-md"
+          >
+            {{ ride?.driver.selectedCar.plate }}
+          </span>
+        </div>
         <p v-else class="text-muted-foreground text-sm">-</p>
         <p class="text-sm text-zinc-600">Observações ao Motorista</p>
-        <p class="text-xl font-bold">{{ ride?.observations }}</p>
+        <p v-if="ride?.observations" class="text-xl font-bold">
+          {{ ride?.observations }}
+        </p>
+        <p v-else>Sem Observações</p>
       </div>
     </section>
     <section class="p-4 bg-zinc-200">
@@ -297,7 +308,7 @@ const decodePolyline = (polyline: string) => {
         <div v-if="ride?.travel.stops.length" class="py-2 border-y">
           <p class="text-sm text-zinc-600">Paradas</p>
           <p v-for="(stop, idx) in ride?.travel?.stops" class="text-base font-bold">
-            {{ idx + 1 }} - {{ stop.address }}
+            {{ Number(idx) + 1 }} - {{ stop.address }}
           </p>
         </div>
         <p class="text-sm text-zinc-600">Destino</p>
