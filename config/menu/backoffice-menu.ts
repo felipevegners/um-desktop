@@ -158,7 +158,7 @@ export const backofficeMenu = {
           url: '/admin/finances/commissions',
         },
         {
-          title: 'Relatórios',
+          title: 'Relatórios Gerenciais',
           url: '/admin/finances/reports',
         },
       ],

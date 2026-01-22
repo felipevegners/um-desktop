@@ -285,8 +285,8 @@ const onSubmit = form.handleSubmit(async (values) => {
               </FormItem>
             </FormField>
           </div>
-          <div class="mb-10">
-            <h2 class="px-6 mb-4 text-2xl font-bold">1. Dados do Cliente</h2>
+          <div class="p-6 mb-10">
+            <h2 class="mb-4 text-2xl font-bold">1. Dados do Cliente</h2>
             <CompanyForm :loading="isLoadingAddress" :isEditing="true" :form="form" />
           </div>
           <div class="mb-10">

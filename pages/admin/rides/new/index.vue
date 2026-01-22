@@ -284,7 +284,7 @@ const setSelectedUser = async (user: any) => {
       contractBranches.value = contract?.value.branches;
       contractBranchesList.value = contract?.value.branches.map((branch: any) => {
         return {
-          label: `${branch.branchCode} - ${branch.name}`,
+          label: `${branch.branchCode} - ${branch.fantasyName}`,
           value: branch.id,
         };
       });

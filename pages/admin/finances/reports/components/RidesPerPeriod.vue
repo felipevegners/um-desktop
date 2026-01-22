@@ -29,6 +29,11 @@ const selectedBranches = ref<Array<any>>([]);
 const contractBranches = ref<Array<any>>([]);
 const branchAreas = ref<Array<any>>([]);
 const showFilter = ref(false);
+const filterTerms = ref({
+  contractId: '',
+  branchId: '',
+  areaCode: '',
+});
 
 const ridesStore = useRidesStore();
 const { getRidesByDateRangeAction } = ridesStore;
@@ -86,6 +91,13 @@ const getContractData = (value: string) => {
   setTimeout(() => {
     loadingBranches.value = false;
   }, 500);
+
+  filterTerms.value = {
+    ...filterTerms.value,
+    contractId: value,
+    branchId: '',
+    areaCode: '',
+  };
 };
 
 const getBranchAreas = (value: string) => {
@@ -103,6 +115,47 @@ const getBranchAreas = (value: string) => {
   setTimeout(() => {
     loadingAreas.value = false;
   }, 500);
+
+  filterTerms.value = {
+    ...filterTerms.value,
+    branchId: value,
+    areaCode: '',
+  };
+};
+
+const setBranchArea = (value: string) => {
+  filterTerms.value.areaCode = value;
+};
+
+const applyFilters = () => {
+  const filtered = filteredRides?.value.filter((ride: any) => {
+    const contractMatch = filterTerms.value.contractId
+      ? ride.billing.paymentData.contract === filterTerms.value.contractId
+      : true;
+    const branchMatch = filterTerms.value.branchId
+      ? ride.billing.paymentData.branch === filterTerms.value.branchId
+      : true;
+    const areaMatch =
+      filterTerms.value.areaCode && filterTerms.value.areaCode !== 'all'
+        ? ride.billing.paymentData.area === filterTerms.value.areaCode
+        : true;
+
+    return contractMatch && branchMatch && areaMatch;
+  });
+  filteredRides.value = filtered;
+};
+
+const clearFilters = () => {
+  filterTerms.value = {
+    contractId: '',
+    branchId: '',
+    areaCode: '',
+  };
+  selectedContract.value = null;
+  selectedBranches.value = [];
+  contractBranches.value = [];
+  branchAreas.value = [];
+  filteredRides.value = rides?.value;
 };
 </script>
 <template>
@@ -171,17 +224,21 @@ const getBranchAreas = (value: string) => {
                   v-if="!loadingAreas && branchAreas.length"
                   :items="branchAreas"
                   label="Selecione o centro de custo"
+                  @on-select="setBranchArea"
                 />
               </div>
               <div class="mt-6 flex items-center gap-3">
-                <Button type="button">
+                <Button type="button" @click="applyFilters">
                   <LoaderCircle v-if="false" class="animate-spin" />
                   Aplicar
                 </Button>
-                <Button type="button" variant="ghost">Limpar</Button>
+                <Button type="button" variant="ghost" @click="clearFilters"
+                  >Limpar</Button
+                >
               </div>
             </div>
           </div>
+          <pre>{{ filterTerms }}</pre>
           <RidesTotalsDash :rides="filteredRides" theme="light" />
           <DataTable
             :columns="columns"
