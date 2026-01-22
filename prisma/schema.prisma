@@ -191,6 +191,8 @@ model Rides {
   driver         Json?
   dispatcher     Json?
   observations   String?
+  additionalInfo String?
+  extraCharges   Json?
   createdAt      DateTime? @default(now())
   updatedAt      DateTime? @updatedAt()
 }
