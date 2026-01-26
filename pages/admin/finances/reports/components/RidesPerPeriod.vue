@@ -238,7 +238,7 @@ const clearFilters = () => {
               </div>
             </div>
           </div>
-          <pre>{{ filterTerms }}</pre>
+          <!-- <pre>{{ filterTerms }}</pre> -->
           <RidesTotalsDash :rides="filteredRides" theme="light" />
           <DataTable
             :columns="columns"
