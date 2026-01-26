@@ -20,7 +20,7 @@ const { toast } = useToast();
 
 const selectedRange = ref<{ start: CalendarDate; end: CalendarDate } | null>(null);
 const filteredRides = ref([]);
-const results = ref(null);
+const results = ref<any>(null);
 const selectedContract = ref<string | null>(null);
 const loadingBranches = ref(false);
 const loadingAreas = ref(false);
@@ -75,6 +75,15 @@ const generateReport = async () => {
 };
 
 const getContractData = (value: string) => {
+  filterTerms.value = {
+    contractId: value,
+    branchId: '',
+    areaCode: '',
+  };
+
+  branchAreas.value = [];
+  filteredRides.value = rides?.value;
+
   loadingBranches.value = true;
 
   const filtered = contractsStore.contracts?.find(
@@ -91,16 +100,18 @@ const getContractData = (value: string) => {
   setTimeout(() => {
     loadingBranches.value = false;
   }, 500);
-
-  filterTerms.value = {
-    ...filterTerms.value,
-    contractId: value,
-    branchId: '',
-    areaCode: '',
-  };
 };
 
 const getBranchAreas = (value: string) => {
+  filterTerms.value = {
+    ...filterTerms.value,
+    branchId: value,
+    areaCode: '',
+  };
+
+  branchAreas.value = [];
+  filteredRides.value = rides?.value;
+
   loadingAreas.value = true;
   const selectedBranch = selectedBranches.value.find(
     (branch: any) => branch.id === value,
@@ -115,15 +126,10 @@ const getBranchAreas = (value: string) => {
   setTimeout(() => {
     loadingAreas.value = false;
   }, 500);
-
-  filterTerms.value = {
-    ...filterTerms.value,
-    branchId: value,
-    areaCode: '',
-  };
 };
 
 const setBranchArea = (value: string) => {
+  filteredRides.value = rides?.value;
   filterTerms.value.areaCode = value;
 };
 
@@ -142,6 +148,7 @@ const applyFilters = () => {
 
     return contractMatch && branchMatch && areaMatch;
   });
+  results.value = filtered?.length;
   filteredRides.value = filtered;
 };
 
@@ -232,9 +239,9 @@ const clearFilters = () => {
                   <LoaderCircle v-if="false" class="animate-spin" />
                   Aplicar
                 </Button>
-                <Button type="button" variant="ghost" @click="clearFilters"
-                  >Limpar</Button
-                >
+                <Button type="button" variant="ghost" @click="clearFilters">
+                  Limpar
+                </Button>
               </div>
             </div>
           </div>
