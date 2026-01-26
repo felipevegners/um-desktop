@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import FormButtons from '@/components/forms/FormButtons.vue';
+import AddExtraCharges from '@/components/shared/AddExtraCharges.vue';
 import BackLink from '@/components/shared/BackLink.vue';
 import PaymentStatusFlag from '@/components/shared/PaymentStatusFlag.vue';
 import RideStatusFlag from '@/components/shared/RideStatusFlag.vue';
@@ -114,6 +115,13 @@ const driverData = ref<any>({
   picture: '',
 });
 const driverLocationInterval = ref<any>(null);
+const extraChargesData = reactive([
+  {
+    info: '',
+    type: '',
+    value: '',
+  },
+]);
 
 availableProducts.value = products?.value;
 showWaypointsForm.value = ride?.value.travel?.stops?.length;
@@ -312,6 +320,7 @@ const form = useForm({
     destination: ride?.value.travel.destinationAddress,
     driver: ride?.value.driver.id,
     observations: ride?.value.observations,
+    additionalInfo: ride?.value.additionalInfo || '',
   },
 });
 
@@ -367,8 +376,8 @@ const handleCalculateFinalPrice = async () => {
 
 const onSubmit = form.handleSubmit(async (values) => {
   const ridePayload = {
-    id: ride?.value.id,
     ...ride?.value,
+    id: ride?.value.id,
     reason: values.reason || '-',
     travel: {
       ...ride?.value.travel,
@@ -387,6 +396,7 @@ const onSubmit = form.handleSubmit(async (values) => {
       selectedCar: {},
     },
     observations: values.observations,
+    additionalInfo: values.additionalInfo || '',
   };
   try {
     await updateRideAction(ridePayload);
@@ -490,7 +500,7 @@ const showRideControls = computed(() => {
       <LoaderCircle :size="48" class="animate-spin" />
     </section>
     <section>
-      <form @submit.prevent="onSubmit" @keydown.enter.prevent="true">
+      <form @submit.prevent="onSubmit" @keydown.enter.prevent="true" class="space-y-6">
         <Card class="p-0 bg-zinc-200">
           <CardContent class="px-4 py-6">
             <div class="flex flex-col gap-4">
@@ -858,6 +868,34 @@ const showRideControls = computed(() => {
               </div>
             </div>
           </CardContent>
+        </Card>
+        <!-- ADDITIONAL INFO CARD -->
+        <Card class="p-0">
+          <CardHeader>
+            <CardTitle class="text-xl">Dados adicionais do atendimento</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div class="grid md:grid-cols-2 gap-6">
+              <FormField v-slot="{ componentField }" name="additionalInfo">
+                <FormItem>
+                  <FormLabel>Informações adicionais</FormLabel>
+                  <FormControl>
+                    <Textarea
+                      class="resize-none bg-white min-h-[300px] w-full"
+                      v-bind="componentField"
+                      height="100%"
+                    />
+                  </FormControl>
+                </FormItem>
+              </FormField>
+              <div class="p-4">
+                <h3 class="text-sm mb-4">Taxas Extras</h3>
+                <AddExtraCharges v-model="extraChargesData" />
+                <!-- <pre>{{ extraChargesData }}</pre> -->
+              </div>
+            </div>
+          </CardContent>
+          <CardFooter></CardFooter>
         </Card>
         <FormButtons
           :cancel="'/admin/rides/open'"

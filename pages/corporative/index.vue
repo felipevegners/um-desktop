@@ -146,7 +146,11 @@ const contractRemainBudget = computed(() => {
               class="text-2xl font-bold"
               :class="contract?.availableBudget > 0 ? 'text-green-600' : 'text-red-600'"
             >
-              {{ currencyFormat(contract?.availableBudget) }}
+              {{
+                currencyFormat(
+                  contract?.availableBudget !== null ? contract?.availableBudget : 0,
+                )
+              }}
             </h1>
           </div>
         </div>
