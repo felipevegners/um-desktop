@@ -7,7 +7,7 @@ defineOptions({
 
 defineProps<{
   label: string;
-  componentField: any;
+  componentField?: any;
   styles?: any;
 }>();
 

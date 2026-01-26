@@ -206,7 +206,7 @@ definePageMeta({
                   type="button"
                   size="icon"
                   variant="link"
-                  @click="navigateTo(`/personal/rides/preview/${ride.id}`)"
+                  @click="navigateTo(`/admin/rides/edit/${ride.id}`)"
                 >
                   <ExternalLink :size="16" />
                 </Button>
