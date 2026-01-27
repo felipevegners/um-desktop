@@ -28,6 +28,7 @@ import {
   Paperclip,
   Phone,
   ReceiptText,
+  Save,
   SquareCheck,
   SquareDot,
   SquareSquare,
@@ -178,34 +179,34 @@ const setNewDriver = (driverId: string) => {
   selectedDriver.value = findDriver;
 };
 
-const contactDriver = async () => {
+const setRideDriver = async () => {
   await setRideDriverAction(ride?.value.id, selectedDriver.value);
   await getRideByIdAction(route?.params?.id as string);
   editDriver.value = false;
   selectedDriver.value = ride?.value.driver;
 
-  const message = `
-    *Novo Atendimento - ${ride?.value?.code}*
-    %0A*Passageiro*: ${ride?.value.user.name}
-    %0A*Celular*: ${ride?.value.user.phone}
-    %0A*Data/Hora*: ${ride?.value.travel.date} / ${ride?.value.travel.departTime}
-    %0A------------------------------
-    %0A*Dados da Viagem*
-    %0A%0A*Origem*: ${ride?.value.travel.originAddress}
-  ${
-    ride?.value.travel.stops.length
-      ? ride?.value.travel.stops.map((stop: any, index: any) => {
-          return `%0A%0A*Parada ${index + 1}*: ${stop.address}`;
-        })
-      : ''
-  }
-    %0A%0A*Destino*: ${ride?.value.travel.destinationAddress}
-    %0A%0A*Despachado por*: ${ride?.value.dispatcher.user} - ${ride?.value.dispatcher.email}`;
-  const url =
-    WPP_API.replace('[[phone]]', sanitizePhone(selectedDriver.value.phone as string)) +
-    '&text=' +
-    message;
-  navigateTo(url, { external: true, open: { target: '_blank' } });
+  // const message = `
+  //   *Novo Atendimento - ${ride?.value?.code}*
+  //   %0A*Passageiro*: ${ride?.value.user.name}
+  //   %0A*Celular*: ${ride?.value.user.phone}
+  //   %0A*Data/Hora*: ${ride?.value.travel.date} / ${ride?.value.travel.departTime}
+  //   %0A------------------------------
+  //   %0A*Dados da Viagem*
+  //   %0A%0A*Origem*: ${ride?.value.travel.originAddress}
+  // ${
+  //   ride?.value.travel.stops.length
+  //     ? ride?.value.travel.stops.map((stop: any, index: any) => {
+  //         return `%0A%0A*Parada ${index + 1}*: ${stop.address}`;
+  //       })
+  //     : ''
+  // }
+  //   %0A%0A*Destino*: ${ride?.value.travel.destinationAddress}
+  //   %0A%0A*Despachado por*: ${ride?.value.dispatcher.user} - ${ride?.value.dispatcher.email}`;
+  // const url =
+  //   WPP_API.replace('[[phone]]', sanitizePhone(selectedDriver.value.phone as string)) +
+  //   '&text=' +
+  //   message;
+  // navigateTo(url, { external: true, open: { target: '_blank' } });
 };
 
 const handleRemoveDriver = async () => {
@@ -795,11 +796,12 @@ const showRideControls = computed(() => {
                           </FormField>
                           <div class="flex items-center gap-2">
                             <Button
-                              class="bg-green-800 hover:bg-green-700"
+                              class="bg-green-600 hover:bg-green-700"
                               :disabled="selectedDriver.id === ride?.driver.id"
-                              @click.prevent="contactDriver"
+                              @click.prevent="setRideDriver"
                             >
-                              Acionar Motorista
+                              <Save />
+                              Salvar
                             </Button>
                             <Button variant="ghost" @click.prevent="editDriver = false">
                               Cancelar

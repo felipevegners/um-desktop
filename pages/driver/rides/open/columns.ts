@@ -99,14 +99,14 @@ export const columns: any = [
       return h(
         'div',
         { class: 'capitalize' },
-        `${sanitizeRideDate(data.travel.date)} - ${data.travel.departTime} HS`,
+        `${sanitizeRideDate(data.travel.date)} - ${data.travel.departTime}Hs`,
       );
     },
   }),
   columnHelper.accessor('status', {
     header: () => h('div', { class: 'text-left' }, 'Status'),
     cell: ({ row }) => {
-      const status = row.getValue('status');
+      const status: any = row.getValue('status');
       return h(RideStatusFlag, {
         rideStatus: status,
       });
