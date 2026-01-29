@@ -15,6 +15,7 @@ export default defineEventHandler(async (event) => {
       }
     }
     if (error instanceof Prisma.PrismaClientValidationError) {
+      console.log('PRISMA VALIDATION ERROR ->', error.message);
       handlePrismaError(error, ErrorMessages.Ride.create.validation);
     }
     handlePrismaError(error, ErrorMessages.Ride.create.generic);

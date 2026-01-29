@@ -4,7 +4,8 @@ export default defineEventHandler(async (event) => {
   const API_KEY = process.env.VITE_GOOGLE_MAPS_API_KEY;
   const routesUrl = 'https://routes.googleapis.com/directions/v2:computeRoutes';
   const routesMaskOptions =
-    'routes.duration,routes.distanceMeters,routes.polyline.encodedPolyline,routes.legs';
+    'routes.duration,routes.distanceMeters,routes.polyline.encodedPolyline';
+  // routes.legs
 
   // Validate input
   if (!Array.isArray(locations) || locations.length < 2) {

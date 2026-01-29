@@ -235,7 +235,7 @@ export const ErrorMessages = {
     create: {
       duplicate: 'Já existe uma corrida com este código.',
       invalidReference: 'Motorista, produto ou dados relacionados inválidos.',
-      validation: 'Dados de corrida inválidos.',
+      validation: 'Dados do atendimento inválidos.',
       generic: 'Erro ao criar corrida. Tente novamente.',
     },
     update: {

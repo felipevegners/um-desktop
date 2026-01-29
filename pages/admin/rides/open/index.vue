@@ -92,7 +92,7 @@ const finalColumns = [
         :data="openRides"
         sortby="user"
         :columnPin="['code']"
-        :filterBy="'nome do Usuário'"
+        filterBy="usuário"
       />
     </section>
   </main>

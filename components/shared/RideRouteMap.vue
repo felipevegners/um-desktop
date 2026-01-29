@@ -4,6 +4,7 @@ import { LoaderCircle } from 'lucide-vue-next';
 import { useRuntimeConfig } from 'nuxt/app';
 import { computed, reactive, ref, watch } from 'vue';
 import { CustomMarker, GoogleMap, Polyline } from 'vue3-google-map';
+import { polyLineCodec } from '~/lib/utils';
 
 const customIconStart = `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="#FFFFFF" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-square-dot-icon lucide-square-dot"><rect width="18" height="18" x="3" y="3" rx="2"/><circle cx="12" cy="12" r="1"/></svg>`;
 const customIconStop = `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="#FFFFFF" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-square-pause-icon lucide-square-pause"><rect width="18" height="18" x="3" y="3" rx="2"/><line x1="10" x2="10" y1="15" y2="9"/><line x1="14" x2="14" y1="15" y2="9"/></svg>`;
@@ -24,22 +25,39 @@ const props = defineProps<{
   originCoords?: any;
   stopsCoords?: any;
   destinationCoords?: any;
-  rideRealCoords?: any;
+  rideProgress?: any;
   driverData?: any;
-  inProgress?: boolean;
+  realPolyline?: any;
+  rideStatus?: string;
 }>();
 
-const polylineOpts = ref<any>({
+const driverPath = ref<any>({
   path:
-    props.rideRealCoords?.ridePath?.map((path: any) => ({
+    props.rideProgress?.ridePath?.map((path: any) => ({
       lat: path.latitude,
       lng: path.longitude,
     })) || [],
   geodesic: true,
   strokeColor: '#f0f',
-  strokeOpacity: 0.75,
+  strokeOpacity: 1.0,
   strokeWeight: 4,
   zIndex: 10,
+});
+
+const finalPolyline = computed(() => {
+  const decode: any = polyLineCodec(props.realPolyline || '');
+  const coords = decode.map((path: any) => ({
+    lat: path[0],
+    lng: path[1],
+  }));
+  return {
+    path: coords,
+    geodesic: true,
+    strokeColor: '#33ccff',
+    strokeOpacity: 1.0,
+    strokeWeight: 8,
+    zIndex: 9,
+  };
 });
 
 const directionsRenderer = ref(null);
@@ -116,9 +134,9 @@ async function directions() {
               polylineOptions: {
                 geodesic: true,
                 strokeColor: '#000',
-                strokeOpacity: 0.8,
-                strokeWeight: 6,
-                zIndex: 9,
+                strokeOpacity: 1.0,
+                strokeWeight: 12,
+                zIndex: 8,
                 // icons: [
                 //   {
                 //     icon: customArrow,
@@ -128,6 +146,8 @@ async function directions() {
               },
             }),
           );
+          // if (props.rideStatus !== 'completed' && props.rideStatus !== 'canceled') {
+          // }
           const route = response.routes[0];
           const startLocation = route.legs[0].start_location;
           const endLocation = route.legs[0].end_location;
@@ -199,7 +219,7 @@ async function directions() {
       :disable-default-ui="true"
     >
       <CustomMarker
-        v-if="inProgress && !driverData.loading"
+        v-if="rideStatus === 'in-progress' && !driverData.loading"
         :options="{
           position: {
             lat: driverData?.location?.latitude,
@@ -226,7 +246,8 @@ async function directions() {
           />
         </div>
       </CustomMarker>
-      <Polyline :options="polylineOpts" />
+      <Polyline :options="finalPolyline" />
+      <Polyline :options="driverPath" />
       <DirectionsRenderer />
     </GoogleMap>
   </section>

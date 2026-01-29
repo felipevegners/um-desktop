@@ -170,9 +170,10 @@ type Billing {
 }
 
 type PaymentData {
-  contract String
-  branch   String?
-  area     String?
+  contract     String
+  contractName String?
+  branch       String?
+  area         String?
 }
 
 model Rides {

@@ -195,7 +195,7 @@ const getBranchAreas = (value: string) => {
   contractBranchAreas.value = selectedBranch.areas.map((area: any) => {
     return {
       label: `${area.areaCode} - ${area.areaName}`,
-      value: area.areaCode,
+      value: `${area.areaCode} - ${area.areaName}`,
     };
   });
   setTimeout(() => {
@@ -690,6 +690,7 @@ const onSubmit = form.handleSubmit(async (values) => {
       paymentUrl: paymentLinkUrl.value,
       paymentData: {
         contract: selectedUser.value.contract.contractId,
+        contractName: selectedUser.value.contract.name,
         branch: values?.branch || '-',
         area: values?.area || '-',
       },
@@ -717,6 +718,8 @@ const onSubmit = form.handleSubmit(async (values) => {
       basePrice: selectedProduct.value.basePrice,
       kmPrice: selectedProduct.value.kmPrice,
       minutePrice: selectedProduct.value.minutePrice,
+      includedKms: parseInt(selectedProduct.value.includedKms) || null,
+      includedHours: parseInt(selectedProduct.value.includedHours) || null,
     },
     reason: values.reason || '',
     travel: {
@@ -750,6 +753,8 @@ const onSubmit = form.handleSubmit(async (values) => {
     accepted: false,
     driver: {},
     observations: values.observations,
+    additionalInfo: '',
+    extraCharges: [],
     dispatcher: {
       user: data?.value?.user?.name,
       email: data?.value?.user?.email,

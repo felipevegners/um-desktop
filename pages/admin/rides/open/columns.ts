@@ -13,23 +13,13 @@ export const columns: any = [
     header: () => h('div', { class: 'text-left' }, 'Código'),
     cell: ({ row }) => h('div', { class: 'capitalize text-xs' }, row.getValue('code')),
   }),
-  columnHelper.accessor('user', {
-    enablePinning: true,
-    header: ({ column }) => {
-      return h(
-        Button,
-        {
-          variant: 'ghost',
-          class: 'pl-0',
-          onClick: () => column.toggleSorting(column.getIsSorted() === 'asc'),
-        },
-        () => ['Usuário', h(ArrowUpDown, { class: 'ml-2 h-4 w-4' })],
-      );
-    },
+  columnHelper.accessor('user.name', {
+    id: 'user',
+    header: () => h('div', { class: 'text-left' }, 'Usuário'),
     cell: ({ row }: any) => {
       const data = row.original;
       return h('div', { class: 'text-xs' }, [
-        data.user.name,
+        row.getValue('user'),
         h(
           'a',
           {
@@ -99,7 +89,17 @@ export const columns: any = [
     },
   }),
   columnHelper.accessor('status', {
-    header: () => h('div', { class: 'text-left' }, 'Status'),
+    header: ({ column }) => {
+      return h(
+        Button,
+        {
+          variant: 'ghost',
+          class: 'pl-0',
+          onClick: () => column.toggleSorting(column.getIsSorted() === 'asc'),
+        },
+        () => ['Status', h(ArrowUpDown, { class: 'ml-2 h-4 w-4' })],
+      );
+    },
     cell: ({ row }) => {
       const data = row.original;
       return h(RideStatusFlag, {

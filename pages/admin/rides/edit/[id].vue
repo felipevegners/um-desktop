@@ -118,7 +118,15 @@ const driverData = ref<any>({
   picture: '',
 });
 const driverLocationInterval = ref<any>(null);
-const extraChargesData = reactive(ride?.value.extraCharges || []);
+const extraChargesData = reactive(
+  ride?.value.extraCharges || [
+    {
+      type: '',
+      description: '',
+      amount: 0,
+    },
+  ],
+);
 
 availableProducts.value = products?.value;
 showWaypointsForm.value = ride?.value.travel?.stops?.length;
@@ -450,14 +458,12 @@ const showRideControls = computed(() => {
         <RideStatusFlag :ride-status="ride?.status" />
       </div>
       <div v-if="ride.status === 'completed'" class="flex items-center self-end gap-4">
-        <Button
-          v-if="
+        <!-- v-if="
             ride?.rideFinalPrice === 'NaN' ||
             ride?.rideFinalPrice === null ||
             ride?.rideFinalPrice === ''
-          "
-          @click="handleCalculateFinalPrice"
-        >
+          " -->
+        <Button @click="handleCalculateFinalPrice">
           <Calculator />
           Recalcular Atendimento
         </Button>
@@ -510,7 +516,7 @@ const showRideControls = computed(() => {
                   <h3 class="text-xl font-bold">Dados do atendimento</h3>
                 </div>
                 <div
-                  class="col-span-4 row-span-4 border-4 border-white rounded-md w-full overflow-hidden"
+                  class="relative col-span-4 row-span-4 border-4 border-white rounded-md w-full overflow-hidden"
                 >
                   <RideRouteMap
                     :origin-coords="{
@@ -522,10 +528,31 @@ const showRideControls = computed(() => {
                       lat: ride?.travel.destination.lat,
                       lng: ride?.travel.destination.lng,
                     }"
-                    :rideRealCoords="ride?.status === 'completed' ? ride?.progress : {}"
+                    :ride-progress="ride?.status === 'completed' ? ride?.progress : {}"
                     :driverData="ride?.status === 'in-progress' ? driverData : {}"
-                    :in-progress="ride?.status === 'in-progress'"
+                    :real-polyline="ride?.travel.finalPolyline"
+                    :ride-status="ride?.status"
                   />
+                  <div
+                    v-if="ride?.status === 'completed'"
+                    class="absolute p-2 bg-white/90 bottom-0 space-y-2"
+                  >
+                    <small class="text-muted-foreground text-xs">Legenda</small>
+                    <div class="mb-2 flex items-center gap-3">
+                      <div class="flex items-center gap-2">
+                        <span class="block w-5 h-1 bg-black"></span>
+                        <small>Rota Inicial</small>
+                      </div>
+                      <div class="flex items-center gap-2">
+                        <span class="block w-5 h-1 bg-[#f0f]"></span>
+                        <small>Motorista</small>
+                      </div>
+                      <div class="flex items-center gap-2">
+                        <span class="block w-5 h-1 bg-[#33ccff]"></span>
+                        <small>Rota Realizada</small>
+                      </div>
+                    </div>
+                  </div>
                 </div>
                 <div class="p-3 bg-white rounded-md">
                   <span class="text-muted-foreground text-sm">Data do embarque</span>
@@ -553,6 +580,25 @@ const showRideControls = computed(() => {
                   </div>
                 </div>
                 <div class="p-3 bg-white rounded-md">
+                  <!-- <span class="text-muted-foreground text-sm">
+                    Hora do Desembarque
+                  </span>
+                  <h3 class="text-lg font-bold">{{ ride?.travel.departTime }}H</h3> -->
+                  <div v-if="ride.status === 'completed'">
+                    <span class="text-muted-foreground text-sm">
+                      Hora do Desembarque (realizado)
+                    </span>
+                    <h3 class="text-lg font-bold">
+                      {{
+                        new Date(ride?.progress.finishedAt).toLocaleTimeString('pt-BR', {
+                          hour: '2-digit',
+                          minute: '2-digit',
+                        })
+                      }}H
+                    </h3>
+                  </div>
+                </div>
+                <div class="p-3 bg-white rounded-md">
                   <span class="text-muted-foreground text-sm">Distância estimada</span>
                   <h3 class="text-lg font-bold">
                     {{ convertMetersToDistance(ride?.travel.estimatedDistance) }}
@@ -562,7 +608,9 @@ const showRideControls = computed(() => {
                       Distância realizada
                     </span>
                     <h3 class="text-lg font-bold text-amber-600">
-                      {{ convertMetersToDistance(ride?.travel.finalDistance) }}
+                      {{
+                        convertMetersToDistance(ride?.travel.completedData?.finalDistance)
+                      }}
                     </h3>
                   </div>
                 </div>
@@ -574,7 +622,11 @@ const showRideControls = computed(() => {
                   <div v-if="ride?.status === 'completed'">
                     <span class="text-muted-foreground text-sm">Duração real</span>
                     <h3 class="text-lg font-bold text-amber-600">
-                      {{ convertSecondsToTime(ride?.travel.finalDuration) }}
+                      {{
+                        convertSecondsToTime(
+                          ride?.travel.completedData?.finalDuration || 0,
+                        )
+                      }}
                     </h3>
                   </div>
                   <div
@@ -588,7 +640,7 @@ const showRideControls = computed(() => {
                     </h3>
                   </div>
                 </div>
-                <div class="p-3 bg-white rounded-md">
+                <div class="p-3 bg-amber-100 rounded-md">
                   <span class="text-muted-foreground text-sm">
                     Valor estimado (atendimento + adicionais)
                   </span>
@@ -629,7 +681,9 @@ const showRideControls = computed(() => {
                     <p class="font-bold text-lg">{{ ride?.travel.passengers }}</p>
                   </div>
                 </div>
-                <div class="p-3 flex flex-col items-start gap-2 bg-white rounded-md">
+                <div
+                  class="col-span-4 p-3 flex flex-col items-start gap-2 bg-white rounded-md"
+                >
                   <span class="text-muted-foreground text-sm">Solicitante</span>
                   <div class="flex flex-col items-start">
                     <p class="font-bold">{{ ride?.dispatcher.user }}</p>
@@ -836,7 +890,11 @@ const showRideControls = computed(() => {
                       >
                         <h4 class="text-lg">Comissão por este atendimento</h4>
                         <h1 class="text-2xl font-bold">
-                          {{ currencyFormat(ride.travel.driverCommission) }}
+                          {{
+                            currencyFormat(
+                              ride.travel.completedData?.driverCommission || '0',
+                            )
+                          }}
                         </h1>
                       </div>
                     </div>

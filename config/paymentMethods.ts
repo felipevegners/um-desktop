@@ -19,18 +19,18 @@ export const paymentMethods = [
     ],
     value: 'creditcard',
   },
-  {
-    id: 'cielo',
-    label: 'Cartão de Crédito (Parcelado)',
-    icon: 'CreditCard',
-    logo: [
-      '/images/logos/mastercard.svg',
-      '/images/logos/visa.svg',
-      '/images/logos/elo.svg',
-      '/images/logos/amex.svg',
-    ],
-    value: 'cielo',
-  },
+  // {
+  //   id: 'cielo',
+  //   label: 'Cartão de Crédito (Parcelado)',
+  //   icon: 'CreditCard',
+  //   logo: [
+  //     '/images/logos/mastercard.svg',
+  //     '/images/logos/visa.svg',
+  //     '/images/logos/elo.svg',
+  //     '/images/logos/amex.svg',
+  //   ],
+  //   value: 'cielo',
+  // },
   {
     id: 'corporative',
     label: 'Faturamento Corporativo',

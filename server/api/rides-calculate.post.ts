@@ -55,36 +55,75 @@ export default defineEventHandler(async (event) => {
           departureTime: time.toISOString(),
         });
 
-        const normalizedDuration = routeCalculation[0]?.duration.replace('s', '');
         const etaDuration = ride.travel.estimatedDuration; // in seconds
         const etaDistance = ride.travel.estimatedDistance; // in meters
-        const realDuration = Math.ceil(normalizedDuration); // in seconds
+        const startedTime = new Date(ride?.progress?.startedAt).getTime();
+        const finishedTime = new Date(ride?.progress?.finishedAt).getTime();
+
         const realDistance = routeCalculation[0]?.distanceMeters; // in meters
+        const realDuration = Math.ceil((finishedTime - startedTime) / 1000); // in seconds
+
         const totalTimeStopped =
           ride.progress.stops?.reduce((acc: any, curr: any) => {
             return acc + curr.totalStopInMinutes;
           }, 0) * 60 || 0;
+
+        const finalDuration = realDuration + totalTimeStopped; // in seconds
+
         const { basePrice, kmPrice, minutePrice } = ride.product;
 
-        const finalDuration = Math.max(realDuration, etaDuration) + totalTimeStopped; // in seconds
-        const finalDistance = Math.max(realDistance, etaDistance); // in meters
+        let rideExtraKms = 0;
+        let rideExtraHours = 0;
+        let rideExtraKmPrice = '0';
+        let rideExtraHourPrice = '0';
 
-        const finalKmPrice =
-          parseFloat(basePrice) + parseFloat(kmPrice) * (finalDistance / 1000);
-        const finalDurationPrice = parseFloat(minutePrice) * (finalDuration / 60);
-        const rideFinalPrice = finalKmPrice + finalDurationPrice;
+        let calculatedFinalPrice = 0;
 
+        if (ride?.product.type === 'contract') {
+          // Se a distancia final for maior que a distância incluída no produto
+          if (realDistance > ride.product?.includedKms * 1000) {
+            const extraKms = Math.ceil(
+              (realDistance - ride.product?.includedKms * 1000) / 1000,
+            );
+            const diffPrice = extraKms * parseFloat(kmPrice);
+
+            rideExtraKmPrice = diffPrice.toFixed(2).toString();
+            rideExtraKms = extraKms;
+
+            calculatedFinalPrice = parseFloat(basePrice) + diffPrice;
+          }
+          // Se a duração final for maior que a duração incluída no produto
+          const includedHoursToSeconds = ride.product.includedHours * 60 * 60;
+          if (finalDuration > includedHoursToSeconds) {
+            const totalInSeconds = finalDuration - includedHoursToSeconds;
+            const totalInMinutes = Math.ceil(totalInSeconds / 60);
+
+            const diffPriceDuration =
+              totalInMinutes * parseFloat(ride.product.minutePrice);
+
+            rideExtraHourPrice = diffPriceDuration.toFixed(2).toString();
+            rideExtraHours = totalInMinutes / 60;
+            calculatedFinalPrice += diffPriceDuration;
+          }
+        } else {
+          const finalKmPrice =
+            parseFloat(basePrice) + parseFloat(kmPrice) * (realDistance / 1000);
+
+          const finalDurationPrice = parseFloat(minutePrice) * (finalDuration / 60);
+          calculatedFinalPrice = finalKmPrice + finalDurationPrice;
+        }
+        // START CALCULATE ADDONS PRICE
         const addonsPrice = ride?.billing?.addons?.length
           ? ride.billing.addons.reduce((acc: any, curr: any) => {
               return acc + parseFloat(curr.basePrice);
             }, 0)
           : 0;
 
-        const rideTotalPrice = rideFinalPrice + addonsPrice;
+        const rideTotalPrice = calculatedFinalPrice + addonsPrice;
+        // END CALCULATE ADDONS PRICE
 
-        const finalPolyline = routeCalculation[0]?.polyline.encodedPolyline;
-
-        const driverFeeTax: any = await prisma.fees.findUnique({
+        // START DRIVER COMMISSION CALCULATION
+        const currentDriverFeeTax: any = await prisma.fees.findUnique({
           where: {
             type: 'driver_fee',
           },
@@ -93,7 +132,8 @@ export default defineEventHandler(async (event) => {
           },
         });
 
-        const commissionAmmount = (rideFinalPrice * parseFloat(driverFeeTax.value)) / 100;
+        const commissionAmmount =
+          (calculatedFinalPrice * parseFloat(currentDriverFeeTax.value)) / 100;
         const allCommissions = await prisma.commissions.findMany();
         const existingRideCommission = allCommissions.find((commission) => {
           // @ts-ignore
@@ -129,18 +169,24 @@ export default defineEventHandler(async (event) => {
             return existingRideCommission.ammount;
           }
         };
+        // END DRIVER COMMISSION CALCULATION
 
-        const finalTravelData = {
-          ...ride.travel,
-          driverCommission: await rideDriverCommission(),
-          finalDuration,
-          finalDistance,
-          totalTimeStopped,
-          finalPolyline,
-          rideTotalPrice,
+        const realizedPolyline = routeCalculation[0]?.polyline.encodedPolyline;
+
+        const completedRideData = {
+          completedData: {
+            rideTotalPrice,
+            finalDistance: realDistance,
+            finalDuration,
+            totalTimeStopped,
+            driverCommission: await rideDriverCommission(),
+            rideExtraKms,
+            rideExtraHours,
+            rideExtraKmPrice,
+            rideExtraHourPrice,
+            realizedPolyline,
+          },
         };
-
-        // console.log('FINAL TRAVEL DATA ->', finalTravelData);
 
         await prisma.rides.update({
           where: {
@@ -152,7 +198,10 @@ export default defineEventHandler(async (event) => {
               ammount: rideTotalPrice.toFixed(2),
             },
             rideFinalPrice: rideTotalPrice.toFixed(2),
-            travel: finalTravelData,
+            travel: {
+              ...ride.travel,
+              ...completedRideData,
+            },
             progress: ride?.progress.startLocation
               ? ride.progress
               : {

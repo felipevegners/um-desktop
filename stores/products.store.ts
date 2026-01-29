@@ -49,7 +49,9 @@ export const useProductsStore = defineStore('products', {
   },
   getters: {
     enabledProducts(state) {
-      return state.products.filter((product: any) => product.enabled === true);
+      return state.products.filter(
+        (product: any) => product.enabled === true && product.type !== 'addon',
+      );
     },
   },
 });

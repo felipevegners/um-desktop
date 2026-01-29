@@ -1,8 +1,9 @@
 <script setup lang="ts">
-import AdditionalInfoForm from '@/components/forms/AdditionalInfoForm.vue';
-import ComercialConditionsForm from '@/components/forms/ComercialConditionsForm.vue';
-import CompanyForm from '@/components/forms/CompanyForm.vue';
-import MasterManagerForm from '@/components/forms/MasterManagerForm.vue';
+import {
+  FormsAdditionalInfoForm,
+  FormsCompanyForm,
+  FormsProductsForm,
+} from '#components';
 import BackLink from '@/components/shared/BackLink.vue';
 import {
   Accordion,
@@ -12,13 +13,13 @@ import {
 } from '@/components/ui/accordion';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/components/ui/toast/use-toast';
+import { useContractsStore } from '@/stores/contracts.store';
+import { useProductsStore } from '@/stores/products.store';
 import { toTypedSchema } from '@vee-validate/zod';
 import { ArrowLeft, ArrowRight, Check, FileText, LoaderCircle } from 'lucide-vue-next';
 import { useForm } from 'vee-validate';
 import { computed, ref } from 'vue';
 import * as z from 'zod';
-import ProductsForm from '~/components/forms/ProductsForm.vue';
-import { useContractsStore } from '~/stores/contracts.store';
 
 const { createContractAction } = useContractsStore();
 
@@ -31,27 +32,17 @@ useHead({
 
 const currentStep = ref<any>(0);
 const isLoadingSend = ref<boolean>(false);
-const availableProducts = ref();
-const isLoadingProducts = ref<boolean>(false);
 const selectedProducts = reactive([]);
 
 const { toast } = useToast();
 
-const fetchProducts = async () => {
-  isLoadingProducts.value = true;
-  try {
-    return await $fetch('/api/products');
-  } catch (error) {
-    toast({
-      title: 'Opss!',
-      class: 'bg-red-500 border-0 text-white text-2xl',
-      description: `Ocorreu um erro ao carregar os Produtos. Atualize a página.`,
-    });
-  } finally {
-    isLoadingProducts.value = false;
-  }
-};
-availableProducts.value = await fetchProducts();
+const store = useProductsStore();
+const { getProductsAction } = store;
+const { enabledProducts, isLoading } = storeToRefs(store);
+
+onBeforeMount(async () => {
+  await getProductsAction();
+});
 
 const MAX_FILE_SIZE = 4000000;
 const ACCEPTED_IMAGE_TYPES = ['image/jpeg', 'image/jpg', 'image/png'];
@@ -209,8 +200,8 @@ function prevStep() {
           <AccordionTrigger class="px-6 text-xl font-bold hover:no-underline">
             1. Dados da Empresa Matriz
           </AccordionTrigger>
-          <AccordionContent class="mt-4">
-            <CompanyForm :form="form" />
+          <AccordionContent class="mt-4 p-6">
+            <FormsCompanyForm :form="form" />
           </AccordionContent>
         </AccordionItem>
         <!-- @vue-skip -->
@@ -224,7 +215,7 @@ function prevStep() {
             2. Gestor Master
           </AccordionTrigger>
           <AccordionContent>
-            <MasterManagerForm :form="form" />
+            <FormsMasterManagerForm :form="form" />
           </AccordionContent>
         </AccordionItem>
         <!-- @vue-skip -->
@@ -238,7 +229,7 @@ function prevStep() {
             3. Condições Comerciais
           </AccordionTrigger>
           <AccordionContent>
-            <ComercialConditionsForm />
+            <FormsComercialConditionsForm />
           </AccordionContent>
         </AccordionItem>
         <!-- @vue-skip -->
@@ -252,9 +243,9 @@ function prevStep() {
             4. Produtos e Valores
           </AccordionTrigger>
           <AccordionContent>
-            <ProductsForm
+            <FormsProductsForm
               v-model="selectedProducts"
-              :products="availableProducts"
+              :products="enabledProducts"
               :editMode="false"
             />
           </AccordionContent>
@@ -270,7 +261,7 @@ function prevStep() {
             5. Informações Adicionais
           </AccordionTrigger>
           <AccordionContent>
-            <AdditionalInfoForm />
+            <FormsAdditionalInfoForm />
           </AccordionContent>
         </AccordionItem>
       </Accordion>
