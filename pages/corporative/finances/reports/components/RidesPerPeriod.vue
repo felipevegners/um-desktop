@@ -10,6 +10,10 @@ import { storeToRefs } from 'pinia';
 
 import { columns } from '../columns';
 
+const { data } = useAuth();
+//@ts-ignore
+const contractId = data.value?.user.contract?.contractId;
+
 interface CalendarDate {
   era: string;
   year: number;
@@ -42,27 +46,41 @@ const filterTerms = ref<any>({
 const ridesUsersList = ref<any>([]);
 
 const ridesStore = useRidesStore();
-const { getRidesByDateRangeAction } = ridesStore;
+const { getRidesByDateRangeAndContractIdAction } = ridesStore;
 const { rides, loadingData } = storeToRefs(ridesStore);
-
-const contractsStore = useContractsStore();
-const { getContractsAction } = contractsStore;
-const { contracts } = storeToRefs(contractsStore);
 
 const driversStore = useDriverStore();
 const { getDriversAction } = driversStore;
 const { drivers } = storeToRefs(driversStore);
 
-onMounted(async () => {
-  await getContractsAction();
-  await getDriversAction();
-});
+const contractsStore = useContractsStore();
+const { getContractByIdAction } = contractsStore;
+const { contract } = storeToRefs(contractsStore);
 
-const sanitizeContracts = computed(() => {
-  return contracts?.value.map((contract: any) => ({
-    label: contract.customerName,
-    value: contract.id,
-  }));
+const getContractData = () => {};
+
+onMounted(async () => {
+  await getDriversAction();
+  await getContractByIdAction(contractId);
+
+  filteredRides.value = rides?.value;
+  filterRidesUsers();
+
+  loadingBranches.value = true;
+  contractName.value = contract?.value.customerName;
+  selectedBranches.value = contract?.value.branches;
+  contractBranches.value = contract?.value.branches.map((branch: any) => {
+    return {
+      label: `${branch.branchCode} - ${branch.fantasyName}`,
+      value: branch.id,
+    };
+  });
+  ridesUsersList.value = ridesUsersList.value.filter(
+    (user: any) => user.contractId === contractId,
+  );
+  setTimeout(() => {
+    loadingBranches.value = false;
+  }, 500);
 });
 
 const sanitizeDrivers = computed(() => {
@@ -102,8 +120,7 @@ const generateReport = async () => {
     return;
   }
   try {
-    await getRidesByDateRangeAction(selectedRange.value);
-    // console.log('Rides fetched successfully');
+    await getRidesByDateRangeAndContractIdAction(selectedRange.value, contractId);
   } catch (error) {
     console.error('Error fetching rides:', error);
   } finally {
@@ -111,32 +128,6 @@ const generateReport = async () => {
     filteredRides.value = rides?.value;
     filterRidesUsers();
   }
-};
-
-const getContractData = (value: string) => {
-  branchAreas.value = [];
-  filteredRides.value = rides?.value;
-  filterRidesUsers();
-
-  loadingBranches.value = true;
-
-  const filtered = contractsStore.contracts?.find(
-    (contract: any) => contract.id === value,
-  );
-  contractName.value = filtered.customerName;
-  selectedBranches.value = filtered.branches;
-  contractBranches.value = filtered.branches.map((branch: any) => {
-    return {
-      label: `${branch.branchCode} - ${branch.fantasyName}`,
-      value: branch.id,
-    };
-  });
-  ridesUsersList.value = ridesUsersList.value.filter(
-    (user: any) => user.contractId === value,
-  );
-  setTimeout(() => {
-    loadingBranches.value = false;
-  }, 500);
 };
 
 const getBranchAreas = (value: string) => {
@@ -157,10 +148,6 @@ const getBranchAreas = (value: string) => {
   setTimeout(() => {
     loadingAreas.value = false;
   }, 500);
-};
-
-const setBranchArea = (value: string) => {
-  // filteredRides.value = rides?.value;
 };
 
 const applyFilters = () => {
@@ -252,25 +239,12 @@ const clearFilters = () => {
             <h4 class="font-bold mb-8">Filtrar Resultados</h4>
             <div class="mb-8 md:grid md:grid-cols-3 gap-4">
               <div>
-                <Label class="text-sm dark:text-white">Contrato</Label>
-                <FormSelect
-                  :items="sanitizeContracts"
-                  label="Selecione o contrato"
-                  v-model="filterTerms.contractId"
-                  @on-select="getContractData"
-                />
-              </div>
-              <div>
                 <Label class="text-sm dark:text-white">Filial</Label>
                 <div v-if="loadingBranches" class="p-2 bg-white rounded-md">
                   <LoaderCircle class="animate-spin" />
                 </div>
-                <div
-                  v-if="!loadingBranches && !selectedBranches.length"
-                  class="bg-zinc-100 rounded-md h-10 cursor-not-allowed"
-                />
                 <FormSelect
-                  v-if="!loadingBranches && selectedBranches.length"
+                  v-if="!loadingBranches"
                   :items="contractBranches"
                   v-model="filterTerms.branch"
                   label="Selecione a filial"
@@ -291,7 +265,6 @@ const clearFilters = () => {
                   :items="branchAreas"
                   v-model="filterTerms.areaCode"
                   label="Selecione o centro de custo"
-                  @on-select="setBranchArea"
                 />
               </div>
             </div>
@@ -321,14 +294,6 @@ const clearFilters = () => {
                   label="Selecione o status do pagamento"
                   v-model="filterTerms.paymentStatus"
                   :decoration="true"
-                />
-              </div>
-              <div>
-                <Label class="text-sm dark:text-white">Motorista</Label>
-                <FormSelect
-                  :items="sanitizeDrivers"
-                  label="Selecione o motorista"
-                  v-model="filterTerms.driver"
                 />
               </div>
             </div>

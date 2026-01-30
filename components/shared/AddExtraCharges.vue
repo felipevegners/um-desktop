@@ -24,15 +24,19 @@ const addRow = () => {
 };
 
 const removeRow = (index: any) => {
-  if (props.modelValue.length <= 1) return;
+  if (props.modelValue.length === 0) return;
   props.modelValue.splice(index, 1);
 };
 </script>
 <template>
+  <Button v-if="props.modelValue.length === 0" @click.prevent="addRow">
+    <Plus />
+    Adicionar Taxa
+  </Button>
   <ul class="mb-4 space-y-6">
     <li
       v-for="(extra, index) in props.modelValue"
-      :key="extra.id"
+      :key="extra.type"
       class="md:grid md:grid-cols-5 gap-4 items-end"
     >
       <div class="flex flex-col items-start gap-2">
@@ -88,7 +92,7 @@ const removeRow = (index: any) => {
         <Button
           variant="ghost"
           @click.prevent="removeRow(index)"
-          :disabled="props.modelValue.length <= 1"
+          :disabled="props.modelValue.length === 0"
         >
           <Trash />
         </Button>

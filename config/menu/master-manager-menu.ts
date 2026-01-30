@@ -1,4 +1,11 @@
-import { Building2, CalendarDays, Handshake, Headset, User } from 'lucide-vue-next';
+import {
+  Building2,
+  CalendarDays,
+  HandCoins,
+  Handshake,
+  Headset,
+  User,
+} from 'lucide-vue-next';
 
 const { data } = useAuth();
 //@ts-ignore
@@ -90,24 +97,18 @@ export const masterManagerMenu = {
         },
       ],
     },
-    // {
-    //   title: 'Financeiro',
-    //   url: '#',
-    //   icon: HandCoins,
-    //   isActive: route.path.includes('invoices'),
-    //   items: [
-    //     {
-    //       title: 'Faturas em aberto',
-    //       // url: '/corporative/invoices/active',
-    //       url: '#',
-    //     },
-    //     {
-    //       title: 'Faturas canceladas',
-    //       // url: '/corporative/invoices/canceled',
-    //       url: '#',
-    //     },
-    //   ],
-    // },
+    {
+      title: 'Financeiro',
+      url: '/corporative/finances/reports',
+      icon: HandCoins,
+      isActive: route.path.includes('finances'),
+      items: [
+        {
+          title: 'Relatórios Financeiros',
+          url: '/corporative/finances/reports',
+        },
+      ],
+    },
   ],
   // settings: [
   //   {

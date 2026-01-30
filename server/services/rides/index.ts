@@ -42,6 +42,21 @@ export const getRidesByDateRangeService = async (startDate: string, endDate: str
   }
 };
 
+export const getRidesByDateRangeAndContractIdService = async (
+  startDate: string,
+  endDate: string,
+  contractId: string,
+) => {
+  try {
+    return await $fetch(
+      `/api/rides?startDate=${startDate}&endDate=${endDate}&contractId=${contractId}`,
+    );
+  } catch (error) {
+    console.log('Error during rides by date range service GET -> ', error);
+    throw error;
+  }
+};
+
 export const createRideService = async (rideData: any) => {
   try {
     return await $fetch('/api/rides', {

@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import FormButtons from '@/components/forms/FormButtons.vue';
 import BackLink from '@/components/shared/BackLink.vue';
-import PaymentStatusFlag from '@/components/shared/PaymentStatusFlag.vue';
 import RideRouteMap from '@/components/shared/RideRouteMap.vue';
 import RideStatusFlag from '@/components/shared/RideStatusFlag.vue';
 import { useToast } from '@/components/ui/toast/use-toast';
@@ -14,10 +13,8 @@ import { useProductsStore } from '@/stores/products.store';
 import { useRidesStore } from '@/stores/rides.store';
 import { CalendarDate, DateFormatter } from '@internationalized/date';
 import {
-  Banknote,
   CalendarDays,
   CarFront,
-  Check,
   Link,
   LoaderCircle,
   Mail,
@@ -423,13 +420,14 @@ const showRideControls = computed(() => {
         </Button>
 
         <div class="p-2 border border-zinc-950 rounded-md flex gap-6">
-          <div class="pr-2 flex items-center border-r border-zinc-950">
+          <div class="pr-2 flex items-center gap-2 border-r border-zinc-950">
             <Settings />
+            <span>Ações</span>
           </div>
-          <Button @click="toggleFinishModal">
+          <!-- <Button @click="toggleFinishModal">
             <Check />
             FInalizar
-          </Button>
+          </Button> -->
           <Button @click="toggleCancelationModal" variant="destructive">
             <X />
             Cancelar
@@ -451,195 +449,222 @@ const showRideControls = computed(() => {
     <section>
       <form @submit.prevent="onSubmit" @keydown.enter.prevent="true">
         <Card class="p-0 bg-zinc-200">
-          <CardContent class="p-4">
-            <div class="p-4 flex flex-col gap-4 border border-zinc-300 rounded-md">
+          <CardContent class="px-4 py-6">
+            <div class="flex flex-col gap-4">
               <!-- RIDE -->
-              <div class="grid grid-cols-2 gap-6 items-start">
-                <div class="col-span-2 flex items-start justify-between gap-4">
-                  <div class="flex items-center gap-2">
-                    <Map />
-                    <h3 class="text-sm font-bold">Dados do atendimento</h3>
+              <div class="col-span-2 md:grid md:grid-cols-4 gap-3">
+                <div class="mb-6 flex items-center gap-2">
+                  <Map />
+                  <h3 class="text-xl font-bold">Dados do atendimento</h3>
+                </div>
+                <div
+                  class="relative col-span-4 row-span-4 border-4 border-white rounded-md w-full overflow-hidden"
+                >
+                  <RideRouteMap
+                    :origin-coords="{
+                      lat: ride?.travel.origin.lat,
+                      lng: ride?.travel.origin.lng,
+                    }"
+                    :stops-coords="ride?.travel.stops"
+                    :destination-coords="{
+                      lat: ride?.travel.destination.lat,
+                      lng: ride?.travel.destination.lng,
+                    }"
+                    :ride-progress="ride?.status === 'completed' ? ride?.progress : {}"
+                    :driverData="ride?.status === 'in-progress' ? driverData : {}"
+                    :real-polyline="ride?.travel.finalPolyline"
+                    :ride-status="ride?.status"
+                  />
+                  <div
+                    v-if="ride?.status === 'completed'"
+                    class="absolute p-2 bg-white/90 bottom-0 space-y-2"
+                  >
+                    <small class="text-muted-foreground text-xs">Legenda</small>
+                    <div class="mb-2 flex items-center gap-3">
+                      <div class="flex items-center gap-2">
+                        <span class="block w-5 h-1 bg-black"></span>
+                        <small>Rota Inicial</small>
+                      </div>
+                      <div class="flex items-center gap-2">
+                        <span class="block w-5 h-1 bg-[#f0f]"></span>
+                        <small>Motorista</small>
+                      </div>
+                      <div class="flex items-center gap-2">
+                        <span class="block w-5 h-1 bg-[#33ccff]"></span>
+                        <small>Rota Realizada</small>
+                      </div>
+                    </div>
                   </div>
                 </div>
-
-                <div class="col-span-2 grid grid-cols-4 gap-3">
+                <div class="p-3 bg-white rounded-md">
+                  <span class="text-muted-foreground text-sm">Data do embarque</span>
+                  <h3 class="text-lg font-bold">
+                    {{ sanitizeRideDate(ride?.travel.date) }}
+                  </h3>
+                </div>
+                <div class="p-3 bg-white rounded-md">
+                  <span class="text-muted-foreground text-sm">
+                    Hora de embarque (estimado)
+                  </span>
+                  <h3 class="text-lg font-bold">{{ ride?.travel.departTime }}H</h3>
+                  <div v-if="ride.status === 'completed'">
+                    <span class="text-muted-foreground text-sm">
+                      Hora de embarque (realizado)
+                    </span>
+                    <h3 class="text-lg font-bold">
+                      {{
+                        new Date(ride?.progress.startedAt).toLocaleTimeString('pt-BR', {
+                          hour: '2-digit',
+                          minute: '2-digit',
+                        })
+                      }}H
+                    </h3>
+                  </div>
+                </div>
+                <div class="p-3 bg-white rounded-md">
+                  <div>
+                    <span class="text-muted-foreground text-sm">
+                      Hora do Desembarque
+                    </span>
+                    <h3 v-if="ride.status === 'completed'" class="text-lg font-bold">
+                      {{
+                        new Date(ride?.progress.finishedAt).toLocaleTimeString('pt-BR', {
+                          hour: '2-digit',
+                          minute: '2-digit',
+                        })
+                      }}H
+                    </h3>
+                  </div>
+                </div>
+                <div class="p-3 bg-white rounded-md">
+                  <span class="text-muted-foreground text-sm">Distância estimada</span>
+                  <h3 class="text-lg font-bold">
+                    {{ convertMetersToDistance(ride?.travel.estimatedDistance) }}
+                  </h3>
+                  <div v-if="ride.status === 'completed'">
+                    <span class="text-muted-foreground text-sm">
+                      Distância realizada
+                    </span>
+                    <h3 class="text-lg font-bold text-amber-600">
+                      {{
+                        convertMetersToDistance(ride?.travel.completedData?.finalDistance)
+                      }}
+                    </h3>
+                  </div>
+                </div>
+                <div class="p-3 bg-white rounded-md">
+                  <span class="text-muted-foreground text-sm">Duração estimada</span>
+                  <h3 class="text-lg font-bold">
+                    {{ convertSecondsToTime(ride?.travel.estimatedDuration) }}
+                  </h3>
+                  <div v-if="ride?.status === 'completed'">
+                    <span class="text-muted-foreground text-sm">Duração real</span>
+                    <h3 class="text-lg font-bold text-amber-600">
+                      {{
+                        convertSecondsToTime(
+                          ride?.travel.completedData?.finalDuration || 0,
+                        )
+                      }}
+                    </h3>
+                  </div>
                   <div
-                    class="col-span-2 row-span-4 p-4 bg-white rounded-md w-full overflow-hidden"
+                    v-if="ride?.status === 'completed' && ride?.progress?.stops?.length"
                   >
-                    <RideRouteMap
-                      :origin-coords="{
-                        lat: ride?.travel.origin.lat,
-                        lng: ride?.travel.origin.lng,
-                      }"
-                      :stops-coords="ride?.travel.stops"
-                      :destination-coords="{
-                        lat: ride?.travel.destination.lat,
-                        lng: ride?.travel.destination.lng,
-                      }"
-                      :rideRealCoords="ride?.status === 'completed' ? ride?.progress : {}"
-                      :driverData="ride?.status === 'in-progress' ? driverData : {}"
-                      :in-progress="ride?.status === 'in-progress'"
+                    <span class="text-muted-foreground text-sm">
+                      Tempo em Paradas ({{ ride?.progress?.stops?.length }})
+                    </span>
+                    <h3 class="text-lg font-bold text-red-600">
+                      {{ convertSecondsToTime(ride?.travel.totalTimeStopped) }}
+                    </h3>
+                  </div>
+                </div>
+                <div class="p-3 bg-amber-100 rounded-md">
+                  <span class="text-muted-foreground text-sm">
+                    Valor estimado (atendimento + adicionais)
+                  </span>
+                  <h3 class="text-lg font-bold">
+                    {{ currencyFormat(ride?.estimatedPrice) }}
+                  </h3>
+                  <div v-if="ride.status === 'completed'">
+                    <span class="text-muted-foreground text-sm">Valor final</span>
+                    <h3 class="text-lg font-bold text-amber-600">
+                      {{ currencyFormat(ride?.rideFinalPrice) }}
+                    </h3>
+                  </div>
+                </div>
+                <div class="p-3 flex flex-col items-start gap-3 bg-white rounded-md">
+                  <span class="text-muted-foreground text-sm">Serviço</span>
+                  <div class="flex items-center gap-2">
+                    <SharedProductTag
+                      :label="ride?.product.name"
+                      :type="ride?.product.name"
                     />
+                    <small>{{ ride?.product.code }}</small>
                   </div>
-                  <div class="p-3 border border-zinc-400 bg-white rounded-md">
-                    <span class="text-muted-foreground text-sm">Data do embarque</span>
-                    <h3 class="text-lg font-bold">
-                      {{ sanitizeRideDate(ride?.travel.date) }}
-                    </h3>
-                  </div>
-                  <div class="p-3 border border-zinc-400 bg-white rounded-md">
-                    <span class="text-muted-foreground text-sm">
-                      Hora do embarque (estimado)
-                    </span>
-                    <h3 class="text-lg font-bold">{{ ride?.travel.departTime }}</h3>
-                    <div v-if="ride.status === 'completed'">
-                      <span class="text-muted-foreground text-sm">
-                        Hora do embarque (realizado)
+                  <div v-if="ride?.billing.addons?.length">
+                    <span class="text-muted-foreground text-sm">Adicionais</span>
+                    <p v-for="item in ride?.billing.addons" class="text-sm">
+                      <span class="font-bold">{{ item.code }}</span> - {{ item.name }}
+                      <span> - </span>
+                      <span class="font-bold">
+                        {{ currencyFormat(item.basePrice) }}
                       </span>
-                      <h3 class="text-lg font-bold">
-                        {{
-                          new Date(ride?.progress.startedAt).toLocaleTimeString('pt-BR', {
-                            hour: '2-digit',
-                            minute: '2-digit',
-                          })
-                        }}
-                      </h3>
-                    </div>
+                    </p>
                   </div>
-                  <div class="p-3 border border-zinc-400 bg-white rounded-md">
-                    <span class="text-muted-foreground text-sm">Distância estimada</span>
-                    <h3 class="text-lg font-bold">
-                      {{ convertMetersToDistance(ride?.travel.estimatedDistance) }}
-                    </h3>
-                    <div v-if="ride.status === 'completed'">
+                </div>
+                <div class="p-3 flex flex-col items-start gap-2 bg-white rounded-md">
+                  <span class="text-muted-foreground text-sm">Passageiros</span>
+                  <div class="flex items-center gap-2">
+                    <Users2 :size="16" />
+                    <p class="font-bold text-lg">{{ ride?.travel.passengers }}</p>
+                  </div>
+                </div>
+                <div
+                  class="col-span-4 p-3 flex flex-col items-start gap-2 bg-white rounded-md"
+                >
+                  <span class="text-muted-foreground text-sm">Solicitante</span>
+                  <div class="flex flex-col items-start">
+                    <p class="font-bold">{{ ride?.dispatcher.user }}</p>
+                    <small>em: {{ ride?.dispatcher.dispatchDate }}</small>
+                  </div>
+                </div>
+                <div
+                  class="col-span-4 p-3 flex flex-col items-start gap-2 bg-white rounded-md"
+                >
+                  <div class="flex items-center gap-2">
+                    <SquareDot :size="16" />
+                    <span class="text-muted-foreground text-sm">Origem</span>
+                  </div>
+                  <p class="font-bold text-lg">{{ ride?.travel.originAddress }}</p>
+                </div>
+                <div
+                  v-if="ride?.travel.stops.length > 0"
+                  class="col-span-4 p-3 flex flex-col items-start gap-2 bg-white rounded-md"
+                >
+                  <div v-for="(stop, index) in ride?.travel.stops" :key="index">
+                    <div class="flex items-center gap-2">
+                      <SquareSquare :size="16" />
                       <span class="text-muted-foreground text-sm">
-                        Distância realizada
+                        Parada {{ Number(index) + 1 }}
                       </span>
-                      <h3 class="text-lg font-bold text-amber-600">
-                        {{ convertMetersToDistance(ride?.travel.finalDistance) }}
-                      </h3>
                     </div>
+                    <p class="font-bold text-lg">{{ stop.address }}</p>
                   </div>
-                  <div class="p-3 border border-zinc-400 bg-white rounded-md">
-                    <span class="text-muted-foreground text-sm">Duração estimada</span>
-                    <h3 class="text-lg font-bold">
-                      {{ convertSecondsToTime(ride?.travel.estimatedDuration) }}
-                    </h3>
-                    <div v-if="ride?.status === 'completed'">
-                      <span class="text-muted-foreground text-sm">Duração real</span>
-                      <h3 class="text-lg font-bold text-amber-600">
-                        {{ convertSecondsToTime(ride?.travel.finalDuration) }}
-                      </h3>
-                    </div>
-                    <div
-                      v-if="ride?.status === 'completed' && ride?.progress?.stops?.length"
-                    >
-                      <span class="text-muted-foreground text-sm">
-                        Tempo em Paradas ({{ ride?.progress?.stops?.length }})
-                      </span>
-                      <h3 class="text-lg font-bold text-red-600">
-                        {{ convertSecondsToTime(ride?.travel.totalTimeStopped) }}
-                      </h3>
-                    </div>
+                </div>
+                <div
+                  class="col-span-4 p-3 flex flex-col items-start gap-2 bg-white rounded-md"
+                >
+                  <div class="flex items-center gap-2">
+                    <SquareCheck :size="16" />
+                    <span class="text-muted-foreground text-sm">Destino</span>
                   </div>
-                  <div class="p-3 border border-zinc-400 bg-white rounded-md">
-                    <span class="text-muted-foreground text-sm">
-                      Valor estimado (atendimento + adicionais)
-                    </span>
-                    <h3 class="text-lg font-bold">
-                      {{ currencyFormat(ride?.estimatedPrice) }}
-                    </h3>
-                    <div v-if="ride.status === 'completed'">
-                      <span class="text-muted-foreground text-sm">Valor final</span>
-                      <h3 class="text-lg font-bold text-amber-600">
-                        {{ currencyFormat(ride?.rideFinalPrice) }}
-                      </h3>
-                    </div>
-                  </div>
-                  <div
-                    class="p-3 flex flex-col items-start gap-3 border border-zinc-400 bg-white rounded-md"
-                  >
-                    <span class="text-muted-foreground text-sm">Serviço</span>
-                    <div class="flex items-center gap-2">
-                      <SharedProductTag
-                        :label="ride?.product.name"
-                        :type="ride?.product.name"
-                      />
-                      <small>{{ ride?.product.code }}</small>
-                    </div>
-                    <div v-if="ride?.billing.addons?.length">
-                      <span class="text-muted-foreground text-sm">Adicionais</span>
-                      <p v-for="item in ride?.billing.addons" class="text-sm">
-                        <span class="font-bold">{{ item.code }}</span> - {{ item.name }}
-                        <span> - </span>
-                        <span class="font-bold">
-                          {{ currencyFormat(item.basePrice) }}
-                        </span>
-                      </p>
-                    </div>
-                  </div>
-                  <div
-                    class="p-3 flex flex-col items-start gap-2 border border-zinc-400 bg-white rounded-md"
-                  >
-                    <span class="text-muted-foreground text-sm">Passageiros</span>
-                    <div class="flex items-center gap-2">
-                      <Users2 :size="16" />
-                      <p class="font-bold text-lg">{{ ride?.travel.passengers }}</p>
-                    </div>
-                  </div>
-                  <div
-                    class="p-3 flex flex-col items-start gap-2 border border-zinc-400 bg-white rounded-md"
-                  >
-                    <span class="text-muted-foreground text-sm">Solicitante</span>
-                    <div class="flex flex-col items-start">
-                      <p class="font-bold">{{ ride?.dispatcher.user }}</p>
-                      <small>em: {{ ride?.dispatcher.dispatchDate }}</small>
-                    </div>
-                  </div>
-                  <div
-                    class="col-span-4 p-3 flex flex-col items-start gap-2 border border-zinc-400 bg-white rounded-md"
-                  >
-                    <div class="flex items-center gap-2">
-                      <SquareDot :size="16" />
-                      <span class="text-muted-foreground text-sm">Origem</span>
-                    </div>
-                    <p class="font-bold text-lg">{{ ride?.travel.originAddress }}</p>
-                  </div>
-                  <div
-                    v-if="ride?.travel.stops.length > 0"
-                    class="col-span-4 p-3 flex flex-col items-start gap-2 border border-zinc-400 bg-white rounded-md"
-                  >
-                    <div v-for="(stop, index) in ride?.travel.stops" :key="index">
-                      <div class="flex items-center gap-2">
-                        <SquareSquare :size="16" />
-                        <span class="text-muted-foreground text-sm">
-                          Parada {{ index + 1 }}
-                        </span>
-                      </div>
-                      <p class="font-bold text-lg">{{ stop.address }}</p>
-                    </div>
-                  </div>
-                  <div
-                    class="col-span-4 p-3 flex flex-col items-start gap-2 border border-zinc-400 bg-white rounded-md"
-                  >
-                    <div class="flex items-center gap-2">
-                      <SquareCheck :size="16" />
-                      <span class="text-muted-foreground text-sm">Destino</span>
-                    </div>
-                    <p class="font-bold text-lg">{{ ride?.travel.destinationAddress }}</p>
-                  </div>
+                  <p class="font-bold text-lg">{{ ride?.travel.destinationAddress }}</p>
                 </div>
               </div>
               <!-- USER -->
-              <div
-                class="p-6 flex flex-col gap-6 bg-white border border-zinc-900 rounded-md"
-              >
-                <div class="flex items-center gap-2">
-                  <User />
-                  <div>
-                    <h3 class="text-sm font-bold">Dados do usuário</h3>
-                  </div>
-                </div>
+              <div class="p-6 flex flex-col h-full gap-6 bg-white rounded-md">
+                <User />
+                <h3 class="text-xl font-bold">Dados do Usuário</h3>
                 <div class="space-y-2">
                   <h2 class="font-bold text-lg">{{ ride?.user.name }}</h2>
                   <p class="flex items-center gap-2 text-sm">
@@ -664,86 +689,56 @@ const showRideControls = computed(() => {
                 </div>
               </div>
               <!-- DRIVER  -->
-              <div
-                class="p-6 grid grid-cols-2 gap-6 items-start bg-white border border-zinc-900 rounded-md"
-              >
-                <div class="flex items-start gap-4">
-                  <div>
-                    <CarFront />
-                    <h3 class="mb-6 text-sm font-bold">Dados do Motorista</h3>
-                    <h2 class="font-bold text-lg">
-                      {{ ride?.driver.name || 'Sem motorista' }}
-                    </h2>
-                    <div
-                      v-if="!ride?.accepted && ride?.driver.name"
-                      class="my-4 p-2 flex items-center gap-2 rounded-md bg-red-100 text-red-600 text-sm"
-                    >
-                      <MessageSquareWarning />
-                      <span>
-                        {{ ride?.driver.name }} ainda não aceitou este atendimento.
-                      </span>
+              <div class="p-6 col-span-2 flex flex-col gap-6 bg-white rounded-md">
+                <div class="flex flex-col gap-6">
+                  <CarFront />
+                  <h3 class="text-xl font-bold">Dados do Motorista</h3>
+                </div>
+                <div class="md:grid md:grid-cols-2">
+                  <div class="flex flex-col gap-6">
+                    <div>
+                      <small>Nome</small>
+                      <h2 class="font-bold text-lg">
+                        {{ ride?.driver.name || 'Sem motorista' }}
+                      </h2>
+                      <div v-if="ride?.driver.hasCarSelected">
+                        <small>Veículo</small>
+                        <p class="font-bold uppercase">
+                          {{ ride?.driver.selectedCar.model }} -
+                          {{ ride?.driver.selectedCar.color }}
+                        </p>
+                        <span
+                          class="block w-fit my-2 px-1 pt-1 pb-0.5 bg-white font-mono font-bold text-xl uppercase border border-zinc-950 rounded-md"
+                        >
+                          {{ ride?.driver.selectedCar.plate }}
+                        </span>
+                      </div>
+                      <div
+                        v-if="!ride?.accepted && ride?.driver.name"
+                        class="my-4 p-2 flex items-center gap-2 rounded-md bg-red-100 text-red-600 text-sm"
+                      >
+                        <MessageSquareWarning />
+                        <span>
+                          {{ ride?.driver.name }} ainda não aceitou este atendimento.
+                        </span>
+                      </div>
                     </div>
                   </div>
                 </div>
-                <div
-                  v-if="showRideControls"
-                  class="flex flex-col items-start justify-center gap-6 h-full"
-                ></div>
-                <div
-                  v-if="showRideControls"
-                  class="col-span-2 p-4 border border-zinc-900 rounded-md bg-amber-100"
-                >
+                <div class="p-4 rounded-md border border-zinc-400">
                   <FormField v-slot="{ componentField }" name="observations">
                     <FormItem>
                       <FormLabel>Instruções / Observações para o Motorista</FormLabel>
                       <FormControl>
-                        <Textarea class="resize-none bg-white" v-bind="componentField" />
+                        <Textarea
+                          class="resize-none bg-white h-full"
+                          v-bind="componentField"
+                          height="100%"
+                          :disabled="ride?.status === 'completed'"
+                        />
                       </FormControl>
                     </FormItem>
                   </FormField>
-                </div>
-                <div
-                  v-else
-                  class="p-4 border border-zinc-900 rounded-md row-span-2 h-full"
-                >
-                  <span class="text-muted-foreground text-sm">Observações</span>
-
-                  <p>{{ ride.travel.observations || 'Sem observações' }}</p>
-                </div>
-              </div>
-              <!-- PAYMENT -->
-              <div
-                class="p-6 flex flex-col gap-6 bg-white border border-zinc-900 rounded-md"
-              >
-                <div class="flex items-center gap-4">
-                  <Banknote />
-                  <div class="flex items-center justify-between w-full">
-                    <h3 class="text-sm font-bold">Dados do Pagamento</h3>
-                    <PaymentStatusFlag
-                      :payment-status="ride?.billing.status"
-                      :payment-url="ride?.billing.paymentUrl"
-                    />
-                  </div>
-                </div>
-                <div class="flex items-start justify-between">
-                  <div class="space-y-2 text-center">
-                    <small class="text-xs text-muted-foreground">MEIO DE PAGAMENTO</small>
-                    <p class="text-sm text-center uppercase font-bold">
-                      {{ translatePaymentMethod }}
-                    </p>
-                  </div>
-                  <div class="space-y-2 text-center">
-                    <small class="text-xs text-muted-foreground">DATA DO PAGAMENTO</small>
-                    <p class="text-center uppercase font-bold">
-                      {{ ride?.billing.date || '-' }}
-                    </p>
-                  </div>
-                  <div class="space-y-2 text-center">
-                    <small class="text-xs text-muted-foreground">PARCELAS</small>
-                    <p class="text-center uppercase font-bold">
-                      {{ ride?.billing.installments || '-' }}
-                    </p>
-                  </div>
                 </div>
               </div>
             </div>

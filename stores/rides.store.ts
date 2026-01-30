@@ -1,6 +1,7 @@
 import {
   createRideService,
   getContractRidesService,
+  getRidesByDateRangeAndContractIdService,
   getRidesByDateRangeService,
   getRidesService,
   updateRideService,
@@ -100,6 +101,55 @@ export const useRidesStore = defineStore('rides', {
         console.log(startDateISO, endDateISO);
 
         const response: any = await getRidesByDateRangeService(startDateISO, endDateISO);
+        this.rides = response;
+        this.loadingData = false;
+      } catch (error) {
+        console.error('Error fetching rides by date range:', error);
+        this.rides = [];
+        this.loadingData = false;
+        throw error;
+      }
+    },
+
+    async getRidesByDateRangeAndContractIdAction(
+      dateRange: {
+        start: { era: string; year: number; month: number; day: number };
+        end: { era: string; year: number; month: number; day: number };
+      } | null,
+      contractId: string,
+    ) {
+      console.log('Fetching rides for date range:', dateRange);
+      this.loadingData = true;
+      try {
+        if (!dateRange || !dateRange.start || !dateRange.end) {
+          this.rides = [];
+          this.loadingData = false;
+          return;
+        }
+
+        // Convert calendar date objects to JavaScript Date objects
+        const startDate = new Date(
+          dateRange.start.year,
+          dateRange.start.month - 1,
+          dateRange.start.day,
+        );
+        const endDate = new Date(
+          dateRange.end.year,
+          dateRange.end.month - 1,
+          dateRange.end.day,
+        );
+
+        // Format dates as ISO strings for the API
+        const startDateISO = startDate.toISOString();
+        const endDateISO = endDate.toISOString();
+
+        console.log(startDateISO, endDateISO);
+
+        const response: any = await getRidesByDateRangeAndContractIdService(
+          startDateISO,
+          endDateISO,
+          contractId,
+        );
         this.rides = response;
         this.loadingData = false;
       } catch (error) {

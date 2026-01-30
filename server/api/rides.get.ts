@@ -12,6 +12,7 @@ export default defineEventHandler(async (event) => {
   const contractId = query.contractId;
   const startDate = query.startDate;
   const endDate = query.endDate;
+
   if (rideId) {
     const ride = await prisma.rides.findUnique({
       where: {
@@ -21,13 +22,7 @@ export default defineEventHandler(async (event) => {
     return ride;
   }
   let whereClause: any = {};
-  // if (contractId) {
-  //   whereClause.billing = {
-  //     paymentData: {
-  //       contract: contractId,
-  //     },
-  //   };
-  // }
+
   if (startDate && endDate) {
     const start = new Date(startDate);
     const end = new Date(endDate);

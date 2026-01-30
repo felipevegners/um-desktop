@@ -127,7 +127,63 @@ const contractRemainBudget = computed(() => {
       </div>
     </div>
     <div class="grid auto-rows-min gap-4 md:grid-cols-3">
-      <div class="p-6 flex flex-col rounded-xl bg-muted/90 gap-6">
+      <div class="col-span-2 p-6 flex flex-col rounded-xl bg-muted/90 h-full">
+        <p class="font-bold text-lg">
+          <CalendarDays class="mb-2" :size="32" />
+          Atendimentos recentes
+        </p>
+        <div v-if="loadingData" class="flex items-center justify-center h-full">
+          <LoaderCircle :size="48" class="animate-spin" />
+        </div>
+        <ul v-else-if="contractRidesList.length > 0" class="mt-6 flex-1">
+          <li
+            v-for="(ride, index) in contractRidesList"
+            :key="index"
+            class="py-4 flex items-center justify-between gap-3 border-b border-zinc-300 last-of-type:border-b-0"
+          >
+            <p class="text-sm font-bold flex items-center">
+              {{ ride.code }}
+              <Button
+                type="button"
+                size="icon"
+                variant="link"
+                @click="navigateTo(`/corporative/rides/edit/${ride.id}`)"
+              >
+                <ExternalLink :size="16" />
+              </Button>
+            </p>
+            <small>
+              {{ ride?.user.name }} |
+              {{ sanitizeRideDate(ride.travel.date) }}
+            </small>
+            <RideStatusFlag :ride-status="ride.status" />
+          </li>
+        </ul>
+        <div v-else class="flex flex-col items-center justify-center h-full">
+          <Inbox class="text-muted-foreground" :size="32" />
+          <p class="text-muted-foreground">Nenhum atendimento recente</p>
+        </div>
+        <Button
+          v-if="contractRidesList.length > 0"
+          type="button"
+          class="mt-6 p-6 w-full"
+          @click="navigateTo('/corporative/rides/open')"
+        >
+          Ver Todos
+        </Button>
+      </div>
+      <div class="p-6 flex flex-col rounded-xl bg-muted/90 h-full">
+        <p class="mb-6 font-bold text-lg">
+          <ChartArea class="mb-2" :size="32" />
+          Atendimentos por mês
+        </p>
+        <DashBarChart v-if="getRideMonthData.length" :data="getRideMonthData" />
+        <div v-else class="flex flex-col items-center justify-center h-full">
+          <Inbox class="text-muted-foreground" :size="32" />
+          <p class="text-muted-foreground">Nenhum atendimento no período</p>
+        </div>
+      </div>
+      <div class="col-span-3 p-6 flex flex-col rounded-xl bg-muted/90 gap-6">
         <p class="font-bold text-lg">
           <Coins class="mb-2" :size="32" />
           Budget
@@ -180,67 +236,11 @@ const contractRemainBudget = computed(() => {
         <Button
           v-if="role === 'master-manager'"
           type="button"
-          class="mt-6 p-6 w-full"
+          class="mt-6 p-6 w-fit"
           @click="navigateTo({ path: '/corporative/contracts/edit/', hash: '#budget' })"
         >
           Gerenciar Budget
         </Button>
-      </div>
-      <div class="p-6 flex flex-col rounded-xl bg-muted/90 h-full">
-        <p class="font-bold text-lg">
-          <CalendarDays class="mb-2" :size="32" />
-          Atendimentos recentes
-        </p>
-        <div v-if="loadingData" class="flex items-center justify-center h-full">
-          <LoaderCircle :size="48" class="animate-spin" />
-        </div>
-        <ul v-else-if="contractRidesList.length > 0" class="mt-6 flex-1">
-          <li
-            v-for="(ride, index) in contractRidesList"
-            :key="index"
-            class="py-4 flex items-center justify-between gap-3 border-b border-zinc-300 last-of-type:border-b-0"
-          >
-            <p class="text-sm font-bold flex items-center">
-              {{ ride.code }}
-              <Button
-                type="button"
-                size="icon"
-                variant="link"
-                @click="navigateTo(`/personal/rides/preview/${ride.id}`)"
-              >
-                <ExternalLink :size="16" />
-              </Button>
-            </p>
-            <small>
-              {{ ride?.user.name }} |
-              {{ sanitizeRideDate(ride.travel.date) }}
-            </small>
-            <RideStatusFlag :ride-status="ride.status" />
-          </li>
-        </ul>
-        <div v-else class="flex flex-col items-center justify-center h-full">
-          <Inbox class="text-muted-foreground" :size="32" />
-          <p class="text-muted-foreground">Nenhum atendimento recente</p>
-        </div>
-        <Button
-          v-if="contractRidesList.length > 0"
-          type="button"
-          class="mt-6 p-6 w-full"
-          @click="navigateTo('/corporative/rides/open')"
-        >
-          Ver Todos
-        </Button>
-      </div>
-      <div class="p-6 flex flex-col rounded-xl bg-muted/90 h-full">
-        <p class="mb-6 font-bold text-lg">
-          <ChartArea class="mb-2" :size="32" />
-          Atendimentos por mês
-        </p>
-        <DashBarChart v-if="getRideMonthData.length" :data="getRideMonthData" />
-        <div v-else class="flex flex-col items-center justify-center h-full">
-          <Inbox class="text-muted-foreground" :size="32" />
-          <p class="text-muted-foreground">Nenhum atendimento no período</p>
-        </div>
       </div>
     </div>
   </div>
