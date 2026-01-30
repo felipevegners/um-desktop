@@ -4,6 +4,7 @@ import DatePickerRange from '@/components/shared/DatePickerRange.vue';
 import FormSelect from '@/components/shared/FormSelect.vue';
 import RidesTotalsDash from '@/components/shared/RidesTotalsDash.vue';
 import { useToast } from '@/components/ui/toast/use-toast';
+import { paymentStatusOptions, rideStatusOptions } from '@/config/status';
 import { Filter, LoaderCircle } from 'lucide-vue-next';
 import { storeToRefs } from 'pinia';
 
@@ -29,11 +30,16 @@ const selectedBranches = ref<Array<any>>([]);
 const contractBranches = ref<Array<any>>([]);
 const branchAreas = ref<Array<any>>([]);
 const showFilter = ref(false);
-const filterTerms = ref({
+const filterTerms = ref<any>({
   contractId: '',
   branchId: '',
   areaCode: '',
+  status: '',
+  paymentStatus: '',
+  driver: '',
+  user: '',
 });
+const ridesUsersList = ref<any>([]);
 
 const ridesStore = useRidesStore();
 const { getRidesByDateRangeAction } = ridesStore;
@@ -43,8 +49,13 @@ const contractsStore = useContractsStore();
 const { getContractsAction } = contractsStore;
 const { contracts } = storeToRefs(contractsStore);
 
+const driversStore = useDriverStore();
+const { getDriversAction } = driversStore;
+const { drivers } = storeToRefs(driversStore);
+
 onMounted(async () => {
   await getContractsAction();
+  await getDriversAction();
 });
 
 const sanitizeContracts = computed(() => {
@@ -53,6 +64,33 @@ const sanitizeContracts = computed(() => {
     value: contract.id,
   }));
 });
+
+const sanitizeDrivers = computed(() => {
+  const availableDrivers = drivers?.value.filter(
+    (driver: any) => driver.scheduleOpen === true,
+  );
+  return availableDrivers?.map((driver) => {
+    return {
+      label: driver.name,
+      value: driver.id,
+    };
+  });
+});
+
+const filterRidesUsers = () => {
+  ridesUsersList.value = rides?.value
+    .map((ride: any) => {
+      return {
+        label: ride.user.name,
+        value: ride.user.id,
+        contractId: ride.billing.paymentData.contract,
+      };
+    })
+    .filter(
+      (item: any, index: number, self: any) =>
+        index === self.findIndex((obj: any) => obj.value === item.value),
+    );
+};
 
 const generateReport = async () => {
   if (!selectedRange.value) {
@@ -65,24 +103,20 @@ const generateReport = async () => {
   }
   try {
     await getRidesByDateRangeAction(selectedRange.value);
-    console.log('Rides fetched successfully');
+    // console.log('Rides fetched successfully');
   } catch (error) {
     console.error('Error fetching rides:', error);
   } finally {
     results.value = rides?.value.length;
     filteredRides.value = rides?.value;
+    filterRidesUsers();
   }
 };
 
 const getContractData = (value: string) => {
-  filterTerms.value = {
-    contractId: value,
-    branchId: '',
-    areaCode: '',
-  };
-
   branchAreas.value = [];
   filteredRides.value = rides?.value;
+  filterRidesUsers();
 
   loadingBranches.value = true;
 
@@ -97,18 +131,15 @@ const getContractData = (value: string) => {
       value: branch.id,
     };
   });
+  ridesUsersList.value = ridesUsersList.value.filter(
+    (user: any) => user.contractId === value,
+  );
   setTimeout(() => {
     loadingBranches.value = false;
   }, 500);
 };
 
 const getBranchAreas = (value: string) => {
-  filterTerms.value = {
-    ...filterTerms.value,
-    branchId: value,
-    areaCode: '',
-  };
-
   branchAreas.value = [];
   filteredRides.value = rides?.value;
 
@@ -129,11 +160,12 @@ const getBranchAreas = (value: string) => {
 };
 
 const setBranchArea = (value: string) => {
-  filteredRides.value = rides?.value;
-  filterTerms.value.areaCode = value;
+  // filteredRides.value = rides?.value;
 };
 
 const applyFilters = () => {
+  filteredRides.value = rides?.value;
+
   const filtered = filteredRides?.value.filter((ride: any) => {
     const contractMatch = filterTerms.value.contractId
       ? ride.billing.paymentData.contract === filterTerms.value.contractId
@@ -145,8 +177,30 @@ const applyFilters = () => {
       filterTerms.value.areaCode && filterTerms.value.areaCode !== 'all'
         ? ride.billing.paymentData.area === filterTerms.value.areaCode
         : true;
+    const userMatch = filterTerms.value.user
+      ? ride.user.id === filterTerms.value.user
+      : true;
+    const statusMatch =
+      filterTerms.value.status && filterTerms.value.status !== 'all'
+        ? ride.status === filterTerms.value.status
+        : true;
+    const paymentStatusMatch =
+      filterTerms.value.paymentStatus && filterTerms.value.paymentStatus !== 'all'
+        ? ride.billing.status === filterTerms.value.paymentStatus
+        : true;
+    const driverMatch = filterTerms.value.driver
+      ? ride.driver.id === filterTerms.value.driver
+      : true;
 
-    return contractMatch && branchMatch && areaMatch;
+    return (
+      contractMatch &&
+      branchMatch &&
+      areaMatch &&
+      userMatch &&
+      statusMatch &&
+      paymentStatusMatch &&
+      driverMatch
+    );
   });
   results.value = filtered?.length;
   filteredRides.value = filtered;
@@ -157,12 +211,17 @@ const clearFilters = () => {
     contractId: '',
     branchId: '',
     areaCode: '',
+    status: '',
+    paymentStatus: '',
+    driver: '',
+    user: '',
   };
   selectedContract.value = null;
   selectedBranches.value = [];
   contractBranches.value = [];
   branchAreas.value = [];
   filteredRides.value = rides?.value;
+  filterRidesUsers();
 };
 </script>
 <template>
@@ -188,17 +247,16 @@ const clearFilters = () => {
         </div>
       </div>
       <div class="w-full">
-        <LoaderCircle v-if="loadingData" class="animate-spin" />
-        <div v-if="filteredRides.length > 0" class="space-y-4">
+        <div class="space-y-4">
           <div v-if="showFilter" class="p-4 border border-zinc-950 bg-white rounded-md">
             <h4 class="font-bold mb-8">Filtrar Resultados</h4>
-            <div class="md:grid md:grid-cols-3 gap-4">
+            <div class="mb-8 md:grid md:grid-cols-3 gap-4">
               <div>
                 <Label class="text-sm dark:text-white">Contrato</Label>
                 <FormSelect
                   :items="sanitizeContracts"
-                  v-model="selectedContract"
                   label="Selecione o contrato"
+                  v-model="filterTerms.contractId"
                   @on-select="getContractData"
                 />
               </div>
@@ -214,6 +272,7 @@ const clearFilters = () => {
                 <FormSelect
                   v-if="!loadingBranches && selectedBranches.length"
                   :items="contractBranches"
+                  v-model="filterTerms.branch"
                   label="Selecione a filial"
                   @on-select="getBranchAreas"
                 />
@@ -230,8 +289,46 @@ const clearFilters = () => {
                 <FormSelect
                   v-if="!loadingAreas && branchAreas.length"
                   :items="branchAreas"
+                  v-model="filterTerms.areaCode"
                   label="Selecione o centro de custo"
                   @on-select="setBranchArea"
+                />
+              </div>
+            </div>
+            <div class="md:grid md:grid-cols-3 gap-4">
+              <div>
+                <Label class="text-sm dark:text-white">Usuário</Label>
+                <FormSelect
+                  :items="ridesUsersList"
+                  label="Selecione o usuário"
+                  v-model="filterTerms.user"
+                  :disabled="ridesUsersList.length === 0"
+                />
+              </div>
+              <div>
+                <Label class="text-sm dark:text-white">Status do Atendimento</Label>
+                <FormSelect
+                  :items="rideStatusOptions"
+                  label="Selecione o status"
+                  v-model="filterTerms.status"
+                  :decoration="true"
+                />
+              </div>
+              <div>
+                <Label class="text-sm dark:text-white">Status do Pagamento</Label>
+                <FormSelect
+                  :items="paymentStatusOptions"
+                  label="Selecione o status do pagamento"
+                  v-model="filterTerms.paymentStatus"
+                  :decoration="true"
+                />
+              </div>
+              <div>
+                <Label class="text-sm dark:text-white">Motorista</Label>
+                <FormSelect
+                  :items="sanitizeDrivers"
+                  label="Selecione o motorista"
+                  v-model="filterTerms.driver"
                 />
               </div>
               <div class="mt-6 flex items-center gap-3">
@@ -245,9 +342,10 @@ const clearFilters = () => {
               </div>
             </div>
           </div>
-          <!-- <pre>{{ filterTerms }}</pre> -->
           <RidesTotalsDash :rides="filteredRides" theme="light" />
+          <LoaderCircle v-if="loadingData" class="animate-spin" />
           <DataTable
+            v-else
             :columns="columns"
             :data="filteredRides"
             :loading="loadingData"
@@ -256,12 +354,6 @@ const clearFilters = () => {
             :show-pagination="false"
           />
         </div>
-        <p
-          v-if="results === 0 && !loadingData"
-          class="text-sm text-red-600 bg-red-100 p-2 rounded-md border border-red-600 w-full"
-        >
-          Nenhum atendimento encontrado no período selecionado.
-        </p>
       </div>
     </div>
   </section>

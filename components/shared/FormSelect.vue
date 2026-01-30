@@ -15,12 +15,14 @@ const props = defineProps<{
   tableId?: string;
   loading?: boolean;
   disabled?: boolean;
+  decoration?: boolean;
 }>();
 const selectedItem = ref('');
-const emit = defineEmits(['on-select']);
+const emit = defineEmits(['on-select', 'update:modelValue']);
 
 const selected = (value: any) => {
   emit('on-select', value, props.tableId);
+  emit('update:modelValue', value, props.tableId);
 };
 
 const reset = () => {
@@ -51,7 +53,11 @@ defineExpose({ reset });
           :id="item.value"
           class="hover:bg-zinc-500"
         >
-          {{ item.label }}
+          <div v-if="decoration" class="flex items-center gap-1">
+            <span :class="`block w-4 h-3 rounded-lg bg-${item.color}`"></span>
+            {{ item.label }}
+          </div>
+          <p v-else>{{ item.label }}</p>
         </SelectItem>
       </SelectGroup>
     </SelectContent>

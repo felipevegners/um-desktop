@@ -3,9 +3,17 @@ import { Button } from '@/components/ui/button';
 import { WPP_API } from '@/config/paths';
 import { createColumnHelper } from '@tanstack/vue-table';
 import { ArrowUpDown, MessageCircleMore } from 'lucide-vue-next';
+import TableActions from '~/components/shared/TableActions.vue';
 import { currencyFormat, sanitizePhone, sanitizeRideDate } from '~/lib/utils';
 
 const columnHelper = createColumnHelper<any>();
+
+const editRide = (rideId: string) => {
+  navigateTo({
+    name: 'admin-rides-edit-id',
+    params: { id: rideId },
+  });
+};
 
 export const columns: any = [
   columnHelper.accessor('code', {
@@ -117,6 +125,26 @@ export const columns: any = [
         ? new Date(data?.progress?.finishedAt).toLocaleDateString('pt-BR')
         : '-';
       return h('div', { class: 'capitalize text-xs' }, sanitizeDate);
+    },
+  }),
+  columnHelper.display({
+    id: 'actions',
+    enableHiding: false,
+    header: () => h('div', { class: 'text-left' }, 'Ações'),
+    cell: ({ row }) => {
+      const { id } = row.original;
+      return h(
+        'div',
+        { class: 'relative text-left' },
+        h(TableActions, {
+          dataId: id,
+          options: ['edit'],
+          loading: false,
+          onView: () => {},
+          onEdit: editRide,
+          onDelete: () => {},
+        }),
+      );
     },
   }),
 ];
