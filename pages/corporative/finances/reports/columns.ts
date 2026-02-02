@@ -1,11 +1,13 @@
+import ExtraChargesTooltip from '@/components/shared/ExtraChargesTooltip.vue';
+import ProductTag from '@/components/shared/ProductTag.vue';
 import { Button } from '@/components/ui/button';
 import { WPP_API } from '@/config/paths';
 import { createColumnHelper } from '@tanstack/vue-table';
 import { ArrowUpDown, MessageCircleMore } from 'lucide-vue-next';
-import TableActions from '~/components/shared/TableActions.vue';
 import {
   convertSecondsToTime,
   currencyFormat,
+  sanitizeAmount,
   sanitizePhone,
   sanitizeRideDate,
 } from '~/lib/utils';
@@ -23,6 +25,20 @@ export const columns: any = [
   columnHelper.accessor('code', {
     header: () => h('div', { class: 'text-left' }, 'Código'),
     cell: ({ row }) => h('div', { class: 'capitalize text-xs' }, row.getValue('code')),
+  }),
+  columnHelper.accessor('product', {
+    header: () => h('div', { class: 'text-xs text-left' }, 'Produto'),
+    cell: ({ row }) => {
+      const { product }: any = row.original;
+      return h(
+        'div',
+        { class: 'relative text-left' },
+        h(ProductTag, {
+          label: product.name,
+          type: product.name,
+        }),
+      );
+    },
   }),
   columnHelper.accessor('user', {
     enablePinning: true,
@@ -84,7 +100,7 @@ export const columns: any = [
               'span',
               {
                 class:
-                  'ml-1 px-2 py-0.5 text-center bg-zinc-900 text-zinc-300 text-xs w-fit rounded-md',
+                  'block m-2 px-2 py-0.5 text-center bg-zinc-900 text-zinc-300 text-xs w-fit rounded-md',
               },
               `${data?.travel.stops?.length > 1 ? data?.travel.stops?.length + ' paradas' : data?.travel.stops?.length + ' parada'}`,
             )
@@ -104,30 +120,83 @@ export const columns: any = [
       );
     },
   }),
+  columnHelper.accessor('travel', {
+    header: () => h('div', { class: 'text-xs text-left' }, 'Km Extra'),
+    cell: ({ row }) => {
+      const data = row.original;
+      return h(
+        'div',
+        { class: 'text-xs' },
+        data.travel.completedData ? data.travel.completedData.rideExtraKms + ' KMs' : '0',
+      );
+    },
+  }),
+  columnHelper.accessor('travel', {
+    header: () => h('div', { class: 'text-xs text-left' }, 'Valor Km Extra'),
+    cell: ({ row }) => {
+      const data = row.original;
+      return h(
+        'div',
+        { class: 'text-xs font-bold text-amber-600' },
+        data.travel.completedData
+          ? currencyFormat(data.travel.completedData.rideExtraKmPrice)
+          : '0',
+      );
+    },
+  }),
+  columnHelper.accessor('travel', {
+    header: () => h('div', { class: 'text-xs text-left' }, 'Minuto Extra'),
+    cell: ({ row }) => {
+      const data = row.original;
+      return h(
+        'div',
+        { class: 'text-xs' },
+        data.travel.completedData
+          ? Math.ceil(data.travel.completedData.rideExtraHours * 60) + ' Min'
+          : '0',
+      );
+    },
+  }),
+  columnHelper.accessor('travel', {
+    header: () => h('div', { class: 'text-xs text-left' }, 'Valor Min. Extra'),
+    cell: ({ row }) => {
+      const data = row.original;
+      return h(
+        'div',
+        { class: 'text-xs font-bold text-amber-600' },
+        data.travel.completedData
+          ? currencyFormat(data.travel.completedData.rideExtraHourPrice)
+          : '0',
+      );
+    },
+  }),
   columnHelper.accessor('extraCharges', {
     header: () => h('div', { class: 'text-center' }, 'Adicionais'),
     cell: ({ row }) => {
       const data = row.original;
       const extraChargesTotal =
-        data.extraCharges?.length > 0
-          ? data.extraCharges?.reduce((acc: any, curr: any) => {
-              const sanitizeAmmount = curr.ammount.replace('.', '');
-              const ammount = parseFloat(sanitizeAmmount.replace(',', '.'));
-              return acc + ammount;
+        data?.extraCharges?.length > 0
+          ? data.extraCharges.reduce((acc: number, curr: any) => {
+              return acc + sanitizeAmount(curr?.ammount);
             }, 0)
-          : '0';
-      return h(
-        'span',
-        { class: 'text-xs text-center' },
+          : 0;
+      return h('div', { class: 'flex items-center gap-1 text-xs font-bold' }, [
         currencyFormat(extraChargesTotal),
-      );
+        extraChargesTotal > 0
+          ? h(ExtraChargesTooltip, { items: data.extraCharges })
+          : null,
+      ]);
     },
   }),
   columnHelper.accessor('billing', {
     header: () => h('div', { class: 'text-left' }, 'Valor Total'),
     cell: ({ row }) => {
       const data = row.original;
-      return h('span', { class: 'text-xs' }, currencyFormat(data.billing.ammount));
+      return h(
+        'span',
+        { class: 'text-xs font-bold' },
+        currencyFormat(data.billing.ammount),
+      );
     },
   }),
 
@@ -144,24 +213,24 @@ export const columns: any = [
   //     );
   //   },
   // }),
-  columnHelper.display({
-    id: 'actions',
-    enableHiding: false,
-    header: () => h('div', { class: 'text-left' }, 'Ações'),
-    cell: ({ row }) => {
-      const { id } = row.original;
-      return h(
-        'div',
-        { class: 'relative text-left' },
-        h(TableActions, {
-          dataId: id,
-          options: ['edit'],
-          loading: false,
-          onView: () => {},
-          onEdit: editRide,
-          onDelete: () => {},
-        }),
-      );
-    },
-  }),
+  // columnHelper.display({
+  //   id: 'actions',
+  //   enableHiding: false,
+  //   header: () => h('div', { class: 'text-left' }, 'Ações'),
+  //   cell: ({ row }) => {
+  //     const { id } = row.original;
+  //     return h(
+  //       'div',
+  //       { class: 'relative text-left' },
+  //       h(TableActions, {
+  //         dataId: id,
+  //         options: ['edit'],
+  //         loading: false,
+  //         onView: () => {},
+  //         onEdit: editRide,
+  //         onDelete: () => {},
+  //       }),
+  //     );
+  //   },
+  // }),
 ];

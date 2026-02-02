@@ -1,8 +1,9 @@
+import PaymentStatusFlag from '@/components/shared/PaymentStatusFlag.vue';
+import ProductTag from '@/components/shared/ProductTag.vue';
+import RideStatusFlag from '@/components/shared/RideStatusFlag.vue';
 import { Button } from '@/components/ui/button';
 import { createColumnHelper } from '@tanstack/vue-table';
 import { ArrowUpDown } from 'lucide-vue-next';
-import PaymentStatusFlag from '~/components/shared/PaymentStatusFlag.vue';
-import RideStatusFlag from '~/components/shared/RideStatusFlag.vue';
 import { currencyFormat, sanitizeRideDate } from '~/lib/utils';
 
 const columnHelper = createColumnHelper<any>();
@@ -83,6 +84,20 @@ export const columns: any = [
         'div',
         { class: 'capitalize' },
         `${sanitizeRideDate(data.travel.date)} - ${data.travel.departTime}`,
+      );
+    },
+  }),
+  columnHelper.accessor('product', {
+    header: () => h('div', { class: 'text-left' }, 'Produto'),
+    cell: ({ row }) => {
+      const { product }: any = row.original;
+      return h(
+        'div',
+        { class: 'relative text-left' },
+        h(ProductTag, {
+          label: product.name,
+          type: product.name,
+        }),
       );
     },
   }),

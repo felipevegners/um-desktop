@@ -754,7 +754,13 @@ const onSubmit = form.handleSubmit(async (values) => {
     driver: {},
     observations: values.observations,
     additionalInfo: '',
-    extraCharges: [],
+    extraCharges: [
+      {
+        type: '',
+        info: '',
+        ammount: 0,
+      },
+    ],
     dispatcher: {
       user: data?.value?.user?.name,
       email: data?.value?.user?.email,

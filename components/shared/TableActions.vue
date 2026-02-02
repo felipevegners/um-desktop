@@ -59,7 +59,7 @@ const deleteFn = () => {
       class="text-zinc-700 hover:bg-zinc-700 hover:text-white"
       @click="editFn"
     >
-      <Edit class="w-4 h-4" />
+      <Edit :size="14" />
     </Button>
     <Button
       v-if="props.options?.includes('delete') && isAdmin"

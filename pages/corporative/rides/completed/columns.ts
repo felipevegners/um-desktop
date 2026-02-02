@@ -1,3 +1,4 @@
+import ProductTag from '@/components/shared/ProductTag.vue';
 import { Button } from '@/components/ui/button';
 import { WPP_API } from '@/config/paths';
 import { createColumnHelper } from '@tanstack/vue-table';
@@ -70,6 +71,20 @@ export const columns: any = [
             )
           : '',
       ]);
+    },
+  }),
+  columnHelper.accessor('product', {
+    header: () => h('div', { class: 'text-left' }, 'Produto'),
+    cell: ({ row }) => {
+      const { product }: any = row.original;
+      return h(
+        'div',
+        { class: 'relative text-left' },
+        h(ProductTag, {
+          label: product.name,
+          type: product.name,
+        }),
+      );
     },
   }),
   columnHelper.accessor('billing', {

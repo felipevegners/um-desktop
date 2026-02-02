@@ -44,7 +44,7 @@ export default defineEventHandler(async (event) => {
             },
           ];
       const time =
-        ride?.progress?.finishedAt! == ''
+        ride?.progress?.finishedAt !== ''
           ? new Date(ride?.progress?.finishedAt)
           : new Date();
       time.setHours(time.getHours() + 3);
@@ -52,7 +52,7 @@ export default defineEventHandler(async (event) => {
       try {
         const routeCalculation = await getRideRoutesService({
           locations,
-          departureTime: time.toISOString(),
+          // departureTime: time.toISOString(),
         });
 
         const etaDuration = ride.travel.estimatedDuration; // in seconds
@@ -77,11 +77,14 @@ export default defineEventHandler(async (event) => {
         let rideExtraKmPrice = '0';
         let rideExtraHourPrice = '0';
 
-        let calculatedFinalPrice = 0;
+        let calculatedFinalPrice = parseFloat(basePrice);
 
         if (ride?.product.type === 'contract') {
+          console.log('CAIU AQUI ');
           // Se a distancia final for maior que a distância incluída no produto
           if (realDistance > ride.product?.includedKms * 1000) {
+            console.log('DIST. MAIOR QUE A FRANQUIA ');
+
             const extraKms = Math.ceil(
               (realDistance - ride.product?.includedKms * 1000) / 1000,
             );
@@ -90,11 +93,14 @@ export default defineEventHandler(async (event) => {
             rideExtraKmPrice = diffPrice.toFixed(2).toString();
             rideExtraKms = extraKms;
 
-            calculatedFinalPrice = parseFloat(basePrice) + diffPrice;
+            calculatedFinalPrice += diffPrice;
+            console.log('CALCULADO COM KM EXCENDETE --->', calculatedFinalPrice);
           }
           // Se a duração final for maior que a duração incluída no produto
-          const includedHoursToSeconds = ride.product.includedHours * 60 * 60;
+          const includedHoursToSeconds = ride.product?.includedHours * 60 * 60;
           if (finalDuration > includedHoursToSeconds) {
+            console.log('DURAÇÃO MAIOR QUE A FRANQUIA ');
+
             const totalInSeconds = finalDuration - includedHoursToSeconds;
             const totalInMinutes = Math.ceil(totalInSeconds / 60);
 
@@ -104,6 +110,8 @@ export default defineEventHandler(async (event) => {
             rideExtraHourPrice = diffPriceDuration.toFixed(2).toString();
             rideExtraHours = totalInMinutes / 60;
             calculatedFinalPrice += diffPriceDuration;
+
+            console.log('CALCULADO COM TEMPO EXCENDETE --->', calculatedFinalPrice);
           }
         } else {
           const finalKmPrice =

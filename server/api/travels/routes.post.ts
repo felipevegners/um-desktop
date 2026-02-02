@@ -57,7 +57,7 @@ export default defineEventHandler(async (event) => {
         intermediates: intermediates,
         travelMode: 'DRIVE',
         routingPreference: 'TRAFFIC_AWARE_OPTIMAL',
-        departureTime: departureTime,
+        // departureTime: departureTime,
         computeAlternativeRoutes: false,
         routeModifiers: {
           avoidTolls: false,

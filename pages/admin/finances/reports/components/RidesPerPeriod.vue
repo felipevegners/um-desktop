@@ -38,8 +38,11 @@ const filterTerms = ref<any>({
   paymentStatus: '',
   driver: '',
   user: '',
+  product: '',
 });
 const ridesUsersList = ref<any>([]);
+const availableProducts = ref<any>([]);
+const loadingFilters = ref<boolean>(false);
 
 const ridesStore = useRidesStore();
 const { getRidesByDateRangeAction } = ridesStore;
@@ -53,9 +56,24 @@ const driversStore = useDriverStore();
 const { getDriversAction } = driversStore;
 const { drivers } = storeToRefs(driversStore);
 
+const productsStore = useProductsStore();
+const { getProductsAction } = productsStore;
+const { products } = storeToRefs(productsStore);
+
 onMounted(async () => {
   await getContractsAction();
   await getDriversAction();
+  await getProductsAction();
+
+  const results = products?.value.map((product: any) => {
+    return (
+      product.type !== 'addon' && {
+        label: product.name,
+        value: product.id,
+      }
+    );
+  });
+  availableProducts.value = results;
 });
 
 const sanitizeContracts = computed(() => {
@@ -114,6 +132,7 @@ const generateReport = async () => {
 };
 
 const getContractData = (value: string) => {
+  selectedContract.value = value;
   branchAreas.value = [];
   filteredRides.value = rides?.value;
   filterRidesUsers();
@@ -164,6 +183,7 @@ const setBranchArea = (value: string) => {
 };
 
 const applyFilters = () => {
+  loadingFilters.value = true;
   filteredRides.value = rides?.value;
 
   const filtered = filteredRides?.value.filter((ride: any) => {
@@ -191,6 +211,9 @@ const applyFilters = () => {
     const driverMatch = filterTerms.value.driver
       ? ride.driver.id === filterTerms.value.driver
       : true;
+    const productMatch = filterTerms.value.product
+      ? ride.product.id === filterTerms.value.product
+      : true;
 
     return (
       contractMatch &&
@@ -199,14 +222,19 @@ const applyFilters = () => {
       userMatch &&
       statusMatch &&
       paymentStatusMatch &&
-      driverMatch
+      driverMatch &&
+      productMatch
     );
   });
   results.value = filtered?.length;
   filteredRides.value = filtered;
+  setTimeout(() => {
+    loadingFilters.value = false;
+  }, 1000);
 };
 
 const clearFilters = () => {
+  loadingFilters.value = true;
   filterTerms.value = {
     contractId: '',
     branchId: '',
@@ -215,6 +243,7 @@ const clearFilters = () => {
     paymentStatus: '',
     driver: '',
     user: '',
+    product: '',
   };
   selectedContract.value = null;
   selectedBranches.value = [];
@@ -222,6 +251,9 @@ const clearFilters = () => {
   branchAreas.value = [];
   filteredRides.value = rides?.value;
   filterRidesUsers();
+  setTimeout(() => {
+    loadingFilters.value = false;
+  }, 500);
 };
 </script>
 <template>
@@ -324,6 +356,14 @@ const clearFilters = () => {
                 />
               </div>
               <div>
+                <Label class="text-sm dark:text-white">Produto</Label>
+                <FormSelect
+                  :items="availableProducts"
+                  label="Selecione o produto"
+                  v-model="filterTerms.product"
+                />
+              </div>
+              <div>
                 <Label class="text-sm dark:text-white">Motorista</Label>
                 <FormSelect
                   :items="sanitizeDrivers"
@@ -343,16 +383,21 @@ const clearFilters = () => {
             </div>
           </div>
           <RidesTotalsDash :rides="filteredRides" theme="dark" />
-          <LoaderCircle v-if="loadingData" class="animate-spin" />
-          <DataTable
-            v-else
-            :columns="columns"
-            :data="filteredRides"
-            :loading="loadingData"
-            :show-column-select="false"
-            :show-filter="false"
-            :show-pagination="false"
-          />
+          <div class="flex items-center justify-center">
+            <LoaderCircle
+              v-if="loadingData || loadingFilters"
+              class="m-10 animate-spin"
+              :size="32"
+            />
+            <DataTable
+              v-else
+              :columns="columns"
+              :data="filteredRides"
+              :show-column-select="false"
+              :show-filter="false"
+              :show-pagination="false"
+            />
+          </div>
         </div>
       </div>
     </div>

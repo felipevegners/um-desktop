@@ -29,11 +29,39 @@ export const dateFormat = (date: any) => {
   });
 };
 
-export const currencyFormat = (value: string) => {
+export const currencyFormat = (value: string | number) => {
   return new Intl.NumberFormat('pt-BR', {
     style: 'currency',
     currency: 'BRL',
-  }).format(parseFloat(value));
+  }).format(parseFloat(value as any));
+};
+
+export const sanitizeAmount = (value: string | number | null | undefined): number => {
+  if (value === null || value === undefined) return 0;
+  if (typeof value === 'number') return isNaN(value) ? 0 : value;
+
+  const str = value.toString().trim();
+  if (str === '' || str === '0' || str === '0,00' || str === '0.00') return 0;
+
+  const normalized = str.replace(/\s/g, '');
+  let cleaned = normalized;
+
+  // If both '.' and ',' are present, assume '.' are thousand separators and ',' is decimal
+  if (cleaned.includes('.') && cleaned.includes(',')) {
+    cleaned = cleaned.replace(/\./g, '').replace(',', '.');
+  } else if (cleaned.includes(',')) {
+    // If only ',' present, treat it as decimal separator
+    cleaned = cleaned.replace(',', '.');
+  } else {
+    // If only '.' present, decide if they are thousand separators (more than one) or decimal (single)
+    const dots = (cleaned.match(/\./g) || []).length;
+    if (dots > 1) {
+      cleaned = cleaned.replace(/\./g, '');
+    }
+  }
+
+  const parsed = parseFloat(cleaned);
+  return isNaN(parsed) ? 0 : parsed;
 };
 // To decode Google Maps Polyline into a Paths
 export const polyLineCodec = (polyline: string) => {

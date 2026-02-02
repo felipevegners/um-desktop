@@ -44,6 +44,8 @@ const filterTerms = ref<any>({
   user: '',
 });
 const ridesUsersList = ref<any>([]);
+const availableProducts = ref<any>([]);
+const loadingFilters = ref<boolean>(false);
 
 const ridesStore = useRidesStore();
 const { getRidesByDateRangeAndContractIdAction } = ridesStore;
@@ -78,22 +80,28 @@ onMounted(async () => {
   ridesUsersList.value = ridesUsersList.value.filter(
     (user: any) => user.contractId === contractId,
   );
+
+  availableProducts.value = contract?.value.products.map((product: any) => ({
+    label: product.name,
+    value: product.id,
+  }));
+
   setTimeout(() => {
     loadingBranches.value = false;
   }, 500);
 });
 
-const sanitizeDrivers = computed(() => {
-  const availableDrivers = drivers?.value.filter(
-    (driver: any) => driver.scheduleOpen === true,
-  );
-  return availableDrivers?.map((driver) => {
-    return {
-      label: driver.name,
-      value: driver.id,
-    };
-  });
-});
+// const sanitizeDrivers = computed(() => {
+//   const availableDrivers = drivers?.value.filter(
+//     (driver: any) => driver.scheduleOpen === true,
+//   );
+//   return availableDrivers?.map((driver) => {
+//     return {
+//       label: driver.name,
+//       value: driver.id,
+//     };
+//   });
+// });
 
 const filterRidesUsers = () => {
   ridesUsersList.value = rides?.value
@@ -152,6 +160,7 @@ const getBranchAreas = (value: string) => {
 
 const applyFilters = () => {
   filteredRides.value = rides?.value;
+  loadingFilters.value = true;
 
   const filtered = filteredRides?.value.filter((ride: any) => {
     const contractMatch = filterTerms.value.contractId
@@ -178,6 +187,9 @@ const applyFilters = () => {
     const driverMatch = filterTerms.value.driver
       ? ride.driver.id === filterTerms.value.driver
       : true;
+    const productMatch = filterTerms.value.product
+      ? ride.product.id === filterTerms.value.product
+      : true;
 
     return (
       contractMatch &&
@@ -186,11 +198,15 @@ const applyFilters = () => {
       userMatch &&
       statusMatch &&
       paymentStatusMatch &&
-      driverMatch
+      driverMatch &&
+      productMatch
     );
   });
   results.value = filtered?.length;
   filteredRides.value = filtered;
+  setTimeout(() => {
+    loadingFilters.value = false;
+  }, 1000);
 };
 
 const clearFilters = () => {
@@ -294,6 +310,14 @@ const clearFilters = () => {
                   label="Selecione o status do pagamento"
                   v-model="filterTerms.paymentStatus"
                   :decoration="true"
+                />
+              </div>
+              <div>
+                <Label class="text-sm dark:text-white">Produto</Label>
+                <FormSelect
+                  :items="availableProducts"
+                  label="Selecione o produto"
+                  v-model="filterTerms.product"
                 />
               </div>
             </div>

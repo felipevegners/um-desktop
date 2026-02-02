@@ -123,7 +123,7 @@ const extraChargesData = reactive(
     {
       type: '',
       description: '',
-      amount: 0,
+      amount: '0',
     },
   ],
 );
@@ -330,7 +330,7 @@ const form = useForm({
 });
 
 onMounted(async () => {
-  if (ride?.value.status === 'in-progress') {
+  if (ride?.value?.status === 'in-progress') {
     driverLocationInterval.value = setInterval(async () => {
       driverData.value = {
         loading: driverData.value.loading,
@@ -411,9 +411,10 @@ const onSubmit = form.handleSubmit(async (values) => {
       class: 'bg-green-600 border-0 text-white text-2xl hover:text-white',
       description: `Atendimento alterado com sucesso!`,
     });
-    navigateTo(
-      `/admin/rides/${ride?.value.status === 'completed' ? 'completed' : 'open'}`,
-    );
+    // navigateTo(
+    //   `/admin/rides/${ride?.value.status === 'completed' ? 'completed' : 'open'}`,
+    // );
+    window.location.reload();
   } catch (error) {
     toast({
       title: 'Oops!',
@@ -457,7 +458,7 @@ const showRideControls = computed(() => {
         </h1>
         <RideStatusFlag :ride-status="ride?.status" />
       </div>
-      <div v-if="ride.status === 'completed'" class="flex items-center self-end gap-4">
+      <div v-if="ride?.status === 'completed'" class="flex items-center self-end gap-4">
         <!-- v-if="
             ride?.rideFinalPrice === 'NaN' ||
             ride?.rideFinalPrice === null ||
@@ -584,7 +585,7 @@ const showRideControls = computed(() => {
                     Hora do Desembarque
                   </span>
                   <h3 class="text-lg font-bold">{{ ride?.travel.departTime }}H</h3> -->
-                  <div v-if="ride.status === 'completed'">
+                  <div v-if="ride?.status === 'completed'">
                     <span class="text-muted-foreground text-sm">
                       Hora do Desembarque (realizado)
                     </span>
@@ -603,7 +604,7 @@ const showRideControls = computed(() => {
                   <h3 class="text-lg font-bold">
                     {{ convertMetersToDistance(ride?.travel.estimatedDistance) }}
                   </h3>
-                  <div v-if="ride.status === 'completed'">
+                  <div v-if="ride?.status === 'completed'">
                     <span class="text-muted-foreground text-sm">
                       Distância realizada
                     </span>
@@ -636,7 +637,9 @@ const showRideControls = computed(() => {
                       Tempo em Paradas ({{ ride?.progress?.stops?.length }})
                     </span>
                     <h3 class="text-lg font-bold text-red-600">
-                      {{ convertSecondsToTime(ride?.travel.totalTimeStopped) }}
+                      {{
+                        convertSecondsToTime(ride?.travel.completedData?.totalTimeStopped)
+                      }}
                     </h3>
                   </div>
                 </div>
@@ -647,7 +650,7 @@ const showRideControls = computed(() => {
                   <h3 class="text-lg font-bold">
                     {{ currencyFormat(ride?.estimatedPrice) }}
                   </h3>
-                  <div v-if="ride.status === 'completed'">
+                  <div v-if="ride?.status === 'completed'">
                     <span class="text-muted-foreground text-sm">Valor final</span>
                     <h3 class="text-lg font-bold text-amber-600">
                       {{ currencyFormat(ride?.rideFinalPrice) }}
@@ -885,14 +888,14 @@ const showRideControls = computed(() => {
 
                     <div class="flex flex-col items-end">
                       <div
-                        v-if="ride.status === 'completed'"
+                        v-if="ride?.status === 'completed'"
                         class="p-4 rounded-md bg-amber-50"
                       >
                         <h4 class="text-lg">Comissão por este atendimento</h4>
                         <h1 class="text-2xl font-bold">
                           {{
                             currencyFormat(
-                              ride.travel.completedData?.driverCommission || '0',
+                              ride?.travel.completedData?.driverCommission || '0',
                             )
                           }}
                         </h1>

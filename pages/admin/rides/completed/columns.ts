@@ -1,8 +1,15 @@
+import ProductTag from '@/components/shared/ProductTag.vue';
 import { Button } from '@/components/ui/button';
 import { WPP_API } from '@/config/paths';
 import { createColumnHelper } from '@tanstack/vue-table';
 import { ArrowUpDown, MessageCircleMore } from 'lucide-vue-next';
-import { currencyFormat, sanitizePhone, sanitizeRideDate } from '~/lib/utils';
+import ExtraChargesTooltip from '~/components/shared/ExtraChargesTooltip.vue';
+import {
+  currencyFormat,
+  sanitizeAmount,
+  sanitizePhone,
+  sanitizeRideDate,
+} from '~/lib/utils';
 
 const columnHelper = createColumnHelper<any>();
 
@@ -66,6 +73,38 @@ export const columns: any = [
               `${data?.travel.stops?.length > 1 ? data?.travel.stops?.length + ' paradas' : data?.travel.stops?.length + ' parada'}`,
             )
           : '',
+      ]);
+    },
+  }),
+  columnHelper.accessor('product', {
+    header: () => h('div', { class: 'text-left' }, 'Produto'),
+    cell: ({ row }) => {
+      const { product }: any = row.original;
+      return h(
+        'div',
+        { class: 'relative text-left' },
+        h(ProductTag, {
+          label: product.name,
+          type: product.name,
+        }),
+      );
+    },
+  }),
+  columnHelper.accessor('extraCharges', {
+    header: () => h('div', { class: 'text-center' }, 'Adicionais'),
+    cell: ({ row }) => {
+      const data = row.original;
+      const extraChargesTotal =
+        data?.extraCharges?.length > 0
+          ? data.extraCharges.reduce((acc: number, curr: any) => {
+              return acc + sanitizeAmount(curr?.ammount);
+            }, 0)
+          : 0;
+      return h('div', { class: 'flex items-center gap-1 text-xs' }, [
+        currencyFormat(extraChargesTotal),
+        extraChargesTotal > 0
+          ? h(ExtraChargesTooltip, { items: data.extraCharges })
+          : null,
       ]);
     },
   }),

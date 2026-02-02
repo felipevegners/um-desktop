@@ -1,4 +1,5 @@
 import PaymentStatusFlag from '@/components/shared/PaymentStatusFlag.vue';
+import ProductTag from '@/components/shared/ProductTag.vue';
 import RideStatusFlag from '@/components/shared/RideStatusFlag.vue';
 import { Button } from '@/components/ui/button';
 import { WPP_API } from '@/config/paths';
@@ -69,6 +70,20 @@ export const columns: any = [
             )
           : '',
       ]);
+    },
+  }),
+  columnHelper.accessor('product', {
+    header: () => h('div', { class: 'text-left' }, 'Produto'),
+    cell: ({ row }) => {
+      const { product }: any = row.original;
+      return h(
+        'div',
+        { class: 'relative text-left' },
+        h(ProductTag, {
+          label: product.name,
+          type: product.name,
+        }),
+      );
     },
   }),
   columnHelper.accessor('billing', {
