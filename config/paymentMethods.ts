@@ -33,7 +33,7 @@ export const paymentMethods = [
   // },
   {
     id: 'corporative',
-    label: 'Faturamento Corporativo',
+    label: 'Faturamento',
     icon: 'Building',
     logo: [''],
     value: 'corporative',

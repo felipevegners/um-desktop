@@ -168,6 +168,15 @@ const translatePaymentMethod = computed(() => {
   return method?.label;
 });
 
+const getPaymentBranch = computed(() => {
+  if (contract?.value) {
+    const findBranch = contract?.value.branches?.find(
+      (branch: any) => branch.id === ride?.value.billing?.paymentData?.branch,
+    );
+    return `${findBranch?.branchCode} - ${findBranch?.fantasyName}`;
+  }
+});
+
 const sanitizeDrivers = computed(() => {
   const availableDrivers = drivers?.value.filter(
     (driver: any) => driver.scheduleOpen === true,
@@ -478,7 +487,11 @@ const showRideControls = computed(() => {
         </Button>
       </div>
       <div v-if="showRideControls" class="flex gap-6 items-center">
-        <Button @click="handleCopyTrackLink" class="bg-blue-600 hover:bg-blue-700">
+        <Button
+          v-if="ride?.status === 'in-progress'"
+          @click="handleCopyTrackLink"
+          class="bg-blue-600 hover:bg-blue-700"
+        >
           <Link />
           Copiar Link Rastreio
         </Button>
@@ -581,14 +594,8 @@ const showRideControls = computed(() => {
                   </div>
                 </div>
                 <div class="p-3 bg-white rounded-md">
-                  <!-- <span class="text-muted-foreground text-sm">
-                    Hora do Desembarque
-                  </span>
-                  <h3 class="text-lg font-bold">{{ ride?.travel.departTime }}H</h3> -->
+                  <span class="text-muted-foreground text-sm"> Hora do Desembarque </span>
                   <div v-if="ride?.status === 'completed'">
-                    <span class="text-muted-foreground text-sm">
-                      Hora do Desembarque (realizado)
-                    </span>
                     <h3 class="text-lg font-bold">
                       {{
                         new Date(ride?.progress.finishedAt).toLocaleTimeString('pt-BR', {
@@ -598,6 +605,7 @@ const showRideControls = computed(() => {
                       }}H
                     </h3>
                   </div>
+                  <p v-else>-</p>
                 </div>
                 <div class="p-3 bg-white rounded-md">
                   <span class="text-muted-foreground text-sm">Distância estimada</span>
@@ -727,7 +735,106 @@ const showRideControls = computed(() => {
                 </div>
               </div>
               <!-- RIDE -->
-              <div class="grid grid-cols-2 gap-6 items-start">
+              <div class="flex flex-col md:grid md:grid-cols-2 gap-6 items-start">
+                <!-- PAYMENT -->
+                <div
+                  class="col-span-2 p-6 flex flex-col h-full gap-6 bg-white rounded-md"
+                >
+                  <div class="flex flex-col gap-6">
+                    <Banknote />
+                    <div class="flex items-center justify-start gap-3 w-full">
+                      <h3 class="text-xl font-bold">Dados do Pagamento</h3>
+                    </div>
+                    <div>
+                      <small>Status</small>
+                      <PaymentStatusFlag
+                        :payment-status="ride?.billing.status"
+                        :payment-url="ride?.billing.paymentUrl"
+                      />
+                    </div>
+                  </div>
+                  <div class="flex flex-col items-start gap-10">
+                    <div class="flex justify-between gap-6 w-full">
+                      <div class="space-y-2">
+                        <small class="text-xxs text-muted-foreground">
+                          MÉTODO DE PAGAMENTO
+                        </small>
+                        <p class="text-sm uppercase font-bold">
+                          {{ translatePaymentMethod }}
+                        </p>
+                      </div>
+                      <div class="space-y-2">
+                        <small class="text-[10px] text-muted-foreground"> FILIAL </small>
+                        <p class="text-sm uppercase font-bold">
+                          {{ getPaymentBranch }}
+                        </p>
+                      </div>
+                      <div class="space-y-2">
+                        <small class="text-[10px] text-muted-foreground">
+                          CENTRO DE CUSTO
+                        </small>
+                        <p class="text-sm uppercase font-bold">
+                          {{
+                            ride?.billing.paymentData.area === 'splited'
+                              ? 'RATEIO'
+                              : ride?.billing.paymentData.area
+                          }}
+                        </p>
+                      </div>
+                      <div class="space-y-2">
+                        <small class="text-[10px] text-muted-foreground">
+                          DATA DO PAGAMENTO
+                        </small>
+                        <p class="text-center uppercase font-bold">
+                          {{
+                            ride?.billing.paymentMethod === 'corporative'
+                              ? contract?.comercialConditions?.paymentDueDate + ' dias'
+                              : ride?.billing.date || '-'
+                          }}
+                        </p>
+                      </div>
+                    </div>
+                    <div v-if="ride?.billing.installments" class="space-y-2">
+                      <small class="text-[10px] text-muted-foreground">PARCELAS</small>
+                      <p class="text-center uppercase font-bold">
+                        {{ ride?.billing.installments || '-' }}
+                      </p>
+                    </div>
+                    <div
+                      v-if="ride?.billing.paymentData.area === 'splited'"
+                      class="w-full space-y-4"
+                    >
+                      <p class="font-bold">Pagamento rateado entre filiais</p>
+                      <ul class="space-y-4">
+                        <li
+                          v-for="splited in ride?.billing.paymentData.splitedPayment"
+                          class="md:grid md:grid-cols-3 gap-6"
+                        >
+                          <div>
+                            <small class="text-xxs text-muted-foreground uppercase">
+                              Cód. do CC
+                            </small>
+                            <p class="font-bold">
+                              {{ splited.area }}
+                            </p>
+                          </div>
+                          <div>
+                            <small class="text-xxs text-muted-foreground uppercase">
+                              Porcentagem
+                            </small>
+                            <p class="font-bold">{{ splited.percentage }}%</p>
+                          </div>
+                          <div>
+                            <small class="text-xxs text-muted-foreground uppercase">
+                              Valor
+                            </small>
+                            <p class="font-bold">{{ currencyFormat(splited.amount) }}</p>
+                          </div>
+                        </li>
+                      </ul>
+                    </div>
+                  </div>
+                </div>
                 <!-- USER -->
                 <div class="p-6 flex flex-col h-full gap-6 bg-white rounded-md">
                   <User />
@@ -756,49 +863,8 @@ const showRideControls = computed(() => {
                   </div>
                 </div>
 
-                <!-- PAYMENT -->
-                <div class="p-6 flex flex-col h-full gap-6 bg-white rounded-md">
-                  <div class="flex flex-col gap-6">
-                    <Banknote />
-                    <div class="flex items-center justify-start gap-3 w-full">
-                      <h3 class="text-xl font-bold">Dados do Pagamento</h3>
-                    </div>
-                  </div>
-                  <div class="flex items-start gap-10">
-                    <div class="space-y-2">
-                      <small class="text-[10px] text-muted-foreground">
-                        MÉTODO DE PAGAMENTO
-                      </small>
-                      <p class="text-sm uppercase font-bold">
-                        {{ translatePaymentMethod }}
-                      </p>
-                    </div>
-                    <div class="space-y-2">
-                      <small class="text-[10px] text-muted-foreground">
-                        DATA DO PAGAMENTO
-                      </small>
-                      <p class="text-center uppercase font-bold">
-                        {{ ride?.billing.date || '-' }}
-                      </p>
-                    </div>
-                    <div v-if="ride?.billing.installments" class="space-y-2">
-                      <small class="text-[10px] text-muted-foreground">PARCELAS</small>
-                      <p class="text-center uppercase font-bold">
-                        {{ ride?.billing.installments || '-' }}
-                      </p>
-                    </div>
-                  </div>
-                  <div>
-                    <small>Status</small>
-                    <PaymentStatusFlag
-                      :payment-status="ride?.billing.status"
-                      :payment-url="ride?.billing.paymentUrl"
-                    />
-                  </div>
-                </div>
-
                 <!-- DRIVER  -->
-                <div class="p-6 col-span-2 flex flex-col gap-6 bg-white rounded-md">
+                <div class="p-6 col-span-1 flex flex-col gap-6 bg-white rounded-md">
                   <div class="flex flex-col gap-6">
                     <CarFront />
                     <h3 class="text-xl font-bold">Dados do Motorista</h3>
@@ -833,7 +899,10 @@ const showRideControls = computed(() => {
                         </div>
                       </div>
                       <!-- CHANGE DRIVER CONTROLS -->
-                      <div v-if="showRideControls" class="flex gap-6">
+                      <div
+                        v-if="ride?.status === 'pending' || ride?.status === 'created'"
+                        class="flex gap-6"
+                      >
                         <div
                           v-if="editDriver"
                           class="flex-1 flex items-center justify-between gap-3"

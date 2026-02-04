@@ -68,7 +68,7 @@ onBeforeMount(async () => {
   await getContractsAction();
 });
 
-const managerRoles = ['master-manager', 'branch-manager'];
+const managerRoles = ['master-manager', 'branch-manager', 'admin'];
 
 const generateManagerList = () => {
   const findContractUsers = accounts.value.filter(
@@ -222,13 +222,38 @@ const handleCancelChangeManager = () => {
   <section class="mb-6 px-6 flex items-center justify-between">
     <div v-if="editMode" class="w-full">
       <h3 class="mb-4 text-lg font-bold">1. Contrato vinculado</h3>
-      <div class="p-4 bg-white border border-zinc-950 rounded-md">
-        <LoaderCircle v-if="isLoading" class="animate-spin" />
-        <h1 v-else class="font-bold text-2xl">
-          {{
-            `${selectedContract && selectedContract?.customerName} - ${selectedContract && selectedContract?.customer?.document}`
-          }}
-        </h1>
+      <div class="flex items-center justify-between gap-6">
+        <div class="flex-1 p-4 bg-white border border-zinc-950 rounded-md">
+          <LoaderCircle v-if="isLoading" class="animate-spin" />
+          <h1 v-else class="font-bold text-2xl">
+            {{
+              `${selectedContract && selectedContract?.customerName} - ${selectedContract && selectedContract?.customer?.document}`
+            }}
+          </h1>
+        </div>
+        <div v-if="editMode && role === 'admin'">
+          <FormField v-slot="{ componentField }" name="status">
+            <FormItem class="flex flex-col items-center">
+              <FormLabel class="text-sm">Status do Cadastro</FormLabel>
+              <FormControl>
+                <FormSelect
+                  v-bind="componentField"
+                  :items="[
+                    {
+                      label: 'Validado',
+                      value: 'validated',
+                    },
+                    {
+                      label: 'Pendente',
+                      value: 'pending',
+                    },
+                  ]"
+                  label="Selecione"
+                />
+              </FormControl>
+            </FormItem>
+          </FormField>
+        </div>
       </div>
     </div>
     <div v-else class="md:max-w-[350px]">
@@ -243,29 +268,6 @@ const handleCancelChangeManager = () => {
               :label="'Selecione'"
               @on-select="compileBudget"
               :disabled="editMode"
-            />
-          </FormControl>
-        </FormItem>
-      </FormField>
-    </div>
-    <div v-if="editMode && role === 'admin'">
-      <FormField v-slot="{ componentField }" name="status">
-        <FormItem class="grid grid-cols-2 items-center gap-4">
-          <FormLabel class="font-bold">Status do Cadastro</FormLabel>
-          <FormControl>
-            <FormSelect
-              v-bind="componentField"
-              :items="[
-                {
-                  label: 'Validado',
-                  value: 'validated',
-                },
-                {
-                  label: 'Pendente',
-                  value: 'pending',
-                },
-              ]"
-              label="Selecione"
             />
           </FormControl>
         </FormItem>

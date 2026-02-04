@@ -45,13 +45,14 @@ defineExpose({ reset });
       <SelectValue :placeholder="label" />
     </SelectTrigger>
     <SelectContent>
-      <SelectGroup>
+      <SelectGroup class="max-h-[350px] overflow-auto">
         <SelectItem
           v-for="item in items"
           :value="item.value"
           :key="item.value"
           :id="item.value"
           class="hover:bg-zinc-500"
+          :disabled="item.disabled"
         >
           <div v-if="decoration" class="flex items-center gap-1">
             <span :class="`block w-4 h-3 rounded-lg bg-${item.color}`"></span>

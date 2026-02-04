@@ -20,6 +20,10 @@ const addRow = () => {
     info: '',
     type: '',
     ammount: '',
+    file: {
+      name: '',
+      url: '',
+    },
   });
 };
 

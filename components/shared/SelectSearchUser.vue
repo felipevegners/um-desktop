@@ -44,7 +44,7 @@ const selected = () => {
       </ComboboxTrigger>
     </ComboboxAnchor>
 
-    <ComboboxList class="md:w-[400px]">
+    <ComboboxList class="md:w-[400px] md:max-h-[300px]">
       <div class="relative w-full items-center">
         <ComboboxInput
           class="pl-9 focus-visible:ring-0 border-0 border-b rounded-none h-10 w-full"
