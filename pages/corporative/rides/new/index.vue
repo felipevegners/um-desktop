@@ -19,6 +19,7 @@ import { toTypedSchema } from '@vee-validate/zod';
 import {
   LoaderCircle,
   Minus,
+  Percent,
   Plus,
   SquareCheck,
   SquareDot,
@@ -32,6 +33,7 @@ import { storeToRefs } from 'pinia';
 import { useForm } from 'vee-validate';
 import { GoogleMap, Marker, Polyline } from 'vue3-google-map';
 import * as z from 'zod';
+import SplitPaymentCCs from '~/components/shared/SplitPaymentCCs.vue';
 import {
   convertMetersToDistance,
   convertSecondsToTime,
@@ -105,6 +107,9 @@ const contractBranchesList = ref<any>();
 const loadingAreas = ref<boolean>(false);
 const enablePayment = ref<boolean>(false);
 const showPaymentArea = ref<boolean>(false);
+const splitPaymentAreas = ref<boolean>(false);
+const splitPaymentCCAreas = ref<any>([]);
+
 const showWaypointsForm = ref<boolean>(false);
 const showContractProductAlert = ref<boolean>(false);
 const loadingGenerateRide = ref<boolean>(false);
@@ -276,17 +281,43 @@ const setSelectedUser = async (user: any) => {
         ['EASY', 'PREMIUM', 'GOLD', 'BLINDADO', 'VAN'].indexOf(b.name),
     );
     contractBranches.value = contract?.value.branches;
-    contractBranchesList.value = contract?.value.branches.map((branch: any) => {
-      return {
-        label: `${branch.branchCode} - ${branch.fantasyName}`,
-        value: branch.id,
-      };
-    });
+
+    const isMasterManager = userData.role === 'master-manager';
+
+    const filterUserBranch = contract?.value.branches.find(
+      (branch: any) => branch.id === userData.contract.branchId,
+    );
+
+    contractBranchesList.value = isMasterManager
+      ? contract?.value.branches.map((branch: any) => {
+          return {
+            label: `${branch.branchCode} - ${branch.fantasyName}`,
+            value: branch.id,
+          };
+        })
+      : [
+          {
+            label: `${filterUserBranch.branchCode} - ${filterUserBranch.fantasyName}`,
+            value: filterUserBranch.id,
+          },
+        ];
+
+    if (!isMasterManager) {
+      form.setFieldValue('branch', filterUserBranch.id);
+      getBranchAreas(filterUserBranch.id);
+    } else {
+      form.setFieldValue('area', contractBranchesList.value[0].value);
+      getBranchAreas(contractBranchesList.value[0].value);
+    }
+    // contractBranchesList.value = contract?.value.branches.map((branch: any) => {
+    //   return {
+    //     label: `${branch.branchCode} - ${branch.fantasyName}`,
+    //     value: branch.id,
+    //   };
+    // });
 
     loadingProducts.value = false;
-    paymentMethodList.value = paymentMethods.filter(
-      (method) => method.value === 'corporative',
-    );
+    paymentMethodList.value = paymentMethods.filter((method) => method.value !== 'pix');
   } catch (error) {
     toast({
       title: 'Opss!',
@@ -578,7 +609,7 @@ const showPaymentModal = async () => {
       block: 'start',
     });
 
-    if (paymentMethod.value === 'corporative' && form.values.area && form.values.branch) {
+    if (paymentMethod.value === 'corporative' && form.values.branch) {
       onSubmit();
     } else {
       form.setErrors({
@@ -698,8 +729,15 @@ const onSubmit = form.handleSubmit(async (values) => {
       paymentUrl: paymentLinkUrl.value,
       paymentData: {
         contract: selectedUser.value.contract.contractId,
+        contractName: selectedUser.value.contract.name,
         branch: values?.branch || '-',
-        area: values?.area || '-',
+        area:
+          splitPaymentCCAreas.value.length > 0
+            ? 'splited'
+            : values.area
+              ? values.area
+              : '-',
+        splitedPayment: splitPaymentCCAreas.value,
       },
       addons: selectedRideAddons.value || [],
       ammount: calculatedEstimates.value.estimatedTotalPrice,
@@ -725,8 +763,10 @@ const onSubmit = form.handleSubmit(async (values) => {
       basePrice: selectedProduct.value.basePrice,
       kmPrice: selectedProduct.value.kmPrice,
       minutePrice: selectedProduct.value.minutePrice,
+      includedKms: parseInt(selectedProduct.value.includedKms) || null,
+      includedHours: parseInt(selectedProduct.value.includedHours) || null,
     },
-    reason: values.reason || '',
+    reason: values.reason,
     travel: {
       rideEstimatedPrice: calculatedEstimates.value.estimatedPrice,
       passengers: ridePassengers.value,
@@ -750,6 +790,12 @@ const onSubmit = form.handleSubmit(async (values) => {
       routePreviewImg: {
         url: routePreviewUrl,
       },
+      completedData: {
+        rideExtraKms: rideExtraKms.value,
+        rideExtraHours: rideExtraHours.value,
+        rideExtraKmPrice: rideExtraKmPrice.value,
+        rideExtraHourPrice: rideExtraHourPrice.value,
+      },
     },
     progress: {
       steps: [],
@@ -758,6 +804,8 @@ const onSubmit = form.handleSubmit(async (values) => {
     accepted: false,
     driver: {},
     observations: values.observations,
+    additionalInfo: '',
+    extraCharges: [],
     dispatcher: {
       user: data?.value?.user?.name,
       email: data?.value?.user?.email,
@@ -1144,36 +1192,38 @@ const onSubmit = form.handleSubmit(async (values) => {
                 <LoaderCircle :size="60" class="animate-spin" />
                 <small class="text-muted-foreground uppercase">Calculando rota</small>
               </div>
-              <div v-else class="md:grid md:grid-cols-2 gap-10">
+              <div v-else class="flex flex-col gap-10">
                 <div class="space-y-6 flex flex-col items-start">
                   <h3 class="text-lg font-bold">Preview da Rota</h3>
-                  <GoogleMap
-                    ref="mapRef"
-                    :api-key="API_KEY"
-                    style="width: 100%; height: 700px"
-                    :center="mapCenter"
-                    :zoom="initialZoom"
-                    :zoom-control="true"
-                  >
-                    <Marker
-                      v-for="marker in markers"
-                      ref="markerRef"
-                      :key="marker.id"
-                      :options="{
-                        position: {
-                          lat: marker.lat,
-                          lng: marker.lng,
-                        },
-                        icon: marker.icon,
-                      }"
-                      class="w-10 h-10"
-                    />
-                    <Polyline :options="ridePath" />
-                  </GoogleMap>
+                  <div class="p-4 bg-white rounded-md w-full">
+                    <GoogleMap
+                      ref="mapRef"
+                      :api-key="API_KEY"
+                      style="width: 100%; height: 700px"
+                      :center="mapCenter"
+                      :zoom="initialZoom"
+                      :zoom-control="true"
+                    >
+                      <Marker
+                        v-for="marker in markers"
+                        ref="markerRef"
+                        :key="marker.id"
+                        :options="{
+                          position: {
+                            lat: marker.lat,
+                            lng: marker.lng,
+                          },
+                          icon: marker.icon,
+                        }"
+                        class="w-10 h-10"
+                      />
+                      <Polyline :options="ridePath" />
+                    </GoogleMap>
+                  </div>
                 </div>
                 <div class="w-full space-y-6">
                   <h3 class="text-lg font-bold">Resumo</h3>
-                  <div class="p-6 bg-white rounded-md space-y-6 border border-zinc-900">
+                  <div class="p-6 bg-white rounded-md space-y-6">
                     <div>
                       <small class="font-bold">Data e Hora</small>
                       <h2 class="font-bold text-2xl">
@@ -1186,7 +1236,7 @@ const onSubmit = form.handleSubmit(async (values) => {
                       <p>{{ originLocationDetails.address }}</p>
                     </div>
                     <div
-                      v-if="routeWaypoints"
+                      v-if="routeWaypoints.length > 0"
                       v-for="(waypoint, index) in routeWaypoints"
                     >
                       <small class="font-bold">Parada {{ Number(index) + 1 }}</small>
@@ -1229,6 +1279,7 @@ const onSubmit = form.handleSubmit(async (values) => {
                         </p>
                       </div>
                     </div>
+
                     <div
                       v-if="showContractProductAlert"
                       class="p-4 bg-amber-200 rounded-md border border-amber-900"
@@ -1241,10 +1292,8 @@ const onSubmit = form.handleSubmit(async (values) => {
                         Confira abaixo as franquias inclusas neste serviço.
                       </p>
                     </div>
-                    <div class="p-4">
-                      <h2 class="mb-3 pb-3 border-b border-zinc-400 font-bold">
-                        Descrição dos Valores
-                      </h2>
+                    <div>
+                      <h2 class="mb-3 pb-3 font-bold">Descrição dos Valores</h2>
                       <div v-if="showContractProductAlert">
                         <p
                           class="flex items-center justify-between gap-2 py-2 border-b border-zinc-200"
@@ -1307,25 +1356,30 @@ const onSubmit = form.handleSubmit(async (values) => {
                           </span>
                         </p>
                       </div>
-                      <div v-if="form.values.rideAddons.length">
-                        <h2 class="mt-3 pb-3 border-b border-zinc-400 font-bold">
-                          Adicionais
-                        </h2>
+                      <div v-if="form.values.rideAddons.length" class="p-4 bg-amber-100">
+                        <h2 class="mt-3 pb-3 font-bold">Adicionais</h2>
                         <p
                           v-for="item in selectedRideAddons"
-                          class="flex items-center justify-between gap-2 py-2 border-b border-zinc-200"
+                          class="flex items-center justify-between gap-2 py-2"
                         >
                           <span>{{ item.name }}</span>
+                          <span
+                            class="h-2 w-full border-b-2 border-dotted border-zinc-400"
+                          ></span>
                           <span class="font-bold">
                             {{ currencyFormat(item.basePrice) }}
                           </span>
                         </p>
                       </div>
-                      <p class="mt-4 font-bold">*Total estimado</p>
-                      <p class="font-bold text-3xl">
+                      <p
+                        class="mt-4 pt-8 font-bold border-t border-zinc-400 text-muted-foreground text-sm"
+                      >
+                        Total estimado
+                      </p>
+                      <p class="my-3 font-bold text-4xl">
                         {{ currencyFormat(calculatedEstimates?.estimatedTotalPrice) }}
                       </p>
-                      <small class="text-muted-foreground text-[11px]">
+                      <small class="text-muted-foreground text-[12px]">
                         * O valor total final do serviço será calculado ao término do
                         atendimento, podendo ou não haver acréscimos no valor.
                       </small>
@@ -1354,7 +1408,7 @@ const onSubmit = form.handleSubmit(async (values) => {
                 </span>
                 Pagamento
               </CardTitle>
-              <div class="lg:grid lg:grid-cols-2 lg:gap-4">
+              <div>
                 <ul class="space-y-2">
                   <li
                     v-for="method in paymentMethodList"
@@ -1380,13 +1434,14 @@ const onSubmit = form.handleSubmit(async (values) => {
                         method.value === 'corporative' &&
                         paymentMethod.includes(method.value)
                       "
-                      class="md:grid md:grid-cols-2 gap-6 w-full"
+                      class="p-4 mb-4 md:grid md:grid-cols-2 gap-6 w-full"
                     >
-                      <FormField v-slot="{ componentField }" name="branch">
+                      <FormField v-slot="{ componentField, value }" name="branch">
                         <FormItem>
                           <FormLabel>Filial*</FormLabel>
                           <FormControl>
                             <FormSelect
+                              :value="value"
                               v-bind="componentField"
                               :items="contractBranchesList"
                               label="Selecione"
@@ -1396,20 +1451,41 @@ const onSubmit = form.handleSubmit(async (values) => {
                           <FormMessage class="text-xs" />
                         </FormItem>
                       </FormField>
-                      <FormField v-slot="{ componentField }" name="area">
-                        <FormItem>
-                          <FormLabel>Centro de Custo*</FormLabel>
-                          <FormControl>
-                            <FormSelect
-                              v-bind="componentField"
-                              :items="contractBranchAreas"
-                              :loading="loadingAreas"
-                              label="Selecione"
-                            />
-                          </FormControl>
-                          <FormMessage class="text-xs" />
-                        </FormItem>
-                      </FormField>
+                      <div class="col-span-2">
+                        <div v-if="!splitPaymentAreas" class="flex items-end gap-6">
+                          <FormField v-slot="{ componentField }" name="area">
+                            <FormItem class="min-w-[250px]">
+                              <FormLabel>Centro de Custo*</FormLabel>
+                              <FormControl>
+                                <FormSelect
+                                  v-bind="componentField"
+                                  :items="contractBranchAreas"
+                                  :loading="loadingAreas"
+                                  label="Selecione"
+                                />
+                              </FormControl>
+                              <FormMessage class="text-xs" />
+                            </FormItem>
+                          </FormField>
+                          <Button
+                            v-if="contractBranchAreas?.length > 1"
+                            type="button"
+                            @click.prevent="splitPaymentAreas = !splitPaymentAreas"
+                          >
+                            <Percent />
+                            Ratear entre CCs
+                          </Button>
+                        </div>
+                      </div>
+                      <SplitPaymentCCs
+                        v-if="splitPaymentAreas"
+                        :branch-areas="contractBranchAreas"
+                        :contract-branches="contractBranchesList"
+                        :estimates="calculatedEstimates"
+                        @toogle-split-payment="splitPaymentAreas = !splitPaymentAreas"
+                        v-model="splitPaymentCCAreas"
+                        :form="form"
+                      />
                     </div>
                   </li>
                 </ul>

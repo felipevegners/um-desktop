@@ -4,6 +4,7 @@ import BackLink from '@/components/shared/BackLink.vue';
 import RideRouteMap from '@/components/shared/RideRouteMap.vue';
 import RideStatusFlag from '@/components/shared/RideStatusFlag.vue';
 import { useToast } from '@/components/ui/toast/use-toast';
+import { extraChargesTypes } from '@/config/extraCharges';
 import { WPP_API } from '@/config/paths';
 import { paymentMethods } from '@/config/paymentMethods';
 import { deleteRideService } from '@/server/services/rides';
@@ -33,6 +34,7 @@ import {
 } from 'lucide-vue-next';
 import { storeToRefs } from 'pinia';
 import { useForm } from 'vee-validate';
+import PaymentStatusFlag from '~/components/shared/PaymentStatusFlag.vue';
 import {
   convertMetersToDistance,
   convertSecondsToTime,
@@ -84,23 +86,17 @@ await getProductsAction();
 useHead({
   title: `${ride?.value.status === 'completed' ? 'Visualizar' : 'Editar'} Atendimento | Urban Mobi`,
 });
-
-const editDriver = ref<boolean>(false);
-const selectedDriver = ref<any>();
-selectedDriver.value = ride?.value.driver;
 const selectedUser = ref<any>();
 const loadingSend = ref<boolean>(false);
 const availableUsers = ref();
 const availableProducts = ref<any>([]);
 const selectedProduct = ref<any>(ride?.value.product);
 const travelDate = ref<any>();
-const showRouteRecalculation = ref<boolean>(false);
 const showCancelationModal = ref<boolean>(false);
 const showDeleteConfirmationModal = ref<boolean>(false);
 const loadingCancelAndDelete = ref<boolean>(false);
 const showFinishModal = ref<boolean>(false);
 const showWaypointsForm = ref<boolean>(false);
-const loadingRemoveDriver = ref<boolean>(false);
 const driverData = ref<any>({
   loading: true,
   location: {},
@@ -138,80 +134,9 @@ onBeforeMount(async () => {
   const splitDate = ride?.value.travel.date.split('/').reverse();
   const dateNumbers = splitDate.map((str: string) => Number(str));
   travelDate.value = new CalendarDate(dateNumbers[0], dateNumbers[1], dateNumbers[2]);
-
-  await getDriversAction();
-});
-
-const sanitizeDrivers = computed(() => {
-  const availableDrivers = drivers?.value.filter(
-    (driver: any) => driver.scheduleOpen === true,
-  );
-  return availableDrivers?.map((driver) => {
-    return {
-      label: driver.name,
-      value: driver.id,
-    };
-  });
 });
 
 waypointLocationDetails.value = ride?.value.travel.stops || [];
-
-const setNewDriver = (driverId: string) => {
-  const findDriver = drivers.value.find((driver) => driver.id === driverId);
-  selectedDriver.value = findDriver;
-};
-
-const contactDriver = async () => {
-  await setRideDriverAction(ride?.value.id, selectedDriver.value);
-  await getRideByIdAction(route?.params?.id as string);
-  editDriver.value = false;
-  selectedDriver.value = ride?.value.driver;
-
-  const message = `
-    *Novo Atendimento - ${ride?.value?.code}*
-    %0A*Passageiro*: ${ride?.value.user.name}
-    %0A*Celular*: ${ride?.value.user.phone}
-    %0A*Data/Hora*: ${ride?.value.travel.date} / ${ride?.value.travel.departTime}
-    %0A------------------------------
-    %0A*Dados da Viagem*
-    %0A%0A*Origem*: ${ride?.value.travel.originAddress}
-  ${
-    ride?.value.travel.stops.length
-      ? ride?.value.travel.stops.map((stop: any, index: any) => {
-          return `%0A%0A*Parada ${index + 1}*: ${stop.address}`;
-        })
-      : ''
-  }
-    %0A%0A*Destino*: ${ride?.value.travel.destinationAddress}
-    %0A%0A*Despachado por*: ${ride?.value.dispatcher.user} - ${ride?.value.dispatcher.email}`;
-  const url =
-    WPP_API.replace('[[phone]]', sanitizePhone(selectedDriver.value.phone as string)) +
-    '&text=' +
-    message;
-  navigateTo(url, { external: true, open: { target: '_blank' } });
-};
-
-const handleRemoveRider = async () => {
-  const payload = {
-    ...ride?.value,
-    status: 'created',
-    driver: {},
-  };
-  try {
-    loadingRemoveDriver.value = true;
-    await updateRideAction(payload);
-  } catch (error) {
-    toast({
-      title: 'Oops!',
-      description: `Ocorreu um erro ao remover o motorista. Tente novamente.`,
-      variant: 'destructive',
-    });
-  } finally {
-    loadingRemoveDriver.value = false;
-    editDriver.value = false;
-    await getRideByIdAction(route?.params?.id as string);
-  }
-};
 
 const toggleCancelationModal = () => {
   showCancelationModal.value = !showCancelationModal.value;
@@ -232,7 +157,7 @@ const handleCancelRide = async () => {
     setTimeout(() => {
       loadingCancelAndDelete.value = false;
       showCancelationModal.value = false;
-      navigateTo('/admin/rides/open');
+      navigateTo('/corporative/rides/open');
     }, 1500);
   } catch (error) {
     toast({
@@ -337,15 +262,8 @@ const onSubmit = form.handleSubmit(async (values) => {
       date: values.departDate,
       departTime: values.departTime,
     },
-    status: selectedDriver.value.name ? 'pending' : ride?.value.status,
-    driver: {
-      id: selectedDriver.value.id,
-      name: selectedDriver.value.name,
-      phone: selectedDriver.value.phone,
-      email: selectedDriver.value.email,
-      hasCarSelected: false,
-      selectedCar: {},
-    },
+    status: ride?.value.status,
+    driver: {},
     observations: values.observations,
   };
   try {
@@ -390,6 +308,15 @@ const translatePaymentMethod = computed(() => {
   return method?.label;
 });
 
+const getPaymentBranch = computed(() => {
+  if (contract?.value) {
+    const findBranch = contract?.value.branches?.find(
+      (branch: any) => branch.id === ride?.value.billing?.paymentData?.branch,
+    );
+    return `${findBranch?.branchCode} - ${findBranch?.fantasyName}`;
+  }
+});
+
 const showRideControls = computed(() => {
   return ride?.value.status !== 'completed' && ride?.value.status !== 'cancelled';
 });
@@ -410,24 +337,19 @@ const showRideControls = computed(() => {
         <RideStatusFlag :ride-status="ride?.status" />
       </div>
       <div v-if="showRideControls" class="flex gap-6 items-center">
-        <Button
-          v-if="ride.status === 'in-progress'"
-          @click="handleCopyTrackLink"
-          class="bg-blue-600 hover:bg-blue-700"
-        >
-          <Link />
-          Copiar Link Rastreio
-        </Button>
-
         <div class="p-2 border border-zinc-950 rounded-md flex gap-6">
           <div class="pr-2 flex items-center gap-2 border-r border-zinc-950">
             <Settings />
             <span>Ações</span>
           </div>
-          <!-- <Button @click="toggleFinishModal">
-            <Check />
-            FInalizar
-          </Button> -->
+          <Button
+            v-if="ride.status === 'in-progress'"
+            @click="handleCopyTrackLink"
+            class="bg-violet-600 hover:bg-violet-700"
+          >
+            <Link />
+            Copiar Link de Rastreio
+          </Button>
           <Button @click="toggleCancelationModal" variant="destructive">
             <X />
             Cancelar
@@ -541,6 +463,20 @@ const showRideControls = computed(() => {
                   <h3 class="text-lg font-bold">
                     {{ convertMetersToDistance(ride?.travel.estimatedDistance) }}
                   </h3>
+                  <div v-if="ride?.travel.completedData.rideExtraKms !== 0" class="my-3">
+                    <span class="text-sm text-muted-foreground">KM Extra</span>
+                    <h3 class="text-lg font-bold text-amber-600">
+                      {{
+                        ride?.travel.completedData.rideExtraKms.toLocaleString('pt-BR', {
+                          maximumFractionDigits: 2,
+                        })
+                      }}
+                    </h3>
+                    <span class="text-sm text-muted-foreground">Valor Km Extra</span>
+                    <h3 class="text-lg font-bold text-amber-600">
+                      {{ currencyFormat(ride?.travel.completedData.rideExtraKmPrice) }}
+                    </h3>
+                  </div>
                   <div v-if="ride.status === 'completed'">
                     <span class="text-muted-foreground text-sm">
                       Distância realizada
@@ -557,6 +493,24 @@ const showRideControls = computed(() => {
                   <h3 class="text-lg font-bold">
                     {{ convertSecondsToTime(ride?.travel.estimatedDuration) }}
                   </h3>
+
+                  <div
+                    v-if="ride?.travel.completedData.rideExtraHours !== 0"
+                    class="my-3"
+                  >
+                    <span class="text-sm text-muted-foreground">Hora Extra</span>
+                    <h3 class="text-lg font-bold text-amber-600">
+                      {{
+                        ride?.travel.completedData.rideExtraHours <= 9
+                          ? `0${ride?.travel.completedData.rideExtraHours}`
+                          : ride?.travel.completedData.rideExtraHours
+                      }}
+                    </h3>
+                    <span class="text-sm text-muted-foreground">Valor Hora Extra</span>
+                    <h3 class="text-lg font-bold text-amber-600">
+                      {{ currencyFormat(ride?.travel.completedData.rideExtraHourPrice) }}
+                    </h3>
+                  </div>
                   <div v-if="ride?.status === 'completed'">
                     <span class="text-muted-foreground text-sm">Duração real</span>
                     <h3 class="text-lg font-bold text-amber-600">
@@ -578,13 +532,30 @@ const showRideControls = computed(() => {
                     </h3>
                   </div>
                 </div>
-                <div class="p-3 bg-amber-100 rounded-md">
+                <div class="p-3 bg-white rounded-md">
                   <span class="text-muted-foreground text-sm">
                     Valor estimado (atendimento + adicionais)
                   </span>
-                  <h3 class="text-lg font-bold">
+                  <h3 class="text-lg font-bold text-amber-600">
                     {{ currencyFormat(ride?.estimatedPrice) }}
                   </h3>
+                  <div
+                    v-if="ride?.extraCharges.length"
+                    class="my-3 p-3 border border-amber-600 rounded-md flex flex-col gap-4"
+                  >
+                    <span class="text-sm text-amber-600"> Custos extras </span>
+                    <div v-for="extra in ride?.extraCharges">
+                      <small class="block font-bold">
+                        {{ extraChargesTypes[extra.type] }}
+                      </small>
+                      <small class="block w-full text-muted-foreground">{{
+                        extra.info
+                      }}</small>
+                      <small class="font-bold text-amber-600">{{
+                        currencyFormat(extra.amount)
+                      }}</small>
+                    </div>
+                  </div>
                   <div v-if="ride.status === 'completed'">
                     <span class="text-muted-foreground text-sm">Valor final</span>
                     <h3 class="text-lg font-bold text-amber-600">
@@ -661,6 +632,103 @@ const showRideControls = computed(() => {
                   <p class="font-bold text-lg">{{ ride?.travel.destinationAddress }}</p>
                 </div>
               </div>
+              <!-- PAYMENT -->
+              <div class="col-span-2 p-6 flex flex-col h-full gap-6 bg-white rounded-md">
+                <div class="flex flex-col gap-6">
+                  <Banknote />
+                  <div class="flex items-center justify-start gap-3 w-full">
+                    <h3 class="text-xl font-bold">Dados do Pagamento</h3>
+                  </div>
+                  <div>
+                    <small>Status</small>
+                    <PaymentStatusFlag
+                      :payment-status="ride?.billing.status"
+                      :payment-url="ride?.billing.paymentUrl"
+                    />
+                  </div>
+                </div>
+                <div class="flex flex-col items-start gap-10">
+                  <div class="flex justify-between gap-6 w-full">
+                    <div class="space-y-2">
+                      <small class="text-xxs text-muted-foreground">
+                        MÉTODO DE PAGAMENTO
+                      </small>
+                      <p class="text-sm uppercase font-bold">
+                        {{ translatePaymentMethod }}
+                      </p>
+                    </div>
+                    <div class="space-y-2">
+                      <small class="text-[10px] text-muted-foreground"> FILIAL </small>
+                      <p class="text-sm uppercase font-bold">
+                        {{ getPaymentBranch }}
+                      </p>
+                    </div>
+                    <div class="space-y-2">
+                      <small class="text-[10px] text-muted-foreground">
+                        CENTRO DE CUSTO
+                      </small>
+                      <p class="text-sm uppercase font-bold">
+                        {{
+                          ride?.billing.paymentData.area === 'splited'
+                            ? 'RATEIO'
+                            : ride?.billing.paymentData.area
+                        }}
+                      </p>
+                    </div>
+                    <div class="space-y-2">
+                      <small class="text-[10px] text-muted-foreground">
+                        DATA DO PAGAMENTO
+                      </small>
+                      <p class="text-center uppercase font-bold">
+                        {{
+                          ride?.billing.paymentMethod === 'corporative'
+                            ? contract?.comercialConditions?.paymentDueDate + ' dias'
+                            : ride?.billing.date || '-'
+                        }}
+                      </p>
+                    </div>
+                  </div>
+                  <div v-if="ride?.billing.installments" class="space-y-2">
+                    <small class="text-[10px] text-muted-foreground">PARCELAS</small>
+                    <p class="text-center uppercase font-bold">
+                      {{ ride?.billing.installments || '-' }}
+                    </p>
+                  </div>
+                  <div
+                    v-if="ride?.billing.paymentData.area === 'splited'"
+                    class="p-4 border border-amber-500 bg-amber-100 rounded-md w-full space-y-4"
+                  >
+                    <p class="font-bold">Pagamento rateado entre filiais</p>
+                    <ul class="space-y-4">
+                      <li
+                        v-for="splited in ride?.billing.paymentData.splitedPayment"
+                        class="md:grid md:grid-cols-3 gap-6"
+                      >
+                        <div>
+                          <small class="text-xxs text-muted-foreground uppercase">
+                            Cód. do CC
+                          </small>
+                          <p class="font-bold">
+                            {{ splited.area }}
+                          </p>
+                        </div>
+                        <div>
+                          <small class="text-xxs text-muted-foreground uppercase">
+                            Porcentagem
+                          </small>
+                          <p class="font-bold">{{ splited.percentage }}%</p>
+                        </div>
+                        <div>
+                          <small class="text-xxs text-muted-foreground uppercase">
+                            Valor
+                          </small>
+                          <p class="font-bold">{{ currencyFormat(splited.amount) }}</p>
+                        </div>
+                      </li>
+                    </ul>
+                  </div>
+                </div>
+              </div>
               <!-- USER -->
               <div class="p-6 flex flex-col h-full gap-6 bg-white rounded-md">
                 <User />
@@ -698,8 +766,11 @@ const showRideControls = computed(() => {
                   <div class="flex flex-col gap-6">
                     <div>
                       <small>Nome</small>
-                      <h2 class="font-bold text-lg">
-                        {{ ride?.driver.name || 'Sem motorista' }}
+                      <h2
+                        class="font-bold text-lg"
+                        :class="!ride?.driver.name && 'text-amber-500'"
+                      >
+                        {{ ride?.driver.name || 'Não definido' }}
                       </h2>
                       <div v-if="ride?.driver.hasCarSelected">
                         <small>Veículo</small>
@@ -753,20 +824,6 @@ const showRideControls = computed(() => {
       </form>
     </section>
   </main>
-  <Dialog :open="showRouteRecalculation">
-    <DialogContent>
-      <DialogHeader>
-        <DialogTitle class="text-center">Recalculando Rota</DialogTitle>
-        <DialogDescription>
-          <div class="py-8 flex flex-col gap-3 items-center">
-            <LoaderCircle class="animate-spin text-zinc-900" :size="48" />
-            <p class="text-xs">Calculando...</p>
-          </div>
-        </DialogDescription>
-      </DialogHeader>
-      <DialogFooter> </DialogFooter>
-    </DialogContent>
-  </Dialog>
   <Dialog :open="showCancelationModal" @update:open="showCancelationModal = $event">
     <DialogContent class="space-y-4">
       <DialogHeader>

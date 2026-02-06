@@ -27,7 +27,7 @@ const tagTypeClasses = {
 };
 
 const classes = [
-  'px-2 py-1 uppercase text-center rounded-md w-fit font-bold',
+  'px-2 py-1 uppercase text-center rounded-md w-fit',
   tagTypeClasses[props.type],
 ];
 </script>

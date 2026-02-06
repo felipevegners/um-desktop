@@ -5,6 +5,7 @@ import BackLink from '@/components/shared/BackLink.vue';
 import PaymentStatusFlag from '@/components/shared/PaymentStatusFlag.vue';
 import RideStatusFlag from '@/components/shared/RideStatusFlag.vue';
 import { useToast } from '@/components/ui/toast/use-toast';
+import { extraChargesTypes } from '@/config/extraCharges';
 import { WPP_API } from '@/config/paths';
 import { paymentMethods } from '@/config/paymentMethods';
 import { deleteRideService } from '@/server/services/rides';
@@ -612,6 +613,20 @@ const showRideControls = computed(() => {
                   <h3 class="text-lg font-bold">
                     {{ convertMetersToDistance(ride?.travel.estimatedDistance) }}
                   </h3>
+                  <div v-if="ride?.travel.completedData.rideExtraKms !== 0" class="my-3">
+                    <span class="text-sm">KM Extra</span>
+                    <h3 class="text-lg font-bold text-amber-600">
+                      {{
+                        ride?.travel.completedData.rideExtraKms.toLocaleString('pt-BR', {
+                          maximumFractionDigits: 2,
+                        })
+                      }}
+                    </h3>
+                    <span class="text-sm">Valor Km Extra</span>
+                    <h3 class="text-lg font-bold text-amber-600">
+                      {{ currencyFormat(ride?.travel.completedData.rideExtraKmPrice) }}
+                    </h3>
+                  </div>
                   <div v-if="ride?.status === 'completed'">
                     <span class="text-muted-foreground text-sm">
                       Distância realizada
@@ -628,6 +643,28 @@ const showRideControls = computed(() => {
                   <h3 class="text-lg font-bold">
                     {{ convertSecondsToTime(ride?.travel.estimatedDuration) }}
                   </h3>
+                  <div
+                    v-if="ride?.travel.completedData.rideExtraHours !== 0"
+                    class="my-3"
+                  >
+                    <span class="text-sm">Hora Extra</span>
+                    <h3 class="text-lg font-bold text-amber-600">
+                      {{
+                        ride?.travel.completedData.rideExtraHours <= 9
+                          ? `0${ride?.travel.completedData.rideExtraHours.toLocaleString(
+                              'pt-BR',
+                              {
+                                maximumFractionDigits: 2,
+                              },
+                            )}`
+                          : ride?.travel.completedData.rideExtraHours
+                      }}
+                    </h3>
+                    <span class="text-sm">Valor Hora Extra</span>
+                    <h3 class="text-lg font-bold text-amber-600">
+                      {{ currencyFormat(ride?.travel.completedData.rideExtraHourPrice) }}
+                    </h3>
+                  </div>
                   <div v-if="ride?.status === 'completed'">
                     <span class="text-muted-foreground text-sm">Duração real</span>
                     <h3 class="text-lg font-bold text-amber-600">
@@ -651,13 +688,30 @@ const showRideControls = computed(() => {
                     </h3>
                   </div>
                 </div>
-                <div class="p-3 bg-amber-100 rounded-md">
+                <div class="p-3 bg-white rounded-md">
                   <span class="text-muted-foreground text-sm">
                     Valor estimado (atendimento + adicionais)
                   </span>
-                  <h3 class="text-lg font-bold">
+                  <h3 class="text-lg font-bold text-amber-600">
                     {{ currencyFormat(ride?.estimatedPrice) }}
                   </h3>
+                  <div
+                    v-if="ride?.extraCharges && ride?.extraCharges.length > 0"
+                    class="my-3 p-3 border border-amber-600 rounded-md flex flex-col gap-4"
+                  >
+                    <span class="text-sm text-amber-600"> Custos extras </span>
+                    <div v-for="extra in ride?.extraCharges">
+                      <small class="block font-bold">
+                        {{ extraChargesTypes[extra.type] }}
+                      </small>
+                      <small class="block w-full text-muted-foreground">{{
+                        extra.info
+                      }}</small>
+                      <small class="font-bold text-amber-600">{{
+                        currencyFormat(extra.amount)
+                      }}</small>
+                    </div>
+                  </div>
                   <div v-if="ride?.status === 'completed'">
                     <span class="text-muted-foreground text-sm">Valor final</span>
                     <h3 class="text-lg font-bold text-amber-600">

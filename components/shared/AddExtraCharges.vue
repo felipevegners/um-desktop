@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { extraChargesList } from '@/config/extraCharges';
 import { Paperclip, Plus, Trash } from 'lucide-vue-next';
 import { vMaska } from 'maska/vue';
 
@@ -19,7 +20,7 @@ const addRow = () => {
   props.modelValue.push({
     info: '',
     type: '',
-    ammount: '',
+    amount: '',
     file: {
       name: '',
       url: '',
@@ -46,19 +47,14 @@ const removeRow = (index: any) => {
       <div class="flex flex-col items-start gap-2">
         <small>Tipo de taxa</small>
         <FormSelect
-          :items="[
-            { label: 'Pedágio', value: 'toll_fee' },
-            { label: 'Estacionamento', value: 'parking_fee' },
-            { label: 'Diária de Hotel', value: 'hotel_fee' },
-            { label: 'Outros', value: 'others' },
-          ]"
+          :items="extraChargesList"
           label="Selecione o tipo"
           v-model="extra.type"
         />
       </div>
       <div class="col-span-2 flex flex-col items-start gap-2">
         <small>Descrição</small>
-        <Input type="text" v-model="extra.description" />
+        <Input type="text" v-model="extra.info" />
       </div>
       <div class="flex items-end gap-1">
         <div class="relative flex flex-col items-start gap-2">
@@ -69,7 +65,7 @@ const removeRow = (index: any) => {
             data-maska-tokens="9:[0-9]:repeated"
             data-maska-reversed
             class="relative pl-9"
-            v-model="extra.ammount"
+            v-model="extra.amount"
           />
           <span
             class="absolute start-0 top-[36px] flex items-center justify-center px-3 text-sm"

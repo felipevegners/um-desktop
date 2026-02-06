@@ -178,7 +178,7 @@ export const columns: any = [
       const extraChargesTotal =
         data?.extraCharges?.length > 0
           ? data.extraCharges.reduce((acc: number, curr: any) => {
-              return acc + sanitizeAmount(curr?.ammount);
+              return acc + sanitizeAmount(curr?.amount);
             }, 0)
           : 0;
       return h('div', { class: 'flex items-center gap-1 text-xs font-bold' }, [

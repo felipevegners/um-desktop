@@ -70,7 +70,7 @@ const finalColumns = [
   columnHelper.display({
     id: 'actions',
     enableHiding: false,
-    header: () => h('div', { class: 'text-left' }, 'Ações'),
+    header: () => h('div', { class: 'text-xs leading-none text-left' }, 'Ações'),
     cell: ({ row }) => {
       const { id } = row.original;
       if (role === 'master-manager') {

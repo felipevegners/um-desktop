@@ -24,7 +24,6 @@ import {
   SquareCheck,
   SquareDot,
   SquareSquare,
-  Trash,
   Users,
   Waypoints,
   X,
@@ -34,6 +33,7 @@ import { storeToRefs } from 'pinia';
 import { useForm } from 'vee-validate';
 import { GoogleMap, Marker, Polyline } from 'vue3-google-map';
 import * as z from 'zod';
+import SplitPaymentCCs from '~/components/shared/SplitPaymentCCs.vue';
 import {
   convertMetersToDistance,
   convertSecondsToTime,
@@ -862,6 +862,12 @@ const onSubmit = form.handleSubmit(async (values) => {
       routePreviewImg: {
         url: routePreviewUrl,
       },
+      completedData: {
+        rideExtraKms: rideExtraKms.value,
+        rideExtraHours: rideExtraHours.value,
+        rideExtraKmPrice: rideExtraKmPrice.value,
+        rideExtraHourPrice: rideExtraHourPrice.value,
+      },
     },
     progress: {
       steps: [],
@@ -871,17 +877,7 @@ const onSubmit = form.handleSubmit(async (values) => {
     driver: {},
     observations: values.observations,
     additionalInfo: '',
-    extraCharges: [
-      {
-        type: '',
-        info: '',
-        ammount: 0,
-        file: {
-          name: '',
-          url: '',
-        },
-      },
-    ],
+    extraCharges: [],
     dispatcher: {
       user: data?.value?.user?.name,
       email: data?.value?.user?.email,
@@ -1574,7 +1570,16 @@ const onSubmit = form.handleSubmit(async (values) => {
                           </Button>
                         </div>
                       </div>
-                      <div v-if="splitPaymentAreas" class="col-span-2">
+                      <SplitPaymentCCs
+                        v-if="splitPaymentAreas"
+                        :contract-branches="contractBranchesList"
+                        :branch-areas="contractBranchAreas"
+                        :estimates="calculatedEstimates"
+                        @toogle-split-payment="splitPaymentAreas = !splitPaymentAreas"
+                        v-model="splitPaymentCCAreas"
+                        :form="form"
+                      />
+                      <!-- <div v-if="splitPaymentAreas" class="col-span-2">
                         <div class="p-4 rounded-md border border-zinc-950">
                           <h3 class="mb-4 font-bold text-xl">
                             Ratear valor entre centros de custo
@@ -1678,7 +1683,7 @@ const onSubmit = form.handleSubmit(async (values) => {
                             {{ currencyFormat(remainingRideAmount) }}
                           </p>
                         </div>
-                      </div>
+                      </div> -->
                     </div>
                   </li>
                 </ul>
@@ -1698,7 +1703,7 @@ const onSubmit = form.handleSubmit(async (values) => {
             <LoaderCircle v-if="loadingGenerateRide" class="animate-spin" />
 
             {{
-              paymentMethod === 'corporative' && form.values.area
+              paymentMethod === 'corporative' && form.values.branch
                 ? 'Gerar atendimento corporativo'
                 : 'Gerar atendimento'
             }}

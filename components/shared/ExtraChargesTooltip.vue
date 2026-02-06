@@ -33,9 +33,9 @@ const translateExtraChargeType = (type: string) => {
         <ul>
           <li v-for="item in items" class="my-3">
             <p class="text=xs font-bold">{{ translateExtraChargeType(item.type) }}</p>
-            <small>{{ item.description }}</small>
+            <small>{{ item.info }}</small>
             <p class="text-sm font-bold text-amber-400">
-              {{ currencyFormat(item.ammount) }}
+              {{ currencyFormat(item.amount) }}
             </p>
           </li>
         </ul>

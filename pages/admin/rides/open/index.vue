@@ -39,7 +39,7 @@ const finalColumns = [
   columnHelper.display({
     id: 'driver',
     enableHiding: false,
-    header: () => h('div', { class: 'text-left' }, 'Motorista'),
+    header: () => h('div', { class: 'text-xs leading-none text-left' }, 'Motorista'),
     cell: ({ row }) => {
       const { id, driver } = row.original;
       return h(
@@ -52,7 +52,7 @@ const finalColumns = [
   columnHelper.display({
     id: 'actions',
     enableHiding: false,
-    header: () => h('div', { class: 'text-left' }, 'Ações'),
+    header: () => h('div', { class: 'text-xs leading-none text-left' }, 'Ações'),
     cell: ({ row }) => {
       const { id } = row.original;
       return h(
@@ -92,7 +92,7 @@ const finalColumns = [
         :data="openRides"
         sortby="user"
         :columnPin="['code']"
-        filterBy="usuário"
+        filterBy="código ou usuário"
       />
     </section>
   </main>

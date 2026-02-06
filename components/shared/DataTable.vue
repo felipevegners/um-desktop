@@ -37,9 +37,21 @@ import { cn, valueUpdater } from '~/lib/utils';
 
 const sorting = ref<SortingState>([]);
 const columnFilters = ref<ColumnFiltersState>([]);
+const globalFilter = ref<string>('');
 const columnVisibility = ref<VisibilityState>({});
 const rowSelection = ref({});
 const expanded = ref<ExpandedState>({});
+
+// Global filter function that searches across user.name and code
+const globalFilterFn = (row: any, columnId: string, filterValue: string): boolean => {
+  if (!filterValue) return true;
+  const original = row.original;
+  const searchTerm = filterValue.toLowerCase();
+  const userName = original?.user?.name?.toLowerCase() ?? '';
+  const rideCode = original?.code?.toLowerCase() ?? '';
+  // add more filters if necessary
+  return userName.includes(searchTerm) || rideCode.includes(searchTerm);
+};
 
 const emit = defineEmits<{
   'update:selectedRows': [rows: TData[]];
@@ -75,6 +87,7 @@ const table = useVueTable({
   getSortedRowModel: getSortedRowModel(),
   getFilteredRowModel: getFilteredRowModel(),
   getExpandedRowModel: getExpandedRowModel(),
+  globalFilterFn,
   onSortingChange: (updaterOrValue) => valueUpdater(updaterOrValue, sorting),
   onColumnFiltersChange: (updaterOrValue) => valueUpdater(updaterOrValue, columnFilters),
   onColumnVisibilityChange: (updaterOrValue) =>
@@ -87,6 +100,9 @@ const table = useVueTable({
     },
     get columnFilters() {
       return columnFilters.value;
+    },
+    get globalFilter() {
+      return globalFilter.value;
     },
     get columnVisibility() {
       return columnVisibility.value;
@@ -112,6 +128,14 @@ watch(
   },
   { deep: true },
 );
+
+// Watch global filter changes
+watch(
+  () => globalFilter.value,
+  (newValue) => {
+    table.setGlobalFilter(newValue);
+  },
+);
 </script>
 
 <template>
@@ -121,8 +145,8 @@ watch(
         v-if="showFilter"
         class="max-w-sm"
         :placeholder="`Filtrar por ${filterBy}`"
-        :model-value="table.getColumn(sortby as string)?.getFilterValue() as string"
-        @update:model-value="table.getColumn(sortby as string)?.setFilterValue($event)"
+        :model-value="globalFilter"
+        @update:model-value="globalFilter = String($event)"
       />
       <DropdownMenu v-if="showColumnSelect">
         <DropdownMenuTrigger as-child>
@@ -137,7 +161,7 @@ watch(
               .getAllColumns()
               .filter((column) => column.getCanHide())"
             :key="column.id"
-            class="capitalize"
+            class=""
             :checked="column.getIsVisible()"
             @update:checked="
               (value) => {
@@ -145,7 +169,7 @@ watch(
               }
             "
           >
-            {{ column.id }}
+            {{ (column.columnDef?.meta as any)?.label || column.id }}
           </DropdownMenuCheckboxItem>
         </DropdownMenuContent>
       </DropdownMenu>
@@ -164,6 +188,7 @@ watch(
                     'sticky bg-background/95': header.column.getIsPinned(),
                   },
                   header.column.getIsPinned() === 'left' ? 'left-0' : 'right-0',
+                  `max-w-[${(header.column.columnDef?.meta as any)?.width}]`,
                 )
               "
             >
@@ -189,6 +214,7 @@ watch(
                         'sticky bg-background/95': cell.column.getIsPinned(),
                       },
                       cell.column.getIsPinned() === 'left' ? 'left-0' : 'right-0',
+                      `max-w-[${(cell.column.columnDef?.meta as any)?.width}]`,
                     )
                   "
                 >

@@ -16,6 +16,7 @@ const paymentStatusTranslate = {
   expired: 'Expirado',
   voided: 'Cancelado',
   invoice: 'Faturar',
+  invoiced: 'Faturado',
   unpaid: 'Não Pago',
   NotFinalized: 'Não finalizado',
   authorized: 'Autorizado',
@@ -45,7 +46,7 @@ const showUrlButton = computed(() => {
 <template>
   <div class="flex items-center gap-1">
     <span
-      :class="`py-1 px-3 flex items-center justify-center rounded-md text-white text-[11px] uppercase w-fit  
+      :class="`px-2 py-1 flex items-center justify-center rounded-md text-white text-xxs uppercase w-fit  
       ${
         paymentStatus === 'pending' || paymentStatus === 'unpaid'
           ? 'bg-amber-600'

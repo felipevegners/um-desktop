@@ -47,7 +47,7 @@ onBeforeMount(async () => {
         ),
     );
   }
-  filteredRides.value = cancelledRides;
+  filteredRides.value = cancelledRides.value;
 });
 
 const editRide = (rideId: string) => {
@@ -61,7 +61,7 @@ const finalColumns = [
   columnHelper.display({
     id: 'actions',
     enableHiding: false,
-    header: () => h('div', { class: 'text-left' }, 'Ações'),
+    header: () => h('div', { class: 'text-xs leading-none text-left' }, 'Ações'),
     cell: ({ row }) => {
       const { id } = row.original;
       return h(
@@ -101,7 +101,7 @@ const finalColumns = [
         :data="filteredRides"
         sortby="user"
         :columnPin="['code']"
-        :filterBy="'nome do Usuário'"
+        :filterBy="'código ou nome do usuário'"
       />
     </section>
   </main>

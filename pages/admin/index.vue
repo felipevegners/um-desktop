@@ -157,7 +157,10 @@ definePageMeta({
         </p>
 
         <div>
-          <div v-if="calculateOpenRidePrices !== ''" class="md:grid md:grid-cols-3 gap-6">
+          <div
+            v-if="calculateOpenRidePrices !== ''"
+            class="flex flex-col md:grid md:grid-cols-3 gap-6"
+          >
             <div
               class="p-6 bg-zinc-950 text-white border border-zinc-950 rounded-lg w-full"
             >
@@ -168,7 +171,7 @@ definePageMeta({
                 v-if="calculateAllRidesPrices === 'NaN'"
                 class="animate-spin"
               />
-              <h1 v-else class="text-6xl font-bold">
+              <h1 v-else class="text-3xl lg:text-5xl font-bold">
                 {{
                   currencyFormat(
                     calculateAllRidesPrices === 'NaN' ? '0' : calculateAllRidesPrices,
@@ -184,7 +187,7 @@ definePageMeta({
                 v-if="calculateOpenRidePrices === 'NaN'"
                 class="animate-spin"
               />
-              <h1 v-else class="text-6xl font-bold">
+              <h1 v-else class="text-3xl lg:text-5xl font-bold">
                 {{
                   currencyFormat(
                     calculateOpenRidePrices === 'NaN' ? '0' : calculateOpenRidePrices,
@@ -200,7 +203,7 @@ definePageMeta({
                 v-if="calculateFinishedRideAmmount === 'NaN'"
                 class="animate-spin"
               />
-              <h1 v-else class="text-6xl font-bold">
+              <h1 v-else class="text-3xl lg:text-5xl font-bold">
                 {{
                   currencyFormat(
                     calculateFinishedRideAmmount === 'NaN'
@@ -218,7 +221,7 @@ definePageMeta({
                 v-if="calculateCancelledRideAmmount === 'NaN'"
                 class="animate-spin"
               />
-              <h1 v-else class="text-6xl font-bold">
+              <h1 v-else class="text-3xl lg:text-5xl font-bold text-red-600">
                 {{
                   currencyFormat(
                     calculateCancelledRideAmmount === 'NaN'
@@ -236,7 +239,7 @@ definePageMeta({
                 v-if="calculateTotalCommissions === 'NaN'"
                 class="animate-spin"
               />
-              <h1 v-else class="text-6xl font-bold text-amber-600">
+              <h1 v-else class="font-bold text-amber-600 text-3xl lg:text-5xl">
                 {{
                   currencyFormat(
                     calculateTotalCommissions === 'NaN' ? '0' : calculateTotalCommissions,
@@ -247,7 +250,7 @@ definePageMeta({
             <div class="p-6 bg-zinc-950 text-white border border-zinc-950 rounded-lg">
               <span class="block mb-6 text-sm text-muted-foreground">Receita Bruta</span>
               <LoaderCircle v-if="totalRevenue === 'NaN'" class="animate-spin" />
-              <h1 v-else class="text-6xl font-bold text-um-primary">
+              <h1 v-else class="text-3xl lg:text-5xl font-bold text-um-primary">
                 {{ currencyFormat(totalRevenue === 'NaN' ? '0' : totalRevenue) }}
               </h1>
             </div>
