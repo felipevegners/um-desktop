@@ -1,8 +1,7 @@
 import ProductTag from '@/components/shared/ProductTag.vue';
-import { Button } from '@/components/ui/button';
 import { WPP_API } from '@/config/paths';
 import { createColumnHelper } from '@tanstack/vue-table';
-import { ArrowUpDown, MessageCircleMore } from 'lucide-vue-next';
+import { MessageCircleMore } from 'lucide-vue-next';
 import ExtraChargesTooltip from '~/components/shared/ExtraChargesTooltip.vue';
 import {
   convertSecondsToTime,
@@ -35,39 +34,61 @@ export const columns: any = [
       );
     },
   }),
-  columnHelper.accessor('user', {
-    enablePinning: true,
-    header: ({ column }) => {
-      return h(
-        Button,
-        {
-          variant: 'ghost',
-          class: 'pl-0 text-xs leading-none',
-          onClick: () => column.toggleSorting(column.getIsSorted() === 'asc'),
-        },
-        () => ['Usuário', h(ArrowUpDown, { class: 'ml-2 h-4 w-4' })],
-      );
-    },
+  columnHelper.accessor((row) => row.user?.name ?? '', {
+    id: 'user',
+    meta: { label: 'Usuário', width: '200px' },
+    header: () => h('div', { class: 'text-xs leading-none text-left' }, 'Usuário'),
     cell: ({ row }: any) => {
       const data = row.original;
-      return h('div', { class: 'text-xs' }, [
-        data.user.name,
-        h(
-          'a',
-          {
-            href: WPP_API.replace('[[phone]]', sanitizePhone(data.user.phone as string)),
-            target: '_blank',
-            class: 'flex items-center gap-2 text-xs',
-          },
-          [
-            h('span', { class: 'text-muted-foreground' }, data.user.phone),
-            h(MessageCircleMore, { class: 'text-green-500 text-xs', size: 18 }),
-          ] as any,
-        ),
-      ]);
+      if (data.user.isVisitor) {
+        return h('div', { class: 'text-xs' }, [
+          data.user.visitorData.name,
+          h(
+            'span',
+            {
+              class:
+                'block my-1 w-fit px-1.5 py-1 bg-zinc-950 rounded-md text-white text-xxs uppercase',
+            },
+            'visitante',
+          ),
+          h(
+            'a',
+            {
+              href: WPP_API.replace(
+                '[[phone]]',
+                sanitizePhone(data.user.visitorData.phone as string),
+              ),
+              target: '_blank',
+              class: 'flex items-center gap-2 text-xs',
+            },
+            [
+              h('span', { class: 'text-muted-foreground' }, data.user.visitorData.phone),
+              h(MessageCircleMore, { class: 'text-green-500 text-xs', size: 18 }),
+            ] as any,
+          ),
+        ]);
+      } else {
+        return h('div', { class: 'text-xs' }, [
+          data.user.name,
+          h(
+            'a',
+            {
+              href: WPP_API.replace(
+                '[[phone]]',
+                sanitizePhone(data.user.phone as string),
+              ),
+              target: '_blank',
+              class: 'flex items-center gap-2 text-xs',
+            },
+            [
+              h('span', { class: 'text-muted-foreground' }, data.user.phone),
+              h(MessageCircleMore, { class: 'text-green-500 text-xs', size: 18 }),
+            ] as any,
+          ),
+        ]);
+      }
     },
   }),
-
   columnHelper.display({
     id: 'DateTime',
     enableHiding: false,

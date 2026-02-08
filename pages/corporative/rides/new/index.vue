@@ -1413,7 +1413,7 @@ const onSubmit = form.handleSubmit(async (values) => {
                   </div>
                   <Button
                     type="button"
-                    class="p-6 text-lg w-full"
+                    class="p-6 text-lg self-center"
                     @click.prevent="goToPaymentSection"
                   >
                     Prosseguir para pagamento
@@ -1456,12 +1456,42 @@ const onSubmit = form.handleSubmit(async (values) => {
                       />
                     </div>
                     <div
-                      v-show="
+                      v-if="
                         method.value === 'corporative' &&
                         paymentMethod.includes(method.value)
                       "
                       class="p-4 mb-4 md:grid md:grid-cols-2 gap-6 w-full"
                     >
+                      <div v-if="visitorUser" class="col-span-2 flex items-center gap-10">
+                        <div
+                          class="p-4 flex flex-col border border-amber-500 rounded-md bg-amber-100 w-full"
+                        >
+                          <div>
+                            <h3 class="mb-4 font-bold">Atendimento para visitante</h3>
+                          </div>
+                          <div class="flex flex-col gap-3">
+                            <div>
+                              <small class="text-muted-foreground"
+                                >Nome do visitante</small
+                              >
+                              <!-- @vue-skip -->
+                              <p>{{ form.values.visitorName }}</p>
+                            </div>
+                            <div>
+                              <small class="text-muted-foreground">Empresa</small>
+                              <!-- @vue-skip -->
+                              <p>{{ form.values.visitorCompany }}</p>
+                            </div>
+                            <div>
+                              <small class="text-muted-foreground"
+                                >Motivo da visita</small
+                              >
+                              <!-- @vue-skip -->
+                              <p>{{ form.values.visitorReason }}</p>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
                       <FormField v-slot="{ componentField, value }" name="branch">
                         <FormItem>
                           <FormLabel>Filial*</FormLabel>
