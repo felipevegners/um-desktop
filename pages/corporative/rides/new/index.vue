@@ -33,6 +33,7 @@ import { storeToRefs } from 'pinia';
 import { useForm } from 'vee-validate';
 import { GoogleMap, Marker, Polyline } from 'vue3-google-map';
 import * as z from 'zod';
+import VisitorUserForm from '~/components/forms/VisitorUserForm.vue';
 import SplitPaymentCCs from '~/components/shared/SplitPaymentCCs.vue';
 import {
   convertMetersToDistance,
@@ -95,6 +96,8 @@ const selectedUser = ref<any>({
   phone: '',
   role: 'platform-corp-user',
 });
+
+const visitorUser = ref(false);
 const showGenerateRide = ref<boolean>(false);
 const ridePassengers = ref(1);
 const paymentMethod = ref<any>('');
@@ -573,24 +576,27 @@ const dynamicSchema = computed(() => {
     destination: z.string(),
     observations: z.string().optional(),
     rideAddons: z.any(),
+    reason: z.string().min(1).max(100),
+    branch: z.string().optional(),
+    area: z.string().optional(),
   });
-
-  if (selectedUser?.value.role !== 'platform-user') {
+  if (visitorUser.value) {
     return baseSchema.extend({
-      reason: z.string().min(1).max(100),
-      branch: z.string().optional(),
-      area: z.string().optional(),
+      visitorName: z
+        .string({ message: 'Obrigatório!' })
+        .min(2, 'Insira ao menos 2 caracteres!'),
+      visitorPhone: z
+        .string({ message: 'Obrigatório!' })
+        .min(2, 'Insira ao menos 2 caracteres!'),
+      visitorCompany: z.string().optional(),
+      visitorReason: z.string().optional(),
     });
   } else {
-    return baseSchema.extend({
-      reason: z.string().optional(),
-      branch: z.string().optional(),
-      area: z.string().optional(),
-    });
+    return baseSchema;
   }
 });
 
-const newRideSchema = toTypedSchema(dynamicSchema.value);
+const newRideSchema = computed(() => toTypedSchema(dynamicSchema.value));
 
 const form = useForm({
   validationSchema: newRideSchema,
@@ -754,6 +760,20 @@ const onSubmit = form.handleSubmit(async (values) => {
       name: selectedUser.value.name,
       email: selectedUser.value.email,
       phone: selectedUser.value.phone,
+      isVisitor: visitorUser.value,
+      visitorData: visitorUser.value
+        ? {
+            //@ts-expect-error
+            name: values.visitorName,
+            //@ts-expect-error
+            phone: values.visitorPhone,
+            //@ts-expect-error
+            company: values.visitorCompany,
+            //@ts-expect-error
+            reason: values.visitorReason,
+            host: selectedUser.value.name,
+          }
+        : null,
     },
     product: {
       id: selectedProduct.value.id,
@@ -859,10 +879,10 @@ const onSubmit = form.handleSubmit(async (values) => {
                 </span>
                 Selecione o Usuário e o Serviço
               </CardTitle>
-              <div class="lg:mx-w-lg">
+              <div class="lg:mx-w-lg flex flex-col gap-6">
                 <!-- COLUNA DE DADOS -->
                 <div class="flex flex-col w-full gap-6">
-                  <FormField v-slot="{ componentField }" name="user">
+                  <FormField v-if="!visitorUser" v-slot="{ componentField }" name="user">
                     <FormItem>
                       <FormLabel>Usuário*</FormLabel>
                       <FormControl>
@@ -874,83 +894,89 @@ const onSubmit = form.handleSubmit(async (values) => {
                       </FormControl>
                     </FormItem>
                   </FormField>
-                  <div v-if="showAvailableProducts" class="lg:max-w-lg">
-                    <LoaderCircle v-if="loadingProducts" class="animate-spin" />
-                    <div v-else>
-                      <label class="text-sm font-medium">Selecione o Serviço UM*</label>
-                      <ul class="mt-2 flex justify-evenly gap-4 flex-wrap">
-                        <li
-                          class="w-full"
-                          v-for="product in availableProducts"
-                          :key="product.id"
+                  <VisitorUserForm
+                    :users-list="availableUsers"
+                    :visitor-user="visitorUser"
+                    @toogle-form="visitorUser = !visitorUser"
+                    @selected-user="setSelectedUser"
+                  />
+                </div>
+                <div v-if="showAvailableProducts" class="lg:max-w-lg">
+                  <LoaderCircle v-if="loadingProducts" class="animate-spin" />
+                  <div v-else>
+                    <label class="text-sm font-medium">Selecione o Serviço UM*</label>
+                    <ul class="mt-2 flex justify-evenly gap-4 flex-wrap">
+                      <li
+                        class="w-full"
+                        v-for="product in availableProducts"
+                        :key="product.id"
+                      >
+                        <article
+                          class="p-4 flex items-center justify-between gap-4 bg-white rounded-md border border-zinc-900"
                         >
-                          <article
-                            class="p-4 flex items-center justify-between gap-4 bg-white rounded-md border border-zinc-900"
+                          <div
+                            class="font-normal uppercase flex items-center justify-start gap-2"
                           >
+                            <Checkbox
+                              @update:checked="setSelectedProduct(product)"
+                              :checked="selectedProduct?.id === product.id"
+                            />
                             <div
-                              class="font-normal uppercase flex items-center justify-start gap-2"
-                            >
-                              <Checkbox
-                                @update:checked="setSelectedProduct(product)"
-                                :checked="selectedProduct?.id === product.id"
-                              />
-                              <div
-                                class="w-[50px] h-[50px] rounded-md bg-zinc-200 bg-contain bg-no-repeat bg-center relative flex items-center justify-center"
-                                :style="{
-                                  backgroundImage: `url(${product.image?.url})`,
-                                }"
-                              />
-                              <ProductTag :label="product.name" :type="product.name" />
-                              <div class="flex items-center justify-start gap-4">
-                                <div class="flex items-center">
-                                  <Users :size="14" />
-                                  <small class="ml-1 font-bold">
-                                    {{ product?.capacity }}
-                                  </small>
-                                </div>
-                                <div class="ml-4 flex flex-col items-center">
-                                  <small class="text-xs">Base</small>
-                                  <small>R$ {{ product.basePrice }}</small>
-                                </div>
-                                <div class="flex flex-col items-center">
-                                  <small class="text-xs">Km</small>
-                                  <small>R$ {{ product.kmPrice }}</small>
-                                </div>
-                                <div class="flex flex-col items-center">
-                                  <small class="text-xs">Min.</small>
-                                  <small>R$ {{ product.minutePrice }}</small>
-                                </div>
+                              class="w-[50px] h-[50px] rounded-md bg-zinc-200 bg-contain bg-no-repeat bg-center relative flex items-center justify-center"
+                              :style="{
+                                backgroundImage: `url(${product.image?.url})`,
+                              }"
+                            />
+                            <ProductTag :label="product.name" :type="product.name" />
+                            <div class="flex items-center justify-start gap-4">
+                              <div class="flex items-center">
+                                <Users :size="14" />
+                                <small class="ml-1 font-bold">
+                                  {{ product?.capacity }}
+                                </small>
+                              </div>
+                              <div class="ml-4 flex flex-col items-center">
+                                <small class="text-xs">Base</small>
+                                <small>R$ {{ product.basePrice }}</small>
+                              </div>
+                              <div class="flex flex-col items-center">
+                                <small class="text-xs">Km</small>
+                                <small>R$ {{ product.kmPrice }}</small>
+                              </div>
+                              <div class="flex flex-col items-center">
+                                <small class="text-xs">Min.</small>
+                                <small>R$ {{ product.minutePrice }}</small>
                               </div>
                             </div>
-                            <TooltipProvider>
-                              <Tooltip>
-                                <TooltipTrigger as-child class="hover:cursor-pointer">
-                                  <svg
-                                    xmlns="http://www.w3.org/2000/svg"
-                                    width="24"
-                                    height="24"
-                                    viewBox="0 0 24 24"
-                                    fill="none"
-                                    stroke="currentColor"
-                                    stroke-width="2"
-                                    stroke-linecap="round"
-                                    stroke-linejoin="round"
-                                    class="text-zinc-700 lucide lucide-circle-question-mark-icon lucide-circle-question-mark"
-                                  >
-                                    <circle cx="12" cy="12" r="10" />
-                                    <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3" />
-                                    <path d="M12 17h.01" />
-                                  </svg>
-                                </TooltipTrigger>
-                                <TooltipContent class="bg-zinc-700 text-white">
-                                  <p>{{ product.description }}</p>
-                                </TooltipContent>
-                              </Tooltip>
-                            </TooltipProvider>
-                          </article>
-                        </li>
-                      </ul>
-                    </div>
+                          </div>
+                          <TooltipProvider>
+                            <Tooltip>
+                              <TooltipTrigger as-child class="hover:cursor-pointer">
+                                <svg
+                                  xmlns="http://www.w3.org/2000/svg"
+                                  width="24"
+                                  height="24"
+                                  viewBox="0 0 24 24"
+                                  fill="none"
+                                  stroke="currentColor"
+                                  stroke-width="2"
+                                  stroke-linecap="round"
+                                  stroke-linejoin="round"
+                                  class="text-zinc-700 lucide lucide-circle-question-mark-icon lucide-circle-question-mark"
+                                >
+                                  <circle cx="12" cy="12" r="10" />
+                                  <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3" />
+                                  <path d="M12 17h.01" />
+                                </svg>
+                              </TooltipTrigger>
+                              <TooltipContent class="bg-zinc-700 text-white">
+                                <p>{{ product.description }}</p>
+                              </TooltipContent>
+                            </Tooltip>
+                          </TooltipProvider>
+                        </article>
+                      </li>
+                    </ul>
                   </div>
                 </div>
               </div>
