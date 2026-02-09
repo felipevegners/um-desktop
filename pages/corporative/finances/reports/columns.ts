@@ -1,9 +1,8 @@
 import ExtraChargesTooltip from '@/components/shared/ExtraChargesTooltip.vue';
 import ProductTag from '@/components/shared/ProductTag.vue';
-import { Button } from '@/components/ui/button';
 import { WPP_API } from '@/config/paths';
 import { createColumnHelper } from '@tanstack/vue-table';
-import { ArrowUpDown, MessageCircleMore } from 'lucide-vue-next';
+import { MessageCircleMore } from 'lucide-vue-next';
 import {
   convertSecondsToTime,
   currencyFormat,
@@ -14,20 +13,22 @@ import {
 
 const columnHelper = createColumnHelper<any>();
 
-const editRide = (rideId: string) => {
-  navigateTo({
-    name: 'corporative-rides-edit-id',
-    params: { id: rideId },
-  });
-};
-
 export const columns: any = [
   columnHelper.accessor('code', {
-    header: () => h('div', { class: 'text-left' }, 'Código'),
-    cell: ({ row }) => h('div', { class: 'capitalize text-xs' }, row.getValue('code')),
+    meta: {
+      label: 'Código',
+      width: '120px',
+    },
+    header: () => h('div', { class: 'text-xs leading-none text-left' }, 'Código'),
+    cell: ({ row }: any) => {
+      const { code }: any = row.original;
+      const sanitized = code.replace('UM-', '');
+      return h('div', { class: 'capitalize text-xs' }, sanitized);
+    },
   }),
   columnHelper.accessor('product', {
-    header: () => h('div', { class: 'text-xs text-left' }, 'Produto'),
+    meta: { label: 'Produto', width: '90px' },
+    header: () => h('div', { class: 'text-xs leading-none text-left' }, 'Produto'),
     cell: ({ row }) => {
       const { product }: any = row.original;
       return h(
@@ -40,52 +41,73 @@ export const columns: any = [
       );
     },
   }),
-  columnHelper.accessor('user', {
-    enablePinning: true,
-    header: ({ column }) => {
-      return h(
-        Button,
-        {
-          variant: 'ghost',
-          class: 'pl-0',
-          onClick: () => column.toggleSorting(column.getIsSorted() === 'asc'),
-        },
-        () => ['Usuário', h(ArrowUpDown, { class: 'ml-2 h-4 w-4' })],
-      );
-    },
+  columnHelper.accessor((row) => row.user?.name ?? '', {
+    id: 'user',
+    meta: { label: 'Usuário', width: '200px' },
+    header: () => h('div', { class: 'text-xs leading-none text-left' }, 'Usuário'),
     cell: ({ row }: any) => {
       const data = row.original;
-      return h('div', { class: 'text-xs' }, [
-        data.user.name,
-        h(
-          'a',
-          {
-            href: WPP_API.replace('[[phone]]', sanitizePhone(data.user.phone as string)),
-            target: '_blank',
-            class: 'flex items-center gap-2 text-xs',
-          },
-          [
-            h('span', { class: 'text-muted-foreground' }, data.user.phone),
-            h(MessageCircleMore, { class: 'text-green-500 text-xs', size: 18 }),
-          ] as any,
-        ),
-      ]);
+      if (data.user.isVisitor) {
+        return h('div', { class: 'text-xs' }, [
+          data.user.visitorData.name,
+          h(
+            'span',
+            {
+              class:
+                'block my-1 w-fit px-1.5 py-1 bg-zinc-950 rounded-md text-white text-xxs uppercase',
+            },
+            'visitante',
+          ),
+          h(
+            'a',
+            {
+              href: WPP_API.replace(
+                '[[phone]]',
+                sanitizePhone(data.user.visitorData.phone as string),
+              ),
+              target: '_blank',
+              class: 'flex items-center gap-2 text-xs',
+            },
+            [
+              h('span', { class: 'text-muted-foreground' }, data.user.visitorData.phone),
+              h(MessageCircleMore, { class: 'text-green-500 text-xs', size: 18 }),
+            ] as any,
+          ),
+        ]);
+      } else {
+        return h('div', { class: 'text-xs' }, [
+          data.user.name,
+          h(
+            'a',
+            {
+              href: WPP_API.replace(
+                '[[phone]]',
+                sanitizePhone(data.user.phone as string),
+              ),
+              target: '_blank',
+              class: 'flex items-center gap-2 text-xs',
+            },
+            [
+              h('span', { class: 'text-muted-foreground' }, data.user.phone),
+              h(MessageCircleMore, { class: 'text-green-500 text-xs', size: 18 }),
+            ] as any,
+          ),
+        ]);
+      }
     },
   }),
-  columnHelper.display({
-    id: 'DateTime',
-    enableHiding: false,
-    header: () => h('div', { class: 'text-left' }, 'Data e Hora'),
+  columnHelper.accessor('time', {
+    meta: { label: 'Data e Hora', width: '100px' },
+    header: () => h('div', { class: 'text-xs leading-none text-left' }, 'Data e Hora'),
     cell: ({ row }) => {
       const data = row.original;
-      const travelDateTime = `${sanitizeRideDate(data.travel.date as string)} - ${data.travel.departTime}`;
+      const travelDateTime = `${sanitizeRideDate(data.travel.date as string)} ${data.travel.departTime}`;
       return h('div', { class: 'capitalize text-xs text-wrap' }, [`${travelDateTime}`]);
     },
   }),
-  columnHelper.display({
-    id: 'routeDateTime',
-    enableHiding: false,
-    header: () => h('div', { class: 'text-left' }, 'Rota'),
+  columnHelper.accessor('route', {
+    meta: { label: 'Rota', width: '200px' },
+    header: () => h('div', { class: 'text-xs leading-none text-left' }, 'Rota'),
     cell: ({ row }) => {
       const data = row.original;
       const normalizeOrigin = data.travel.originAddress.split('-').slice(0, 1).pop();
@@ -100,7 +122,7 @@ export const columns: any = [
               'span',
               {
                 class:
-                  'block m-2 px-2 py-0.5 text-center bg-zinc-900 text-zinc-300 text-xs w-fit rounded-md',
+                  'ml-1 px-2 py-0.5 text-center bg-zinc-900 text-zinc-300 text-xs w-fit rounded-md',
               },
               `${data?.travel.stops?.length > 1 ? data?.travel.stops?.length + ' paradas' : data?.travel.stops?.length + ' parada'}`,
             )
@@ -108,8 +130,10 @@ export const columns: any = [
       ]);
     },
   }),
-  columnHelper.accessor('travel', {
-    header: () => h('div', { class: 'text-center' }, 'Tempo em Paradas'),
+
+  columnHelper.accessor('tp', {
+    meta: { label: 'TP' },
+    header: () => h('div', { class: 'text-xs leading-none text-center' }, 'TP'),
     cell: ({ row }) => {
       const data = row.original;
       const { totalTimeStopped } = data.travel;
@@ -120,76 +144,92 @@ export const columns: any = [
       );
     },
   }),
-  columnHelper.accessor('travel', {
-    header: () => h('div', { class: 'text-xs text-left' }, 'Km Extra'),
+  columnHelper.accessor('kme', {
+    meta: { label: 'KME' },
+    header: () => h('div', { class: 'text-xs leading-none text-left' }, 'KME'),
     cell: ({ row }) => {
       const data = row.original;
       return h(
         'div',
         { class: 'text-xs' },
-        data.travel.completedData ? data.travel.completedData.rideExtraKms + ' KMs' : '0',
+        data.travel.completedData?.rideExtraKms !== 0
+          ? data.travel.completedData?.rideExtraKms.toLocaleString('pt-BR', {
+              maximumFractionDigits: 2,
+            })
+          : '-',
       );
     },
   }),
-  columnHelper.accessor('travel', {
-    header: () => h('div', { class: 'text-xs text-left' }, 'Valor Km Extra'),
+  columnHelper.accessor('kme-price', {
+    meta: { label: 'Valor KME' },
+    header: () => h('div', { class: 'text-xs leading-none text-left' }, 'Valor KME'),
     cell: ({ row }) => {
       const data = row.original;
       return h(
         'div',
         { class: 'text-xs font-bold text-amber-600' },
-        data.travel.completedData
-          ? currencyFormat(data.travel.completedData.rideExtraKmPrice)
-          : '0',
+        data?.travel.completedData && data?.travel.completedData?.rideExtraKmPrice !== ''
+          ? currencyFormat(data.travel.completedData?.rideExtraKmPrice)
+          : '-',
       );
     },
   }),
-  columnHelper.accessor('travel', {
-    header: () => h('div', { class: 'text-xs text-left' }, 'Minuto Extra'),
+  columnHelper.accessor('he', {
+    meta: { label: 'HE' },
+    header: () => h('div', { class: 'text-xs leading-none text-left' }, 'HE'),
     cell: ({ row }) => {
       const data = row.original;
       return h(
         'div',
         { class: 'text-xs' },
-        data.travel.completedData
-          ? Math.ceil(data.travel.completedData.rideExtraHours * 60) + ' Min'
-          : '0',
+        data?.travel.completedData && data?.travel.completedData?.rideExtraHours !== 0
+          ? Math.ceil(data?.travel.completedData?.rideExtraHours || 0)
+          : '-',
       );
     },
   }),
-  columnHelper.accessor('travel', {
-    header: () => h('div', { class: 'text-xs text-left' }, 'Valor Min. Extra'),
+  columnHelper.accessor('he-price', {
+    meta: { label: 'Valor HE' },
+
+    header: () => h('div', { class: 'text-xs leading-none text-left' }, 'Valor HE'),
     cell: ({ row }) => {
       const data = row.original;
       return h(
         'div',
         { class: 'text-xs font-bold text-amber-600' },
-        data.travel.completedData
-          ? currencyFormat(data.travel.completedData.rideExtraHourPrice)
-          : '0',
+        data?.travel.completedData &&
+          data?.travel.completedData?.rideExtraHourPrice !== ''
+          ? currencyFormat(data?.travel.completedData?.rideExtraHourPrice || '0')
+          : '-',
       );
     },
   }),
   columnHelper.accessor('extraCharges', {
-    header: () => h('div', { class: 'text-center' }, 'Adicionais'),
+    meta: { label: 'Adicionais' },
+    header: () => h('div', { class: 'text-xs leading-none text-center' }, 'Adicionais'),
     cell: ({ row }) => {
       const data = row.original;
       const extraChargesTotal =
-        data?.extraCharges?.length > 0
-          ? data.extraCharges.reduce((acc: number, curr: any) => {
+        data?.extraCharges && data?.extraCharges.length > 0
+          ? data.extraCharges?.reduce((acc: number, curr: any) => {
               return acc + sanitizeAmount(curr?.amount);
             }, 0)
           : 0;
-      return h('div', { class: 'flex items-center gap-1 text-xs font-bold' }, [
-        currencyFormat(extraChargesTotal),
-        extraChargesTotal > 0
-          ? h(ExtraChargesTooltip, { items: data.extraCharges })
-          : null,
-      ]);
+      return h(
+        'div',
+        { class: 'flex items-center gap-1 text-xs font-bold text-amber-600' },
+        [
+          currencyFormat(extraChargesTotal),
+          extraChargesTotal > 0
+            ? h(ExtraChargesTooltip, { items: data.extraCharges })
+            : null,
+        ],
+      );
     },
   }),
   columnHelper.accessor('billing', {
-    header: () => h('div', { class: 'text-left' }, 'Valor Total'),
+    meta: { label: 'Valor Total' },
+    header: () => h('div', { class: 'text-xs leading-none text-center' }, 'Valor Total'),
     cell: ({ row }) => {
       const data = row.original;
       return h(
@@ -199,38 +239,4 @@ export const columns: any = [
       );
     },
   }),
-
-  // columnHelper.display({
-  //   id: 'driver',
-  //   enableHiding: false,
-  //   header: () => h('div', { class: 'text-left' }, 'Motorista'),
-  //   cell: ({ row }) => {
-  //     const { id, driver } = row.original;
-  //     return h(
-  //       'div',
-  //       { class: 'relative text-xs' },
-  //       driver.name ? driver.name.split(' ')[0] : 'Nenhum',
-  //     );
-  //   },
-  // }),
-  // columnHelper.display({
-  //   id: 'actions',
-  //   enableHiding: false,
-  //   header: () => h('div', { class: 'text-left' }, 'Ações'),
-  //   cell: ({ row }) => {
-  //     const { id } = row.original;
-  //     return h(
-  //       'div',
-  //       { class: 'relative text-left' },
-  //       h(TableActions, {
-  //         dataId: id,
-  //         options: ['edit'],
-  //         loading: false,
-  //         onView: () => {},
-  //         onEdit: editRide,
-  //         onDelete: () => {},
-  //       }),
-  //     );
-  //   },
-  // }),
 ];

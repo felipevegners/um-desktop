@@ -39,7 +39,6 @@ import {
   convertSecondsToTime,
   currencyFormat,
   polyLineCodec,
-  sanitizeAmount,
   sanitizeRideDate,
 } from '~/lib/utils';
 
@@ -96,6 +95,7 @@ const paymentLinkUrl = ref<string>('');
 const contractBranches = ref<any>();
 const contractBranchAreas = ref<any>();
 const contractBranchesList = ref<any>();
+const selectedUserBranchName = ref<string>();
 const loadingAreas = ref<boolean>(false);
 const enablePayment = ref<boolean>(false);
 const splitPaymentAreas = ref<boolean>(false);
@@ -112,16 +112,6 @@ const calculatedEstimates = ref({
   estimatedTotalPrice: '',
 });
 
-const addShareCCRow = () => {
-  splitPaymentCCAreas.value.push({ area: '', percentage: 0, amount: 0 });
-};
-
-const removeShareCCRow = (index: number) => {
-  splitPaymentCCAreas.value.splice(index, 1);
-  calculateCCPercentage(index - 1);
-  showAddCCToShareBtn.value = true;
-};
-
 const availableContractBranchAreas = computed(() => {
   if (!contractBranchAreas.value) return [];
 
@@ -134,58 +124,6 @@ const availableContractBranchAreas = computed(() => {
     disabled: usedAreas.includes(item.value),
   }));
 });
-
-const calculateCCPercentage = (index: number) => {
-  totalRideRated.value = 0;
-  const totalPercentage =
-    parseFloat(calculatedEstimates.value.estimatedTotalPrice) *
-    (splitPaymentCCAreas.value[index].percentage / 100);
-  splitPaymentCCAreas.value[index].amount = Math.round(totalPercentage * 100) / 100; // number
-
-  const checkAllPercentages = splitPaymentCCAreas.value.reduce(
-    (acc: number, curr: any) => {
-      return (acc + curr.percentage) as number;
-    },
-    0,
-  );
-  showAddCCToShareBtn.value = checkAllPercentages >= 100 ? false : true;
-
-  if (checkAllPercentages > 100) {
-    //@ts-ignore
-    form.setFieldError(`percentage-${index}`, 'Valor atingiu os 100%');
-    return null;
-  } else {
-    //@ts-ignore
-    form.resetField(`percentage-${index}`);
-
-    const acumulatedCents = splitPaymentCCAreas.value.reduce((acc: number, curr: any) => {
-      const cents = Math.round(sanitizeAmount(curr?.amount) * 100);
-      return acc + cents;
-    }, 0);
-
-    const acumulated = acumulatedCents / 100;
-
-    totalRideRated.value = acumulated.toFixed(2);
-
-    const estimatedCents = Math.round(
-      sanitizeAmount(calculatedEstimates.value.estimatedTotalPrice) * 100,
-    );
-    const remainingCents = estimatedCents - acumulatedCents;
-    const remaining = remainingCents / 100;
-    remainingRideAmount.value = Math.max(0, remaining).toFixed(2);
-
-    splitPaymentCCAreas.value[index].amount = totalPercentage.toFixed(2);
-
-    return splitPaymentCCAreas.value[index].amount;
-  }
-};
-
-const cancelSplitPayment = () => {
-  splitPaymentAreas.value = !splitPaymentAreas;
-  splitPaymentCCAreas.value = [];
-  remainingRideAmount.value = calculatedEstimates.value.estimatedTotalPrice;
-  showAddCCToShareBtn.value = true;
-};
 
 const showWaypointsForm = ref<boolean>(false);
 const showContractProductAlert = ref<boolean>(false);
@@ -384,6 +322,7 @@ const setSelectedUser = async (user: any) => {
         (branch: any) => branch.id === userData.contract.branchId,
       );
 
+      selectedUserBranchName.value = filterUserBranch.fantasyName;
       contractBranchesList.value = isMasterManager
         ? contract?.value.branches.map((branch: any) => {
             return {
@@ -801,7 +740,7 @@ const onSubmit = form.handleSubmit(async (values) => {
       paymentUrl: paymentLinkUrl.value,
       paymentData: {
         contract: selectedUser.value.contract.contractId,
-        contractName: selectedUser.value.contract.name,
+        branchName: selectedUserBranchName.value,
         branch: values?.branch || '-',
         area:
           splitPaymentCCAreas.value.length > 0

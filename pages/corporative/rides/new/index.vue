@@ -10,7 +10,6 @@ import { useToast } from '@/components/ui/toast/use-toast';
 import { paymentMethods } from '@/config/paymentMethods';
 import { getRideRoutesService } from '@/server/services/rides';
 import { useAccountStore } from '@/stores/account.store';
-import { useBranchesStore } from '@/stores/branches.store';
 import { useContractsStore } from '@/stores/contracts.store';
 import { useProductsStore } from '@/stores/products.store';
 import { useRidesStore } from '@/stores/rides.store';
@@ -69,7 +68,6 @@ const role = data.value?.user?.role;
 const name = data.value?.user?.name;
 
 const contractsStore = useContractsStore();
-const branchesStore = useBranchesStore();
 const accountStore = useAccountStore();
 const ridesStore = useRidesStore();
 const productsStore = useProductsStore();
@@ -77,7 +75,7 @@ const { getContractByIdAction } = contractsStore;
 const { contract } = storeToRefs(contractsStore);
 const { getUsersAccountsByContractIdAction } = accountStore;
 const { accounts } = storeToRefs(accountStore);
-const { createRideAction, getRidesAction, loadingData } = ridesStore;
+const { createRideAction, getRidesAction } = ridesStore;
 const { rides } = storeToRefs(ridesStore);
 const { getProductsAction } = productsStore;
 const { products } = storeToRefs(productsStore);
@@ -107,6 +105,7 @@ const paymentLinkUrl = ref<string>('');
 const contractBranches = ref<any>();
 const contractBranchAreas = ref<any>();
 const contractBranchesList = ref<any>();
+const selectedUserBranchName = ref<string>();
 const loadingAreas = ref<boolean>(false);
 const enablePayment = ref<boolean>(false);
 const showPaymentArea = ref<boolean>(false);
@@ -291,6 +290,8 @@ const setSelectedUser = async (user: any) => {
       (branch: any) => branch.id === userData.contract.branchId,
     );
 
+    selectedUserBranchName.value = filterUserBranch.fantasyName;
+
     contractBranchesList.value = isMasterManager
       ? contract?.value.branches.map((branch: any) => {
           return {
@@ -312,12 +313,6 @@ const setSelectedUser = async (user: any) => {
       form.setFieldValue('area', contractBranchesList.value[0].value);
       getBranchAreas(contractBranchesList.value[0].value);
     }
-    // contractBranchesList.value = contract?.value.branches.map((branch: any) => {
-    //   return {
-    //     label: `${branch.branchCode} - ${branch.fantasyName}`,
-    //     value: branch.id,
-    //   };
-    // });
 
     loadingProducts.value = false;
     paymentMethodList.value = paymentMethods.filter((method) => method.value !== 'pix');
@@ -735,8 +730,8 @@ const onSubmit = form.handleSubmit(async (values) => {
       paymentUrl: paymentLinkUrl.value,
       paymentData: {
         contract: selectedUser.value.contract.contractId,
-        contractName: selectedUser.value.contract.name,
         branch: values?.branch || '-',
+        branchName: selectedUserBranchName.value,
         area:
           splitPaymentCCAreas.value.length > 0
             ? 'splited'
@@ -836,13 +831,6 @@ const onSubmit = form.handleSubmit(async (values) => {
   try {
     loadingGenerateRide.value = true;
     await createRideAction(ridePayload);
-  } catch (error) {
-    toast({
-      title: 'Oops!',
-      description: `Ocorreu um erro ao criar o agendamento. Tente novamente.`,
-      variant: 'destructive',
-    });
-  } finally {
     loadingGenerateRide.value = false;
     toast({
       title: 'Tudo pronto!',
@@ -852,6 +840,12 @@ const onSubmit = form.handleSubmit(async (values) => {
     setTimeout(() => {
       navigateTo('/corporative/rides/open');
     }, 1500);
+  } catch (error) {
+    toast({
+      title: 'Oops!',
+      description: `Ocorreu um erro ao criar o agendamento. Tente novamente.`,
+      variant: 'destructive',
+    });
   }
 });
 </script>

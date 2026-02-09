@@ -9,6 +9,7 @@ const props = defineProps<{
 
 <template>
   <td
+    v-bind="$attrs"
     :class="
       cn(
         'p-4 align-middle [&:has([role=checkbox])]:pr-0',

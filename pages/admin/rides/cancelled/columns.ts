@@ -65,6 +65,36 @@ export const columns: any = [
       ]);
     },
   }),
+  columnHelper.accessor('branch', {
+    meta: {
+      label: 'Filial',
+      width: '120px',
+    },
+    header: () => h('div', { class: 'text-xs leading-none text-left' }, 'Filial'),
+    cell: ({ row }: any) => {
+      const { billing }: any = row.original;
+      const name = billing.paymentData.branchName;
+      return h('div', { class: 'capitalize text-xs' }, name ? name : '-');
+    },
+  }),
+  columnHelper.accessor('area', {
+    meta: {
+      label: 'CC',
+      width: '120px',
+    },
+    header: () => h('div', { class: 'text-xs leading-none text-left' }, 'CC'),
+    cell: ({ row }: any) => {
+      const { billing }: any = row.original;
+      let name = billing.paymentData.area;
+      if (name === 'splited') {
+        const areas = billing.paymentData.splitedPayment.map((item: any) => {
+          return item.area;
+        });
+        return h('div', { class: 'capitalize text-xs' }, `${areas.join(' / ')}`);
+      }
+      return h('div', { class: 'capitalize text-xs' }, name ? name : '-');
+    },
+  }),
   columnHelper.accessor('time', {
     meta: { label: 'Data e Hora', width: '100px' },
     header: () => h('div', { class: 'text-xs leading-none text-left' }, 'Data e Hora'),

@@ -257,7 +257,7 @@ const menuData = generateMenu(user.role);
       </SidebarFooter> -->
       <SidebarRail />
     </Sidebar>
-    <SidebarInset>
+    <SidebarInset class="max-w-[calc(100%-256px)]">
       <Header />
       <slot />
     </SidebarInset>

@@ -18,9 +18,9 @@ const columnHelper = createColumnHelper<any>();
 
 export const columns: any = [
   columnHelper.accessor('code', {
+    size: 90,
     meta: {
       label: 'Código',
-      width: '120px',
     },
     header: () => h('div', { class: 'text-xs leading-none text-left' }, 'Código'),
     cell: ({ row }: any) => {
@@ -30,7 +30,8 @@ export const columns: any = [
     },
   }),
   columnHelper.accessor('product', {
-    meta: { label: 'Produto', width: '90px' },
+    size: 120,
+    meta: { label: 'Produto' },
     header: () => h('div', { class: 'text-xs leading-none text-left' }, 'Produto'),
     cell: ({ row }) => {
       const { product }: any = row.original;
@@ -46,7 +47,8 @@ export const columns: any = [
   }),
   columnHelper.accessor((row) => row.user?.name ?? '', {
     id: 'user',
-    meta: { label: 'Usuário', width: '200px' },
+    size: 200,
+    meta: { label: 'Usuário' },
     header: () => h('div', { class: 'text-xs leading-none text-left' }, 'Usuário'),
     cell: ({ row }: any) => {
       const data = row.original;
@@ -67,12 +69,42 @@ export const columns: any = [
       ]);
     },
   }),
+  columnHelper.accessor('branch', {
+    meta: {
+      label: 'Filial',
+      width: '120px',
+    },
+    header: () => h('div', { class: 'text-xs leading-none text-left' }, 'Filial'),
+    cell: ({ row }: any) => {
+      const { billing }: any = row.original;
+      const name = billing.paymentData.branchName;
+      return h('div', { class: 'capitalize text-xs' }, name ? name : '-');
+    },
+  }),
+  columnHelper.accessor('area', {
+    meta: {
+      label: 'CC',
+      width: '120px',
+    },
+    header: () => h('div', { class: 'text-xs leading-none text-left' }, 'CC'),
+    cell: ({ row }: any) => {
+      const { billing }: any = row.original;
+      let name = billing.paymentData.area;
+      if (name === 'splited') {
+        const areas = billing.paymentData.splitedPayment.map((item: any) => {
+          return item.area;
+        });
+        return h('div', { class: 'capitalize text-xs' }, `${areas.join(' / ')}`);
+      }
+      return h('div', { class: 'capitalize text-xs' }, name ? name : '-');
+    },
+  }),
   columnHelper.accessor('time', {
     meta: { label: 'Data e Hora', width: '100px' },
     header: () => h('div', { class: 'text-xs leading-none text-left' }, 'Data e Hora'),
     cell: ({ row }) => {
       const data = row.original;
-      const travelDateTime = `${sanitizeRideDate(data.travel.date as string)} - ${data.travel.departTime}`;
+      const travelDateTime = `${sanitizeRideDate(data.travel.date as string)} ${data.travel.departTime}`;
       return h('div', { class: 'capitalize text-xs text-wrap' }, [`${travelDateTime}`]);
     },
   }),

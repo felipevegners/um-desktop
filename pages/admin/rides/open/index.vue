@@ -38,7 +38,7 @@ const finalColumns = [
   ...columns,
   columnHelper.display({
     id: 'driver',
-    enableHiding: false,
+    meta: { label: 'Motorista' },
     header: () => h('div', { class: 'text-xs leading-none text-left' }, 'Motorista'),
     cell: ({ row }) => {
       const { id, driver } = row.original;
@@ -87,13 +87,15 @@ const finalColumns = [
     </section>
     <section v-else>
       <RidesTotalsDash :rides="openRides" />
-      <DataTable
-        :columns="finalColumns"
-        :data="openRides"
-        sortby="user"
-        :columnPin="['code']"
-        filterBy="código ou usuário"
-      />
+      <ScrollArea class="w-full">
+        <DataTable
+          :columns="finalColumns"
+          :data="openRides"
+          sortby="user"
+          :columnPin="['code', 'product', 'user']"
+          filterBy="código ou usuário"
+        />
+      </ScrollArea>
     </section>
   </main>
 </template>
