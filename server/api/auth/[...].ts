@@ -1,6 +1,7 @@
 import { NuxtAuthHandler } from '#auth';
 import { useToast } from '@/components/ui/toast/use-toast';
 import bcrypt from 'bcrypt';
+import { getCookie, setCookie } from 'h3';
 import CredentialsProvider from 'next-auth/providers/credentials';
 import { prisma } from '~/utils/prisma';
 
@@ -59,6 +60,32 @@ export default NuxtAuthHandler({
   },
 
   callbacks: {
+    async signIn({ user }: any) {
+      // Set cookies when user is authenticated
+      try {
+        const event = useEvent();
+        const cookiesAccepted = String(getCookie(event, 'accept_cookies') || 'false');
+
+        if (event) {
+          setCookie(event, 'accept_cookies', cookiesAccepted, {
+            maxAge: 60 * 60 * 24 * 365, // 1 year
+            secure: true,
+            httpOnly: false,
+            sameSite: 'lax',
+          });
+          //@ts-ignore
+          setCookie(event, 'accept_terms', String(user?.acceptTerms), {
+            maxAge: 60 * 60 * 24 * 365, // 1 year
+            secure: true,
+            httpOnly: false,
+            sameSite: 'lax',
+          });
+        }
+      } catch (error) {
+        console.error('Error setting cookies:', error);
+      }
+      return true;
+    },
     async jwt({ token, user }) {
       if (user) {
         token = {
@@ -75,6 +102,13 @@ export default NuxtAuthHandler({
         ...token,
       };
       return session;
+    },
+    async redirect({ url, baseUrl }) {
+      // Allows relative callback URLs
+      if (url.startsWith('/')) return `${baseUrl}${url}`;
+      // Allows callback URLs on the same origin
+      else if (new URL(url).origin === baseUrl) return url;
+      return baseUrl;
     },
   },
 });

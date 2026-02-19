@@ -43,7 +43,7 @@ const getUserRole = computed(() => {
             <small class="text-muted-foreground text-xs">{{ getUserRole }}</small>
           </div>
         </div>
-        <h3 class="text-md" v-else>Sua sessão expirou, faça novamente o login.</h3>
+        <h3 class="text-sm" v-else>Sua sessão expirou, faça novamente o login.</h3>
         <Button class="mr-4" variant="outline" @click="signOut">
           <LogOut class="w-5 h-5" />
           Logout

@@ -210,6 +210,8 @@ const onSubmit = form.handleSubmit(async (values) => {
       name: '',
       url: '',
     },
+    acceptTerms: account.value.acceptTerms,
+    emailConfirmed: account.value.emailConfirmed,
   };
 
   try {

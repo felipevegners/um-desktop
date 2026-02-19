@@ -15,6 +15,9 @@ export type ModuleOptions = RouteHandlerConfig & {
 export default defineNuxtConfig({
   compatibilityDate: '2024-11-01',
   devtools: { enabled: true },
+  experimental: {
+    asyncContext: true,
+  },
   app: {
     head: {
       title: 'Urban Mobi - Plataforma de Gestão de Mobilidade Urbana e Corporativa',

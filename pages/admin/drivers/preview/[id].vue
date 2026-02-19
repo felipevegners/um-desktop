@@ -81,7 +81,7 @@ await getDriverByIdAction(route.params.id as string);
                   {{ driver?.status === 'validated' ? 'Validado' : 'Pendente' }}
                 </p>
                 <p
-                  v-if="driver?.acceptedTerms === false"
+                  v-if="driver?.accept_terms === false"
                   class="flex items-center gap-2 text-red-800"
                 >
                   <Info :size="18" />

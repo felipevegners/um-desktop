@@ -1,12 +1,82 @@
 <script setup lang="ts">
 import Header from '@/components/shared/Header.vue';
+import { useToast } from '@/components/ui/toast';
 import { generateMenu } from '@/config/menu/generateMenu';
-import { ChevronRight, LayoutDashboard, LogOut, Package, User } from 'lucide-vue-next';
+import {
+  ChevronRight,
+  LayoutDashboard,
+  LoaderCircle,
+  LogOut,
+  Package,
+  User,
+} from 'lucide-vue-next';
+
+import { privacyTerms } from '../config/privacy';
+
+const { toast } = useToast();
 
 const { data, signOut } = useAuth();
 //@ts-ignore
 const { user } = data.value;
 const menuData = generateMenu(user.role);
+
+const accountStore = useAccountStore();
+const { updateUserAccountAction } = accountStore;
+const { isLoadingSend } = storeToRefs(accountStore);
+
+// Terms management
+const accept_terms = useCookie('accept_terms');
+const showTermsMessage = ref(accept_terms.value === 'false' || !accept_terms.value);
+const showContinueBtn = ref(false);
+
+const acceptTerms = async () => {
+  try {
+    const accountData = {
+      accountId: user.id,
+      username: user.username,
+      email: user.email,
+      role: user.role,
+      enabled: user.enabled,
+      status: user.status,
+      avatar: user.avatar,
+      contract: user.contract,
+      phone: user.phone,
+      position: user.position,
+      department: user.department,
+      document: user.document,
+      birthDate: user.birthDate,
+      address: user.address,
+      emailConfirmed: user.emailConfirmed,
+      acceptTerms: true,
+    };
+    await updateUserAccountAction(accountData);
+  } catch (error) {
+    console.error('Erro ao enviar o aceite dos termos', error);
+    toast({
+      title: 'Opss!',
+      class: 'bg-red-500 border-0 text-white text-2xl',
+      description: `Ocorreu um erro ao enviar o aceite dos termos. Tente novamente.`,
+    });
+  } finally {
+    accept_terms.value = 'true';
+    showTermsMessage.value = false;
+  }
+};
+
+const userTermsFileUrl =
+  privacyTerms.find((item) => item.title === 'Termos de Uso')?.url || '#';
+
+// Cookie management
+const accept_cookies = useCookie('accept_cookies');
+const showCookieMessage = ref(accept_cookies.value === 'false' || !accept_cookies.value);
+
+const acceptCookies = () => {
+  accept_cookies.value = 'true';
+  showCookieMessage.value = false;
+};
+
+const cookiesPoliceFileUrl =
+  'https://1f76f02ebg.ufs.sh/f/kwE4poT2ybaglWtZTAQV7Wx9FKAmke5pJPqZjf4gYzBL3lr2';
 
 // const userNameInitials = computed(() => {
 //   const splited = menuData.user.name.split(' ');
@@ -15,6 +85,48 @@ const menuData = generateMenu(user.role);
 </script>
 
 <template>
+  <div
+    v-if="showTermsMessage"
+    class="fixed flex items-center justify-center bg-zinc-950/90 z-50 w-full h-full"
+  >
+    <div
+      class="max-w-sm md:max-w-lg bg-zinc-950 rounded-lg shadow-lg p-6 m-auto text-white space-y-12"
+    >
+      <img class="h-10" src="/images/logo_horizontal_white.svg" />
+      <h2 class="mb-6 font-bold text-xl">Termos de Uso</h2>
+      <div class="space-y-3">
+        <p>
+          Verificamos que você ainda não aceitou
+          <NuxtLink
+            :href="userTermsFileUrl"
+            target="_blank"
+            class="underline text-um-primary"
+          >
+            nossos termos de uso.
+          </NuxtLink>
+        </p>
+        <p>Por favor, leia e aceite os termos para continuar utilizando a plataforma.</p>
+      </div>
+      <div class="my-10 flex items-center gap-4">
+        <Checkbox
+          class="w-5 h-5 bg-transparent border border-um-primary data-[state=checked]:text-um-primary"
+          v-model="showContinueBtn"
+          @update:checked="(value) => (showContinueBtn = value)"
+        />
+        <label class="text-sm">Declaro que li e aceito os termos de uso.</label>
+      </div>
+      <Button
+        type="button"
+        class="border border-um-primary text-um-primary hover:bg-um-primary/80 hover:text-black uppercase"
+        :disabled="!showContinueBtn"
+        @click="acceptTerms"
+      >
+        <LoaderCircle :size="16" class="animate-spin mr-2" v-if="isLoadingSend" />
+        Continuar
+        <ChevronRight :size="16" />
+      </Button>
+    </div>
+  </div>
   <SidebarProvider>
     <Sidebar collapsible="icon" class="text-white bg-zinc-900 border-none">
       <SidebarHeader class="sidebar">
@@ -58,7 +170,7 @@ const menuData = generateMenu(user.role);
             >
               <SidebarMenuItem>
                 <CollapsibleTrigger as-child>
-                  <SidebarMenuButton :tooltip="item.title">
+                  <SidebarMenuButton :tooltip="item.title" class="my-3">
                     <component
                       :is="item.icon"
                       :class="`${item.isActive ? 'text-um-primary' : 'text-white'}`"
@@ -142,6 +254,22 @@ const menuData = generateMenu(user.role);
           </SidebarMenu>
         </SidebarGroup>
       </SidebarContent>
+      <SidebarSeparator class="border-b border-zinc-700" />
+      <SidebarGroup>
+        <SidebarGroupLabel class="text-[#33ffcc] text-md">
+          Privacidade
+        </SidebarGroupLabel>
+        <SidebarMenu>
+          <SidebarMenuItem v-for="item in privacyTerms" :key="item.title">
+            <SidebarMenuButton as-child>
+              <!-- @vue-skip -->
+              <NuxtLink :to="item.url" target="_blank" class="hover:underline">
+                <span>{{ item.title }}</span>
+              </NuxtLink>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+        </SidebarMenu>
+      </SidebarGroup>
       <SidebarSeparator class="border-b border-zinc-700" />
       <div class="p-2 flex flex-row items-center gap-2">
         <Package class="text-muted-foreground" :size="16" />
@@ -260,6 +388,34 @@ const menuData = generateMenu(user.role);
     <SidebarInset class="max-w-[calc(100%-256px)]">
       <Header />
       <slot />
+      <!-- Cookie Acceptance Message -->
+      <div
+        v-if="showCookieMessage"
+        class="p-6 fixed bottom-4 right-5 bg-zinc-950 text-white rounded-lg shadow-lg z-40 flex flex-col gap-4 max-w-sm md:max-w-lg"
+      >
+        <h3 class="font-bold">Política de Cookies</h3>
+        <p class="block text-sm">
+          Usamos cookies para melhorar sua experiência. Ao continuar navegando, você
+          aceita nossa
+          <NuxtLink
+            :href="cookiesPoliceFileUrl"
+            target="_blank"
+            exact-active-class="text-um-primary underline"
+            class="text-um-primary underline"
+          >
+            política de cookies.
+          </NuxtLink>
+        </p>
+        <div class="mt-4 flex gap-2">
+          <Button
+            type="button"
+            class="border border-um-primary text-um-primary hover:bg-um-primary/80 hover:text-black uppercase"
+            @click="acceptCookies"
+          >
+            Aceitar
+          </Button>
+        </div>
+      </div>
     </SidebarInset>
   </SidebarProvider>
 </template>

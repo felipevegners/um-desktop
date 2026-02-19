@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import DashBarChart from '@/components/shared/DashBarChart.vue';
+import RideStatusFlag from '@/components/shared/RideStatusFlag.vue';
 import '@/stores/contracts.store';
 import { useRidesStore } from '@/stores/rides.store';
 import {
@@ -10,8 +12,6 @@ import {
   Inbox,
   LoaderCircle,
 } from 'lucide-vue-next';
-import DashBarChart from '~/components/shared/DashBarChart.vue';
-import RideStatusFlag from '~/components/shared/RideStatusFlag.vue';
 import { currencyFormat, sanitizeRideDate } from '~/lib/utils';
 
 const { data } = useAuth();
@@ -126,6 +126,7 @@ const contractRemainBudget = computed(() => {
         </Button>
       </div>
     </div>
+
     <div class="grid auto-rows-min gap-4 md:grid-cols-3">
       <div class="col-span-2 p-6 flex flex-col rounded-xl bg-muted/90 h-full">
         <p class="font-bold text-lg">
@@ -159,9 +160,9 @@ const contractRemainBudget = computed(() => {
             <RideStatusFlag :ride-status="ride.status" />
           </li>
         </ul>
-        <div v-else class="flex flex-col items-center justify-center h-full">
-          <Inbox class="text-muted-foreground" :size="32" />
-          <p class="text-muted-foreground">Nenhum atendimento recente</p>
+        <div v-else class="p-10 flex flex-col items-center justify-center h-full">
+          <Inbox class="text-muted-foreground" :size="24" />
+          <p class="my-3 text-muted-foreground text-sm">Nenhum atendimento recente</p>
         </div>
         <Button
           v-if="contractRidesList.length > 0"
@@ -178,9 +179,9 @@ const contractRemainBudget = computed(() => {
           Atendimentos por mês
         </p>
         <DashBarChart v-if="getRideMonthData.length" :data="getRideMonthData" />
-        <div v-else class="flex flex-col items-center justify-center h-full">
-          <Inbox class="text-muted-foreground" :size="32" />
-          <p class="text-muted-foreground">Nenhum atendimento no período</p>
+        <div v-else class="p-10 flex flex-col items-center justify-center h-full">
+          <Inbox class="text-muted-foreground" :size="24" />
+          <p class="my-3 text-muted-foreground text-sm">Nenhum atendimento no período</p>
         </div>
       </div>
       <div class="col-span-3 p-6 flex flex-col rounded-xl bg-muted/90 gap-6">
