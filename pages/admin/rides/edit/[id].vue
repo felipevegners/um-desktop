@@ -524,11 +524,19 @@ const showRideControls = computed(() => {
       <form @submit.prevent="onSubmit" @keydown.enter.prevent="true" class="space-y-6">
         <Card class="p-0 bg-zinc-200">
           <CardContent class="px-4 py-6">
-            <div class="flex flex-col gap-4">
+            <div class="flex flex-col w-full gap-4">
               <div class="col-span-2 md:grid md:grid-cols-4 gap-3">
-                <div class="flex items-center gap-2">
-                  <Map />
-                  <h3 class="text-xl font-bold">Dados do atendimento</h3>
+                <div class="mb-4 col-span-4 flex items-center justify-between">
+                  <div class="flex gap-2">
+                    <Map />
+                    <h3 class="text-xl font-bold">Dados do atendimento</h3>
+                  </div>
+                  <div>
+                    <small class="text-xs text-muted-foreground">Solicitado em</small>
+                    <h3 class="font-bold">
+                      {{ new Date(ride?.createdAt).toLocaleDateString('pt-BR') }}
+                    </h3>
+                  </div>
                 </div>
                 <div
                   class="relative col-span-4 row-span-4 border-4 border-white rounded-md w-full overflow-hidden"
@@ -613,18 +621,29 @@ const showRideControls = computed(() => {
                   <h3 class="text-lg font-bold">
                     {{ convertMetersToDistance(ride?.travel.estimatedDistance) }}
                   </h3>
-                  <div v-if="ride?.travel.completedData.rideExtraKms !== 0" class="my-3">
+                  <div
+                    v-if="
+                      ride?.travel.completedData &&
+                      ride?.travel.completedData?.rideExtraKms !== 0
+                    "
+                    class="my-3"
+                  >
                     <span class="text-sm">KM Extra</span>
                     <h3 class="text-lg font-bold text-amber-600">
                       {{
-                        ride?.travel.completedData.rideExtraKms.toLocaleString('pt-BR', {
-                          maximumFractionDigits: 2,
-                        })
+                        ride?.travel.completedData?.rideExtraKms?.toLocaleString(
+                          'pt-BR',
+                          {
+                            maximumFractionDigits: 2,
+                          },
+                        )
                       }}
                     </h3>
                     <span class="text-sm">Valor Km Extra</span>
                     <h3 class="text-lg font-bold text-amber-600">
-                      {{ currencyFormat(ride?.travel.completedData.rideExtraKmPrice) }}
+                      {{
+                        currencyFormat(ride?.travel.completedData?.rideExtraKmPrice || 0)
+                      }}
                     </h3>
                   </div>
                   <div v-if="ride?.status === 'completed'">
@@ -644,25 +663,32 @@ const showRideControls = computed(() => {
                     {{ convertSecondsToTime(ride?.travel.estimatedDuration) }}
                   </h3>
                   <div
-                    v-if="ride?.travel.completedData.rideExtraHours !== 0"
-                    class="my-3"
+                    v-if="
+                      ride?.travel.completedData &&
+                      ride?.travel.completedData?.rideExtraHours !== 0
+                    "
+                    class="my-3 border border-red-400"
                   >
                     <span class="text-sm">Hora Extra</span>
                     <h3 class="text-lg font-bold text-amber-600">
                       {{
-                        ride?.travel.completedData.rideExtraHours <= 9
-                          ? `0${ride?.travel.completedData.rideExtraHours.toLocaleString(
+                        ride?.travel.completedData?.rideExtraHours <= 9
+                          ? `0${ride?.travel.completedData?.rideExtraHours?.toLocaleString(
                               'pt-BR',
                               {
                                 maximumFractionDigits: 2,
                               },
                             )}`
-                          : ride?.travel.completedData.rideExtraHours
+                          : ride?.travel.completedData?.rideExtraHours
                       }}
                     </h3>
                     <span class="text-sm">Valor Hora Extra</span>
                     <h3 class="text-lg font-bold text-amber-600">
-                      {{ currencyFormat(ride?.travel.completedData.rideExtraHourPrice) }}
+                      {{
+                        currencyFormat(
+                          ride?.travel.completedData?.rideExtraHourPrice || 0,
+                        )
+                      }}
                     </h3>
                   </div>
                   <div v-if="ride?.status === 'completed'">
@@ -699,6 +725,7 @@ const showRideControls = computed(() => {
                     v-if="ride?.extraCharges && ride?.extraCharges.length > 0"
                     class="my-3 p-3 border border-amber-600 rounded-md flex flex-col gap-4"
                   >
+                    <pre>{{ ride?.extraCharges }}</pre>
                     <span class="text-sm text-amber-600"> Custos extras </span>
                     <div v-for="extra in ride?.extraCharges">
                       <small class="block font-bold">

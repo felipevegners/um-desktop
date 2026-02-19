@@ -135,7 +135,7 @@ const onSubmit = form.handleSubmit(async (values) => {
             class="mt-6 flex flex-col items-center justify-center gap-6 text-muted-foreground text-xs"
           >
             <div>
-              <NuxtLink to="#" class="hover:text-um-primary"> Lembrar senha </NuxtLink>
+              <NuxtLink to="#" class="hover:text-um-primary"> Recuperar senha </NuxtLink>
             </div>
             <div class="flex items-start gap-4">
               <NuxtLink to="/register?type=personal" class="hover:text-um-primary">

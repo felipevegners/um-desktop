@@ -29,6 +29,16 @@ export const columns: any = [
       return h('div', { class: 'capitalize text-xs' }, sanitized);
     },
   }),
+  columnHelper.accessor('finishedAt', {
+    header: () => h('div', { class: 'text-xs text-left' }, 'Aberto em'),
+    cell: ({ row }) => {
+      const data = row.original;
+      const sanitizeDate = data?.createdAt
+        ? new Date(data?.createdAt).toLocaleDateString('pt-BR')
+        : '-';
+      return h('div', { class: 'capitalize text-xs' }, sanitizeDate);
+    },
+  }),
   columnHelper.accessor('product', {
     size: 120,
     meta: { label: 'Produto' },
