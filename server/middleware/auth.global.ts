@@ -43,13 +43,15 @@ export default defineEventHandler(async (event) => {
     // ignore and fallback to JWT verification
   }
 
-  if (!token) throw createError({ statusCode: 401, statusMessage: 'Unauthorized' });
+  if (!token) {
+    throw createError({ statusCode: 401, statusMessage: 'Não autorizado' });
+  }
 
   try {
     const payload = jwt.verify(token, process.env.JWT_ACCESS_SECRET as string);
     (event as any).context = (event as any).context || {};
     (event as any).context.user = payload;
   } catch (err) {
-    throw createError({ statusCode: 401, statusMessage: 'Unauthorized' });
+    throw createError({ statusCode: 401, statusMessage: 'Não autorizado' });
   }
 });

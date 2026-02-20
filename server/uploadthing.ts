@@ -1,6 +1,6 @@
 import type { H3Event } from 'h3';
-import { createUploadthing } from 'uploadthing/h3';
 import type { FileRouter } from 'uploadthing/h3';
+import { createUploadthing } from 'uploadthing/h3';
 
 // Fake auth function
 
@@ -21,7 +21,7 @@ export const uploadRouter = {
       const user = await auth(event);
 
       // If you throw, the user will not be able to upload
-      if (!user) throw new Error('Unauthorized');
+      if (!user) throw new Error('Não autorizado');
 
       // Whatever is returned here is accessible in onUploadComplete as `metadata`
       return { userId: user.id };
@@ -34,7 +34,7 @@ export const uploadRouter = {
   })
     .middleware(async ({ event }) => {
       const user = await auth(event);
-      if (!user) throw new Error('Unauthorized');
+      if (!user) throw new Error('Não autorizado');
       return { userId: user.id };
     })
     .onUploadComplete((data) => console.log('file uploaded -> ', data)),
@@ -44,7 +44,7 @@ export const uploadRouter = {
   })
     .middleware(async ({ event }) => {
       const user = await auth(event);
-      if (!user) throw new Error('Unauthorized');
+      if (!user) throw new Error('Não autorizado');
       return { userId: user.id };
     })
     .onUploadComplete((data) => console.log('file uploaded -> ', data)),
@@ -53,7 +53,7 @@ export const uploadRouter = {
   })
     .middleware(async ({ event }) => {
       const user = await auth(event);
-      if (!user) throw new Error('Unauthorized');
+      if (!user) throw new Error('Não autorizado');
       return { userId: user.id };
     })
     .onUploadComplete((data) => console.log('file uploaded -> ', data)),
