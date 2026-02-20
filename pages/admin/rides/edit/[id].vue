@@ -667,7 +667,7 @@ const showRideControls = computed(() => {
                       ride?.travel.completedData &&
                       ride?.travel.completedData?.rideExtraHours !== 0
                     "
-                    class="my-3 border border-red-400"
+                    class="my-3"
                   >
                     <span class="text-sm">Hora Extra</span>
                     <h3 class="text-lg font-bold text-amber-600">
@@ -723,10 +723,9 @@ const showRideControls = computed(() => {
                   </h3>
                   <div
                     v-if="ride?.extraCharges && ride?.extraCharges.length > 0"
-                    class="my-3 p-3 border border-amber-600 rounded-md flex flex-col gap-4"
+                    class="my-3 p-3 border border-amber-600 bg-amber-50 rounded-md flex flex-col gap-4"
                   >
-                    <pre>{{ ride?.extraCharges }}</pre>
-                    <span class="text-sm text-amber-600"> Custos extras </span>
+                    <span class="text-sm text-amber-600 font-bold"> Custos extras </span>
                     <div v-for="extra in ride?.extraCharges">
                       <small class="block font-bold">
                         {{ extraChargesTypes[extra.type] }}

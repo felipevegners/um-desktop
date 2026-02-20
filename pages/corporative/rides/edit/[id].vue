@@ -542,9 +542,9 @@ const showRideControls = computed(() => {
                   </h3>
                   <div
                     v-if="ride?.extraCharges.length"
-                    class="my-3 p-3 border border-amber-600 rounded-md flex flex-col gap-4"
+                    class="my-3 p-3 border border-amber-600 bg-amber-50 rounded-md flex flex-col gap-4"
                   >
-                    <span class="text-sm text-amber-600"> Custos extras </span>
+                    <span class="text-sm text-amber-600 font-bold"> Custos extras </span>
                     <div v-for="extra in ride?.extraCharges">
                       <small class="block font-bold">
                         {{ extraChargesTypes[extra.type] }}

@@ -35,6 +35,8 @@ model Accounts {
   history        Json?
   status         String?
   enabled        Boolean
+  tokenExpiresAt DateTime?
+  isLoggedIn     Boolean?    @default(false)
   emailConfirmed Boolean?
   acceptTerms    Boolean?
   createdAt      DateTime?   @default(now())

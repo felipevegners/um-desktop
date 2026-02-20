@@ -84,6 +84,18 @@ export default NuxtAuthHandler({
       } catch (error) {
         console.error('Error setting cookies:', error);
       }
+      // Update DB to mark user as logged in and set token expiry for refresh logic
+      try {
+        const refreshExpiry = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
+        if (user?.id) {
+          await prisma.accounts.update({
+            where: { id: user.id },
+            data: { tokenExpiresAt: refreshExpiry, isLoggedIn: true },
+          });
+        }
+      } catch (err) {
+        console.error('Error updating login state in DB:', err);
+      }
       return true;
     },
     async jwt({ token, user }) {
@@ -109,6 +121,32 @@ export default NuxtAuthHandler({
       // Allows callback URLs on the same origin
       else if (new URL(url).origin === baseUrl) return url;
       return baseUrl;
+    },
+  },
+  events: {
+    async signOut(message: any) {
+      try {
+        // Try to retrieve user id from token or session
+        const userId = message?.token?.id || message?.session?.user?.id || undefined;
+
+        // If we don't have an id but have email, resolve the account
+        let idToUse = userId;
+        if (!idToUse && message?.session?.user?.email) {
+          const acc = await prisma.accounts.findUnique({
+            where: { email: message.session.user.email },
+          });
+          idToUse = acc?.id;
+        }
+
+        if (idToUse) {
+          await prisma.accounts.update({
+            where: { id: idToUse },
+            data: { isLoggedIn: false, tokenExpiresAt: null },
+          });
+        }
+      } catch (err) {
+        console.error('Error in signOut event updating DB:', err);
+      }
     },
   },
 });
