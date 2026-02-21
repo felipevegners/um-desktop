@@ -31,6 +31,13 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 401, statusMessage: 'Senha inválida.' });
   }
 
+  // Atualiza isLoggedIn e tokenExpiresAt no banco
+  const tokenExpiresAt = new Date(Date.now() + 30 * 60 * 1000); // 30 minutos
+  await prisma.accounts.update({
+    where: { id: account.id },
+    data: { isLoggedIn: true, tokenExpiresAt },
+  });
+
   // Gera o token JWT
   const token = jwt.sign(
     {
@@ -43,9 +50,10 @@ export default defineEventHandler(async (event) => {
     { expiresIn: '30m' },
   );
 
-  // Retorna o token e os dados do usuário (sem a senha)
+  // Retorna o token, tokenExpiresAt e os dados do usuário (sem a senha)
   return {
     token,
+    tokenExpiresAt,
     user: {
       ...account,
       password: undefined,
