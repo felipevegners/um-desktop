@@ -12,6 +12,9 @@ import {
 } from 'lucide-vue-next';
 
 import { privacyTerms } from '../config/privacy';
+import { useRemoteSessionCheck } from '@/composables/auth/useRemoteSessionCheck';
+
+useRemoteSessionCheck();
 
 const { toast } = useToast();
 
