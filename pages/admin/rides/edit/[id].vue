@@ -390,6 +390,30 @@ const handleCalculateFinalPrice = async () => {
 };
 
 const onSubmit = form.handleSubmit(async (values) => {
+  // Calculate sum of extra charges
+  const extraChargesSum = (extraChargesData || []).reduce((sum: any, item: any) => {
+    const amount =
+      typeof item.amount === 'string'
+        ? parseFloat(item.amount.replace(',', '.'))
+        : Number(item.amount);
+    return sum + (isNaN(amount) ? 0 : amount);
+  }, 0);
+
+  // let estimatedPrice = ride?.value.estimatedPrice ? Number(ride.value.estimatedPrice) : 0;
+  let rideFinalPrice = ride?.value.rideFinalPrice ? Number(ride.value.rideFinalPrice) : 0;
+  let billingAmmount = ride?.value.billing?.ammount
+    ? Number(ride.value.billing.ammount)
+    : 0;
+
+  // If extra charges > 0, add to estimatedPrice and billing.ammount
+  if (extraChargesSum > 0) {
+    // estimatedPrice += extraChargesSum;
+    billingAmmount += extraChargesSum;
+    if (ride?.value.status === 'completed') {
+      rideFinalPrice += extraChargesSum;
+    }
+  }
+
   const ridePayload = {
     ...ride?.value,
     id: ride?.value.id,
@@ -413,6 +437,12 @@ const onSubmit = form.handleSubmit(async (values) => {
     observations: values.observations,
     additionalInfo: values.additionalInfo || '',
     extraCharges: extraChargesData || [],
+    // estimatedPrice: estimatedPrice.toString(),
+    rideFinalPrice: rideFinalPrice.toString(),
+    billing: {
+      ...ride?.value.billing,
+      ammountWithExtras: billingAmmount.toString(),
+    },
   };
   try {
     await updateRideAction(ridePayload);
@@ -719,7 +749,7 @@ const showRideControls = computed(() => {
                     Valor estimado (atendimento + adicionais)
                   </span>
                   <h3 class="text-lg font-bold text-amber-600">
-                    {{ currencyFormat(ride?.estimatedPrice) }}
+                    {{ currencyFormat(ride?.travel.rideEstimatedPrice) }}
                   </h3>
                   <div
                     v-if="ride?.extraCharges && ride?.extraCharges.length > 0"
