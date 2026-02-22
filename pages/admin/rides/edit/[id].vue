@@ -119,15 +119,9 @@ const driverData = ref<any>({
   picture: '',
 });
 const driverLocationInterval = ref<any>(null);
-const extraChargesData = reactive(
-  ride?.value.extraCharges || [
-    {
-      type: '',
-      description: '',
-      amount: '0',
-    },
-  ],
-);
+const extraChargesData = reactive(ride?.value.extraCharges || []);
+// Track removed charges for price consistency
+const removedCharges = ref<any[]>([]);
 
 availableProducts.value = products?.value;
 showWaypointsForm.value = ride?.value.travel?.stops?.length;
@@ -399,19 +393,36 @@ const onSubmit = form.handleSubmit(async (values) => {
     return sum + (isNaN(amount) ? 0 : amount);
   }, 0);
 
-  // let estimatedPrice = ride?.value.estimatedPrice ? Number(ride.value.estimatedPrice) : 0;
-  let rideFinalPrice = ride?.value.rideFinalPrice ? Number(ride.value.rideFinalPrice) : 0;
-  let billingAmmount = ride?.value.billing?.ammount
+  // Calculate sum of removed charges
+  const removedChargesSum = (removedCharges.value || []).reduce((sum: any, item: any) => {
+    const amount =
+      typeof item.amount === 'string'
+        ? parseFloat(item.amount.replace(',', '.'))
+        : Number(item.amount);
+    return sum + (isNaN(amount) ? 0 : amount);
+  }, 0);
+
+  // Use ride.billing.ammount as original price
+  let originalPrice = ride?.value.billing?.ammount
     ? Number(ride.value.billing.ammount)
     : 0;
 
-  // If extra charges > 0, add to estimatedPrice and billing.ammount
-  if (extraChargesSum > 0) {
-    // estimatedPrice += extraChargesSum;
-    billingAmmount += extraChargesSum;
-    if (ride?.value.status === 'completed') {
-      rideFinalPrice += extraChargesSum;
-    }
+  // Calculate ammountWithExtras based on current extra charges
+  let ammountWithExtras = originalPrice + extraChargesSum;
+
+  // If charges are removed, subtract their sum from ammountWithExtras
+  if (removedChargesSum > 0) {
+    ammountWithExtras -= removedChargesSum;
+    // Ensure ammountWithExtras does not go below originalPrice
+    if (ammountWithExtras < originalPrice) ammountWithExtras = originalPrice;
+  }
+
+  // Calculate rideFinalPrice for completed rides
+  let rideFinalPrice = ride?.value.rideFinalPrice
+    ? Number(ride.value.rideFinalPrice)
+    : originalPrice;
+  if (ride?.value.status === 'completed') {
+    rideFinalPrice = Number(ammountWithExtras);
   }
 
   const ridePayload = {
@@ -437,11 +448,10 @@ const onSubmit = form.handleSubmit(async (values) => {
     observations: values.observations,
     additionalInfo: values.additionalInfo || '',
     extraCharges: extraChargesData || [],
-    // estimatedPrice: estimatedPrice.toString(),
     rideFinalPrice: rideFinalPrice.toString(),
     billing: {
       ...ride?.value.billing,
-      ammountWithExtras: billingAmmount.toString(),
+      ammountWithExtras: ammountWithExtras.toString(),
     },
   };
   try {
@@ -451,9 +461,6 @@ const onSubmit = form.handleSubmit(async (values) => {
       class: 'bg-green-600 border-0 text-white text-2xl hover:text-white',
       description: `Atendimento alterado com sucesso!`,
     });
-    // navigateTo(
-    //   `/admin/rides/${ride?.value.status === 'completed' ? 'completed' : 'open'}`,
-    // );
     window.location.reload();
   } catch (error) {
     toast({
@@ -748,26 +755,38 @@ const showRideControls = computed(() => {
                   <span class="text-muted-foreground text-sm">
                     Valor estimado (atendimento + adicionais)
                   </span>
-                  <h3 class="text-lg font-bold text-amber-600">
+                  <h3 class="text-lg font-bold">
                     {{ currencyFormat(ride?.travel.rideEstimatedPrice) }}
                   </h3>
-                  <div
-                    v-if="ride?.extraCharges && ride?.extraCharges.length > 0"
-                    class="my-3 p-3 border border-amber-600 bg-amber-50 rounded-md flex flex-col gap-4"
-                  >
-                    <span class="text-sm text-amber-600 font-bold"> Custos extras </span>
-                    <div v-for="extra in ride?.extraCharges">
-                      <small class="block font-bold">
-                        {{ extraChargesTypes[extra.type] }}
-                      </small>
-                      <small class="block w-full text-muted-foreground">{{
-                        extra.info
-                      }}</small>
-                      <small class="font-bold text-amber-600">{{
-                        currencyFormat(extra.amount)
-                      }}</small>
+                  <div v-if="ride?.extraCharges && ride?.extraCharges.length > 0">
+                    <div
+                      class="my-3 p-3 border border-amber-600 bg-amber-50 rounded-md flex flex-col gap-4"
+                    >
+                      <span class="text-sm text-amber-600 font-bold">
+                        Custos extras
+                      </span>
+                      <div v-for="extra in ride?.extraCharges">
+                        <small class="block font-bold">
+                          {{ extraChargesTypes[extra.type] }}
+                        </small>
+                        <small class="block w-full text-muted-foreground">{{
+                          extra.info
+                        }}</small>
+                        <small class="font-bold text-amber-600">{{
+                          currencyFormat(extra.amount)
+                        }}</small>
+                      </div>
+                    </div>
+                    <div>
+                      <span class="text-muted-foreground text-sm">
+                        Valor Total (estimado + custos extras)
+                      </span>
+                      <h3 class="text-lg font-bold text-amber-600">
+                        {{ currencyFormat(ride?.billing.ammountWithExtras) }}
+                      </h3>
                     </div>
                   </div>
+
                   <div v-if="ride?.status === 'completed'">
                     <span class="text-muted-foreground text-sm">Valor final</span>
                     <h3 class="text-lg font-bold text-amber-600">
@@ -1110,7 +1129,10 @@ const showRideControls = computed(() => {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <AddExtraCharges v-model="extraChargesData" />
+            <AddExtraCharges
+              v-model="extraChargesData"
+              v-model:removedCharges="removedCharges"
+            />
           </CardContent>
         </Card>
         <!-- ADDITIONAL INFO CARD -->

@@ -203,7 +203,6 @@ export const columns: any = [
   }),
   columnHelper.accessor('he-price', {
     meta: { label: 'Valor HE' },
-
     header: () => h('div', { class: 'text-xs leading-none text-left' }, 'Valor HE'),
     cell: ({ row }) => {
       const data = row.original;

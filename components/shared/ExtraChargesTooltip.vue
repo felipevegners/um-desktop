@@ -32,7 +32,7 @@ const translateExtraChargeType = (type: string) => {
       <TooltipContent class="px-4 bg-zinc-900 text-white min-w-[200px]">
         <ul>
           <li v-for="item in items" class="my-3">
-            <p class="text=xs font-bold">{{ translateExtraChargeType(item.type) }}</p>
+            <p class="text-xs font-bold">{{ translateExtraChargeType(item.type) }}</p>
             <small>{{ item.info }}</small>
             <p class="text-sm font-bold text-amber-400">
               {{ currencyFormat(item.amount) }}

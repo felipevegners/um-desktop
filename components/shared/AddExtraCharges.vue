@@ -9,10 +9,11 @@ defineOptions({
   name: 'AddExtraCharges',
 });
 
-const emit = defineEmits(['update:modelValue']);
-const props = defineProps(['modelValue']);
+const emit = defineEmits(['update:modelValue', 'update:removedCharges']);
+const props = defineProps(['modelValue', 'removedCharges']);
 const maskedValue = ref('');
 const unmaskedValue = ref('');
+const removedChargesLocal = ref<Array<any>>(props.removedCharges || []);
 
 defineExpose({ unmaskedValue });
 
@@ -30,14 +31,17 @@ const addRow = () => {
 
 const removeRow = (index: any) => {
   if (props.modelValue.length === 0) return;
+  // Track removed charge
+  const removed = props.modelValue[index];
+  if (removed && removed.amount && removed.type) {
+    removedChargesLocal.value.push({ ...removed });
+    emit('update:removedCharges', removedChargesLocal.value);
+  }
   props.modelValue.splice(index, 1);
+  emit('update:modelValue', props.modelValue);
 };
 </script>
 <template>
-  <Button v-if="props.modelValue.length === 0" @click.prevent="addRow">
-    <Plus />
-    Adicionar Taxa
-  </Button>
   <ul class="mb-4 space-y-6">
     <li
       v-for="(extra, index) in props.modelValue"
@@ -85,10 +89,6 @@ const removeRow = (index: any) => {
         </Button>
       </div>
       <div class="flex items-center gap-4">
-        <Button @click.prevent="addRow">
-          <Plus />
-          Adicionar
-        </Button>
         <Button
           variant="ghost"
           @click.prevent="removeRow(index)"
@@ -99,6 +99,10 @@ const removeRow = (index: any) => {
       </div>
     </li>
   </ul>
+  <Button @click.prevent="addRow">
+    <Plus />
+    Adicionar Custo Extra
+  </Button>
 </template>
 
 <style scoped></style>

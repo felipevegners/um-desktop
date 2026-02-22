@@ -24,6 +24,7 @@ const editRide = (rideId: string) => {
 
 export const columns: any = [
   columnHelper.accessor('code', {
+    meta: { width: '150px' },
     header: () => h('div', { class: 'text-xs text-left' }, 'Código'),
     cell: ({ row }) => h('div', { class: 'capitalize text-xs' }, row.getValue('code')),
   }),
@@ -42,6 +43,7 @@ export const columns: any = [
     },
   }),
   columnHelper.accessor('user', {
+    meta: { width: '200px' },
     enablePinning: true,
     header: ({ column }) => {
       return h(
@@ -76,6 +78,7 @@ export const columns: any = [
   columnHelper.display({
     id: 'DateTime',
     enableHiding: false,
+    meta: { width: '200px' },
     header: () => h('div', { class: 'text-xs text-left' }, 'Data e Hora'),
     cell: ({ row }) => {
       const data = row.original;
@@ -86,6 +89,7 @@ export const columns: any = [
   columnHelper.display({
     id: 'routeDateTime',
     enableHiding: false,
+    meta: { width: '300px' },
     header: () => h('div', { class: 'text-xs text-left' }, 'Rota'),
     cell: ({ row }) => {
       const data = row.original;
@@ -110,7 +114,7 @@ export const columns: any = [
     },
   }),
   columnHelper.accessor('travel', {
-    header: () => h('div', { class: 'text-xs text-left' }, 'Tempo em Paradas'),
+    header: () => h('div', { class: 'text-xs text-left' }, 'TP'),
     cell: ({ row }) => {
       const data = row.original;
       const { totalTimeStopped } = data.travel;
@@ -122,7 +126,7 @@ export const columns: any = [
     },
   }),
   columnHelper.accessor('travel', {
-    header: () => h('div', { class: 'text-xs text-left' }, 'Km Extra'),
+    header: () => h('div', { class: 'text-xs text-left' }, 'KME'),
     cell: ({ row }) => {
       const data = row.original;
       return h(
@@ -133,20 +137,20 @@ export const columns: any = [
     },
   }),
   columnHelper.accessor('travel', {
-    header: () => h('div', { class: 'text-xs text-left' }, 'Valor Km Extra'),
+    header: () => h('div', { class: 'text-xs text-left' }, 'Valor KME'),
     cell: ({ row }) => {
       const data = row.original;
       return h(
         'div',
         { class: 'text-xs font-bold text-amber-600' },
-        data.travel.completedData
-          ? currencyFormat(data.travel.completedData.rideExtraKmPrice)
-          : currencyFormat('0'),
+        data?.travel.completedData && data?.travel.completedData?.rideExtraKmPrice !== ''
+          ? currencyFormat(data.travel.completedData?.rideExtraKmPrice)
+          : '-',
       );
     },
   }),
   columnHelper.accessor('travel', {
-    header: () => h('div', { class: 'text-xs text-left' }, 'Minuto Extra'),
+    header: () => h('div', { class: 'text-xs text-left' }, 'Hora Extra'),
     cell: ({ row }) => {
       const data = row.original;
       return h(
@@ -159,19 +163,21 @@ export const columns: any = [
     },
   }),
   columnHelper.accessor('travel', {
-    header: () => h('div', { class: 'text-xs text-left' }, 'Valor Min. Extra'),
+    header: () => h('div', { class: 'text-xs text-left' }, 'Valor HE'),
     cell: ({ row }) => {
       const data = row.original;
       return h(
         'div',
         { class: 'text-xs font-bold text-amber-600' },
-        data.travel.completedData
-          ? currencyFormat(data.travel.completedData.rideExtraHourPrice)
-          : currencyFormat('0'),
+        data?.travel.completedData &&
+          data?.travel.completedData?.rideExtraHourPrice !== ''
+          ? currencyFormat(data?.travel.completedData?.rideExtraHourPrice || '0')
+          : '-',
       );
     },
   }),
   columnHelper.accessor('extraCharges', {
+    meta: { width: '200px' },
     header: () => h('div', { class: 'text-xs text-center' }, 'Adicionais'),
     cell: ({ row }) => {
       const data = row.original;
@@ -214,7 +220,7 @@ export const columns: any = [
     },
   }),
   columnHelper.accessor('finishedAt', {
-    header: () => h('div', { class: 'text-xs text-left' }, 'Finalizado em'),
+    header: () => h('div', { class: 'text-xs text-left' }, 'Finalizado'),
     cell: ({ row }) => {
       const data = row.original;
       const sanitizeDate = data?.progress?.finishedAt
