@@ -162,13 +162,14 @@ model Products {
 }
 
 type Billing {
-  paymentMethod String?
-  paymentUrl    String?
-  addons        Json?
-  ammount       String?
-  status        String?
-  installments  Int?
-  paymentData   PaymentData?
+  paymentMethod     String?
+  paymentUrl        String?
+  addons            Json?
+  ammount           String?
+  ammountWithExtras String?
+  status            String?
+  installments      Int?
+  paymentData       PaymentData?
 }
 
 type PaymentData {
