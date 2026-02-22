@@ -752,6 +752,7 @@ const onSubmit = form.handleSubmit(async (values) => {
       },
       addons: selectedRideAddons.value || [],
       ammount: calculatedEstimates.value.estimatedTotalPrice,
+      ammountWithExtras: null,
       status:
         paymentMethod.value === 'corporative'
           ? 'invoice'
