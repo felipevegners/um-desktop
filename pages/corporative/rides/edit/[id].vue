@@ -376,9 +376,24 @@ const showRideControls = computed(() => {
             <div class="flex flex-col gap-4">
               <!-- RIDE -->
               <div class="col-span-2 md:grid md:grid-cols-4 gap-3">
-                <div class="mb-6 flex items-center gap-2">
-                  <Map />
-                  <h3 class="text-xl font-bold">Dados do atendimento</h3>
+                <div class="mb-4 col-span-4 flex items-center justify-between">
+                  <div class="flex gap-2">
+                    <Map />
+                    <h3 class="text-xl font-bold">Dados do atendimento</h3>
+                  </div>
+                  <div>
+                    <small class="text-xs text-muted-foreground">Solicitado em</small>
+                    <h3 class="font-bold">
+                      {{ new Date(ride?.createdAt).toLocaleDateString('pt-BR') }}
+                    </h3>
+                  </div>
+                </div>
+                <div
+                  v-if="ride.progress.steps.length"
+                  class="col-span-4 p-3 bg-white rounded-md"
+                >
+                  <span class="text-muted-foreground text-sm">Etapas do Atendimento</span>
+                  <RideStepper :steps="ride.progress.steps" theme="white" />
                 </div>
                 <div
                   class="relative col-span-4 row-span-4 border-4 border-white rounded-md w-full overflow-hidden"
