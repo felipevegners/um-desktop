@@ -96,39 +96,37 @@ const userName = computed(() => {
   if (data) return data?.value.user?.name;
 });
 
-const contractRemainBudget = computed(() => {
-  if (contract?.value) {
-    return contract?.value.mainBudget - contract.value.usedBudget;
-  }
-  return 0;
-});
+// const contractRemainBudget = computed(() => {
+//   if (contract?.value) {
+//     return contract?.value.mainBudget - contract.value.usedBudget;
+//   }
+//   return 0;
+// });
 </script>
 
 <template>
-  <div class="my-6 flex flex-1 flex-col gap-4 p-6 pt-0">
+  <div class="my-6 mx-3 flex flex-col gap-4 md:p-6 pt-0">
     <div
-      class="h-[240px] rounded-xl bg-[url('/images/dashboard_banner_background.jpg')] bg-no-repeat bg-cover bg-center"
+      class="p-6 md:p-6 md:h-[240px] flex flex-col md:flex-row items-center justify-between rounded-xl bg-zinc-950 md:bg-[url('/images/dashboard_banner_background.jpg')] bg-no-repeat bg-cover bg-center"
     >
-      <div class="p-10 flex items-center justify-between h-full">
-        <div class="flex flex-col gap-2">
-          <h2 class="text-white">Olá, {{ userName }}!</h2>
-          <h1 class="font-bold text-white text-2xl">
-            Você está no painel de gestão da Urban Mobi!
-          </h1>
-        </div>
-        <Button
-          type="button"
-          class="p-6 bg-um-primary hover:bg-um-primary/80 text-black uppercase font-bold shadow-lg"
-          @click="navigateTo('/corporative/rides/new')"
-        >
-          <CalendarPlus :size="18" />
-          Solicitar Atendimento
-        </Button>
+      <div class="flex flex-col gap-6">
+        <h2 class="text-white">Olá, {{ userName }}!</h2>
+        <h1 class="font-bold text-white md:text-2xl">
+          Você está no painel de gestão da Urban Mobi!
+        </h1>
       </div>
+      <Button
+        type="button"
+        class="p-6 mt-10 md:mt-0 w-full md:w-fit bg-um-primary hover:bg-um-primary/80 text-black uppercase font-bold md:shadow-lg"
+        @click="navigateTo('/corporative/rides/new')"
+      >
+        <CalendarPlus :size="18" />
+        Solicitar Atendimento
+      </Button>
     </div>
 
-    <div class="grid auto-rows-min gap-4 md:grid-cols-3">
-      <div class="col-span-2 p-6 flex flex-col rounded-xl bg-muted/90 h-full">
+    <div class="flex flex-col md:grid auto-rows-min gap-4 md:grid-cols-3">
+      <div class="col-span-1 p-6 flex flex-col rounded-xl bg-muted/90 h-full">
         <p class="font-bold text-lg">
           <CalendarDays class="mb-2" :size="32" />
           Atendimentos recentes
@@ -142,22 +140,22 @@ const contractRemainBudget = computed(() => {
             :key="index"
             class="py-4 flex items-center justify-between gap-3 border-b border-zinc-300 last-of-type:border-b-0"
           >
-            <p class="text-sm font-bold flex items-center">
-              {{ ride.code }}
-              <Button
-                type="button"
-                size="icon"
-                variant="link"
-                @click="navigateTo(`/corporative/rides/edit/${ride.id}`)"
-              >
-                <ExternalLink :size="16" />
-              </Button>
-            </p>
-            <small>
+            <p class="flex-1 text-sm text-left">
+              <span class="font-bold">{{ ride.code }}</span>
+              <span> | </span>
               {{ ride?.user.name }} |
               {{ sanitizeRideDate(ride.travel.date) }}
-            </small>
+            </p>
             <RideStatusFlag :ride-status="ride.status" />
+
+            <Button
+              type="button"
+              size="icon"
+              variant="link"
+              @click="navigateTo(`/corporative/rides/edit/${ride.id}`)"
+            >
+              <ExternalLink :size="16" />
+            </Button>
           </li>
         </ul>
         <div v-else class="p-10 flex flex-col items-center justify-center h-full">
@@ -184,7 +182,7 @@ const contractRemainBudget = computed(() => {
           <p class="my-3 text-muted-foreground text-sm">Nenhum atendimento no período</p>
         </div>
       </div>
-      <div class="col-span-3 p-6 flex flex-col rounded-xl bg-muted/90 gap-6">
+      <div class="col-span-1 p-6 flex flex-col rounded-xl bg-muted/90 gap-6">
         <p class="font-bold text-lg">
           <Coins class="mb-2" :size="32" />
           Budget
@@ -195,10 +193,12 @@ const contractRemainBudget = computed(() => {
         <div v-else class="flex flex-col">
           <div>
             <small class="text-muted-foreground">Budget total / mensal</small>
-            <h1 class="text-5xl font-bold">{{ currencyFormat(contract?.mainBudget) }}</h1>
+            <h1 class="text-xl md:text-5xl font-bold">
+              {{ currencyFormat(contract?.mainBudget) }}
+            </h1>
           </div>
           <div>
-            <small class="text-muted-foreground">Budget disponível</small>
+            <small class="text-muted-foreground">Budget disponível (não alocado)</small>
             <h1
               class="text-2xl font-bold"
               :class="contract?.availableBudget > 0 ? 'text-green-600' : 'text-red-600'"
@@ -214,7 +214,7 @@ const contractRemainBudget = computed(() => {
         <div v-for="branch in userAllowedBranches" :key="branch.id">
           <div class="border border-zinc-950 rounded-lg bg-muted/80 p-4 mt-4 pt-1">
             <small class="mb-6 font-bold"> {{ branch.fantasyName }}</small>
-            <div class="flex justify-between gap-2">
+            <div class="flex flex-col md:flex-row justify-between gap-2">
               <div>
                 <small class="text-muted-foreground">Alocado</small>
                 <h1 class="text-xl font-bold">{{ currencyFormat(branch.budget) }}</h1>
@@ -237,7 +237,7 @@ const contractRemainBudget = computed(() => {
         <Button
           v-if="role === 'master-manager'"
           type="button"
-          class="mt-6 p-6 w-fit"
+          class="mt-6 p-6 w-full md:w-fit"
           @click="navigateTo({ path: '/corporative/contracts/edit/', hash: '#budget' })"
         >
           Gerenciar Budget

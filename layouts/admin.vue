@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import Header from '@/components/shared/Header.vue';
 import { useToast } from '@/components/ui/toast';
+import { useRemoteSessionCheck } from '@/composables/auth/useRemoteSessionCheck';
 import { generateMenu } from '@/config/menu/generateMenu';
 import {
   ChevronRight,
@@ -12,7 +13,6 @@ import {
 } from 'lucide-vue-next';
 
 import { privacyTerms } from '../config/privacy';
-import { useRemoteSessionCheck } from '@/composables/auth/useRemoteSessionCheck';
 
 useRemoteSessionCheck();
 
@@ -131,7 +131,7 @@ const cookiesPoliceFileUrl =
     </div>
   </div>
   <SidebarProvider>
-    <Sidebar collapsible="icon" class="text-white bg-zinc-900 border-none">
+    <Sidebar collapsible="icon" class="text-white bg-zinc-950 border-none">
       <SidebarHeader class="sidebar">
         <SidebarMenu>
           <SidebarMenuItem>
@@ -256,30 +256,30 @@ const cookiesPoliceFileUrl =
             </SidebarMenuItem>
           </SidebarMenu>
         </SidebarGroup>
+        <SidebarSeparator class="border-b border-zinc-700" />
+        <SidebarGroup class="bg-zinc-950 text-white">
+          <SidebarGroupLabel class="text-[#33ffcc] text-md">
+            Privacidade
+          </SidebarGroupLabel>
+          <SidebarMenu>
+            <SidebarMenuItem v-for="item in privacyTerms" :key="item.title">
+              <SidebarMenuButton as-child>
+                <!-- @vue-skip -->
+                <NuxtLink :to="item.url" target="_blank" class="hover:underline">
+                  <span>{{ item.title }}</span>
+                </NuxtLink>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+          </SidebarMenu>
+        </SidebarGroup>
       </SidebarContent>
       <SidebarSeparator class="border-b border-zinc-700" />
-      <SidebarGroup>
-        <SidebarGroupLabel class="text-[#33ffcc] text-md">
-          Privacidade
-        </SidebarGroupLabel>
-        <SidebarMenu>
-          <SidebarMenuItem v-for="item in privacyTerms" :key="item.title">
-            <SidebarMenuButton as-child>
-              <!-- @vue-skip -->
-              <NuxtLink :to="item.url" target="_blank" class="hover:underline">
-                <span>{{ item.title }}</span>
-              </NuxtLink>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
-        </SidebarMenu>
-      </SidebarGroup>
-      <SidebarSeparator class="border-b border-zinc-700" />
-      <div class="p-2 flex flex-row items-center gap-2">
+      <SidebarGroup class="p-2 flex flex-row items-center gap-2 bg-zinc-950">
         <Package class="text-muted-foreground" :size="16" />
         <small class="text-muted-foreground"> v{{ $config.public.clientVersion }} </small>
-      </div>
+      </SidebarGroup>
       <SidebarSeparator class="border-b border-zinc-700" />
-      <SidebarGroup>
+      <SidebarGroup class="bg-zinc-950 text-white">
         <SidebarMenu>
           <SidebarMenuItem>
             <SidebarMenuButton
@@ -388,7 +388,7 @@ const cookiesPoliceFileUrl =
       </SidebarFooter> -->
       <SidebarRail />
     </Sidebar>
-    <SidebarInset class="max-w-[calc(100%-256px)]">
+    <SidebarInset>
       <Header />
       <slot />
       <!-- Cookie Acceptance Message -->
@@ -425,10 +425,10 @@ const cookiesPoliceFileUrl =
 
 <style scoped>
 .sidebar {
-  @apply md:bg-transparent bg-zinc-600 text-white;
+  @apply md:bg-transparent bg-zinc-950 text-white;
 }
 
 .sidebar-footer {
-  @apply md:bg-transparent bg-zinc-600 text-white;
+  @apply md:bg-transparent bg-zinc-950 text-white;
 }
 </style>
