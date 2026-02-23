@@ -43,6 +43,7 @@ import { storeToRefs } from 'pinia';
 import { useForm } from 'vee-validate';
 import FormSelect from '~/components/shared/FormSelect.vue';
 import RideRouteMap from '~/components/shared/RideRouteMap.vue';
+import RideStepper from '~/components/shared/RideStepper.vue';
 import {
   convertMetersToDistance,
   convertSecondsToTime,
@@ -576,6 +577,13 @@ const showRideControls = computed(() => {
                   </div>
                 </div>
                 <div
+                  v-if="ride.progress.steps.length"
+                  class="col-span-4 p-3 bg-white rounded-md"
+                >
+                  <span class="text-muted-foreground text-sm">Etapas do Atendimento</span>
+                  <RideStepper :steps="ride.progress.steps" theme="white" />
+                </div>
+                <div
                   class="relative col-span-4 row-span-4 border-4 border-white rounded-md w-full overflow-hidden"
                 >
                   <RideRouteMap
@@ -789,7 +797,7 @@ const showRideControls = computed(() => {
 
                   <div v-if="ride?.status === 'completed'">
                     <span class="text-muted-foreground text-sm">Valor final</span>
-                    <h3 class="text-lg font-bold text-amber-600">
+                    <h3 class="text-lg font-bold text-green-600">
                       {{ currencyFormat(ride?.rideFinalPrice) }}
                     </h3>
                   </div>

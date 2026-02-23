@@ -29,7 +29,8 @@ export const columns: any = [
       return h('div', { class: 'capitalize text-xs' }, sanitized);
     },
   }),
-  columnHelper.accessor('finishedAt', {
+  columnHelper.accessor('createdAt', {
+    meta: { label: 'Aberto em', width: '100px' },
     header: () => h('div', { class: 'text-xs text-left' }, 'Aberto em'),
     cell: ({ row }) => {
       const data = row.original;
@@ -119,7 +120,7 @@ export const columns: any = [
     },
   }),
   columnHelper.accessor('route', {
-    meta: { label: 'Rota', width: '200px' },
+    meta: { label: 'Rota', width: '250px' },
     header: () => h('div', { class: 'text-xs leading-none text-left' }, 'Rota'),
     cell: ({ row }) => {
       const data = row.original;
@@ -217,7 +218,7 @@ export const columns: any = [
     },
   }),
   columnHelper.accessor('extraCharges', {
-    meta: { label: 'Adicionais' },
+    meta: { label: 'Adicionais', width: '120px' },
     header: () => h('div', { class: 'text-xs leading-none text-center' }, 'Adicionais'),
     cell: ({ row }) => {
       const data = row.original;
@@ -264,7 +265,7 @@ export const columns: any = [
   }),
 
   columnHelper.accessor('status', {
-    meta: { label: 'Status' },
+    meta: { label: 'Status', width: '110px' },
     header: ({ column }) => {
       return h(
         Button,

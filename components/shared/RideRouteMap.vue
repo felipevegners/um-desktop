@@ -108,24 +108,16 @@ async function directions() {
     await directionsService.route(request, (response: any, status: any) => {
       //@ts-ignore
       if (status === window.google.maps.DirectionsStatus.OK) {
-        // const customArrow = {
-        //   //@ts-ignore
-        //   path: google.maps.SymbolPath.FORWARD_CLOSED_ARROW,
-        //   scale: 5,
-        //   strokeColor: '#000000',
-        //   fillColor: '#000000',
-        //   fillOpacity: 0.8,
-        //   //@ts-ignore
-        //   anchor: new google.maps.Point(0, 0),
-        // };
-
-        // const square = {
-        //   path: 'M 10 20 10 20',
-        //   strokeColor: '#000',
-        //   fillColor: '#33ffcc',
-        //   fillOpacity: 1,
-        //   scale: 5,
-        // };
+        const customArrow = {
+          //@ts-ignore
+          path: 'M-1.547 12l6.563-6.609-1.406-1.406-5.156 5.203-2.063-2.109-1.406 1.406zM0 0q2.906 0 4.945 2.039t2.039 4.945q0 1.453-0.727 3.328t-1.758 3.516-2.039 3.070-1.711 2.273l-0.75 0.797q-0.281-0.328-0.75-0.867t-1.688-2.156-2.133-3.141-1.664-3.445-0.75-3.375q0-2.906 2.039-4.945t4.945-2.039z',
+          scale: 2,
+          strokeColor: '#f0f',
+          fillColor: '#f0f',
+          fillOpacity: 1,
+          //@ts-ignore
+          anchor: new google.maps.Point(0, 20),
+        };
         if (!directionsRenderer.value) {
           setDirection(
             //@ts-ignore
@@ -137,17 +129,9 @@ async function directions() {
                 strokeOpacity: 1.0,
                 strokeWeight: 12,
                 zIndex: 8,
-                // icons: [
-                //   {
-                //     icon: customArrow,
-                //     offset: '0%',
-                //   },
-                // ],
               },
             }),
           );
-          // if (props.rideStatus !== 'completed' && props.rideStatus !== 'canceled') {
-          // }
           const route = response.routes[0];
           const startLocation = route.legs[0].start_location;
           const endLocation = route.legs[0].end_location;
@@ -182,6 +166,18 @@ async function directions() {
             icon: 'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent(customIconEnd),
             title: `Destino`,
           });
+          //@ts-ignore
+          new google.maps.Marker({
+            position: {
+              lat: props.rideProgress?.finishedLocation?.latitude,
+              lng: props.rideProgress?.finishedLocation?.longitude,
+            },
+            map: gmap.value,
+            icon: customArrow,
+            title: `Finalizado`,
+            alignment: 'TOP',
+          });
+
           //@ts-ignore
           directionsRenderer.value.setMap(gmap.value);
           gmap.value.fitBounds(response.routes[0].bounds);

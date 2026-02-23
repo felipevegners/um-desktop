@@ -67,6 +67,14 @@ onMounted(async () => {
 
 const columnHelper = createColumnHelper<any>();
 
+const sortCommissionsByDate = computed(() => {
+  return [...commissions.value].sort((a: any, b: any) => {
+    const dateA = new Date(a.createdAt);
+    const dateB = new Date(b.createdAt);
+    return dateB.getTime() - dateA.getTime();
+  });
+});
+
 const finalColums = [
   ...columns,
   columnHelper.display({
@@ -122,7 +130,7 @@ const finalColums = [
     <section v-else>
       <DataTable
         :columns="finalColums"
-        :data="commissions"
+        :data="sortCommissionsByDate"
         sortby="type"
         :column-pin="['type']"
         filterBy="tipo de pagamento"

@@ -55,8 +55,8 @@ export default defineEventHandler(async (event) => {
           // departureTime: time.toISOString(),
         });
 
-        const etaDuration = ride.travel.estimatedDuration; // in seconds
-        const etaDistance = ride.travel.estimatedDistance; // in meters
+        // const etaDuration = ride.travel.estimatedDuration; // in seconds
+        // const etaDistance = ride.travel.estimatedDistance; // in meters
         const startedTime = new Date(ride?.progress?.startedAt).getTime();
         const finishedTime = new Date(ride?.progress?.finishedAt).getTime();
 
@@ -195,7 +195,7 @@ export default defineEventHandler(async (event) => {
           data: {
             billing: {
               ...ride.billing,
-              ammount: rideTotalPrice.toFixed(2),
+              ammountWithExtras: rideTotalPrice.toFixed(2),
             },
             rideFinalPrice: rideTotalPrice.toFixed(2),
             travel: {
