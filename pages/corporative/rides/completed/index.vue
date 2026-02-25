@@ -67,7 +67,7 @@ const finalColumns = [
   columnHelper.display({
     id: 'actions',
     enableHiding: false,
-    header: () => h('div', { class: 'text-left' }, 'Ações'),
+    header: () => h('div', { class: 'text-left text-xs leading-none' }, 'Ações'),
     cell: ({ row }) => {
       const { id } = row.original;
       return h(
@@ -107,7 +107,7 @@ const finalColumns = [
         :data="filteredRides"
         sortby="user"
         :columnPin="['code']"
-        :filterBy="'nome do Usuário'"
+        :filterBy="'código ou usuário'"
       />
     </section>
   </main>

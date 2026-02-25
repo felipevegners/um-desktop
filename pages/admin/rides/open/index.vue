@@ -87,15 +87,13 @@ const finalColumns = [
     </section>
     <section v-else>
       <RidesTotalsDash :rides="openRides" />
-      <ScrollArea class="w-full">
-        <DataTable
-          :columns="finalColumns"
-          :data="openRides"
-          sortby="user"
-          :columnPin="['code', 'product', 'user']"
-          filterBy="código ou usuário"
-        />
-      </ScrollArea>
+      <DataTable
+        :columns="finalColumns"
+        :data="openRides"
+        sortby="user"
+        :columnPin="['code', 'product', 'user']"
+        filterBy="código ou usuário"
+      />
     </section>
   </main>
 </template>

@@ -156,11 +156,16 @@ onMounted(async () => {
   }
 });
 
+const newUserBranchName = ref<string>('');
 const getBranchAreas = (value: string) => {
   loadingAreas.value = true;
   const selectedBranch = selectedBranches.value.find(
     (branch: any) => branch.id === value,
   );
+
+  if (selectedBranch) {
+    newUserBranchName.value = selectedBranch.fantasyName || '';
+  }
 
   branchAreas.value = selectedBranch.areas?.map((area: any) => {
     return {
@@ -274,6 +279,7 @@ const onSubmit = form.handleSubmit(async (values) => {
           contractId: contractId,
           name: contractName.value || null,
           branchId: values.branch || null,
+          branchName: newUserBranchName.value || null,
           area: values.area || null,
           branches: [],
           restrictions: ['week'],
@@ -346,6 +352,7 @@ const onSubmit = form.handleSubmit(async (values) => {
         contractId: contractId,
         name: contractName.value || null,
         branchId: values.branch || null,
+        branchName: newUserBranchName.value || null,
         area: values.area || null,
         branches: [],
         restrictions: ['week'],

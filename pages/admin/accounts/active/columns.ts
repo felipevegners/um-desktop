@@ -1,6 +1,5 @@
-import { Button } from '@/components/ui/button';
 import { createColumnHelper } from '@tanstack/vue-table';
-import { ArrowUpDown, MessageCircleMore } from 'lucide-vue-next';
+import { MessageCircleMore } from 'lucide-vue-next';
 import { WPP_API } from '~/config/paths';
 import { dateFormat, sanitizePhone } from '~/lib/utils';
 
@@ -17,77 +16,86 @@ const Roles = {
 };
 
 export const columns = [
-  columnHelper.accessor('username', {
-    enablePinning: true,
-    header: ({ column }) => {
-      return h(
-        Button,
-        {
-          variant: 'ghost',
-          class: 'p-0',
-          onClick: () => column.toggleSorting(column.getIsSorted() === 'asc'),
-        },
-        () => ['Nome de Usuário', h(ArrowUpDown, { class: 'ml-2 h-4 w-4' })],
-      );
+  columnHelper.accessor((row) => row.username ?? '', {
+    id: 'user',
+    meta: { label: 'Usuário' },
+    header: () => h('div', { class: 'text-xs leading-none text-left' }, 'Usuário'),
+    cell: ({ row }: any) => {
+      const data = row.original;
+      return h('div', { class: 'text-xs' }, [
+        data.username,
+        h(
+          'a',
+          {
+            href: WPP_API.replace('[[phone]]', sanitizePhone(data.phone as string)),
+            target: '_blank',
+            class: 'flex items-center gap-2 text-xs',
+          },
+          [
+            h('span', { class: 'text-muted-foreground' }, data.phone),
+            h(MessageCircleMore, { class: 'text-green-500 text-xs', size: 18 }),
+          ] as any,
+        ),
+      ]);
     },
-    cell: ({ row }) => h('div', { class: 'capitalize' }, row.getValue('username')),
   }),
   columnHelper.accessor('email', {
-    header: () => h('div', { class: 'text-left' }, 'E-mail'),
-    cell: ({ row }) => h('div', { class: 'lowecase' }, row.getValue('email')),
-  }),
-  columnHelper.accessor('phone', {
-    header: () => h('div', { class: 'text-left' }, 'Celular'),
-    cell: ({ row }) => {
-      const phone = row.getValue('phone');
-      return h(
-        'a',
-        {
-          href: WPP_API.replace('[[phone]]', sanitizePhone(phone as string)),
-          target: '_blank',
-          class: 'flex items-center gap-2',
-        },
-        [
-          row.getValue('phone'),
-          h('img', {
-            class: 'h-4',
-            src: 'https://cdn.simpleicons.org/whatsapp',
-          }),
-        ] as any,
-      );
-    },
+    meta: { label: 'E-mail' },
+    header: () => h('div', { class: 'text-xs leading-none text-left' }, 'E-mail'),
+    cell: ({ row }) => h('div', { class: 'lowercase text-xs' }, row.getValue('email')),
   }),
   columnHelper.accessor('contract', {
-    header: () => h('div', { class: 'text-left' }, 'Empresa'),
+    meta: { label: 'Empresa' },
+    header: () => h('div', { class: 'text-xs leading-none text-left' }, 'Empresa'),
     cell: ({ row }) => {
       const data: any = row.original;
       return h(
         'div',
-        { class: 'capitilize' },
+        { class: 'capitalize text-xs' },
         data.contract?.name ? data.contract.name : '-',
       );
     },
   }),
-  columnHelper.accessor('role', {
-    header: () => h('div', { class: 'text-center' }, 'Nível de Permissão'),
+  columnHelper.accessor('branch', {
+    meta: { label: 'Filial' },
+    header: () => h('div', { class: 'text-xs leading-none text-left' }, 'Filial'),
     cell: ({ row }) => {
-      //@ts-ignore
-      return h('div', { class: 'text-center font-medium' }, Roles[row.getValue('role')]);
+      const data: any = row.original;
+      return h(
+        'div',
+        { class: 'capitalize text-xs' },
+        data.contract.branchName === 'all' ? 'Todas' : data.contract.branchName || '-',
+      );
     },
   }),
-  columnHelper.accessor('createdAt', {
-    header: () => h('div', { class: 'text-left' }, 'Data Cadastro'),
+  columnHelper.accessor('role', {
+    meta: { label: 'Tipo de Usuário' },
+    header: () =>
+      h('div', { class: 'text-left text-xs leading-none' }, 'Tipo de Usuário'),
     cell: ({ row }) => {
       //@ts-ignore
       return h(
         'div',
-        { class: 'text-left font-medium' },
+        { class: 'text-left font-medium text-xs' },
+        Roles[row.getValue('role') as keyof typeof Roles],
+      );
+    },
+  }),
+  columnHelper.accessor('createdAt', {
+    meta: { label: 'Data Cadastro' },
+    header: () => h('div', { class: 'text-left text-xs leading-none' }, 'Data Cadastro'),
+    cell: ({ row }) => {
+      //@ts-ignore
+      return h(
+        'div',
+        { class: 'text-left font-medium text-xs leading-none' },
         dateFormat(row.getValue('createdAt')),
       );
     },
   }),
   columnHelper.accessor('status', {
-    header: () => h('div', { class: 'text-center' }, 'Status'),
+    meta: { label: 'Status' },
+    header: () => h('div', { class: 'text-center text-xs leading-none' }, 'Status'),
     cell: ({ row }) => {
       const status = row.getValue('status');
       return h(
@@ -102,7 +110,9 @@ export const columns = [
     },
   }),
   columnHelper.accessor('emailConfirmed', {
-    header: () => h('div', { class: 'text-left' }, 'E-mail Confirmado'),
+    meta: { label: 'E-mail Confirmado' },
+    header: () =>
+      h('div', { class: 'text-left text-xs leading-none' }, 'E-mail Confirmado'),
     cell: ({ row }) => {
       const status = row.getValue('emailConfirmed');
       return h(

@@ -10,6 +10,7 @@ import { WPP_API } from '@/config/paths';
 import { paymentMethods } from '@/config/paymentMethods';
 import { deleteRideService } from '@/server/services/rides';
 import { useAccountStore } from '@/stores/account.store';
+import { useBranchesStore } from '@/stores/branches.store';
 import { useContractsStore } from '@/stores/contracts.store';
 import { useProductsStore } from '@/stores/products.store';
 import { useRidesStore } from '@/stores/rides.store';
@@ -20,6 +21,7 @@ import {
   CalendarDays,
   CarFront,
   Check,
+  Info,
   Link,
   LoaderCircle,
   Mail,
@@ -73,6 +75,10 @@ const isAdmin = computed(() => {
   return user?.role === 'admin';
 });
 
+const isMasterManager = computed(() => {
+  return user?.role === 'master-manager';
+});
+
 const route = useRoute();
 const router = useRouter();
 const ridesStore = useRidesStore();
@@ -96,6 +102,10 @@ const { getProductsAction } = productsStore;
 const { products } = storeToRefs(productsStore);
 await getRideByIdAction(route?.params?.id as string);
 await getProductsAction();
+
+const branchesStore = useBranchesStore();
+const { getBranchByIdAction, updateBranchAction } = branchesStore;
+const { branch } = storeToRefs(branchesStore);
 
 const editDriver = ref<boolean>(false);
 const selectedDriver = ref<any>();
@@ -352,6 +362,8 @@ onMounted(async () => {
       };
     }, 10000);
   }
+
+  await getBranchByIdAction(ride?.value.billing.paymentData.branch);
 });
 
 onUnmounted(() => {
@@ -411,11 +423,36 @@ const onSubmit = form.handleSubmit(async (values) => {
   // Calculate ammountWithExtras based on current extra charges
   let ammountWithExtras = originalPrice + extraChargesSum;
 
-  // If charges are removed, subtract their sum from ammountWithExtras
-  if (removedChargesSum > 0) {
-    ammountWithExtras -= removedChargesSum;
-    // Ensure ammountWithExtras does not go below originalPrice
+  // Update branch budget logic: always use branch.value.usedBudget
+  let currentUsedBudget = branch?.value.usedBudget
+    ? parseFloat(String(branch.value.usedBudget).replace(',', '.'))
+    : 0;
+  const safeExtraChargesSum = isNaN(extraChargesSum)
+    ? 0
+    : parseFloat(String(extraChargesSum).toString().replace(',', '.'));
+  const safeRemovedChargesSum = isNaN(removedChargesSum)
+    ? 0
+    : parseFloat(String(removedChargesSum).toString().replace(',', '.'));
+
+  // Only update branch budget if extra charges or removed charges changed
+  if (safeExtraChargesSum > 0) {
+    currentUsedBudget += safeExtraChargesSum;
+  }
+  if (safeRemovedChargesSum > 0) {
+    currentUsedBudget -= safeRemovedChargesSum;
+    if (currentUsedBudget < 0) currentUsedBudget = 0;
+    ammountWithExtras -= safeRemovedChargesSum;
     if (ammountWithExtras < originalPrice) ammountWithExtras = originalPrice;
+  }
+
+  if (safeExtraChargesSum > 0 || safeRemovedChargesSum > 0) {
+    const { id, ...restBranchData } = branch?.value || {};
+    await updateBranchAction({
+      ...restBranchData,
+      branchId: id as string,
+      contract: restBranchData.contractId,
+      usedBudget: String(currentUsedBudget),
+    });
   }
 
   // Calculate rideFinalPrice for completed rides
@@ -492,6 +529,27 @@ const handleCopyTrackLink = async () => {
 const showRideControls = computed(() => {
   return ride?.value.status !== 'completed' && ride?.value.status !== 'cancelled';
 });
+
+const handleAcceptBudgetOverQuota = () => {
+  const payload = {
+    ...ride?.value,
+    status: 'created',
+  };
+  try {
+    updateRideAction(payload);
+    toast({
+      title: 'Atendimento liberado com sucesso!',
+      class: 'bg-green-600 border-0 text-white text-2xl hover:text-white',
+    });
+    navigateTo('/corporative/rides/open');
+  } catch (error) {
+    toast({
+      title: 'Oops!',
+      description: `Ocorreu um erro ao liberar o atendimento. Tente novamente.`,
+      variant: 'destructive',
+    });
+  }
+};
 </script>
 <template>
   <main class="p-6">
@@ -504,7 +562,7 @@ const showRideControls = computed(() => {
           <CalendarDays class="w-6 h-6" />
           Editar Atendimento - #{{ ride?.code || '' }}
         </h1>
-        <RideStatusFlag :ride-status="ride?.status" />
+        <RideStatusFlag :ride-status="ride?.status" size="large" />
       </div>
       <div v-if="ride?.status === 'completed'" class="flex items-center self-end gap-4">
         <!-- v-if="
@@ -553,6 +611,33 @@ const showRideControls = computed(() => {
             Excluir
           </Button>
         </div>
+      </div>
+    </section>
+    <section v-if="ride?.status === 'over_quota'" class="mb-10">
+      <div class="p-4 bg-amber-300 border border-amber-600 rounded-md">
+        <div class="flex flex-col gap-2">
+          <MessageSquareWarning class="text-amber-900" />
+          <h3 class="font-bold text-amber-900 text-xl">ATENÇÃO!</h3>
+          <p v-if="ride?.status === 'over_quota'" class="text-amber-900 font-bold">
+            Este atendimento excedeu o budget da filial. Entre em contato com o Gestor
+            Master ({{ contract.manager.username }} - {{ contract.manager.email }}) para
+            mais informações.
+          </p>
+          <small class="block mb-6 text-amber-900">
+            Atendimentos com status "BUDGET" não são confirmados e estão sujeitos a
+            cancelamento automático caso o budget não seja liberado em até 48h. Ao liberar
+            o atendimento o saldo negativo do budget será descontado no início do próximo
+            período de faturamento.
+          </small>
+        </div>
+        <Button
+          v-if="ride?.status === 'over_quota'"
+          class="mt-4 bg-amber-700 hover:bg-amber-800"
+          size="lg"
+          @click="handleAcceptBudgetOverQuota"
+        >
+          Aprovar Atendimento
+        </Button>
       </div>
     </section>
     <section v-if="loadingData" class="p-6 flex items-center justify-center">
@@ -764,9 +849,9 @@ const showRideControls = computed(() => {
                     Valor estimado (atendimento + adicionais)
                   </span>
                   <h3 class="text-lg font-bold">
-                    {{ currencyFormat(ride?.travel.rideEstimatedPrice) }}
+                    {{ currencyFormat(ride?.estimatedPrice) }}
                   </h3>
-                  <div v-if="ride?.extraCharges && ride?.extraCharges.length > 0">
+                  <div v-if="ride?.extraCharges.length > 0">
                     <div
                       class="my-3 p-3 border border-amber-600 bg-amber-50 rounded-md flex flex-col gap-4"
                     >
@@ -781,11 +866,11 @@ const showRideControls = computed(() => {
                           extra.info
                         }}</small>
                         <small class="font-bold text-amber-600">{{
-                          currencyFormat(extra.amount)
+                          currencyFormat(extra.amount || '0')
                         }}</small>
                       </div>
                     </div>
-                    <div>
+                    <div v-if="ride?.billing.ammountWithExtras !== null">
                       <span class="text-muted-foreground text-sm">
                         Valor Total (estimado + custos extras)
                       </span>
@@ -870,6 +955,12 @@ const showRideControls = computed(() => {
                   </div>
                   <p class="font-bold text-lg">{{ ride?.travel.destinationAddress }}</p>
                 </div>
+                <div
+                  class="col-span-4 p-3 flex flex-col items-start gap-2 bg-white rounded-md"
+                >
+                  <span class="text-muted-foreground text-sm">Motivo do Atendimento</span>
+                  <p class="font-bold text-lg">{{ ride?.reason ?? '-' }}</p>
+                </div>
               </div>
               <!-- RIDE -->
               <div class="flex flex-col md:grid md:grid-cols-2 gap-6 items-start">
@@ -888,6 +979,18 @@ const showRideControls = computed(() => {
                         :payment-status="ride?.billing.status"
                         :payment-url="ride?.billing.paymentUrl"
                       />
+                      <div
+                        v-if="ride?.status === 'over_quota'"
+                        class="mt-4 p-3 bg-red-100 rounded-md w-fit text-sm text-red-500 space-y-3"
+                      >
+                        <Info />
+                        <p class="">
+                          <span class="font-bold">Budget da filial insuficiente</span>
+                          <br />
+                          O gestor master deve autorizar o uso de limite excedente ou
+                          cancelar o atendimento.
+                        </p>
+                      </div>
                     </div>
                   </div>
                   <div class="flex flex-col items-start gap-10">
@@ -1092,6 +1195,18 @@ const showRideControls = computed(() => {
                       </div>
                     </div>
 
+                    <div
+                      v-if="ride?.status === 'over_quota'"
+                      class="col-span-2 mt-4 p-2 bg-red-100 rounded-md w-fit text-sm text-red-500 space-y-3"
+                    >
+                      <Info />
+                      <p>
+                        <span class="font-bold">Atenção: </span>
+                        o gestor master deve autorizar o atendimento para selecionar um
+                        motorista.
+                      </p>
+                    </div>
+
                     <div class="flex flex-col items-end">
                       <div
                         v-if="ride?.status === 'completed'"
@@ -1129,7 +1244,7 @@ const showRideControls = computed(() => {
           </CardContent>
         </Card>
         <!-- ADDITIONAL EXTRA FARES -->
-        <Card class="p-0 bg-zinc-200">
+        <Card v-if="ride?.status === 'completed'" class="p-0 bg-zinc-200">
           <CardHeader>
             <CardTitle class="text-xl flex flex-col gap-6">
               <ReceiptText />

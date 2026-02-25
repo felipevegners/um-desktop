@@ -12,7 +12,7 @@ import { useAccountStore } from '@/stores/account.store';
 import { useContractsStore } from '@/stores/contracts.store';
 import { useProductsStore } from '@/stores/products.store';
 import { useRidesStore } from '@/stores/rides.store';
-import { CalendarDate, DateFormatter } from '@internationalized/date';
+import { CalendarDate } from '@internationalized/date';
 import {
   Building,
   CalendarDays,
@@ -51,14 +51,15 @@ definePageMeta({
 
 const { toast } = useToast();
 const { data } = useAuth();
-const df = new DateFormatter('pt-BR', {
-  dateStyle: 'short',
-});
 //@ts-ignore
 const { user } = data.value;
 
 const isAdmin = computed(() => {
   return user?.role === 'admin';
+});
+
+const isMasterManager = computed(() => {
+  return user?.role === 'master-manager';
 });
 
 const route = useRoute();
@@ -321,6 +322,27 @@ const getPaymentBranch = computed(() => {
 const showRideControls = computed(() => {
   return ride?.value.status !== 'completed' && ride?.value.status !== 'cancelled';
 });
+
+const handleAcceptBudgetOverQuota = () => {
+  const payload = {
+    ...ride?.value,
+    status: 'created',
+  };
+  try {
+    updateRideAction(payload);
+    toast({
+      title: 'Atendimento liberado com sucesso!',
+      class: 'bg-green-600 border-0 text-white text-2xl hover:text-white',
+    });
+    navigateTo('/corporative/rides/open');
+  } catch (error) {
+    toast({
+      title: 'Oops!',
+      description: `Ocorreu um erro ao liberar o atendimento. Tente novamente.`,
+      variant: 'destructive',
+    });
+  }
+};
 </script>
 <template>
   <main class="p-6">
@@ -364,6 +386,40 @@ const showRideControls = computed(() => {
             Excluir
           </Button>
         </div>
+      </div>
+    </section>
+    <section v-if="ride?.status === 'over_quota'" class="mb-10">
+      <div class="p-4 bg-amber-300 border border-amber-600 rounded-md">
+        <div class="flex flex-col gap-2">
+          <MessageSquareWarning class="text-amber-900" />
+          <h3 class="font-bold text-amber-900 text-xl">ATENÇÃO!</h3>
+          <p
+            v-if="ride?.status === 'over_quota' && isMasterManager"
+            class="text-amber-900 font-bold"
+          >
+            Este atendimento excedeu o budget da filial e está aguardando sua aprovação
+            para ser confirmado.
+          </p>
+          <p v-else>
+            Este atendimento excedeu o budget da filial. Entre em contato com o Gestor
+            Master ({{ contract.manager.username }} - {{ contract.manager.email }}) para
+            mais informações.
+          </p>
+          <small class="block mb-6 text-amber-900">
+            Atendimentos com status "BUDGET" não são confirmados e estão sujeitos a
+            cancelamento automático caso o budget não seja liberado em até 48h. Ao liberar
+            o atendimento o saldo negativo do budget será descontado no início do próximo
+            período de faturamento.
+          </small>
+        </div>
+        <Button
+          v-if="ride?.status === 'over_quota' && isMasterManager"
+          class="mt-4 bg-amber-700 hover:bg-amber-800"
+          size="lg"
+          @click="handleAcceptBudgetOverQuota"
+        >
+          Aprovar Atendimento
+        </Button>
       </div>
     </section>
     <section v-if="loadingData" class="p-6 flex items-center justify-center">
@@ -646,6 +702,12 @@ const showRideControls = computed(() => {
                     <span class="text-muted-foreground text-sm">Destino</span>
                   </div>
                   <p class="font-bold text-lg">{{ ride?.travel.destinationAddress }}</p>
+                </div>
+                <div
+                  class="col-span-4 p-3 flex flex-col items-start gap-2 bg-white rounded-md"
+                >
+                  <span class="text-muted-foreground text-sm">Motivo do Atendimento</span>
+                  <p class="font-bold text-lg">{{ ride?.reason ?? '-' }}</p>
                 </div>
               </div>
               <!-- PAYMENT -->

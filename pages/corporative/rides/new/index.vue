@@ -10,12 +10,15 @@ import { useToast } from '@/components/ui/toast/use-toast';
 import { paymentMethods } from '@/config/paymentMethods';
 import { getRideRoutesService } from '@/server/services/rides';
 import { useAccountStore } from '@/stores/account.store';
+import { useBranchesStore } from '@/stores/branches.store';
 import { useContractsStore } from '@/stores/contracts.store';
 import { useProductsStore } from '@/stores/products.store';
 import { useRidesStore } from '@/stores/rides.store';
 import type { Product } from '@/types/products/types';
 import { toTypedSchema } from '@vee-validate/zod';
 import {
+  CalendarPlus,
+  Info,
   LoaderCircle,
   Minus,
   Percent,
@@ -77,6 +80,9 @@ const { getUsersAccountsByContractIdAction } = accountStore;
 const { accounts } = storeToRefs(accountStore);
 const { createRideAction, getRidesAction } = ridesStore;
 const { rides } = storeToRefs(ridesStore);
+const branchesStore = useBranchesStore();
+const { getBranchByIdAction, updateBranchAction } = branchesStore;
+const { branch } = storeToRefs(branchesStore);
 const { getProductsAction } = productsStore;
 const { products } = storeToRefs(productsStore);
 
@@ -142,7 +148,7 @@ const routePolyLine = ref();
 const loadingRoute = ref<boolean>(false);
 const mapCenter = ref<any>({ lat: -23.55012592233407, lng: -46.63425371400603 });
 const mapRef = ref<any>(null);
-const initialZoom = ref(1);
+const initialZoom = ref(2);
 const ridePath = ref<any>({
   path: [],
   geodesic: true,
@@ -292,6 +298,12 @@ const setSelectedUser = async (user: any) => {
 
     selectedUserBranchName.value = filterUserBranch.fantasyName;
 
+    // Get user branch budget and calculate available budget based on used budget, then set the values to show on the form
+    const userBranchBudget = parseFloat(filterUserBranch.budget);
+    const availableBudget = userBranchBudget - parseFloat(filterUserBranch.usedBudget);
+    availableBranchBudget.value = availableBudget.toString();
+    usedBranchBudget.value = filterUserBranch.usedBudget;
+
     contractBranchesList.value = isMasterManager
       ? contract?.value.branches.map((branch: any) => {
           return {
@@ -325,8 +337,31 @@ const setSelectedUser = async (user: any) => {
   }
 };
 
+const availableBranchBudget = ref<string>('');
+const usedBranchBudget = ref<string>('');
+const showBranchBudgetAlert = ref<boolean>(false);
+
 const setPaymentMethod = (value: any) => {
   paymentMethod.value = value;
+
+  const ridePriceOverQuota =
+    parseFloat(calculatedEstimates.value.estimatedTotalPrice) >
+    parseFloat(availableBranchBudget.value);
+
+  console.log('ridePriceOverQuota', ridePriceOverQuota);
+  console.log('value', value);
+
+  if (value === 'corporative' && ridePriceOverQuota) {
+    showBranchBudgetAlert.value = true;
+  } else {
+    showBranchBudgetAlert.value = false;
+  }
+};
+
+const branchBudgetOverQuota = ref(false);
+const handleAcceptBudgetOverQuota = () => {
+  showBranchBudgetAlert.value = false;
+  branchBudgetOverQuota.value = true;
 };
 
 // Google Maps Area
@@ -815,7 +850,10 @@ const onSubmit = form.handleSubmit(async (values) => {
     progress: {
       steps: [],
     },
-    status: 'created',
+    status:
+      paymentMethod.value === 'corporative' && branchBudgetOverQuota.value
+        ? 'over_quota'
+        : 'created',
     accepted: false,
     driver: {},
     observations: values.observations,
@@ -828,25 +866,57 @@ const onSubmit = form.handleSubmit(async (values) => {
     },
   };
 
-  try {
-    loadingGenerateRide.value = true;
-    await createRideAction(ridePayload);
-    loadingGenerateRide.value = false;
+  const result = await createRideAction(ridePayload);
+  if (result?.success) {
+    if (paymentMethod.value === 'corporative') {
+      await getBranchByIdAction(values?.branch as string);
+      const { id, ...restBranchData } = branch.value;
+      await updateBranchAction({
+        ...restBranchData,
+        branchId: id,
+        contract: restBranchData.contractId,
+        usedBudget: String(
+          parseFloat(branch.value.usedBudget) +
+            parseFloat(calculatedEstimates.value.estimatedTotalPrice),
+        ),
+      });
+    }
     toast({
       title: 'Tudo pronto!',
       class: 'bg-green-600 border-0 text-white text-2xl',
-      description: `Agendamento cadastrado com sucesso!`,
+      description: `Atendimento cadastrado com sucesso!`,
     });
+    loadingGenerateRide.value = false;
     setTimeout(() => {
       navigateTo('/corporative/rides/open');
-    }, 1500);
-  } catch (error) {
+    }, 1000);
+  } else {
     toast({
       title: 'Oops!',
-      description: `Ocorreu um erro ao criar o agendamento. Tente novamente.`,
+      description: result.error,
       variant: 'destructive',
     });
   }
+
+  // try {
+  //   loadingGenerateRide.value = true;
+  //   await createRideAction(ridePayload);
+  //   loadingGenerateRide.value = false;
+  //   toast({
+  //     title: 'Tudo pronto!',
+  //     class: 'bg-green-600 border-0 text-white text-2xl',
+  //     description: `Agendamento cadastrado com sucesso!`,
+  //   });
+  //   setTimeout(() => {
+  //     navigateTo('/corporative/rides/open');
+  //   }, 1500);
+  // } catch (error) {
+  //   toast({
+  //     title: 'Oops!',
+  //     description: `Ocorreu um erro ao criar o agendamento. Tente novamente.`,
+  //     variant: 'destructive',
+  //   });
+  // }
 });
 </script>
 <template>
@@ -894,6 +964,24 @@ const onSubmit = form.handleSubmit(async (values) => {
                     @toogle-form="visitorUser = !visitorUser"
                     @selected-user="setSelectedUser"
                   />
+                </div>
+                <div
+                  v-if="selectedUserBranchName"
+                  class="p-4 border border-zinc-950 rounded-md max-w-[400px] bg-white"
+                >
+                  <small>Filial</small>
+                  <p class="font-bold">{{ selectedUserBranchName }}</p>
+                  <small>Budget Utilizado</small>
+                  <p class="font-bold text-xl text-amber-600">
+                    {{ currencyFormat(usedBranchBudget) }}
+                  </p>
+                  <small>Budget Disponível</small>
+                  <p
+                    class="font-bold text-2xl"
+                    :class="availableBranchBudget <= '0' && 'text-red-500'"
+                  >
+                    {{ currencyFormat(availableBranchBudget) }}
+                  </p>
                 </div>
                 <div v-if="showAvailableProducts" class="lg:max-w-lg">
                   <LoaderCircle v-if="loadingProducts" class="animate-spin" />
@@ -1221,7 +1309,7 @@ const onSubmit = form.handleSubmit(async (values) => {
                       :api-key="API_KEY"
                       style="width: 100%; height: 700px"
                       :center="mapCenter"
-                      :zoom="initialZoom"
+                      :zoom="10"
                       :zoom-control="true"
                     >
                       <Marker
@@ -1302,9 +1390,9 @@ const onSubmit = form.handleSubmit(async (values) => {
 
                     <div
                       v-if="showContractProductAlert"
-                      class="p-4 bg-amber-200 rounded-md border border-amber-900"
+                      class="p-4 bg-amber-100 rounded-md border border-amber-600"
                     >
-                      <h3 class="mb-2 font-bold uppercase text-amber-700">Importante</h3>
+                      <h3 class="mb-2 font-bold uppercase text-amber-600">Importante</h3>
                       <p>
                         O Serviço
                         <span class="font-bold">{{ selectedProduct.name }}</span> é
@@ -1456,6 +1544,83 @@ const onSubmit = form.handleSubmit(async (values) => {
                       "
                       class="p-4 mb-4 md:grid md:grid-cols-2 gap-6 w-full"
                     >
+                      <div v-if="branchBudgetOverQuota" class="col-span-2">
+                        <p
+                          class="px-2 py-1.5 flex items-center gap-2 bg-red-100 rounded-md w-fit text-sm text-red-500"
+                        >
+                          <Info :size="16" />
+                          Orçamento da filial insuficiente
+                        </p>
+                      </div>
+                      <Dialog :open="showBranchBudgetAlert" :closable="false">
+                        <DialogContent>
+                          <DialogHeader>
+                            <DialogTitle class="font-bold text-xl">
+                              <Info />
+                              Budget Insuficiente
+                            </DialogTitle>
+                            <DialogDescription>
+                              <p class="text-base text-zinc-950">
+                                Este atendimento ultrapassou o limite de budget disponível
+                                para a filial do usuário.
+                                <br />
+                                <br />
+                                Entre em contato com o gestor para aprovar este
+                                atendimento.
+                              </p>
+                            </DialogDescription>
+                          </DialogHeader>
+                          <div class="flex items-center gap-6">
+                            <div>
+                              <small> Budget Disponível </small>
+                              <p
+                                class="font-bold"
+                                :class="
+                                  Number(availableBranchBudget) <
+                                  Number(calculatedEstimates.estimatedTotalPrice)
+                                    ? 'text-red-500'
+                                    : ''
+                                "
+                              >
+                                {{ currencyFormat(availableBranchBudget) }}
+                              </p>
+                            </div>
+                            <div>
+                              <small>Valor do Atendimento</small>
+                              <p class="font-bold">
+                                {{
+                                  currencyFormat(calculatedEstimates.estimatedTotalPrice)
+                                }}
+                              </p>
+                            </div>
+                          </div>
+                          <div class="my-6 text-zinc-950">
+                            <small> Gestor Master </small>
+                            <p class="font-bold">{{ contract.manager.username }}</p>
+                            <p>{{ contract.manager.email }}</p>
+                          </div>
+                          <DialogFooter>
+                            <Button
+                              variant="ghost"
+                              type="button"
+                              @click.prevent="
+                                () => {
+                                  showBranchBudgetAlert = false;
+                                  navigateTo('/admin/rides/open');
+                                }
+                              "
+                            >
+                              Cancelar
+                            </Button>
+                            <Button
+                              type="button"
+                              @click.prevent="handleAcceptBudgetOverQuota"
+                            >
+                              Concordar e continuar
+                            </Button>
+                          </DialogFooter>
+                        </DialogContent>
+                      </Dialog>
                       <div v-if="visitorUser" class="col-span-2 flex items-center gap-10">
                         <div
                           class="p-4 flex flex-col border border-amber-500 rounded-md bg-amber-100 w-full"

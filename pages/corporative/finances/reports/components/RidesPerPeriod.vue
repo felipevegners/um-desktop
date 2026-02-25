@@ -59,8 +59,6 @@ const contractsStore = useContractsStore();
 const { getContractByIdAction } = contractsStore;
 const { contract } = storeToRefs(contractsStore);
 
-const getContractData = () => {};
-
 onMounted(async () => {
   await getDriversAction();
   await getContractByIdAction(contractId);
@@ -90,18 +88,6 @@ onMounted(async () => {
     loadingBranches.value = false;
   }, 500);
 });
-
-// const sanitizeDrivers = computed(() => {
-//   const availableDrivers = drivers?.value.filter(
-//     (driver: any) => driver.scheduleOpen === true,
-//   );
-//   return availableDrivers?.map((driver) => {
-//     return {
-//       label: driver.name,
-//       value: driver.id,
-//     };
-//   });
-// });
 
 const filterRidesUsers = () => {
   ridesUsersList.value = rides?.value

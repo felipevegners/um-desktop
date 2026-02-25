@@ -122,9 +122,9 @@ const finalColumns = [
       <DataTable
         :columns="finalColumns"
         :data="contractRidesList"
-        sortby="code"
+        sortby="user"
         :columnPin="['code']"
-        :filterBy="'código do atendimento'"
+        :filterBy="'código ou usuário'"
       />
     </section>
   </main>

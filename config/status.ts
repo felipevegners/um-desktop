@@ -16,6 +16,7 @@ export const rideStatusOptions = [
   { label: 'Cancelado', value: 'cancelled', color: 'red-600' },
   { label: 'Finalizado', value: 'completed', color: 'zinc-900' },
   { label: 'Recusado', value: 'refused', color: 'red-600' },
+  { label: 'Budget', value: 'over_quota', color: 'red-600' },
   { label: 'Em Andamento', value: 'in-progress', color: 'violet-600' },
 ];
 

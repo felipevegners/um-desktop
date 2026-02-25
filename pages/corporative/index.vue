@@ -81,9 +81,8 @@ const getRideMonthData = computed(() => {
   }
 });
 
-const calculateBranchRemainingBudget = (branch: any) => {
-  const total = branch.budget - branch.usedBudget;
-  return currencyFormat(total.toString());
+const getBranchRemainingBudgetValue = (branch: any) => {
+  return branch.budget - branch.usedBudget;
 };
 
 definePageMeta({
@@ -112,7 +111,7 @@ const userName = computed(() => {
       <div class="flex flex-col gap-6">
         <h2 class="text-white">Olá, {{ userName }}!</h2>
         <h1 class="font-bold text-white md:text-2xl">
-          Você está no painel de gestão da Urban Mobi!
+          Você está no painel de gestão da Urban Mobi
         </h1>
       </div>
       <Button
@@ -226,9 +225,12 @@ const userName = computed(() => {
                 </h1>
               </div>
               <div>
-                <small class="text-muted-foreground">Restante</small>
-                <h1 class="text-xl font-bold text-amber-600">
-                  {{ calculateBranchRemainingBudget(branch) }}
+                <small class="text-muted-foreground">Saldo</small>
+                <h1
+                  class="text-xl font-bold text-amber-600"
+                  :class="getBranchRemainingBudgetValue(branch) < 0 && 'text-red-600'"
+                >
+                  {{ currencyFormat(getBranchRemainingBudgetValue(branch)) }}
                 </h1>
               </div>
             </div>

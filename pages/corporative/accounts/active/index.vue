@@ -88,7 +88,7 @@ const finalColumns = [
   columnHelper.display({
     id: 'actions',
     enableHiding: false,
-    header: () => h('div', { class: 'text-left' }, 'Ações'),
+    header: () => h('div', { class: 'text-left leading-none text-xs' }, 'Ações'),
     cell: ({ row }) => {
       const { id } = row.original;
       return h(
@@ -127,7 +127,7 @@ const finalColumns = [
         :data="userAllowedAccounts"
         sortby="username"
         :column-pin="['username']"
-        filterBy="nome de usuário"
+        filterBy="nome de usuário ou e-mail"
       />
     </section>
   </main>

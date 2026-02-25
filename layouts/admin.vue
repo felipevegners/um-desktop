@@ -256,7 +256,6 @@ const cookiesPoliceFileUrl =
             </SidebarMenuItem>
           </SidebarMenu>
         </SidebarGroup>
-        <SidebarSeparator class="border-b border-zinc-700" />
         <SidebarGroup class="bg-zinc-950 text-white">
           <SidebarGroupLabel class="text-[#33ffcc] text-md">
             Privacidade
@@ -388,7 +387,7 @@ const cookiesPoliceFileUrl =
       </SidebarFooter> -->
       <SidebarRail />
     </Sidebar>
-    <SidebarInset>
+    <SidebarInset class="md:max-w-[calc(100%-256px)]">
       <Header />
       <slot />
       <!-- Cookie Acceptance Message -->

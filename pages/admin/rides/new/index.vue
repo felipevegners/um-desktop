@@ -17,6 +17,7 @@ import { useRidesStore } from '@/stores/rides.store';
 import type { Product } from '@/types/products/types';
 import { toTypedSchema } from '@vee-validate/zod';
 import {
+  Info,
   LoaderCircle,
   Minus,
   Percent,
@@ -54,6 +55,8 @@ const contractsStore = useContractsStore();
 const branchesStore = useBranchesStore();
 const accountStore = useAccountStore();
 const ridesStore = useRidesStore();
+const { getBranchByIdAction } = useBranchesStore();
+const { branch } = storeToRefs(branchesStore);
 const productsStore = useProductsStore();
 const { getContractByIdAction } = contractsStore;
 const { contract } = storeToRefs(contractsStore);
@@ -260,6 +263,10 @@ const getBranchAreas = (value: string) => {
   }, 500);
 };
 
+const availableBranchBudget = ref<string>('');
+const usedBranchBudget = ref<string>('');
+const showBranchBudgetAlert = ref<boolean>(false);
+
 const setSelectedUser = async (user: any) => {
   // reseting state to show another products list
   showAvailableProducts.value = false;
@@ -323,6 +330,12 @@ const setSelectedUser = async (user: any) => {
       );
 
       selectedUserBranchName.value = filterUserBranch.fantasyName;
+
+      const userBranchBudget = parseFloat(filterUserBranch.budget);
+      const availableBudget = userBranchBudget - parseFloat(filterUserBranch.usedBudget);
+      availableBranchBudget.value = availableBudget.toString();
+      usedBranchBudget.value = filterUserBranch.usedBudget;
+
       contractBranchesList.value = isMasterManager
         ? contract?.value.branches.map((branch: any) => {
             return {
@@ -358,6 +371,22 @@ const setSelectedUser = async (user: any) => {
 
 const setPaymentMethod = (value: any) => {
   paymentMethod.value = value;
+
+  const ridePriceOverQuota =
+    parseFloat(calculatedEstimates.value.estimatedTotalPrice) >
+    Number(availableBranchBudget.value);
+
+  if (value === 'corporative' && ridePriceOverQuota) {
+    showBranchBudgetAlert.value = true;
+  } else {
+    showBranchBudgetAlert.value = false;
+  }
+};
+
+const branchBudgetOverQuota = ref(false);
+const handleAcceptBudgetOverQuota = () => {
+  showBranchBudgetAlert.value = false;
+  branchBudgetOverQuota.value = true;
 };
 
 // Google Maps Area
@@ -812,7 +841,10 @@ const onSubmit = form.handleSubmit(async (values) => {
     progress: {
       steps: [],
     },
-    status: 'created',
+    status:
+      paymentMethod.value === 'corporative' && branchBudgetOverQuota.value
+        ? 'over_quota'
+        : 'created',
     accepted: false,
     driver: {},
     observations: values.observations,
@@ -827,6 +859,19 @@ const onSubmit = form.handleSubmit(async (values) => {
 
   const result = await createRideAction(ridePayload);
   if (result?.success) {
+    if (paymentMethod.value === 'corporative') {
+      await getBranchByIdAction(values?.branch as string);
+      const { id, ...restBranchData } = branch.value;
+      await branchesStore.updateBranchAction({
+        ...restBranchData,
+        branchId: id,
+        contract: restBranchData.contractId,
+        usedBudget: String(
+          parseFloat(branch.value.usedBudget) +
+            parseFloat(calculatedEstimates.value.estimatedTotalPrice),
+        ),
+      });
+    }
     toast({
       title: 'Tudo pronto!',
       class: 'bg-green-600 border-0 text-white text-2xl',
@@ -884,6 +929,24 @@ const onSubmit = form.handleSubmit(async (values) => {
                       </FormControl>
                     </FormItem>
                   </FormField>
+                  <div
+                    v-if="selectedUserBranchName"
+                    class="p-4 border border-zinc-950 rounded-md max-w-[400px] bg-white"
+                  >
+                    <small>Filial</small>
+                    <p class="font-bold">{{ selectedUserBranchName }}</p>
+                    <small>Budget Utilizado</small>
+                    <p class="font-bold text-xl text-amber-600">
+                      {{ currencyFormat(usedBranchBudget) }}
+                    </p>
+                    <small>Budget Disponível</small>
+                    <p
+                      class="font-bold text-2xl"
+                      :class="availableBranchBudget <= '0' && 'text-red-500'"
+                    >
+                      {{ currencyFormat(availableBranchBudget) }}
+                    </p>
+                  </div>
                   <div v-if="showAvailableProducts" class="lg:max-w-2xl">
                     <LoaderCircle v-if="loadingProducts" class="animate-spin" />
                     <div v-else>
@@ -1222,7 +1285,7 @@ const onSubmit = form.handleSubmit(async (values) => {
                     <GoogleMap
                       ref="mapRef"
                       :api-key="API_KEY"
-                      style="width: 100%; height: 500px"
+                      style="width: 100%; height: 600px"
                       :center="mapCenter"
                       :zoom="initialZoom"
                       :zoom-control="true"
@@ -1469,6 +1532,83 @@ const onSubmit = form.handleSubmit(async (values) => {
                       "
                       class="p-4 mb-4 md:grid md:grid-cols-2 gap-6 w-full"
                     >
+                      <div v-if="branchBudgetOverQuota" class="col-span-2">
+                        <p
+                          class="px-2 py-1.5 flex items-center gap-2 bg-red-100 rounded-md w-fit text-sm text-red-500"
+                        >
+                          <Info :size="16" />
+                          Orçamento da filial insuficiente
+                        </p>
+                      </div>
+                      <Dialog :open="showBranchBudgetAlert" :closable="false">
+                        <DialogContent>
+                          <DialogHeader>
+                            <DialogTitle class="font-bold text-xl">
+                              <Info />
+                              Budget Insuficiente
+                            </DialogTitle>
+                            <DialogDescription>
+                              <p class="text-base text-zinc-950">
+                                Este atendimento ultrapassou o limite de budget disponível
+                                para a filial do usuário.
+                                <br />
+                                <br />
+                                Entre em contato com o gestor para aprovar este
+                                atendimento.
+                              </p>
+                            </DialogDescription>
+                          </DialogHeader>
+                          <div class="flex items-center gap-6">
+                            <div>
+                              <small> Budget Disponível </small>
+                              <p
+                                class="font-bold"
+                                :class="
+                                  Number(availableBranchBudget) <
+                                  Number(calculatedEstimates.estimatedTotalPrice)
+                                    ? 'text-red-500'
+                                    : ''
+                                "
+                              >
+                                {{ currencyFormat(availableBranchBudget) }}
+                              </p>
+                            </div>
+                            <div>
+                              <small>Valor do Atendimento</small>
+                              <p class="font-bold">
+                                {{
+                                  currencyFormat(calculatedEstimates.estimatedTotalPrice)
+                                }}
+                              </p>
+                            </div>
+                          </div>
+                          <div class="my-6 text-zinc-950">
+                            <small> Gestor Master </small>
+                            <p class="font-bold">{{ contract.manager.username }}</p>
+                            <p>{{ contract.manager.email }}</p>
+                          </div>
+                          <DialogFooter>
+                            <Button
+                              variant="ghost"
+                              type="button"
+                              @click.prevent="
+                                () => {
+                                  showBranchBudgetAlert = false;
+                                  navigateTo('/admin/rides/open');
+                                }
+                              "
+                            >
+                              Cancelar
+                            </Button>
+                            <Button
+                              type="button"
+                              @click.prevent="handleAcceptBudgetOverQuota"
+                            >
+                              Concordar e continuar
+                            </Button>
+                          </DialogFooter>
+                        </DialogContent>
+                      </Dialog>
                       <FormField v-slot="{ componentField, value }" name="branch">
                         <FormItem>
                           <FormLabel>Filial*</FormLabel>
@@ -1519,111 +1659,6 @@ const onSubmit = form.handleSubmit(async (values) => {
                         v-model="splitPaymentCCAreas"
                         :form="form"
                       />
-                      <!-- <div v-if="splitPaymentAreas" class="col-span-2">
-                        <div class="p-4 rounded-md border border-zinc-950">
-                          <h3 class="mb-4 font-bold text-xl">
-                            Ratear valor entre centros de custo
-                          </h3>
-                          <p class="mb-6 text-sm text-muted-foreground">
-                            Adicione os Centros de Custo que devem entrar no rateio deste
-                            atendimento
-                          </p>
-                          <div
-                            v-for="(area, index) in splitPaymentCCAreas"
-                            class="mb-10 md:grid md:grid-cols-4 gap-6"
-                          >
-                            <FormField v-slot="{}" :name="`cc-${index}`">
-                              <FormItem class="col-span-2">
-                                <FormLabel>Centro de Custo*</FormLabel>
-                                <FormControl>
-                                  <FormSelect
-                                    :items="availableContractBranchAreas"
-                                    :loading="loadingAreas"
-                                    label="Selecione"
-                                    v-model="area.area"
-                                  />
-                                </FormControl>
-                                <FormMessage class="text-xs" />
-                              </FormItem>
-                            </FormField>
-                            <FormField v-slot="{}" :name="`percentage-${index}`">
-                              <FormItem class="relative">
-                                <FormLabel>Porcentagem</FormLabel>
-                                <FormControl>
-                                  <Input
-                                    type="number"
-                                    v-maska="'### %'"
-                                    v-model="area.percentage"
-                                    @update:model-value="
-                                      calculateCCPercentage(index as number)
-                                    "
-                                  />
-                                </FormControl>
-                                <FormMessage class="absolute text-xs" />
-                              </FormItem>
-                            </FormField>
-                            <div class="flex flex-col justify-center gap-2">
-                              <small class="font-medium text-sm leading-none">
-                                Valor
-                              </small>
-                              <div class="mt-2 flex items-center gap-6">
-                                <p class="font-bold">
-                                  {{ currencyFormat(area.amount.toString()) }}
-                                </p>
-                                <Button
-                                  type="button"
-                                  size="icon"
-                                  variant="destructive"
-                                  @click.prevent="removeShareCCRow(index as number)"
-                                >
-                                  <Trash />
-                                </Button>
-                              </div>
-                            </div>
-                          </div>
-                          <div class="flex items-center gap-6">
-                            <Button
-                              v-if="showAddCCToShareBtn"
-                              class="w-fit"
-                              @click.prevent="addShareCCRow"
-                            >
-                              <Plus />
-                              Adicionar C/C
-                            </Button>
-                            <Button
-                              type="button"
-                              variant="secondary"
-                              @click.prevent="cancelSplitPayment"
-                            >
-                              <X />
-                              Cancelar
-                            </Button>
-                          </div>
-                        </div>
-                      </div>
-                      <div
-                        v-if="splitPaymentCCAreas.length"
-                        class="col-span-2 flex items-center justify-end gap-10"
-                      >
-                        <div>
-                          <small>Total do atendimento</small>
-                          <p
-                            class="text-3xl font-bold text-zinc-950"
-                            :class="remainingRideAmount !== 0 && 'text-amber-600'"
-                          >
-                            {{ currencyFormat(calculatedEstimates?.estimatedTotalPrice) }}
-                          </p>
-                        </div>
-                        <div>
-                          <small>Resta ratear</small>
-                          <p
-                            class="text-3xl font-bold text-red-600"
-                            :class="remainingRideAmount == 0 && 'text-green-600'"
-                          >
-                            {{ currencyFormat(remainingRideAmount) }}
-                          </p>
-                        </div>
-                      </div> -->
                     </div>
                   </li>
                 </ul>

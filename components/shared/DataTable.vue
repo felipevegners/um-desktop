@@ -67,10 +67,21 @@ const globalFilterFn = (row: any, columnId: string, filterValue: string): boolea
   if (!filterValue) return true;
   const original = row.original;
   const searchTerm = filterValue.toLowerCase();
+  // For rides table
   const userName = original?.user?.name?.toLowerCase() ?? '';
   const rideCode = original?.code?.toLowerCase() ?? '';
-  // add more filters if necessary
-  return userName.includes(searchTerm) || rideCode.includes(searchTerm);
+  // For accounts table
+  const username = original?.username?.toLowerCase() ?? '';
+  const email = original?.email?.toLowerCase() ?? '';
+  const contractName = original?.contract?.name?.toLowerCase() ?? '';
+  // Match if any relevant field contains the search term
+  return (
+    userName.includes(searchTerm) ||
+    rideCode.includes(searchTerm) ||
+    username.includes(searchTerm) ||
+    email.includes(searchTerm) ||
+    contractName.includes(searchTerm)
+  );
 };
 
 const emit = defineEmits<{

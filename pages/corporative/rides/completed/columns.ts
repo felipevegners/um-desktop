@@ -15,12 +15,17 @@ const columnHelper = createColumnHelper<any>();
 
 export const columns: any = [
   columnHelper.accessor('code', {
+    meta: {
+      label: 'Código',
+      width: '120px',
+    },
     header: () => h('div', { class: 'text-xs leading-none text-left' }, 'Código'),
     cell: ({ row }) =>
       //@ts-ignore
       h('div', { class: 'capitalize text-xs' }, row.getValue('code').replace('UM-', '')),
   }),
   columnHelper.accessor('product', {
+    meta: { label: 'Produto', width: '90px' },
     header: () => h('div', { class: 'text-xs leading-none text-left' }, 'Produto'),
     cell: ({ row }) => {
       const { product }: any = row.original;
@@ -119,20 +124,18 @@ export const columns: any = [
       return h('div', { class: 'capitalize text-xs' }, name ? name : '-');
     },
   }),
-  columnHelper.display({
-    id: 'DateTime',
-    enableHiding: false,
+  columnHelper.accessor('time', {
+    meta: { label: 'Data e Hora', width: '100px' },
     header: () => h('div', { class: 'text-xs leading-none text-left' }, 'Data e Hora'),
     cell: ({ row }) => {
       const data = row.original;
-      const travelDateTime = `${sanitizeRideDate(data.travel.date as string)} - ${data.travel.departTime}`;
+      const travelDateTime = `${sanitizeRideDate(data.travel.date as string)} ${data.travel.departTime}`;
       return h('div', { class: 'capitalize text-xs text-wrap' }, [`${travelDateTime}`]);
     },
   }),
 
-  columnHelper.display({
-    id: 'routeDateTime',
-    enableHiding: false,
+  columnHelper.accessor('route', {
+    meta: { label: 'Rota', width: '200px' },
     header: () => h('div', { class: 'text-xs leading-none text-left' }, 'Rota'),
     cell: ({ row }) => {
       const data = row.original;
@@ -148,7 +151,7 @@ export const columns: any = [
               'span',
               {
                 class:
-                  'block m-2 px-2 py-0.5 text-center bg-zinc-900 text-zinc-300 text-xs w-fit rounded-md',
+                  'ml-1 px-2 py-0.5 text-center bg-zinc-900 text-zinc-300 text-xs w-fit rounded-md',
               },
               `${data?.travel.stops?.length > 1 ? data?.travel.stops?.length + ' paradas' : data?.travel.stops?.length + ' parada'}`,
             )
@@ -157,9 +160,9 @@ export const columns: any = [
     },
   }),
 
-  columnHelper.accessor('travel', {
-    header: () =>
-      h('div', { class: 'text-xs leading-none text-center' }, 'Tempo em Paradas'),
+  columnHelper.accessor('tp', {
+    meta: { label: 'TP' },
+    header: () => h('div', { class: 'text-xs leading-none text-center' }, 'TP'),
     cell: ({ row }) => {
       const data = row.original;
       const { totalTimeStopped } = data.travel;
@@ -170,68 +173,74 @@ export const columns: any = [
       );
     },
   }),
-  columnHelper.accessor('travel', {
-    header: () => h('div', { class: 'text-xs leading-none text-left' }, 'Km Extra'),
+  columnHelper.accessor('kme', {
+    meta: { label: 'KME' },
+    header: () => h('div', { class: 'text-xs leading-none text-left' }, 'KME'),
     cell: ({ row }) => {
       const data = row.original;
       return h(
         'div',
         { class: 'text-xs' },
-        data.travel.completedData.rideExtraKms !== 0
-          ? data.travel.completedData.rideExtraKms.toLocaleString('pt-BR', {
+        data.travel.completedData?.rideExtraKms !== 0
+          ? data.travel.completedData?.rideExtraKms.toLocaleString('pt-BR', {
               maximumFractionDigits: 2,
             })
           : '-',
       );
     },
   }),
-  columnHelper.accessor('travel', {
-    header: () => h('div', { class: 'text-xs leading-none text-left' }, 'Valor Km Extra'),
+  columnHelper.accessor('kme-price', {
+    meta: { label: 'Valor KME' },
+    header: () => h('div', { class: 'text-xs leading-none text-left' }, 'Valor KME'),
     cell: ({ row }) => {
       const data = row.original;
       return h(
         'div',
         { class: 'text-xs font-bold text-amber-600' },
-        data.travel.completedData.rideExtraKmPrice !== ''
-          ? currencyFormat(data.travel.completedData.rideExtraKmPrice)
+        data?.travel.completedData && data?.travel.completedData?.rideExtraKmPrice !== ''
+          ? currencyFormat(data.travel.completedData?.rideExtraKmPrice)
           : '-',
       );
     },
   }),
-  columnHelper.accessor('travel', {
-    header: () => h('div', { class: 'text-xs leading-none text-left' }, 'Hora Extra'),
+  columnHelper.accessor('he', {
+    meta: { label: 'HE' },
+    header: () => h('div', { class: 'text-xs leading-none text-left' }, 'HE'),
     cell: ({ row }) => {
       const data = row.original;
       return h(
         'div',
         { class: 'text-xs' },
-        data.travel.completedData.rideExtraHours !== 0
-          ? Math.ceil(data.travel.completedData.rideExtraHours)
+        data?.travel.completedData && data?.travel.completedData?.rideExtraHours !== 0
+          ? Math.ceil(data?.travel.completedData?.rideExtraHours || 0)
           : '-',
       );
     },
   }),
-  columnHelper.accessor('travel', {
-    header: () =>
-      h('div', { class: 'text-xs leading-none text-left' }, 'Valor Hora Extra'),
+  columnHelper.accessor('he-price', {
+    meta: { label: 'Valor HE' },
+
+    header: () => h('div', { class: 'text-xs leading-none text-left' }, 'Valor HE'),
     cell: ({ row }) => {
       const data = row.original;
       return h(
         'div',
         { class: 'text-xs font-bold text-amber-600' },
-        data.travel.completedData.rideExtraHourPrice !== ''
-          ? currencyFormat(data.travel.completedData.rideExtraHourPrice || '0')
+        data?.travel.completedData &&
+          data?.travel.completedData?.rideExtraHourPrice !== ''
+          ? currencyFormat(data?.travel.completedData?.rideExtraHourPrice || '0')
           : '-',
       );
     },
   }),
   columnHelper.accessor('extraCharges', {
+    meta: { label: 'Adicionais' },
     header: () => h('div', { class: 'text-xs leading-none text-center' }, 'Adicionais'),
     cell: ({ row }) => {
       const data = row.original;
       const extraChargesTotal =
-        data?.extraCharges?.length > 0
-          ? data.extraCharges.reduce((acc: number, curr: any) => {
+        data?.extraCharges && data?.extraCharges.length > 0
+          ? data.extraCharges?.reduce((acc: number, curr: any) => {
               return acc + sanitizeAmount(curr?.amount);
             }, 0)
           : 0;
@@ -248,6 +257,7 @@ export const columns: any = [
     },
   }),
   columnHelper.accessor('billing', {
+    meta: { label: 'Valor Total' },
     header: () => h('div', { class: 'text-xs leading-none text-center' }, 'Valor Total'),
     cell: ({ row }) => {
       const data = row.original;

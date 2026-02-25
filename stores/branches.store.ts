@@ -43,6 +43,7 @@ export const useBranchesStore = defineStore('braches', {
       try {
         const response = await getBranchesService(branchId);
         this.branch = response as any;
+        return response;
       } catch (error) {
         console.error('Error from GET by ID store --> ', error);
         throw error;
