@@ -541,7 +541,7 @@ const handleAcceptBudgetOverQuota = () => {
       title: 'Atendimento liberado com sucesso!',
       class: 'bg-green-600 border-0 text-white text-2xl hover:text-white',
     });
-    navigateTo('/corporative/rides/open');
+    navigateTo('/admin/rides/open');
   } catch (error) {
     toast({
       title: 'Oops!',
@@ -620,8 +620,8 @@ const handleAcceptBudgetOverQuota = () => {
           <h3 class="font-bold text-amber-900 text-xl">ATENÇÃO!</h3>
           <p v-if="ride?.status === 'over_quota'" class="text-amber-900 font-bold">
             Este atendimento excedeu o budget da filial. Entre em contato com o Gestor
-            Master ({{ contract.manager.username }} - {{ contract.manager.email }}) para
-            mais informações.
+            Master ({{ contract?.manager?.username }} - {{ contract?.manager?.email }})
+            para mais informações.
           </p>
           <small class="block mb-6 text-amber-900">
             Atendimentos com status "BUDGET" não são confirmados e estão sujeitos a
