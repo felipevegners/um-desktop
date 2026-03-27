@@ -218,7 +218,11 @@ export const useRidesStore = defineStore('rides', {
         this.loadingData = false;
       }
     },
-    async setRideDriverAction(rideId: any, driverData: any) {
+    async setRideDriverAction(
+      rideId: any,
+      driverData: any,
+      options?: { sendPushNotification?: boolean },
+    ) {
       this.loadingSetDriver = true;
       try {
         const newRideData = {
@@ -231,6 +235,7 @@ export const useRidesStore = defineStore('rides', {
             phone: sanitizePhone(driverData.phone),
             email: driverData.email,
           },
+          sendPushNotification: options?.sendPushNotification === true,
         };
         return await updateRideService(newRideData);
       } catch (error) {

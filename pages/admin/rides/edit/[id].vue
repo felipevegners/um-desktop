@@ -4,6 +4,7 @@ import AddExtraCharges from '@/components/shared/AddExtraCharges.vue';
 import BackLink from '@/components/shared/BackLink.vue';
 import PaymentStatusFlag from '@/components/shared/PaymentStatusFlag.vue';
 import RideStatusFlag from '@/components/shared/RideStatusFlag.vue';
+import { Checkbox } from '@/components/ui/checkbox';
 import { useToast } from '@/components/ui/toast/use-toast';
 import { extraChargesTypes } from '@/config/extraCharges';
 import { WPP_API } from '@/config/paths';
@@ -110,6 +111,9 @@ const { branch } = storeToRefs(branchesStore);
 const editDriver = ref<boolean>(false);
 const selectedDriver = ref<any>();
 selectedDriver.value = ride?.value.driver;
+const sendPushOnDriverAssign = ref<boolean>(false);
+const selectedDriverHasValidPushToken = ref<boolean>(false);
+const loadingDriverPushStatus = ref<boolean>(false);
 const selectedUser = ref<any>();
 const loadingSend = ref<boolean>(false);
 const availableUsers = ref();
@@ -200,13 +204,41 @@ waypointLocationDetails.value = ride?.value.travel.stops || [];
 const setNewDriver = (driverId: string) => {
   const findDriver = drivers.value.find((driver) => driver.id === driverId);
   selectedDriver.value = findDriver;
+  void loadSelectedDriverPushStatus(findDriver?.id);
+};
+
+const loadSelectedDriverPushStatus = async (driverId?: string) => {
+  selectedDriverHasValidPushToken.value = false;
+  sendPushOnDriverAssign.value = false;
+
+  if (!driverId) return;
+
+  try {
+    loadingDriverPushStatus.value = true;
+    const account = await $fetch<any>(`/api/auth/accounts?id=${driverId}`);
+    const hasValidPush =
+      !!account?.pushNotification?.expoPushToken &&
+      account?.pushNotification?.isTokenValid === true;
+
+    selectedDriverHasValidPushToken.value = hasValidPush;
+    sendPushOnDriverAssign.value = hasValidPush;
+  } catch (error) {
+    selectedDriverHasValidPushToken.value = false;
+    sendPushOnDriverAssign.value = false;
+  } finally {
+    loadingDriverPushStatus.value = false;
+  }
 };
 
 const setRideDriver = async () => {
-  await setRideDriverAction(ride?.value.id, selectedDriver.value);
+  await setRideDriverAction(ride?.value.id, selectedDriver.value, {
+    sendPushNotification: sendPushOnDriverAssign.value,
+  });
   await getRideByIdAction(route?.params?.id as string);
   editDriver.value = false;
   selectedDriver.value = ride?.value.driver;
+  selectedDriverHasValidPushToken.value = false;
+  sendPushOnDriverAssign.value = false;
 
   // const message = `
   //   *Novo Atendimento - ${ride?.value?.code}*
@@ -345,6 +377,10 @@ const form = useForm({
 });
 
 onMounted(async () => {
+  if (selectedDriver.value?.id) {
+    await loadSelectedDriverPushStatus(selectedDriver.value.id);
+  }
+
   if (ride?.value?.status === 'in-progress') {
     driverLocationInterval.value = setInterval(async () => {
       driverData.value = {
@@ -1173,6 +1209,36 @@ const handleAcceptBudgetOverQuota = () => {
                               Cancelar
                             </Button>
                           </div>
+                          <div
+                            v-if="selectedDriver.id && selectedDriverHasValidPushToken"
+                            class="w-full p-3 border border-zinc-200 rounded-md bg-zinc-50"
+                          >
+                            <label class="flex items-center gap-2 text-sm text-zinc-700">
+                              <Checkbox
+                                :checked="sendPushOnDriverAssign"
+                                @update:checked="
+                                  (checked) => (sendPushOnDriverAssign = checked === true)
+                                "
+                              />
+                              Enviar notificacao via push?
+                            </label>
+                            <small class="text-zinc-500">
+                              O motorista selecionado possui token push valido.
+                            </small>
+                          </div>
+                          <small
+                            v-else-if="selectedDriver.id && !loadingDriverPushStatus"
+                            class="w-full text-xs text-zinc-500"
+                          >
+                            Motorista sem token push valido. O envio via push ficara
+                            indisponivel.
+                          </small>
+                          <small
+                            v-else-if="selectedDriver.id && loadingDriverPushStatus"
+                            class="w-full text-xs text-zinc-500"
+                          >
+                            Validando token push do motorista...
+                          </small>
                         </div>
                         <div v-else class="flex gap-2 self-end">
                           <Button @click.prevent="editDriver = true">

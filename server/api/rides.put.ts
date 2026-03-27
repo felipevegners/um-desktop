@@ -1,4 +1,16 @@
+import { sendRidePushIfEligible } from '~/server/services/push/expo';
 import { Prisma, prisma } from '~/utils/prisma';
+
+const getDriverIdFromJson = (
+  driverData: Prisma.JsonValue | null | undefined,
+): string | undefined => {
+  if (!driverData || Array.isArray(driverData) || typeof driverData !== 'object') {
+    return undefined;
+  }
+
+  const maybeId = (driverData as Record<string, unknown>).id;
+  return typeof maybeId === 'string' ? maybeId : undefined;
+};
 
 export default defineEventHandler(async (event) => {
   const payload = await readBody(event);
@@ -20,9 +32,16 @@ export default defineEventHandler(async (event) => {
     rideFinalPrice,
     additionalInfo,
     extraCharges,
+    sendPushNotification,
   } = payload;
 
   try {
+    const currentRide = await prisma.rides.findUnique({
+      where: {
+        id,
+      },
+    });
+
     const updatedRide = await prisma.rides.update({
       where: {
         id,
@@ -46,6 +65,39 @@ export default defineEventHandler(async (event) => {
         extraCharges,
       },
     });
+
+    const previousDriverId = getDriverIdFromJson(currentRide?.driver as Prisma.JsonValue);
+    const updatedDriverId = getDriverIdFromJson(updatedRide?.driver as Prisma.JsonValue);
+    const statusChangedToPending =
+      updatedRide?.status === 'pending' && currentRide?.status !== 'pending';
+    const driverChanged =
+      previousDriverId && updatedDriverId && previousDriverId !== updatedDriverId;
+    const driverAdded = !previousDriverId && !!updatedDriverId;
+
+    if (
+      sendPushNotification === true &&
+      updatedDriverId &&
+      (statusChangedToPending || driverChanged || driverAdded)
+    ) {
+      await sendRidePushIfEligible({
+        driverId: updatedDriverId,
+        type: 'ride-assigned',
+        ride: updatedRide,
+      });
+    }
+
+    const statusChangedToCancelled =
+      updatedRide?.status === 'cancelled' && currentRide?.status !== 'cancelled';
+    const cancelledDriverId = updatedDriverId || previousDriverId;
+
+    if (statusChangedToCancelled && cancelledDriverId) {
+      await sendRidePushIfEligible({
+        driverId: cancelledDriverId,
+        type: 'ride-cancelled',
+        ride: updatedRide,
+      });
+    }
+
     return updatedRide;
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
