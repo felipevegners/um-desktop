@@ -35,6 +35,7 @@ export default defineEventHandler(async (event) => {
     pathname.startsWith('/api/travels/routes') ||
     pathname.startsWith('/_nuxt') ||
     pathname.startsWith('/api/public') ||
+    pathname.startsWith('/api/auth/mobile-push-token') ||
     (event.node.req && (event.node.req as any).method === 'OPTIONS')
   ) {
     return;
