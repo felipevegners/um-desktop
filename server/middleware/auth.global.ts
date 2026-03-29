@@ -8,7 +8,7 @@ function isMobileRequest(event: any): boolean {
   const mobileHeader = getHeader(event, 'x-mobile-app');
   // You can adjust the detection logic as needed
   return (
-    (typeof mobileHeader !== 'undefined') ||
+    typeof mobileHeader !== 'undefined' ||
     /Mobile|Android|iPhone|iPad|iPod/i.test(userAgent)
   );
 }
@@ -16,7 +16,6 @@ function isMobileRequest(event: any): boolean {
 export default defineEventHandler(async (event) => {
   const url = getRequestURL(event);
   const pathname = url.pathname || '';
-
 
   // Only enforce auth for API routes. Allow root, auth endpoints, assets and OPTIONS.
   if (!pathname.startsWith('/api/')) {
@@ -68,7 +67,16 @@ export default defineEventHandler(async (event) => {
   }
 
   try {
-    const payload = jwt.verify(token, process.env.JWT_ACCESS_SECRET as string);
+    const jwtSecret = process.env.JWT_ACCESS_SECRET || process.env.AUTH_SECRET;
+
+    if (!jwtSecret) {
+      throw createError({
+        statusCode: 500,
+        statusMessage: 'JWT secret não configurado (JWT_ACCESS_SECRET/AUTH_SECRET).',
+      });
+    }
+
+    const payload = jwt.verify(token, jwtSecret);
     (event as any).context = (event as any).context || {};
     (event as any).context.user = payload;
   } catch (err) {

@@ -1,11 +1,20 @@
-import bcrypt from 'bcrypt';
+import bcrypt from 'bcryptjs';
 import { createError, defineEventHandler, readBody } from 'h3';
 import jwt from 'jsonwebtoken';
 import { prisma } from '~/utils/prisma';
 
 export default defineEventHandler(async (event) => {
+  const jwtSecret = process.env.JWT_ACCESS_SECRET || process.env.AUTH_SECRET;
+
   const body = await readBody(event);
   const { email, password } = body;
+
+  if (!jwtSecret) {
+    throw createError({
+      statusCode: 500,
+      statusMessage: 'JWT secret não configurado (JWT_ACCESS_SECRET/AUTH_SECRET).',
+    });
+  }
 
   if (!email || !password) {
     throw createError({
@@ -46,7 +55,7 @@ export default defineEventHandler(async (event) => {
       role: account.role,
       enabled: account.enabled,
     },
-    process.env.JWT_ACCESS_SECRET!,
+    jwtSecret,
     { expiresIn: '30m' },
   );
 

@@ -36,6 +36,7 @@ import {
   SquareCheck,
   SquareDot,
   SquareSquare,
+  ThumbsUp,
   Trash,
   User,
   UserPen,
@@ -216,9 +217,7 @@ const loadSelectedDriverPushStatus = async (driverId?: string) => {
   try {
     loadingDriverPushStatus.value = true;
     const account = await $fetch<any>(`/api/auth/accounts?id=${driverId}`);
-    const hasValidPush =
-      !!account?.pushNotification?.expoPushToken &&
-      account?.pushNotification?.isTokenValid === true;
+    const hasValidPush = !!account?.pushNotification?.expoPushToken;
 
     selectedDriverHasValidPushToken.value = hasValidPush;
     sendPushOnDriverAssign.value = hasValidPush;
@@ -1179,39 +1178,38 @@ const handleAcceptBudgetOverQuota = () => {
                         v-if="ride?.status === 'pending' || ride?.status === 'created'"
                         class="flex gap-6"
                       >
-                        <div
-                          v-if="editDriver"
-                          class="flex-1 flex items-center justify-between gap-3"
-                        >
-                          <FormField v-slot="{ componentField, value }" name="driver">
-                            <FormItem class="w-full">
-                              <FormControl>
-                                <FormSelect
-                                  v-bind="componentField"
-                                  :items="sanitizeDrivers"
-                                  :label="'Selecione'"
-                                  @on-select="setNewDriver"
-                                  :disabled="!editDriver"
-                                />
-                              </FormControl>
-                            </FormItem>
-                          </FormField>
-                          <div class="flex items-center gap-2">
-                            <Button
-                              class="bg-green-600 hover:bg-green-700"
-                              :disabled="selectedDriver.id === ride?.driver.id"
-                              @click.prevent="setRideDriver"
-                            >
-                              <Save />
-                              Salvar
-                            </Button>
-                            <Button variant="ghost" @click.prevent="editDriver = false">
-                              Cancelar
-                            </Button>
+                        <div v-if="editDriver" class="flex-1 flex flex-col gap-3">
+                          <div class="flex flex-col gap-3 xl:flex-row xl:items-center">
+                            <FormField v-slot="{ componentField, value }" name="driver">
+                              <FormItem class="w-full xl:flex-1">
+                                <FormControl>
+                                  <FormSelect
+                                    v-bind="componentField"
+                                    :items="sanitizeDrivers"
+                                    :label="'Selecione'"
+                                    @on-select="setNewDriver"
+                                    :disabled="!editDriver"
+                                  />
+                                </FormControl>
+                              </FormItem>
+                            </FormField>
+                            <div class="flex items-center gap-2 xl:self-start">
+                              <Button
+                                class="bg-green-600 hover:bg-green-700"
+                                :disabled="selectedDriver.id === ride?.driver.id"
+                                @click.prevent="setRideDriver"
+                              >
+                                <Save />
+                                Salvar
+                              </Button>
+                              <Button variant="ghost" @click.prevent="editDriver = false">
+                                Cancelar
+                              </Button>
+                            </div>
                           </div>
                           <div
                             v-if="selectedDriver.id && selectedDriverHasValidPushToken"
-                            class="w-full p-3 border border-zinc-200 rounded-md bg-zinc-50"
+                            class="max-w-xl p-3 border border-zinc-200 rounded-md bg-zinc-50"
                           >
                             <label class="flex items-center gap-2 text-sm text-zinc-700">
                               <Checkbox
@@ -1220,22 +1218,23 @@ const handleAcceptBudgetOverQuota = () => {
                                   (checked) => (sendPushOnDriverAssign = checked === true)
                                 "
                               />
-                              Enviar notificacao via push?
+                              Enviar notificação via push?
                             </label>
-                            <small class="text-zinc-500">
-                              O motorista selecionado possui token push valido.
+                            <small class="text-zinc-500 flex items-center gap-1 mt-2">
+                              <ThumbsUp class="inline-block" :size="14" />
+                              O motorista selecionado possui token push válido.
                             </small>
                           </div>
                           <small
                             v-else-if="selectedDriver.id && !loadingDriverPushStatus"
-                            class="w-full text-xs text-zinc-500"
+                            class="block max-w-xl text-xs text-red-600"
                           >
-                            Motorista sem token push valido. O envio via push ficara
-                            indisponivel.
+                            Motorista sem token push válido. O envio via push ficará
+                            indisponível. Peça ao motorista para relogar no app.
                           </small>
                           <small
                             v-else-if="selectedDriver.id && loadingDriverPushStatus"
-                            class="w-full text-xs text-zinc-500"
+                            class="block max-w-xl text-xs text-zinc-500"
                           >
                             Validando token push do motorista...
                           </small>

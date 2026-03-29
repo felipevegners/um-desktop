@@ -7,7 +7,6 @@ import { WPP_API } from '@/config/paths';
 import { createColumnHelper } from '@tanstack/vue-table';
 import { ArrowUpDown, MessageCircleMore } from 'lucide-vue-next';
 import {
-  convertSecondsToTime,
   currencyFormat,
   sanitizeAmount,
   sanitizePhone,
@@ -95,7 +94,7 @@ export const columns: any = [
   columnHelper.accessor('area', {
     meta: {
       label: 'CC',
-      width: '120px',
+      width: '80px',
     },
     header: () => h('div', { class: 'text-xs leading-none text-left' }, 'CC'),
     cell: ({ row }: any) => {
@@ -145,78 +144,78 @@ export const columns: any = [
     },
   }),
 
-  columnHelper.accessor('tp', {
-    meta: { label: 'TP' },
-    header: () => h('div', { class: 'text-xs leading-none text-center' }, 'TP'),
-    cell: ({ row }) => {
-      const data = row.original;
-      const { totalTimeStopped } = data.travel;
-      return h(
-        'span',
-        { class: 'text-xs text-center' },
-        totalTimeStopped !== undefined ? convertSecondsToTime(totalTimeStopped) : '-',
-      );
-    },
-  }),
-  columnHelper.accessor('kme', {
-    meta: { label: 'KME' },
-    header: () => h('div', { class: 'text-xs leading-none text-left' }, 'KME'),
-    cell: ({ row }) => {
-      const data = row.original;
-      return h(
-        'div',
-        { class: 'text-xs' },
-        data.travel.completedData?.rideExtraKms !== 0
-          ? data.travel.completedData?.rideExtraKms.toLocaleString('pt-BR', {
-              maximumFractionDigits: 2,
-            })
-          : '-',
-      );
-    },
-  }),
-  columnHelper.accessor('kme-price', {
-    meta: { label: 'Valor KME' },
-    header: () => h('div', { class: 'text-xs leading-none text-left' }, 'Valor KME'),
-    cell: ({ row }) => {
-      const data = row.original;
-      return h(
-        'div',
-        { class: 'text-xs font-bold text-amber-600' },
-        data?.travel.completedData && data?.travel.completedData?.rideExtraKmPrice !== ''
-          ? currencyFormat(data.travel.completedData?.rideExtraKmPrice)
-          : '-',
-      );
-    },
-  }),
-  columnHelper.accessor('he', {
-    meta: { label: 'HE' },
-    header: () => h('div', { class: 'text-xs leading-none text-left' }, 'HE'),
-    cell: ({ row }) => {
-      const data = row.original;
-      return h(
-        'div',
-        { class: 'text-xs' },
-        data?.travel.completedData && data?.travel.completedData?.rideExtraHours !== 0
-          ? Math.ceil(data?.travel.completedData?.rideExtraHours || 0)
-          : '-',
-      );
-    },
-  }),
-  columnHelper.accessor('he-price', {
-    meta: { label: 'Valor HE' },
-    header: () => h('div', { class: 'text-xs leading-none text-left' }, 'Valor HE'),
-    cell: ({ row }) => {
-      const data = row.original;
-      return h(
-        'div',
-        { class: 'text-xs font-bold text-amber-600' },
-        data?.travel.completedData &&
-          data?.travel.completedData?.rideExtraHourPrice !== ''
-          ? currencyFormat(data?.travel.completedData?.rideExtraHourPrice || '0')
-          : '-',
-      );
-    },
-  }),
+  // columnHelper.accessor('tp', {
+  //   meta: { label: 'TP' },
+  //   header: () => h('div', { class: 'text-xs leading-none text-center' }, 'TP'),
+  //   cell: ({ row }) => {
+  //     const data = row.original;
+  //     const { totalTimeStopped } = data.travel;
+  //     return h(
+  //       'span',
+  //       { class: 'text-xs text-center' },
+  //       totalTimeStopped !== undefined ? convertSecondsToTime(totalTimeStopped) : '-',
+  //     );
+  //   },
+  // }),
+  // columnHelper.accessor('kme', {
+  //   meta: { label: 'KME' },
+  //   header: () => h('div', { class: 'text-xs leading-none text-left' }, 'KME'),
+  //   cell: ({ row }) => {
+  //     const data = row.original;
+  //     return h(
+  //       'div',
+  //       { class: 'text-xs' },
+  //       data.travel.completedData?.rideExtraKms !== 0
+  //         ? data.travel.completedData?.rideExtraKms.toLocaleString('pt-BR', {
+  //             maximumFractionDigits: 2,
+  //           })
+  //         : '-',
+  //     );
+  //   },
+  // }),
+  // columnHelper.accessor('kme-price', {
+  //   meta: { label: 'Valor KME' },
+  //   header: () => h('div', { class: 'text-xs leading-none text-left' }, 'Valor KME'),
+  //   cell: ({ row }) => {
+  //     const data = row.original;
+  //     return h(
+  //       'div',
+  //       { class: 'text-xs font-bold text-amber-600' },
+  //       data?.travel.completedData && data?.travel.completedData?.rideExtraKmPrice !== ''
+  //         ? currencyFormat(data.travel.completedData?.rideExtraKmPrice)
+  //         : '-',
+  //     );
+  //   },
+  // }),
+  // columnHelper.accessor('he', {
+  //   meta: { label: 'HE' },
+  //   header: () => h('div', { class: 'text-xs leading-none text-left' }, 'HE'),
+  //   cell: ({ row }) => {
+  //     const data = row.original;
+  //     return h(
+  //       'div',
+  //       { class: 'text-xs' },
+  //       data?.travel.completedData && data?.travel.completedData?.rideExtraHours !== 0
+  //         ? Math.ceil(data?.travel.completedData?.rideExtraHours || 0)
+  //         : '-',
+  //     );
+  //   },
+  // }),
+  // columnHelper.accessor('he-price', {
+  //   meta: { label: 'Valor HE' },
+  //   header: () => h('div', { class: 'text-xs leading-none text-left' }, 'Valor HE'),
+  //   cell: ({ row }) => {
+  //     const data = row.original;
+  //     return h(
+  //       'div',
+  //       { class: 'text-xs font-bold text-amber-600' },
+  //       data?.travel.completedData &&
+  //         data?.travel.completedData?.rideExtraHourPrice !== ''
+  //         ? currencyFormat(data?.travel.completedData?.rideExtraHourPrice || '0')
+  //         : '-',
+  //     );
+  //   },
+  // }),
   columnHelper.accessor('extraCharges', {
     meta: { label: 'Adicionais', width: '120px' },
     header: () => h('div', { class: 'text-xs leading-none text-center' }, 'Adicionais'),

@@ -17,7 +17,7 @@ const paymentStatusTranslate = {
   voided: 'Cancelado',
   invoice: 'Faturar',
   invoiced: 'Faturado',
-  unpaid: 'Não Pago',
+  unpaid: 'Aberto',
   NotFinalized: 'Não finalizado',
   authorized: 'Autorizado',
   error: 'Erro',

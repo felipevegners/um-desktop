@@ -26,7 +26,7 @@ export const paymentStatusOptions = [
   { label: 'Faturar', value: 'invoice', color: 'zinc-900' },
   { label: 'Autorizado', value: 'authorized', color: 'green-600' },
   { label: 'Pendente', value: 'pending', color: 'amber-600' },
-  { label: 'Não Pago', value: 'unpaid', color: 'amber-600' },
+  { label: 'Aberto', value: 'unpaid', color: 'amber-600' },
   { label: 'Negado', value: 'denied', color: 'red-600' },
   { label: 'Expirado', value: 'expired', color: 'red-600' },
   { label: 'Cancelado', value: 'voided', color: 'red-600' },

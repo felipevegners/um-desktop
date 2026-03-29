@@ -1,6 +1,6 @@
 import { NuxtAuthHandler } from '#auth';
 import { useToast } from '@/components/ui/toast/use-toast';
-import bcrypt from 'bcrypt';
+import bcrypt from 'bcryptjs';
 import { getCookie, setCookie } from 'h3';
 import CredentialsProvider from 'next-auth/providers/credentials';
 import { prisma } from '~/utils/prisma';

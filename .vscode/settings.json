@@ -1,4 +1,10 @@
 {
+  "terminal.integrated.defaultProfile.windows": "Git Bash",
+  "terminal.integrated.profiles.windows": {
+    "Git Bash": {
+      "path": "C:\\Program Files\\Git\\bin\\bash.exe"
+    }
+  },
   "editor.defaultFormatter": "rvest.vs-code-prettier-eslint",
   "notebook.defaultFormatter": "esbenp.prettier-vscode",
   "editor.formatOnSave": true,

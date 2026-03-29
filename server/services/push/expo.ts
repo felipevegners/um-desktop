@@ -10,14 +10,33 @@ type SendRidePushInput = {
   ride: any;
 };
 
+type ExpoPushTicket = {
+  status?: string;
+  id?: string;
+  message?: string;
+  details?: Record<string, unknown> & { error?: string };
+};
+
+type ExpoPushResponse = {
+  data?: ExpoPushTicket | ExpoPushTicket[];
+  errors?: Array<Record<string, unknown>>;
+};
+
 const isExpoPushToken = (token: string) => {
   return (
     /^ExponentPushToken\[[^\]]+\]$/.test(token) || /^ExpoPushToken\[[^\]]+\]$/.test(token)
   );
 };
 
+const getFirstAndSecondName = (fullName?: string) => {
+  const parts = fullName?.trim().split(/\s+/).filter(Boolean) ?? [];
+  if (parts.length === 0) return 'sem passageiro';
+  return parts.slice(0, 2).join(' ');
+};
+
 const buildRidePushMessage = (type: RidePushType, ride: any, token: string) => {
   const rideCode = ride?.code || 'sem codigo';
+  const rideUser = getFirstAndSecondName(ride?.user?.name);
 
   if (type === 'ride-assigned') {
     return {
@@ -25,8 +44,8 @@ const buildRidePushMessage = (type: RidePushType, ride: any, token: string) => {
       sound: 'default',
       priority: 'high',
       channelId: 'rides-events',
-      title: 'Novo atendimento atribuido',
-      body: `Atendimento ${rideCode} aguardando aceite.`,
+      title: 'Novo Atendimento UM',
+      body: `Atendimento ${rideCode} de ${rideUser} está aguardando sua confirmação. Toque para aceitar ou recusar.`,
       data: {
         type: 'pending-ride',
         rideId: ride?.id,
@@ -41,7 +60,7 @@ const buildRidePushMessage = (type: RidePushType, ride: any, token: string) => {
     priority: 'high',
     channelId: 'rides-events',
     title: 'Atendimento cancelado',
-    body: `Atendimento ${rideCode} foi cancelado pelo backoffice.`,
+    body: `Atendimento ${rideCode} de ${rideUser} foi cancelado pelo backoffice.`,
     data: {
       type: 'ride-cancelled',
       rideId: ride?.id,
@@ -85,10 +104,6 @@ export const sendRidePushIfEligible = async ({
     return { sent: false, reason: 'invalid-token-format' };
   }
 
-  if (isTokenValid === false) {
-    return { sent: false, reason: 'token-marked-invalid' };
-  }
-
   const message = buildRidePushMessage(type, ride, token);
 
   const headers: Record<string, string> = {
@@ -100,18 +115,48 @@ export const sendRidePushIfEligible = async ({
   }
 
   try {
-    const response = await $fetch<{
-      data?: Array<{ status: string; details?: { error?: string } }>;
-    }>(EXPO_PUSH_URL, {
+    const rawResponse = await $fetch<
+      ExpoPushResponse | ExpoPushTicket | ExpoPushTicket[]
+    >(EXPO_PUSH_URL, {
       method: 'POST',
       headers,
       body: message,
     });
 
-    const firstTicket = response?.data?.[0];
-    const ticketError = firstTicket?.details?.error;
+    const response = rawResponse as ExpoPushResponse | ExpoPushTicket | ExpoPushTicket[];
+    const responseObject =
+      response && !Array.isArray(response) && typeof response === 'object'
+        ? (response as Record<string, unknown>)
+        : null;
+    const responseData = responseObject?.data as
+      | ExpoPushTicket
+      | ExpoPushTicket[]
+      | undefined;
 
-    const tokenStillValid = firstTicket?.status === 'ok' && !ticketError;
+    const ticketList = Array.isArray(response)
+      ? response
+      : Array.isArray(responseData)
+        ? responseData
+        : responseData
+          ? [responseData]
+          : responseObject && 'status' in responseObject
+            ? [response as ExpoPushTicket]
+            : [];
+
+    const responseErrors =
+      (responseObject?.errors as Array<Record<string, unknown>> | undefined) ?? null;
+
+    const firstTicket = ticketList[0];
+    const ticketError = firstTicket?.details?.error;
+    const ticketMessage = firstTicket?.message;
+    const ticketStatus = firstTicket?.status;
+    const emptyResponse = ticketList.length === 0 && !responseErrors;
+
+    const tokenStillValid = ticketStatus === 'ok' && !ticketError;
+
+    const lastReceiptError = emptyResponse
+      ? 'expo-empty-response'
+      : ticketError || ticketMessage || null;
 
     await prisma.accounts.update({
       where: { id: driverId },
@@ -120,7 +165,7 @@ export const sendRidePushIfEligible = async ({
           ...(account?.pushNotification || {}),
           isTokenValid: tokenStillValid,
           lastValidatedAt: new Date(),
-          lastReceiptError: ticketError || null,
+          lastReceiptError,
           updatedAt: new Date(),
         },
       } as any,
@@ -128,7 +173,14 @@ export const sendRidePushIfEligible = async ({
 
     return {
       sent: tokenStillValid,
-      reason: tokenStillValid ? 'ok' : ticketError || 'expo-ticket-error',
+      reason: tokenStillValid
+        ? 'ok'
+        : emptyResponse
+          ? 'expo-empty-response'
+          : ticketError || ticketMessage || 'expo-ticket-error',
+      expoTicket: firstTicket ?? null,
+      expoErrors: responseErrors,
+      rawResponse,
     };
   } catch (error) {
     await prisma.accounts.update({

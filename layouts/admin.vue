@@ -237,6 +237,29 @@ const cookiesPoliceFileUrl =
           </SidebarGroup>
           <SidebarSeparator class="border-b border-zinc-700" />
         </div>
+        <div v-if="menuData?.communications?.length > 0">
+          <SidebarGroup>
+            <SidebarGroupLabel class="text-[#33ffcc] text-md">
+              Mensagens
+            </SidebarGroupLabel>
+            <SidebarMenu>
+              <SidebarMenuItem v-for="item in menuData.communications" :key="item.name">
+                <SidebarMenuButton as-child>
+                  <!-- @vue-skip -->
+                  <NuxtLink
+                    :to="item.url"
+                    :class="`${item?.active ? 'text-um-primary' : 'text-white'}`"
+                    exact-active-class="text-um-primary"
+                  >
+                    <component :is="item.icon" />
+                    <span>{{ item.name }}</span>
+                  </NuxtLink>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+            </SidebarMenu>
+          </SidebarGroup>
+          <SidebarSeparator class="border-b border-zinc-700" />
+        </div>
         <!-- @vue-skip -->
         <SidebarGroup v-if="menuData.sac">
           <SidebarGroupLabel class="text-[#33ffcc] text-md"> SAC </SidebarGroupLabel>

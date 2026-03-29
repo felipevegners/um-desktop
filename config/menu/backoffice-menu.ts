@@ -1,4 +1,5 @@
 import {
+  Bell,
   Box,
   Building2,
   CalendarDays,
@@ -183,5 +184,13 @@ export const backofficeMenu = {
     //   icon: LayoutDashboard,
     //   active: '',
     // },
+  ],
+  communications: [
+    {
+      name: 'Notificações Push',
+      url: '/admin/communications/notifications',
+      icon: Bell,
+      active: route.path.startsWith('notifications'),
+    },
   ],
 };

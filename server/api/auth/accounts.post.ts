@@ -1,7 +1,7 @@
 import { mailer } from '@/server/providers/Mailer';
 import { tokenGenerator } from '@/server/providers/TokenGenerator';
 import { Prisma, prisma } from '@/utils/prisma';
-import bcrypt from 'bcrypt';
+import bcrypt from 'bcryptjs';
 
 export default defineEventHandler(async (event) => {
   const body = await readBody(event);
