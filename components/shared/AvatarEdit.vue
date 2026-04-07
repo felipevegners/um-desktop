@@ -22,7 +22,7 @@ const props = withDefaults(defineProps<Props>(), {
 const loadingNewImage = ref<boolean>(false);
 const loadingDeleteImage = ref<boolean>(false);
 const avatarFile = defineModel<any>({
-  default: { name: '', url: '' },
+  default: { name: '', url: '', key: '' },
 });
 
 defineEmits(['update:avatarFile']);
@@ -106,9 +106,18 @@ const imageSrc = computed(() => {
               loadingNewImage = true;
             },
             onClientUploadComplete: (file) => {
-              avatarFile.name = file[0].name;
-              avatarFile.url = file[0].ufsUrl;
-              loadingNewImage = false;
+              const oldUrl = avatarFile.value?.url;
+              const oldKey = avatarFile.value?.key;
+              if (oldUrl || oldKey) {
+                $fetch('/api/files', {
+                  method: 'DELETE',
+                  body: { fileKey: oldKey || undefined, fileUrl: oldUrl || undefined },
+                }).catch(() => {});
+              }
+              avatarFile.value.name = file[0].name;
+              avatarFile.value.url = file[0].ufsUrl || file[0].url || '';
+              avatarFile.value.key = file[0].key || file[0].fileKey || '';
+              loadingNewImage.value = false;
             },
             onUploadError: (error) => {
               toast({

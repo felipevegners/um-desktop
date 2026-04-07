@@ -25,7 +25,7 @@ export default defineEventHandler(async (event) => {
     console.error('[Files Handler] No file data found in request');
     throw createError({
       statusCode: 400,
-      statusMessage: 'Arquivo nao enviado.',
+      message: 'Arquivo nao enviado.',
     });
   }
 
@@ -41,7 +41,7 @@ export default defineEventHandler(async (event) => {
   if (!allowedEndpoints.has(endpoint)) {
     throw createError({
       statusCode: 400,
-      statusMessage: `Endpoint de upload invalido: ${endpoint}`,
+      message: `Endpoint de upload invalido: ${endpoint}`,
     });
   }
 
@@ -66,7 +66,7 @@ export default defineEventHandler(async (event) => {
       console.error('[Files Handler] UploadThing error:', result.error);
       throw createError({
         statusCode: 502,
-        statusMessage: result.error?.message || 'Falha no upload do arquivo.',
+        message: result.error?.message || 'Falha no upload do arquivo.',
       });
     }
 
@@ -87,7 +87,7 @@ export default defineEventHandler(async (event) => {
     console.error('Error during file upload -> ', error);
     throw createError({
       statusCode: 500,
-      statusMessage: 'Erro durante upload de arquivo.',
+      message: 'Erro durante upload de arquivo.',
     });
   }
 });

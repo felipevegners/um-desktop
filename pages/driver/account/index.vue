@@ -67,6 +67,85 @@ const editDriverBankCopy = ref(false);
 const driverSituation = ref<boolean>(false);
 const driverCars = ref<any>();
 const driverFiles = ref<any>();
+const pendingDeleteFiles = ref<Array<{ fileKey?: string; fileUrl?: string }>>([]);
+
+type DriverFileField = 'cnhCopy' | 'addressCopy' | 'bankCopy';
+
+const normalizeFileEntry = (entry?: any) => ({
+  name: entry?.name || '',
+  url: entry?.url || '',
+  key: entry?.key || '',
+});
+
+const queueDeleteFile = (entry?: any) => {
+  const fileKey = entry?.key || undefined;
+  const fileUrl = entry?.url || undefined;
+  if (!fileKey && !fileUrl) return;
+
+  const compareValue = fileKey || fileUrl;
+  const alreadyQueued = pendingDeleteFiles.value.some(
+    (item) => (item.fileKey || item.fileUrl) === compareValue,
+  );
+  if (!alreadyQueued) {
+    pendingDeleteFiles.value.push({ fileKey, fileUrl });
+  }
+};
+
+const closeEditorForField = (field: DriverFileField) => {
+  if (field === 'cnhCopy') editDriverCnhCopy.value = false;
+  if (field === 'addressCopy') editDriverAddressCopy.value = false;
+  if (field === 'bankCopy') editDriverBankCopy.value = false;
+};
+
+const finalizeDriverFileUpload = (field: DriverFileField, uploadedFile?: any) => {
+  if (!uploadedFile) return;
+
+  const previous = driverFiles.value?.[field];
+  const nextUrl = uploadedFile.ufsUrl || uploadedFile.url || '';
+  const nextKey = uploadedFile.key || uploadedFile.fileKey || '';
+
+  if (previous?.url && previous.url !== nextUrl) {
+    queueDeleteFile(previous);
+  }
+
+  driverFiles.value[field] = {
+    name: uploadedFile.name || previous?.name || '',
+    url: nextUrl,
+    key: nextKey,
+  };
+
+  closeEditorForField(field);
+};
+
+const removeDriverFile = (field: DriverFileField) => {
+  const previous = driverFiles.value?.[field];
+  if (!previous?.name && !previous?.url && !previous?.key) return;
+
+  queueDeleteFile(previous);
+  driverFiles.value[field] = {
+    name: '',
+    url: '',
+    key: '',
+  };
+  closeEditorForField(field);
+};
+
+const flushPendingDeletes = async () => {
+  if (!pendingDeleteFiles.value.length) return false;
+
+  const queue = [...pendingDeleteFiles.value];
+  pendingDeleteFiles.value = [];
+  const results = await Promise.allSettled(
+    queue.map((payload) =>
+      $fetch('/api/files', {
+        method: 'DELETE',
+        body: payload,
+      }),
+    ),
+  );
+
+  return results.some((result) => result.status === 'rejected');
+};
 
 driverCars.value = driver?.value.driverCars.length
   ? driver.value.driverCars
@@ -83,26 +162,15 @@ driverCars.value = driver?.value.driverCars.length
       },
     ];
 driverFiles.value = {
-  picture: {
-    name: driver?.value.driverFiles?.picture?.name,
-    url: driver?.value.driverFiles?.picture?.url,
-  },
-  cnhCopy: {
-    name: driver?.value.driverFiles.cnhCopy.name,
-    url: driver?.value.driverFiles.cnhCopy.url,
-  },
-  addressCopy: {
-    name: driver?.value.driverFiles.addressCopy.name,
-    url: driver?.value.driverFiles.addressCopy.url,
-  },
-  bankCopy: {
-    name: driver?.value.driverFiles.bankCopy.name,
-    url: driver?.value.driverFiles.bankCopy.url,
-  },
+  picture: normalizeFileEntry(driver?.value.driverFiles?.picture),
+  cnhCopy: normalizeFileEntry(driver?.value.driverFiles?.cnhCopy),
+  addressCopy: normalizeFileEntry(driver?.value.driverFiles?.addressCopy),
+  bankCopy: normalizeFileEntry(driver?.value.driverFiles?.bankCopy),
 };
 const driverProfilePicture = reactive({
   name: driver?.value.driverFiles?.picture?.name,
   url: driver?.value.driverFiles?.picture?.url,
+  key: driver?.value.driverFiles?.picture?.key || '',
 });
 
 driverSituation.value = driver?.value.enabled;
@@ -194,13 +262,18 @@ const onSubmit = driversForm.handleSubmit(async (values) => {
   try {
     //@ts-ignore
     await updateDriverAction(newDriverData);
-  } catch (error) {
-    toast({
-      title: 'Oops!',
-      description: `Ocorreu um erro ${error} ao adicionar o motorista.`,
-      variant: 'destructive',
-    });
-  } finally {
+
+    const hasDeleteFailures = await flushPendingDeletes();
+
+    if (hasDeleteFailures) {
+      toast({
+        title: 'Atenção',
+        description:
+          'Dados salvos, mas alguns arquivos antigos não puderam ser removidos.',
+        variant: 'destructive',
+      });
+    }
+
     toast({
       title: 'Sucesso!',
       class: 'bg-green-600 border-0 text-white text-2xl',
@@ -208,6 +281,12 @@ const onSubmit = driversForm.handleSubmit(async (values) => {
     });
     driversForm.values = newDriverData;
     navigateTo('/driver');
+  } catch (error) {
+    toast({
+      title: 'Oops!',
+      description: `Ocorreu um erro ${error} ao adicionar o motorista.`,
+      variant: 'destructive',
+    });
   }
 });
 </script>
@@ -461,10 +540,8 @@ const onSubmit = driversForm.handleSubmit(async (values) => {
                                 },
                               },
                               endpoint: 'driverFiles',
-                              onClientUploadComplete: (file) => {
-                                driverFiles.cnhCopy.name = file[0].name;
-                                driverFiles.cnhCopy.url = file[0].ufsUrl;
-                                editDriverCnhCopy = !editDriverCnhCopy;
+                              onClientUploadComplete: (files) => {
+                                finalizeDriverFileUpload('cnhCopy', files?.[0]);
                                 toast({
                                   title: 'Feito!',
                                   class: 'bg-green-500 border-0 text-white text-2xl',
@@ -499,6 +576,15 @@ const onSubmit = driversForm.handleSubmit(async (values) => {
                             </TooltipContent>
                           </Tooltip>
                         </TooltipProvider>
+                        <Button
+                          v-if="driverFiles?.cnhCopy?.name"
+                          type="button"
+                          variant="ghost"
+                          class="h-7 px-2 text-red-600"
+                          @click.prevent="removeDriverFile('cnhCopy')"
+                        >
+                          Remover
+                        </Button>
                       </div>
                     </div>
                   </li>
@@ -554,10 +640,8 @@ const onSubmit = driversForm.handleSubmit(async (values) => {
                                 },
                               },
                               endpoint: 'driverFiles',
-                              onClientUploadComplete: (file) => {
-                                driverFiles.addressCopy.name = file[0].name;
-                                driverFiles.addressCopy.url = file[0].ufsUrl;
-                                editDriverAddressCopy = !editDriverAddressCopy;
+                              onClientUploadComplete: (files) => {
+                                finalizeDriverFileUpload('addressCopy', files?.[0]);
                                 toast({
                                   title: 'Feito!',
                                   class: 'bg-green-500 border-0 text-white text-2xl',
@@ -592,6 +676,15 @@ const onSubmit = driversForm.handleSubmit(async (values) => {
                             </TooltipContent>
                           </Tooltip>
                         </TooltipProvider>
+                        <Button
+                          v-if="driverFiles?.addressCopy?.name"
+                          type="button"
+                          variant="ghost"
+                          class="h-7 px-2 text-red-600"
+                          @click.prevent="removeDriverFile('addressCopy')"
+                        >
+                          Remover
+                        </Button>
                       </div>
                     </div>
                   </li>
@@ -647,10 +740,8 @@ const onSubmit = driversForm.handleSubmit(async (values) => {
                                 },
                               },
                               endpoint: 'driverFiles',
-                              onClientUploadComplete: (file) => {
-                                driverFiles.bankCopy.name = file[0].name;
-                                driverFiles.bankCopy.url = file[0].ufsUrl;
-                                editDriverBankCopy = !editDriverBankCopy;
+                              onClientUploadComplete: (files) => {
+                                finalizeDriverFileUpload('bankCopy', files?.[0]);
                                 toast({
                                   title: 'Feito!',
                                   class: 'bg-green-500 border-0 text-white text-2xl',
@@ -685,6 +776,15 @@ const onSubmit = driversForm.handleSubmit(async (values) => {
                             </TooltipContent>
                           </Tooltip>
                         </TooltipProvider>
+                        <Button
+                          v-if="driverFiles?.bankCopy?.name"
+                          type="button"
+                          variant="ghost"
+                          class="h-7 px-2 text-red-600"
+                          @click.prevent="removeDriverFile('bankCopy')"
+                        >
+                          Remover
+                        </Button>
                       </div>
                     </div>
                   </li>
