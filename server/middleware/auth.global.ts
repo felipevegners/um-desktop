@@ -17,6 +17,10 @@ export default defineEventHandler(async (event) => {
   const url = getRequestURL(event);
   const pathname = url.pathname || '';
 
+  if (pathname.includes('/api/files')) {
+    console.log('[Auth Middleware] Files route detected, skipping auth');
+  }
+
   // Only enforce auth for API routes. Allow root, auth endpoints, assets and OPTIONS.
   if (!pathname.startsWith('/api/')) {
     return;
@@ -24,6 +28,10 @@ export default defineEventHandler(async (event) => {
 
   // Allow all requests from mobile devices for testing purposes
   if (isMobileRequest(event)) {
+    console.log(
+      '[Auth Middleware] Mobile request detected, skipping auth for:',
+      pathname,
+    );
     return;
   }
 
