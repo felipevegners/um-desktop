@@ -131,7 +131,7 @@ const removeDriverFile = (field: DriverFileField) => {
 };
 
 const flushPendingDeletes = async () => {
-  if (!pendingDeleteFiles.value.length) return false;
+  if (!pendingDeleteFiles?.value?.length) return false;
 
   const queue = [...pendingDeleteFiles.value];
   pendingDeleteFiles.value = [];
@@ -147,7 +147,7 @@ const flushPendingDeletes = async () => {
   return results.some((result) => result.status === 'rejected');
 };
 
-driverCars.value = driver?.value.driverCars.length
+driverCars.value = driver?.value?.driverCars?.length
   ? driver.value.driverCars
   : [
       {
@@ -327,7 +327,7 @@ const onSubmit = driversForm.handleSubmit(async (values) => {
                     <div>
                       <small class="text-zinc-500">Cadastrado em:</small>
                       <p class="mb-2 font-bold">
-                        {{ dateFormat(driver?.createdAt) }}
+                        {{ driver && dateFormat(driver.createdAt) }}
                       </p>
                     </div>
                   </div>
@@ -494,18 +494,18 @@ const onSubmit = driversForm.handleSubmit(async (values) => {
                         <p>
                           Cópia CNH:
                           <span class="text-zinc-500 underline">
-                            {{ driverFiles?.cnhCopy?.name }}
+                            {{ driverFiles && driverFiles?.cnhCopy?.name }}
                           </span>
                         </p>
                         <Check
-                          v-if="driverFiles?.cnhCopy?.name"
+                          v-if="driverFiles && driverFiles?.cnhCopy?.name"
                           class="w-5 h-5 text-green-500"
                         />
                       </div>
                       <div class="flex items-center gap-4 border-separate">
                         <small class="text-small">Ações:</small>
                         <a
-                          v-if="driverFiles?.cnhCopy?.name"
+                          v-if="driverFiles && driverFiles?.cnhCopy?.name"
                           target="_blank"
                           :href="driverFiles?.cnhCopy?.url"
                           alt="Visualizar"
@@ -522,7 +522,12 @@ const onSubmit = driversForm.handleSubmit(async (values) => {
                           </TooltipProvider>
                         </a>
                         <div
-                          v-if="!driverFiles.cnhCopy.name || editDriverCnhCopy"
+                          v-if="
+                            !driverFiles ||
+                            !driverFiles.cnhCopy ||
+                            !driverFiles.cnhCopy.name ||
+                            editDriverCnhCopy
+                          "
                           class="flex gap-4 items-center"
                         >
                           <UploadButton
@@ -593,19 +598,31 @@ const onSubmit = driversForm.handleSubmit(async (values) => {
                       <div class="flex gap-2">
                         <p>
                           Comprovante de Endereço:
-                          <span class="text-zinc-500 underline">{{
-                            driverFiles?.addressCopy?.name
-                          }}</span>
+                          <span class="text-zinc-500 underline">
+                            {{
+                              driverFiles &&
+                              driverFiles.addressCopy &&
+                              driverFiles.addressCopy.name
+                            }}</span
+                          >
                         </p>
                         <Check
-                          v-if="driverFiles?.addressCopy?.name"
+                          v-if="
+                            driverFiles &&
+                            driverFiles.addressCopy &&
+                            driverFiles.addressCopy.name
+                          "
                           class="w-5 h-5 text-green-500"
                         />
                       </div>
                       <div class="flex items-center gap-4 border-separate">
                         <small class="text-small">Ações:</small>
                         <a
-                          v-if="driverFiles?.addressCopy?.name"
+                          v-if="
+                            driverFiles &&
+                            driverFiles.addressCopy &&
+                            driverFiles.addressCopy.name
+                          "
                           target="_blank"
                           :href="driverFiles.addressCopy?.url"
                           alt="Visualizar"
@@ -622,7 +639,12 @@ const onSubmit = driversForm.handleSubmit(async (values) => {
                           </TooltipProvider>
                         </a>
                         <div
-                          v-if="!driverFiles.addressCopy?.name || editDriverAddressCopy"
+                          v-if="
+                            !driverFiles ||
+                            !driverFiles.addressCopy ||
+                            !driverFiles.addressCopy.name ||
+                            editDriverAddressCopy
+                          "
                           class="flex gap-4 items-center"
                         >
                           <UploadButton
@@ -693,12 +715,20 @@ const onSubmit = driversForm.handleSubmit(async (values) => {
                       <div class="flex gap-2">
                         <p>
                           Comprovante Bancário:
-                          <span class="text-zinc-500 underline">{{
-                            driverFiles?.bankCopy?.name
-                          }}</span>
+                          <span class="text-zinc-500 underline">
+                            {{
+                              driverFiles &&
+                              driverFiles?.bankCopy &&
+                              driverFiles?.bankCopy?.name
+                            }}</span
+                          >
                         </p>
                         <Check
-                          v-if="driverFiles?.bankCopy?.name"
+                          v-if="
+                            driverFiles &&
+                            driverFiles?.bankCopy &&
+                            driverFiles?.bankCopy?.name
+                          "
                           class="w-5 h-5 text-green-500"
                         />
                       </div>
@@ -707,7 +737,7 @@ const onSubmit = driversForm.handleSubmit(async (values) => {
                         <a
                           v-if="driverFiles?.bankCopy?.name"
                           target="_blank"
-                          :href="driverFiles.bankCopy?.url"
+                          :href="driverFiles?.bankCopy?.url"
                           alt="Visualizar"
                         >
                           <TooltipProvider>
@@ -722,7 +752,7 @@ const onSubmit = driversForm.handleSubmit(async (values) => {
                           </TooltipProvider>
                         </a>
                         <div
-                          v-if="!driverFiles.bankCopy?.name || editDriverBankCopy"
+                          v-if="!driverFiles?.bankCopy?.name || editDriverBankCopy"
                           class="flex gap-4 items-center"
                         >
                           <UploadButton
