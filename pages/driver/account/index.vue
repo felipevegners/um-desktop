@@ -188,6 +188,7 @@ const driverSchema = toTypedSchema(
     name: z.string().min(2).max(50),
     email: z.string().min(2).max(50),
     phone: z.string().min(2).max(50),
+    pix_key: z.string().max(120).optional(),
     document: z.string().min(2).max(50),
     driverLicense: z.string().min(2).max(50),
     licenseExpiration: z.string({ message: 'Obrigatório' }).min(2).max(50),
@@ -212,6 +213,7 @@ const driversForm = useForm({
   validationSchema: driverSchema,
   initialValues: {
     ...driver?.value,
+    pix_key: driver?.value?.pix_key || '',
     zipcode: driver?.value.address?.zipcode,
     streetName: driver?.value.address?.streetName,
     streetNumber: driver?.value.address?.streetNumber,
@@ -231,6 +233,7 @@ const onSubmit = driversForm.handleSubmit(async (values) => {
     name: values.name,
     email: values.email,
     phone: values.phone,
+    pix_key: values.pix_key || '',
     document: values.document,
     driverLicense: values.driverLicense,
     licenseExpiration: values.licenseExpiration,
@@ -366,6 +369,15 @@ const onSubmit = driversForm.handleSubmit(async (values) => {
                         v-bind="componentField"
                         v-maska="'(##) #####-####'"
                       />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                </FormField>
+                <FormField v-slot="{ componentField }" name="pix_key">
+                  <FormItem>
+                    <FormLabel>Chave Pix</FormLabel>
+                    <FormControl>
+                      <Input type="text" v-bind="componentField" />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
