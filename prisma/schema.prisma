@@ -133,6 +133,7 @@ model Drivers {
   name              String
   email             String
   phone             String
+  pix_key           String?
   document          String?
   driverLicense     String?
   licenseExpiration String?

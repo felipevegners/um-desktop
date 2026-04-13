@@ -394,15 +394,6 @@ const onSubmit = driversForm.handleSubmit(async (values) => {
                   <FormMessage />
                 </FormItem>
               </FormField>
-              <FormField v-slot="{ componentField }" name="pix_key">
-                <FormItem>
-                  <FormLabel>Chave Pix</FormLabel>
-                  <FormControl>
-                    <Input type="text" v-bind="componentField" />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              </FormField>
             </div>
             <div class="mb-4 w-full grid grid-cols-4 gap-8">
               <FormField v-slot="{ componentField }" name="document">
@@ -458,6 +449,20 @@ const onSubmit = driversForm.handleSubmit(async (values) => {
                   <FormItem class="col-span-1">
                     <FormLabel>Região Atendida (KM / Área / Período)</FormLabel>
 
+                    <FormControl>
+                      <Input type="text" v-bind="componentField" />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                </FormField>
+              </div>
+            </section>
+            <section class="my-10">
+              <h2 class="mt-4 mb-6 text-lg font-bold">Dados Financeiros</h2>
+              <div class="mb-4 w-full md:grid md:grid-cols-4 gap-8">
+                <FormField v-slot="{ componentField }" name="pix_key">
+                  <FormItem class="col-span-1 md:col-span-2">
+                    <FormLabel>Chave Pix</FormLabel>
                     <FormControl>
                       <Input type="text" v-bind="componentField" />
                     </FormControl>
