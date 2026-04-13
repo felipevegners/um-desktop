@@ -48,7 +48,10 @@ const { data } = useAuth();
 await getDriverByIdAction(data?.value?.user?.id as string);
 
 onMounted(() => {
-  if (driver.value.driverFiles.cnhCopy.name === '' || driver.value.status === 'pending') {
+  const cnhCopyName = driver.value?.driverFiles?.cnhCopy?.name ?? '';
+  const driverStatus = driver.value?.status;
+
+  if (cnhCopyName === '' || driverStatus === 'pending') {
     const targetElement = document.getElementById('files');
     if (targetElement) {
       setTimeout(() => {
@@ -162,24 +165,24 @@ driverCars.value = driver?.value?.driverCars?.length
       },
     ];
 driverFiles.value = {
-  picture: normalizeFileEntry(driver?.value.driverFiles?.picture),
-  cnhCopy: normalizeFileEntry(driver?.value.driverFiles?.cnhCopy),
-  addressCopy: normalizeFileEntry(driver?.value.driverFiles?.addressCopy),
-  bankCopy: normalizeFileEntry(driver?.value.driverFiles?.bankCopy),
+  picture: normalizeFileEntry(driver?.value?.driverFiles?.picture),
+  cnhCopy: normalizeFileEntry(driver?.value?.driverFiles?.cnhCopy),
+  addressCopy: normalizeFileEntry(driver?.value?.driverFiles?.addressCopy),
+  bankCopy: normalizeFileEntry(driver?.value?.driverFiles?.bankCopy),
 };
 const driverProfilePicture = reactive({
-  name: driver?.value.driverFiles?.picture?.name,
-  url: driver?.value.driverFiles?.picture?.url,
-  key: driver?.value.driverFiles?.picture?.key || '',
+  name: driver?.value?.driverFiles?.picture?.name || '',
+  url: driver?.value?.driverFiles?.picture?.url || '',
+  key: driver?.value?.driverFiles?.picture?.key || '',
 });
 
-driverSituation.value = driver?.value.enabled;
+driverSituation.value = driver?.value?.enabled ?? false;
 
 const hasPendingActions = computed(() => {
   return (
-    driverFiles.value.cnhCopy.name === '' ||
-    driverFiles.value.addressCopy.name === '' ||
-    driverFiles.value.bankCopy.name === ''
+    !driverFiles.value?.cnhCopy?.name ||
+    !driverFiles.value?.addressCopy?.name ||
+    !driverFiles.value?.bankCopy?.name
   );
 });
 
@@ -214,22 +217,22 @@ const driversForm = useForm({
   initialValues: {
     ...driver?.value,
     pix_key: driver?.value?.pix_key || '',
-    zipcode: driver?.value.address?.zipcode,
-    streetName: driver?.value.address?.streetName,
-    streetNumber: driver?.value.address?.streetNumber,
-    complement: driver?.value.address?.complement,
-    neighborhood: driver?.value.address?.neighborhood,
-    city: driver?.value.address?.city,
-    state: driver?.value.address?.state,
-    scheduleOpen: driver?.value.scheduleOpen,
-    outsideActuation: driver?.value.outsideActuation,
+    zipcode: driver?.value?.address?.zipcode,
+    streetName: driver?.value?.address?.streetName,
+    streetNumber: driver?.value?.address?.streetNumber,
+    complement: driver?.value?.address?.complement,
+    neighborhood: driver?.value?.address?.neighborhood,
+    city: driver?.value?.address?.city,
+    state: driver?.value?.address?.state,
+    scheduleOpen: driver?.value?.scheduleOpen,
+    outsideActuation: driver?.value?.outsideActuation,
     driverOffers: driver?.value?.offers,
   },
 });
 
 const onSubmit = driversForm.handleSubmit(async (values) => {
   const newDriverData = {
-    id: driver?.value.id,
+    id: driver?.value?.id,
     name: values.name,
     email: values.email,
     phone: values.phone,
@@ -541,8 +544,8 @@ const onSubmit = driversForm.handleSubmit(async (values) => {
                         <div
                           v-if="
                             !driverFiles ||
-                            !driverFiles.cnhCopy ||
-                            !driverFiles.cnhCopy.name ||
+                            !driverFiles?.cnhCopy ||
+                            !driverFiles?.cnhCopy?.name ||
                             editDriverCnhCopy
                           "
                           class="flex gap-4 items-center"
