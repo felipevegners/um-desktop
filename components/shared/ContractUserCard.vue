@@ -69,14 +69,7 @@ const toggleRestriction = (account: Account, restrictionId: string) => {
           title="Editar usuário"
           variant="ghost"
           size="icon"
-          @click.prevent="
-            navigateTo({
-              name: 'corporative-accounts-edit-id',
-              params: {
-                id: account?.id,
-              },
-            })
-          "
+          @click.prevent="navigateTo(`/profile/${account?.id}`)"
           class="hover:bg-zinc-950 hover:text-white rounded-lg"
         >
           <Edit />

@@ -117,7 +117,7 @@ const userName = computed(() => {
       <Button
         type="button"
         class="p-6 mt-10 md:mt-0 w-full md:w-fit bg-um-primary hover:bg-um-primary/80 text-black uppercase font-bold md:shadow-lg"
-        @click="navigateTo('/corporative/rides/new')"
+        @click="navigateTo('/rides/form/new')"
       >
         <CalendarPlus :size="18" />
         Solicitar Atendimento
@@ -151,7 +151,7 @@ const userName = computed(() => {
               type="button"
               size="icon"
               variant="link"
-              @click="navigateTo(`/corporative/rides/edit/${ride.id}`)"
+              @click="navigateTo(`/rides/form/edit/${ride.code || ride.id}`)"
             >
               <ExternalLink :size="16" />
             </Button>
@@ -165,7 +165,7 @@ const userName = computed(() => {
           v-if="contractRidesList.length > 0"
           type="button"
           class="mt-6 p-6 w-full"
-          @click="navigateTo('/corporative/rides/open')"
+          @click="navigateTo('/rides/list/open')"
         >
           Ver Todos
         </Button>

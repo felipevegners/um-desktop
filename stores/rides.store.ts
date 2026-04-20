@@ -1,6 +1,7 @@
 import {
   createRideService,
   getContractRidesService,
+  getRideByCodeService,
   getRidesByDateRangeAndContractIdService,
   getRidesByDateRangeService,
   getRidesService,
@@ -12,15 +13,84 @@ import { sanitizePhone } from '~/lib/utils';
 export interface IRidesState {
   rides?: any;
   ride?: any;
+  capabilities?: {
+    canCreateRide?: boolean;
+    canEditRide?: boolean;
+    canCancelRide?: boolean;
+    canRecalculateRide?: boolean;
+    canAssignDriver?: boolean;
+    canReadFinancial?: boolean;
+  } | null;
   loadingData: boolean;
   loadingSetDriver: boolean;
 }
+
+const ACTIVE_RIDE_STATUSES = new Set([
+  'created',
+  'pending',
+  'accepted',
+  'in-progress',
+  'over_quota',
+  'rejected',
+  // Legacy compatibility
+  'refused',
+]);
+
+const normalizeRideListResponse = (payload: any) => {
+  if (Array.isArray(payload)) {
+    return {
+      items: payload,
+      capabilities: null,
+    };
+  }
+
+  if (payload && typeof payload === 'object') {
+    const items = Array.isArray(payload.items)
+      ? payload.items
+      : Array.isArray(payload.rides)
+        ? payload.rides
+        : Array.isArray(payload.data)
+          ? payload.data
+          : [];
+
+    return {
+      items,
+      capabilities:
+        payload.capabilities && typeof payload.capabilities === 'object'
+          ? payload.capabilities
+          : null,
+    };
+  }
+
+  return {
+    items: [],
+    capabilities: null,
+  };
+};
+
+const normalizeRideDetailResponse = (payload: any) => {
+  if (payload && typeof payload === 'object' && payload.ride) {
+    return {
+      ride: payload.ride,
+      capabilities:
+        payload.capabilities && typeof payload.capabilities === 'object'
+          ? payload.capabilities
+          : null,
+    };
+  }
+
+  return {
+    ride: payload,
+    capabilities: null,
+  };
+};
 
 export const useRidesStore = defineStore('rides', {
   state: (): IRidesState => {
     return {
       rides: [],
       ride: {},
+      capabilities: null,
       loadingData: false,
       loadingSetDriver: false,
     };
@@ -29,9 +99,10 @@ export const useRidesStore = defineStore('rides', {
     openRides({ rides }) {
       if (rides.length > 0)
         return rides
-          .filter(
-            (ride: any) => ride.status !== 'completed' && ride.status !== 'cancelled',
-          )
+          .filter((ride: any) => {
+            const status = String(ride?.status || '').toLowerCase();
+            return ACTIVE_RIDE_STATUSES.has(status);
+          })
           .sort((a: any, b: any) => {
             return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
           });
@@ -50,7 +121,9 @@ export const useRidesStore = defineStore('rides', {
       this.loadingData = true;
       try {
         const response: any = await getRidesService('');
-        this.rides = response.filter((ride: any) => ride.status !== 'canceled');
+        const normalized = normalizeRideListResponse(response);
+        this.capabilities = normalized.capabilities;
+        this.rides = normalized.items.filter((ride: any) => ride.status !== 'canceled');
         this.loadingData = false;
       } catch (error) {
         throw error;
@@ -60,7 +133,9 @@ export const useRidesStore = defineStore('rides', {
       this.loadingData = true;
       try {
         const response: any = await getRidesService('');
-        const filtered = response.filter((ride: any) => ride.user.id === userId);
+        const normalized = normalizeRideListResponse(response);
+        this.capabilities = normalized.capabilities;
+        const filtered = normalized.items.filter((ride: any) => ride.user.id === userId);
         this.rides = filtered;
         this.loadingData = false;
       } catch (error) {
@@ -101,7 +176,9 @@ export const useRidesStore = defineStore('rides', {
         console.log(startDateISO, endDateISO);
 
         const response: any = await getRidesByDateRangeService(startDateISO, endDateISO);
-        this.rides = response;
+        const normalized = normalizeRideListResponse(response);
+        this.capabilities = normalized.capabilities;
+        this.rides = normalized.items;
         this.loadingData = false;
       } catch (error) {
         console.error('Error fetching rides by date range:', error);
@@ -150,7 +227,9 @@ export const useRidesStore = defineStore('rides', {
           endDateISO,
           contractId,
         );
-        this.rides = response;
+        const normalized = normalizeRideListResponse(response);
+        this.capabilities = normalized.capabilities;
+        this.rides = normalized.items;
         this.loadingData = false;
       } catch (error) {
         console.error('Error fetching rides by date range:', error);
@@ -164,7 +243,9 @@ export const useRidesStore = defineStore('rides', {
       this.loadingData = true;
       try {
         const response: any = await getContractRidesService(contractId);
-        this.rides = response;
+        const normalized = normalizeRideListResponse(response);
+        this.capabilities = normalized.capabilities;
+        this.rides = normalized.items;
         this.loadingData = false;
       } catch (error) {
         throw error;
@@ -174,7 +255,12 @@ export const useRidesStore = defineStore('rides', {
       this.loadingData = true;
       try {
         const response: any = await getRidesService('');
-        const filtered = response.filter((ride: any) => ride.driver.id === driverId);
+        const normalized = normalizeRideListResponse(response);
+        this.capabilities = normalized.capabilities;
+        const filtered = normalized.items.filter((ride: any) => {
+          const assignedDriverId = ride?.driver?.id;
+          return typeof assignedDriverId === 'string' && assignedDriverId === driverId;
+        });
         this.rides = filtered;
         this.loadingData = false;
       } catch (error) {
@@ -185,7 +271,21 @@ export const useRidesStore = defineStore('rides', {
       this.loadingData = true;
       try {
         const response = await getRidesService(rideId);
-        this.ride = response;
+        const normalized = normalizeRideDetailResponse(response);
+        this.capabilities = normalized.capabilities;
+        this.ride = normalized.ride;
+        this.loadingData = false;
+      } catch (error) {
+        throw error;
+      }
+    },
+    async getRideByCodeAction(code: string) {
+      this.loadingData = true;
+      try {
+        const response: any = await getRideByCodeService(code);
+        const normalized = normalizeRideListResponse(response);
+        this.capabilities = normalized.capabilities;
+        this.ride = normalized.items?.[0] || null;
         this.loadingData = false;
       } catch (error) {
         throw error;

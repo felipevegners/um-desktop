@@ -64,7 +64,7 @@ const userName = computed(() => {
         <Button
           type="button"
           class="p-6 bg-amber-700 hover:bg-amber-600"
-          @click="navigateTo('driver/account')"
+          @click="navigateTo('/profile/me')"
         >
           Finalizar Cadastro
         </Button>

@@ -1,16 +1,14 @@
 <script setup lang="ts">
-import { Button } from '@/components/ui/button';
-import { CalendarX2, LoaderCircle, Plus } from 'lucide-vue-next';
+import { CalendarX2, LoaderCircle } from 'lucide-vue-next';
 import { storeToRefs } from 'pinia';
 import { onMounted } from 'vue';
 import DataTable from '~/components/shared/DataTable.vue';
-import { getDriver } from '~/server/services/drivers';
 import { useRidesStore } from '~/stores/rides.store';
 
 import { columns } from './columns';
 
 const ridesStore = useRidesStore();
-const { getRidesAction, getDriverRidesAction } = ridesStore;
+const { getDriverRidesAction } = ridesStore;
 const { loadingData, rides } = storeToRefs(ridesStore);
 const driverCanceledList = ref([]);
 
@@ -27,9 +25,10 @@ const { data } = useAuth();
 onMounted(async () => {
   //@ts-ignore
   await getDriverRidesAction(data?.value?.user?.id);
-  driverCanceledList.value = rides?.value.filter(
-    (ride: any) => ride.status === 'cancelled',
-  );
+  driverCanceledList.value = rides?.value.filter((ride: any) => {
+    const status = String(ride?.status || '').toLowerCase();
+    return status === 'cancelled' || status === 'canceled';
+  });
 });
 </script>
 <template>

@@ -40,14 +40,12 @@ const userName = computed(() => {
 });
 
 onMounted(async () => {
+  loadingRides.value = true;
   await getCommissionsAction();
   await getRidesAction();
   await getFeeByTypeAction('driver_fee');
-  loadingRides.value = true;
-  if (rides?.value.length >= 3) {
-    allRides.value = rides?.value.slice(-4).reverse();
-    loadingRides.value = false;
-  }
+  allRides.value = (rides?.value || []).slice(-4).reverse();
+  loadingRides.value = false;
 });
 
 const getRideMonthData = computed(() => {
@@ -279,7 +277,7 @@ definePageMeta({
                   type="button"
                   size="icon"
                   variant="link"
-                  @click="navigateTo(`/admin/rides/edit/${ride.id}`)"
+                  @click="navigateTo(`/rides/form/edit/${ride.code || ride.id}`)"
                 >
                   <ExternalLink :size="16" />
                 </Button>
@@ -295,7 +293,7 @@ definePageMeta({
           <Button
             type="button"
             class="mt-6 p-6 w-full"
-            @click="navigateTo('/admin/rides/open')"
+            @click="navigateTo('/rides/list/open')"
           >
             Ver Todos
           </Button>

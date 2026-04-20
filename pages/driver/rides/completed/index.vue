@@ -30,7 +30,7 @@ onMounted(async () => {
   //@ts-ignore
   await getDriverRidesAction(data?.value?.user?.id);
   driverCompletedList.value = rides?.value.filter(
-    (ride: any) => ride.status === 'completed',
+    (ride: any) => String(ride?.status || '').toLowerCase() === 'completed',
   );
 });
 

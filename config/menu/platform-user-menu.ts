@@ -53,7 +53,7 @@ export const platformUserMenu = {
   settings: [
     {
       name: 'Minha conta',
-      url: '/personal/account',
+      url: '/profile/me',
       icon: UserCog,
     },
   ],

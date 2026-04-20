@@ -24,8 +24,7 @@ const route = useRoute();
 const { data } = useAuth();
 //@ts-ignore
 const contractId = data.value?.user.contract?.contractId;
-//@ts-ignore
-const role = data.value?.user?.role;
+const role = String((data.value as any)?.user?.role || '');
 
 const contractsStore = useContractsStore();
 const { getContractsAction, getContractByIdAction } = contractsStore;
@@ -71,11 +70,10 @@ onBeforeMount(async () => {
 const managerRoles = ['master-manager', 'branch-manager', 'admin'];
 
 const generateManagerList = () => {
-  const findContractUsers = accounts.value.filter(
-    (account: any) =>
-      account.contract.contractId === props.contractId &&
-      managerRoles.includes(account.role),
-  );
+  const findContractUsers = (accounts.value || []).filter((account: any) => {
+    const accountContractId = account?.contract?.contractId;
+    return accountContractId === props.contractId && managerRoles.includes(account?.role);
+  });
   branchManagerUsersList.value = findContractUsers.map((user: any) => {
     return {
       label: `${user.username} - ${rolesTypes[user.role]}`,
@@ -105,22 +103,6 @@ const sanitizeContracts = computed(() => {
       value: contract.id,
     };
   });
-});
-
-const generateEditAccountUrl = computed(() => {
-  let url = '';
-  switch (true) {
-    case role === 'master-manager' || role === 'branch-manager':
-      url = 'corporative-accounts-edit-id';
-      break;
-    case role === 'admin':
-      url = 'admin-accounts-edit-id';
-      break;
-    default:
-      url = 'admin-accounts-edit-id';
-  }
-
-  return url;
 });
 
 const targetAccountPath = computed(() => {
@@ -570,15 +552,7 @@ const handleCancelChangeManager = () => {
         "
         type="button"
         class="my-4"
-        @click="
-          navigateTo(
-            {
-              name: generateEditAccountUrl,
-              params: { id: managerId },
-            },
-            { open: { target: '_blank' } },
-          )
-        "
+        @click="navigateTo(`/profile/${managerId}`, { open: { target: '_blank' } })"
       >
         <UserCog />
         Editar Dados do Gestor

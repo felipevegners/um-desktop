@@ -29,7 +29,9 @@ const { contract } = storeToRefs(contractStore);
 
 const route = useRoute();
 await getBranchByIdAction(route?.params?.id as string);
-await getContractByIdAction(branch.value.contractId as string);
+if (branch.value?.contractId) {
+  await getContractByIdAction(branch.value.contractId as string);
+}
 
 const branchSituation = ref<boolean>(true);
 branchSituation.value = branch?.value.enabled;

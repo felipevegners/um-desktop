@@ -30,6 +30,7 @@ const form = useForm({
 });
 
 const { signIn } = useAuth();
+const route = useRoute();
 const isLoading = ref<boolean>(false);
 
 const viewPassword = ref<boolean>(false);
@@ -41,7 +42,11 @@ const revealPassword = () => {
 const onSubmit = form.handleSubmit(async (values) => {
   try {
     isLoading.value = true;
-    await signIn('credentials', values);
+    const callbackUrl =
+      typeof route.query.callbackUrl === 'string' && route.query.callbackUrl
+        ? route.query.callbackUrl
+        : '/';
+    await signIn('credentials', { ...values, callbackUrl });
   } catch (error) {
     console.error('Erro no login -> ', error);
   } finally {

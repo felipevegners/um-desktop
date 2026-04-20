@@ -186,10 +186,13 @@ type Billing {
 }
 
 type PaymentData {
-  contract       String
+  contractId     String?
+  branchId       String?
   branchName     String?
-  branch         String?
-  area           String?
+  branchCode     String?
+  areaCode       String?
+  areaName       String?
+  paymentType    String?
   splitedPayment Json?
 }
 

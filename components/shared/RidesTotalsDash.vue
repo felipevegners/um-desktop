@@ -6,6 +6,7 @@ defineOptions({
 });
 
 const props = withDefaults(defineProps<{ rides: any[]; theme?: 'light' | 'dark' }>(), {
+  rides: () => [],
   theme: 'dark',
 });
 

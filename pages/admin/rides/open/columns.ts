@@ -15,6 +15,59 @@ import {
 
 const columnHelper = createColumnHelper<any>();
 
+const resolveBranchLabel = (billing: any): string => {
+  const paymentData = billing?.paymentData;
+  const explicitName = paymentData?.branchName;
+  if (typeof explicitName === 'string' && explicitName.trim().length > 0) {
+    return explicitName;
+  }
+
+  const branchCode = paymentData?.branchCode;
+  if (typeof branchCode === 'string' && branchCode.trim().length > 0) {
+    return branchCode;
+  }
+
+  const branchId = paymentData?.branch;
+  if (typeof branchId === 'string' && branchId.trim().length > 0 && branchId !== '-') {
+    return branchId;
+  }
+
+  return '-';
+};
+
+const resolveAreaLabel = (billing: any): string => {
+  const paymentData = billing?.paymentData;
+  const area = paymentData?.area;
+
+  if (area === 'splited') {
+    const areas = Array.isArray(paymentData?.splitedPayment)
+      ? paymentData.splitedPayment
+          .map((item: any) => item?.area)
+          .filter((value: any) => typeof value === 'string' && value.trim().length > 0)
+      : [];
+
+    return areas.length > 0 ? areas.join(' / ') : 'RATEIO';
+  }
+
+  if (typeof area === 'string' && area.trim().length > 0) {
+    return area;
+  }
+
+  return '-';
+};
+
+const resolveRecurrenceTag = (ride: any): string | null => {
+  const recurrence = ride?.travel?.recurrence || ride?.dispatcher?.recurrence;
+  const index = recurrence?.index;
+  const total = recurrence?.total;
+
+  if (typeof index === 'number' && typeof total === 'number' && total > 1) {
+    return `Rec. ${index}/${total}`;
+  }
+
+  return null;
+};
+
 export const columns: any = [
   columnHelper.accessor('code', {
     size: 90,
@@ -23,9 +76,21 @@ export const columns: any = [
     },
     header: () => h('div', { class: 'text-xs leading-none text-left' }, 'Código'),
     cell: ({ row }: any) => {
-      const { code }: any = row.original;
+      const ride = row.original;
+      const { code }: any = ride;
       const sanitized = code.replace('UM-', '');
-      return h('div', { class: 'capitalize text-xs' }, sanitized);
+      const recurrenceTag = resolveRecurrenceTag(ride);
+
+      return h('div', { class: 'text-xs' }, [
+        h('div', { class: 'capitalize' }, sanitized),
+        recurrenceTag
+          ? h(
+              'small',
+              { class: 'inline-block mt-1 rounded bg-zinc-200 px-1.5 py-0.5 text-xxs' },
+              recurrenceTag,
+            )
+          : null,
+      ]);
     },
   }),
   columnHelper.accessor('createdAt', {
@@ -87,7 +152,7 @@ export const columns: any = [
     header: () => h('div', { class: 'text-xs leading-none text-left' }, 'Filial'),
     cell: ({ row }: any) => {
       const { billing }: any = row.original;
-      const name = billing.paymentData.branchName;
+      const name = resolveBranchLabel(billing);
       return h('div', { class: 'capitalize text-xs' }, name ? name : '-');
     },
   }),
@@ -99,13 +164,7 @@ export const columns: any = [
     header: () => h('div', { class: 'text-xs leading-none text-left' }, 'CC'),
     cell: ({ row }: any) => {
       const { billing }: any = row.original;
-      let name = billing.paymentData.area;
-      if (name === 'splited') {
-        const areas = billing.paymentData.splitedPayment.map((item: any) => {
-          return item.area;
-        });
-        return h('div', { class: 'capitalize text-xs' }, `${areas.join(' / ')}`);
-      }
+      const name = resolveAreaLabel(billing);
       return h('div', { class: 'capitalize text-xs' }, name ? name : '-');
     },
   }),
@@ -247,7 +306,7 @@ export const columns: any = [
       return h(
         'span',
         { class: 'text-xs font-bold' },
-        currencyFormat(data.billing.ammount),
+        currencyFormat(data?.billing?.ammount || '0'),
       );
     },
   }),
@@ -257,8 +316,8 @@ export const columns: any = [
     cell: ({ row }) => {
       const data = row.original;
       return h(PaymentStatusFlag, {
-        paymentStatus: data.billing.status,
-        paymentUrl: data.billing.paymentUrl || '',
+        paymentStatus: data?.billing?.status,
+        paymentUrl: data?.billing?.paymentUrl || '',
       });
     },
   }),

@@ -1,11 +1,16 @@
 import { NuxtAuthHandler } from '#auth';
-import { useToast } from '@/components/ui/toast/use-toast';
-import bcrypt from 'bcryptjs';
 import { getCookie, setCookie } from 'h3';
 import CredentialsProvider from 'next-auth/providers/credentials';
+import { $fetch } from 'ofetch';
 import { prisma } from '~/utils/prisma';
 
-const { toast } = useToast();
+function resolveUmApiBaseUrl(): string {
+  return (
+    process.env.UM_API_BASE_URL ||
+    process.env.EXPO_PUBLIC_UM_API_URL ||
+    'https://um-api-pu0t.onrender.com'
+  );
+}
 
 export default NuxtAuthHandler({
   secret: useRuntimeConfig().authSecret,
@@ -20,37 +25,51 @@ export default NuxtAuthHandler({
       credentials: {},
       //@ts-ignore
       async authorize(credentials: { email: string; password: string }) {
-        const account = await prisma.accounts.findUnique({
-          where: {
-            email: credentials.email,
-          },
-        });
-
-        if (!account) {
-          throw new Error('Conta não encontrada!');
-        }
-
-        if (!account.emailConfirmed) {
+        if (!credentials?.email || !credentials?.password) {
           throw createError({
-            statusCode: 401,
-            message:
-              'Sua conta ainda não foi verificada!, Acesse seu e-mail e confirme seu cadastro para prosseguir com o acesso.',
-            cause: 'Error',
+            statusCode: 400,
+            message: 'Email e senha são obrigatórios.',
           });
         }
 
-        const isValid = await bcrypt.compare(credentials.password, account.password);
+        // O login do desktop deve confiar no um-api como fonte única de autenticação.
+        try {
+          const apiBaseUrl = resolveUmApiBaseUrl();
+          const loginUrl = new URL('/auth/login', apiBaseUrl);
+          const loginResult = await $fetch<any>(loginUrl.toString(), {
+            method: 'POST',
+            body: {
+              email: credentials.email,
+              password: credentials.password,
+              clientType: 'web',
+            },
+          });
 
-        if (!isValid) {
+          if (!loginResult?.accessToken || !loginResult?.user) {
+            throw createError({
+              statusCode: 401,
+              message: 'Falha ao validar sessão no um-api.',
+            });
+          }
+
+          return {
+            ...loginResult.user,
+            id: loginResult.user.id,
+            name: loginResult.user.username || loginResult.user.name,
+            umApiToken: loginResult.accessToken,
+            permissions: Array.isArray(loginResult.permissions)
+              ? loginResult.permissions
+              : [],
+            accessScope: loginResult.accessScope || null,
+            session: loginResult.session || null,
+          };
+        } catch (err) {
+          console.error('[auth] Failed login via um-api:', err);
           throw createError({
             statusCode: 401,
-            message: 'Senha inválida!',
+            message: 'Email ou senha inválidos.',
           });
         }
-        return {
-          ...account,
-          password: undefined,
-        };
       },
     }),
   ],
@@ -105,6 +124,8 @@ export default NuxtAuthHandler({
           ...user,
           //@ts-ignore
           name: user?.username,
+          //@ts-ignore
+          umApiToken: user?.umApiToken ?? null,
         };
       }
       return token;

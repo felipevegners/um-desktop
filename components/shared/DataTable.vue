@@ -100,6 +100,8 @@ interface TableProps {
 }
 
 const props = withDefaults(defineProps<TableProps>(), {
+  data: () => [] as TData[],
+  columns: () => [] as ColumnDef<TData, TValue>[],
   showColumnSelect: true,
   showFilter: true,
   showPagination: true,
@@ -188,7 +190,7 @@ watch(
       class="max-w-sm"
       :placeholder="`Filtrar por ${filterBy}`"
       :model-value="globalFilter"
-      @update:model-value="globalFilter = String($event)"
+      @update:model-value="globalFilter = $event ? String($event) : ''"
     />
     <DropdownMenu v-if="showColumnSelect">
       <DropdownMenuTrigger as-child>

@@ -15,6 +15,25 @@ const mapRef = ref<any>(null);
 const GMAPS_API_KEY = computed(() => env.public.VITE_GOOGLE_MAPS_API_KEY);
 const gmap = ref<any>(null);
 
+// Normalize coordinate objects that may use lat/lng or latitude/longitude
+function toLatLng(coords: any): { lat: number; lng: number } | null {
+  if (!coords) return null;
+  const lat =
+    typeof coords.lat === 'number'
+      ? coords.lat
+      : typeof coords.latitude === 'number'
+        ? coords.latitude
+        : parseFloat(coords.lat ?? coords.latitude);
+  const lng =
+    typeof coords.lng === 'number'
+      ? coords.lng
+      : typeof coords.longitude === 'number'
+        ? coords.longitude
+        : parseFloat(coords.lng ?? coords.longitude);
+  if (!isFinite(lat) || !isFinite(lng)) return null;
+  return { lat, lng };
+}
+
 const mapOptions = reactive({
   zoom: 20,
   maxZoom: 10,
@@ -61,10 +80,9 @@ const finalPolyline = computed(() => {
 });
 
 const directionsRenderer = ref(null);
-const center = {
-  lat: props.originCoords?.latitude,
-  lng: props.originCoords?.longitude,
-};
+const originLL = computed(() => toLatLng(props.originCoords));
+const destLL = computed(() => toLatLng(props.destinationCoords));
+const center = computed(() => originLL.value ?? { lat: -15.7801, lng: -47.9292 });
 
 watch(
   () => mapRef.value?.ready,
@@ -72,16 +90,17 @@ watch(
     if (!ready) return;
     gmap.value = mapRef.value?.map;
     directions();
-    //@ts-ignore
-    const bounds = new google.maps.LatLngBounds();
-    //@ts-ignore
-    bounds.extend(new google.maps.LatLng(props.originCoords.lat, props.originCoords.lng));
-    bounds.extend(
+    const oLL = originLL.value;
+    const dLL = destLL.value;
+    if (oLL && dLL) {
       //@ts-ignore
-      new google.maps.LatLng(props.destinationCoords.lat, props.destinationCoords.lng),
-    );
-
-    gmap.value.fitBounds(bounds);
+      const bounds = new google.maps.LatLngBounds();
+      //@ts-ignore
+      bounds.extend(new google.maps.LatLng(oLL.lat, oLL.lng));
+      //@ts-ignore
+      bounds.extend(new google.maps.LatLng(dLL.lat, dLL.lng));
+      gmap.value.fitBounds(bounds);
+    }
   },
 );
 function setDirection(val: any) {
@@ -166,23 +185,23 @@ async function directions() {
             icon: 'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent(customIconEnd),
             title: `Destino`,
           });
-          //@ts-ignore
-          new google.maps.Marker({
-            position: {
-              lat: props.rideProgress?.finishedLocation?.latitude,
-              lng: props.rideProgress?.finishedLocation?.longitude,
-            },
-            map: gmap.value,
-            icon: customArrow,
-            title: `Finalizado`,
-            alignment: 'TOP',
-          });
+          const finishedLL = toLatLng(props.rideProgress?.finishedLocation);
+          if (finishedLL) {
+            //@ts-ignore
+            new google.maps.Marker({
+              position: finishedLL,
+              map: gmap.value,
+              icon: customArrow,
+              title: `Finalizado`,
+              alignment: 'TOP',
+            });
+          }
 
           //@ts-ignore
           directionsRenderer.value.setMap(gmap.value);
           gmap.value.fitBounds(response.routes[0].bounds);
           setTimeout(() => {
-            gmap.value.panTo(response.routes[0].bounds);
+            gmap.value.panTo(response.routes[0].bounds.getCenter());
           }, 200);
         }
         //@ts-ignore
@@ -210,6 +229,7 @@ async function directions() {
     <GoogleMap
       ref="mapRef"
       :api-key="GMAPS_API_KEY"
+      :center="center"
       :options="mapOptions"
       style="width: 100%; height: 550px"
       :disable-default-ui="true"

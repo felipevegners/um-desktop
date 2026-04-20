@@ -13,6 +13,7 @@ const rideStatusTranslate = {
   accepted: 'Confirmado',
   cancelled: 'Cancelado',
   completed: 'Finalizado',
+  rejected: 'Recusado',
   refused: 'Recusado',
   'in-progress': 'Em Andamento',
   over_quota: 'Budget',
@@ -37,8 +38,8 @@ const renderRideStatus = computed(() => {
               ? 'bg-zinc-900 text-white'
               : rideStatus === 'in-progress'
                 ? 'bg-violet-600 animate-pulse text-white'
-                : rideStatus === 'refused'
-                  ? 'bg-red-600 text-white'
+                : rideStatus === 'refused' || rideStatus === 'rejected'
+                  ? 'bg-orange-500 text-white'
                   : 'bg-amber-400 text-black'
     }
     ${size && size === 'large' ? 'font-bold text-sm' : 'text-xxs'}

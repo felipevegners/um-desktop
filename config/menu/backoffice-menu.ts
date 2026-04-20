@@ -32,19 +32,19 @@ export const backofficeMenu = {
       items: [
         {
           title: 'Abertos',
-          url: '/admin/rides/open',
+          url: '/rides/list/open',
         },
         {
           title: 'Finalizados',
-          url: '/admin/rides/completed',
+          url: '/rides/list/completed',
         },
         {
           title: 'Cancelados',
-          url: '/admin/rides/cancelled',
+          url: '/rides/list/cancelled',
         },
         {
           title: '+ Novo Atendimento',
-          url: '/admin/rides/new',
+          url: '/rides/form/new',
         },
       ],
     },

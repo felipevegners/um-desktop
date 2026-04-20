@@ -85,15 +85,7 @@ const handleGeneratePassword = () => {
           <Button
             type="button"
             class="my-4"
-            @click="
-              navigateTo(
-                {
-                  name: 'admin-accounts-edit-id',
-                  params: { id: editId },
-                },
-                { open: { target: '_blank' } },
-              )
-            "
+            @click="navigateTo(`/profile/${editId}`, { open: { target: '_blank' } })"
           >
             <User />
             Editar Conta de Usuário

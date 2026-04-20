@@ -54,12 +54,7 @@ const deleteUserAccount = async (accountId: string) => {
 };
 
 const editAccount = (accountId: string) => {
-  navigateTo({
-    name: 'admin-accounts-edit-id',
-    params: {
-      id: accountId,
-    },
-  });
+  navigateTo(`/profile/${accountId}`);
 };
 
 const finalColumns = [

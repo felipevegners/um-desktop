@@ -22,19 +22,19 @@ export const branchManagerMenu: any = {
       items: [
         {
           title: 'Abertos',
-          url: '/corporative/rides/open',
+          url: '/rides/list/open',
         },
         {
           title: 'Finalizados',
-          url: '/corporative/rides/completed',
+          url: '/rides/list/completed',
         },
         {
           title: 'Cancelados',
-          url: '/corporative/rides/cancelled',
+          url: '/rides/list/cancelled',
         },
         {
           title: '+ Novo agendamento',
-          url: '/corporative/rides/new',
+          url: '/rides/form/new',
         },
       ],
     },

@@ -5,10 +5,13 @@
   "version": "1.0.0",
   "scripts": {
     "build": "nuxt build",
+    "check": "yarn typecheck && yarn build",
     "dev": "nuxt dev",
     "dev:lan": "nuxt dev --host 0.0.0.0 --port 3000",
     "generate": "nuxt generate",
     "preview": "nuxt preview",
+    "start": "node .output/server/index.mjs",
+    "typecheck": "nuxi typecheck",
     "postinstall": "nuxt prepare",
     "vercel-build": "prisma generate && next build"
   },

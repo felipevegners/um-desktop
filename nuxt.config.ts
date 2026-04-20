@@ -77,6 +77,8 @@ export default defineNuxtConfig({
       DATABASE_URL,
       stripePublishableKey: process.env.VITE_STRIPE_PUBLISHABLE_KEY,
       clientVersion: version,
+      PUBLIC_API_BASE_URL:
+        process.env.PUBLIC_API_BASE_URL || 'https://um-api-pu0t.onrender.com',
     },
   },
   imports: {

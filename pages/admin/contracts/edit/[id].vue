@@ -66,11 +66,13 @@ onMounted(async () => {
   if (contract && contract.value.manager === null) {
     await getUsersAccountsAction();
   }
-  const findContractUsers = accounts.value.filter(
-    (account: any) =>
-      account.contract.contractId === (route?.params.id as string) &&
-      account.role === 'master-manager',
-  );
+  const findContractUsers = (accounts.value || []).filter((account: any) => {
+    const accountContractId = account?.contract?.contractId;
+    return (
+      accountContractId === (route?.params.id as string) &&
+      account?.role === 'master-manager'
+    );
+  });
   masterManagerUserList.value = findContractUsers.map((user: any) => {
     return {
       label: `${user.username} - Gestor Master`,

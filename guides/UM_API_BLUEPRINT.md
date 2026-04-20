@@ -506,28 +506,26 @@ Example:
 
 This allows one page to render different controls without duplicating route trees.
 
-### Migration guidance for current duplicated pages
+### Migration guidance for unified routes
 
-Consolidate these pairs first:
+The rides module now uses canonical form routes with capability-driven rendering:
 
-- `pages/admin/rides/open/index.vue`
-- `pages/corporative/rides/open/index.vue`
+- `pages/rides/form/new.vue`
+- `pages/rides/form/edit/[code].vue`
 
-- `pages/admin/rides/completed/index.vue`
-- `pages/corporative/rides/completed/index.vue`
+Role-specific pages remain as compatibility redirects only:
 
-- `pages/admin/rides/edit/[id].vue`
-- `pages/corporative/rides/edit/[id].vue`
+- `pages/admin/rides/new/index.vue` -> `/rides/form/new`
+- `pages/corporative/rides/new/index.vue` -> `/rides/form/new`
+- `pages/admin/rides/edit/[id].vue` -> `/rides/form/edit/:id`
+- `pages/corporative/rides/edit/[id].vue` -> `/rides/form/edit/:id`
 
-- `pages/admin/rides/new/index.vue`
-- `pages/corporative/rides/new/index.vue`
+Shared forms are rendered by the canonical routes:
 
-Recommended extraction order:
-
-1. shared table columns builder
-2. shared page-level list component
-3. shared edit form
-4. shared ride creation flow
+- `components/rides/forms/RideCreateAdminForm.vue`
+- `components/rides/forms/RideCreateCorporativeForm.vue`
+- `components/rides/forms/RideEditAdminForm.vue`
+- `components/rides/forms/RideEditCorporativeForm.vue`
 
 ## Billing and Pricing Engine V2
 

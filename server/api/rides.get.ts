@@ -1,79 +1,58 @@
-import { prisma } from '~/utils/prisma';
+import { createError } from 'h3';
+import { $fetch } from 'ofetch';
+
+import { buildUmApiAuthHeaders, resolveUmApiBaseUrl } from '../utils/um-api';
 
 type RideID = {
   id: string;
+  code: string;
   contractId: string;
+  branchId: string;
+  driverId: string;
+  status: string;
   startDate: string;
   endDate: string;
 };
 export default defineEventHandler(async (event) => {
   const query = getQuery<RideID>(event);
-  const rideId = query.id;
-  const contractId = query.contractId;
-  const startDate = query.startDate;
-  const endDate = query.endDate;
+  const apiBaseUrl = resolveUmApiBaseUrl();
 
-  if (rideId) {
-    const ride = await prisma.rides.findUnique({
-      where: {
-        id: rideId,
-      },
+  const queryParams = new URLSearchParams();
+  if (query.code) queryParams.set('code', query.code);
+  if (query.status) queryParams.set('status', query.status);
+  if (query.contractId) queryParams.set('contractId', query.contractId);
+  if (query.branchId) queryParams.set('branchId', query.branchId);
+  if (query.driverId) queryParams.set('driverId', query.driverId);
+  if (query.startDate) queryParams.set('startDate', query.startDate);
+  if (query.endDate) queryParams.set('endDate', query.endDate);
+
+  try {
+    if (query.id) {
+      const rideByIdUrl = new URL(`/rides/${query.id}`, apiBaseUrl);
+      return await $fetch(rideByIdUrl.toString(), {
+        method: 'GET',
+        headers: await buildUmApiAuthHeaders(event),
+      });
+    }
+
+    const ridesUrl = new URL('/rides', apiBaseUrl);
+    if (queryParams.toString()) {
+      ridesUrl.search = queryParams.toString();
+    }
+
+    return await $fetch(ridesUrl.toString(), {
+      method: 'GET',
+      headers: await buildUmApiAuthHeaders(event),
     });
-    return ride;
-  }
-  let whereClause: any = {};
+  } catch (error: any) {
+    const statusCode = error?.statusCode || error?.response?.status || 500;
+    const statusMessage =
+      error?.data?.message || error?.statusMessage || 'Erro ao buscar atendimentos';
 
-  if (startDate && endDate) {
-    const start = new Date(startDate);
-    const end = new Date(endDate);
-    // Assuming rides have a createdAt or date field - adjust based on your schema
-    whereClause.createdAt = {
-      gte: start,
-      lte: end,
-    };
+    throw createError({
+      statusCode,
+      statusMessage,
+      data: error?.data,
+    });
   }
-  const rides = await prisma.rides.findMany({
-    where: whereClause,
-  });
-
-  if (contractId) {
-    const filterContractRides = rides.filter(
-      (ride) => ride.billing.paymentData?.contract === contractId,
-    );
-    return filterContractRides;
-  }
-  return rides;
 });
-
-// import { prisma } from '~/utils/prisma';
-
-// type RideID = {
-//   id: string;
-//   contractId: string;
-// };
-
-// export default defineEventHandler(async (event) => {
-//   const query = getQuery<RideID>(event);
-//   const rideId = query.id;
-//   const contractId = query.contractId;
-
-//   if (rideId) {
-//     const ride = await prisma.rides.findUnique({
-//       where: {
-//         id: rideId,
-//       },
-//     });
-
-//     return ride;
-//   }
-//   const rides = await prisma.rides.findMany();
-
-//   if (contractId) {
-//     const filterContractRides = rides.filter(
-//       (ride) => ride.billing.paymentData?.contract === contractId,
-//     );
-//     return filterContractRides;
-//   }
-
-//   return rides;
-// });

@@ -26,9 +26,6 @@ const props = defineProps<{
   usersList?: any;
 }>();
 const route = useRoute();
-const { data } = useAuth();
-//@ts-ignore
-const role = data.value?.user?.role;
 
 const showNewManagerSelect = ref<boolean>(false);
 const managerUsersList = ref<any>([]);
@@ -69,22 +66,6 @@ const handleGeneratePassword = () => {
     });
   }
 };
-
-const generateEditAccountUrl = computed(() => {
-  let url = '';
-  switch (true) {
-    case role === 'master-manager' || role === 'branch-manager':
-      url = 'corporative-accounts-edit-id';
-      break;
-    case role === 'admin':
-      url = 'admin-accounts-edit-id';
-      break;
-    default:
-      url = 'admin-accounts-edit-id';
-  }
-
-  return url;
-});
 
 const targetAccountPath = computed(() => {
   const parentBase = route.path.split('/')[1]; // e.g., 'corporative'
@@ -250,15 +231,7 @@ const targetAccountPath = computed(() => {
         v-if="editMode && managerData !== null && !showNewManagerSelect"
         type="button"
         class="my-4"
-        @click="
-          navigateTo(
-            {
-              name: generateEditAccountUrl,
-              params: { id: managerData.id },
-            },
-            { open: { target: '_blank' } },
-          )
-        "
+        @click="navigateTo(`/profile/${managerData.id}`, { open: { target: '_blank' } })"
       >
         <UserCog />
         Editar Dados do Gestor

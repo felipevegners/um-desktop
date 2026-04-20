@@ -12,14 +12,38 @@ export const getRideRoutesService = async (rideData: any) => {
   }
 };
 
-export const getRidesService = async (rideId: string) => {
+export const getRidesService = async (
+  rideId: string,
+  query?: Record<string, string | number | boolean | undefined>,
+) => {
   try {
     if (rideId) {
       return await $fetch(`/api/rides?id=${rideId}`);
     }
+
+    if (query && Object.keys(query).length > 0) {
+      const params = new URLSearchParams();
+      for (const [key, value] of Object.entries(query)) {
+        if (value === undefined || value === null || value === '') continue;
+        params.set(key, String(value));
+      }
+
+      const queryString = params.toString();
+      return await $fetch(queryString ? `/api/rides?${queryString}` : '/api/rides');
+    }
+
     return await $fetch('/api/rides');
   } catch (error) {
     console.log('Error during service GET -> ', error);
+    throw error;
+  }
+};
+
+export const getRideByCodeService = async (code: string) => {
+  try {
+    return await $fetch(`/api/rides?code=${encodeURIComponent(code)}`);
+  } catch (error) {
+    console.log('Error during service GET by code -> ', error);
     throw error;
   }
 };

@@ -15,6 +15,18 @@ import {
 
 const columnHelper = createColumnHelper<any>();
 
+const resolveRecurrenceTag = (ride: any): string | null => {
+  const recurrence = ride?.travel?.recurrence || ride?.dispatcher?.recurrence;
+  const index = recurrence?.index;
+  const total = recurrence?.total;
+
+  if (typeof index === 'number' && typeof total === 'number' && total > 1) {
+    return `Rec. ${index}/${total}`;
+  }
+
+  return null;
+};
+
 export const columns: any = [
   columnHelper.accessor('code', {
     meta: {
@@ -23,9 +35,21 @@ export const columns: any = [
     },
     header: () => h('div', { class: 'text-xs leading-none text-left' }, 'Código'),
     cell: ({ row }: any) => {
-      const { code }: any = row.original;
+      const ride = row.original;
+      const { code }: any = ride;
       const sanitized = code.replace('UM-', '');
-      return h('div', { class: 'capitalize text-xs' }, sanitized);
+      const recurrenceTag = resolveRecurrenceTag(ride);
+
+      return h('div', { class: 'text-xs' }, [
+        h('div', { class: 'capitalize' }, sanitized),
+        recurrenceTag
+          ? h(
+              'small',
+              { class: 'inline-block mt-1 rounded bg-zinc-200 px-1.5 py-0.5 text-xxs' },
+              recurrenceTag,
+            )
+          : null,
+      ]);
     },
   }),
   columnHelper.accessor('product', {

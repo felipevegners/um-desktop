@@ -30,19 +30,19 @@ export const platformAdminMenu = {
       items: [
         {
           title: 'Abertos',
-          url: '/corporative/rides/active',
+          url: '/rides/list/open',
         },
         {
           title: 'Realizados',
-          url: '/corporative/rides/completed',
+          url: '/rides/list/completed',
         },
         {
           title: 'Cancelados',
-          url: '/corporative/rides/canceled',
+          url: '/rides/list/cancelled',
         },
         {
           title: '+ Novo agendamento',
-          url: '/corporative/rides/new',
+          url: '/rides/form/new',
         },
       ],
     },

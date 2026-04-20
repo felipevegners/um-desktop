@@ -2,7 +2,6 @@
 import { SharedBackLink } from '#components';
 import RideStatusFlag from '@/components/shared/RideStatusFlag.vue';
 import { useToast } from '@/components/ui/toast/use-toast';
-import 'add-to-calendar-button';
 import {
   ArrowLeftRight,
   CalendarDays,
@@ -30,7 +29,7 @@ const route = useRoute();
 const { data } = useAuth();
 
 const ridesStore = useRidesStore();
-const { getRideByIdAction, updateRideAction } = ridesStore;
+const { getRideByIdAction } = ridesStore;
 const { ride, loadingData } = storeToRefs(ridesStore);
 
 const driverStore = useDriverStore();
@@ -38,59 +37,94 @@ const { getDriverByIdAction } = driverStore;
 const { driver } = storeToRefs(driverStore);
 
 const showCancelationModal = ref<boolean>(false);
-const showFinishModal = ref<boolean>(false);
 const loadingCancelAndFinish = ref<boolean>(false);
+const refusalReason = ref<string>('');
 const showSelectCar = ref<boolean>(false);
 const selectedCar = ref<any>();
 const showConfirmCar = ref<boolean>(false);
 const loadingSetCar = ref<boolean>(false);
 const showChangeCar = ref<boolean>(false);
+const loadingAcceptRide = ref<boolean>(false);
 
 const toggleCancelationModal = () => {
   showCancelationModal.value = !showCancelationModal.value;
+  if (!showCancelationModal.value) {
+    refusalReason.value = '';
+  }
 };
 
-const toggleFinishRideModal = () => {
-  showFinishModal.value = !showFinishModal.value;
-};
-
-const handleFinishRide = async () => {
-  const payload = {
-    ...ride?.value,
-    status: 'completed',
-  };
-  try {
-    loadingCancelAndFinish.value = true;
-    await updateRideAction(payload);
-    toast({
-      title: 'Tudo pronto!',
-      class: 'bg-green-600 border-0 text-white text-2xl',
-      description: `Atendimento recusado com sucesso!`,
-    });
-    setTimeout(() => {
-      loadingCancelAndFinish.value = false;
-      showFinishModal.value = false;
-      navigateTo('/driver/rides/open');
-    }, 1500);
-  } catch (error) {
-    toast({
-      title: 'Oops!',
-      description: `Ocorreu um erro ao finalizar o atendimento. Tente novamente.`,
-      variant: 'destructive',
-    });
+const onCancelationModalOpenChange = (open: boolean) => {
+  showCancelationModal.value = open;
+  if (!open) {
+    refusalReason.value = '';
   }
 };
 
 const handleRefuseRide = async () => {
-  const payload = {
-    ...ride?.value,
-    driver: {},
-    accepted: false,
-    status: 'refused',
+  if (!ride?.value?.id) {
+    toast({
+      title: 'Oops!',
+      description: 'Atendimento inválido para recusa.',
+      variant: 'destructive',
+    });
+    return;
+  }
+
+  const reason = refusalReason.value.trim();
+  if (!reason) {
+    toast({
+      title: 'Atenção',
+      description: 'Informe o motivo da recusa do atendimento.',
+      variant: 'destructive',
+    });
+    return;
+  }
+
+  const rejectedDriverPayload = {
+    id: '',
+    name: '',
+    phone: '',
+    email: '',
+    hasCarSelected: false,
+    selectedCar: {
+      model: '',
+      color: '',
+      plate: '',
+    },
+    rejectionReason: reason,
   };
+
   try {
     loadingCancelAndFinish.value = true;
-    await updateRideAction(payload);
+    await $fetch('/api/rides-reject', {
+      method: 'POST',
+      body: {
+        id: ride.value.id,
+        reason,
+        accepted: false,
+        driver: rejectedDriverPayload,
+      },
+    });
+
+    if (ride?.value) {
+      ride.value = {
+        ...ride.value,
+        accepted: false,
+        status: 'pending',
+        reason,
+        driver: rejectedDriverPayload,
+      };
+    }
+
+    toast({
+      title: 'Tudo pronto!',
+      class: 'bg-green-600 border-0 text-white text-2xl',
+      description: `Atendimento recusado com sucesso.`,
+    });
+
+    showCancelationModal.value = false;
+    refusalReason.value = '';
+    navigateTo('/driver/rides/open');
   } catch (error) {
     toast({
       title: 'Oops!',
@@ -99,13 +133,6 @@ const handleRefuseRide = async () => {
     });
   } finally {
     loadingCancelAndFinish.value = false;
-    toast({
-      title: 'Tudo pronto!',
-      class: 'bg-green-600 border-0 text-white text-2xl',
-      description: `Atendimento recusado com sucesso!`,
-    });
-    showCancelationModal.value = false;
-    navigateTo('/driver/rides/open');
   }
 };
 
@@ -117,8 +144,28 @@ onBeforeMount(async () => {
 
 const travelEndTimeCalc = (time1: any, time2: any) => {
   const timeToMinutes = (timeString: any) => {
-    const [hours, minutes] = timeString.split(':').map(Number);
-    return hours * 60 + minutes;
+    if (timeString === null || timeString === undefined || timeString === '') {
+      return 0;
+    }
+
+    if (typeof timeString === 'number') {
+      return timeString;
+    }
+
+    const value = String(timeString).trim();
+
+    if (value.includes(':')) {
+      const [hoursRaw, minutesRaw] = value.split(':');
+      const hours = Number(hoursRaw);
+      const minutes = Number(minutesRaw);
+      return (
+        (Number.isNaN(hours) ? 0 : hours) * 60 + (Number.isNaN(minutes) ? 0 : minutes)
+      );
+    }
+
+    // Fallback for values like "90", "90 min", "90m"
+    const numeric = Number.parseInt(value.replace(/[^\d]/g, ''), 10);
+    return Number.isNaN(numeric) ? 0 : numeric;
   };
 
   // Function to convert total minutes back to "HH:MM" format
@@ -142,12 +189,6 @@ const travelEndTimeCalc = (time1: any, time2: any) => {
   return minutesToTime(sumOfMinutes);
 };
 
-const enableFinishRide = computed(() => {
-  const today = new Date().toLocaleDateString('pt-BR');
-  const travelDate = sanitizeRideDate(ride?.value.travel?.date);
-  return today >= travelDate;
-});
-
 const sanitizeDriverCars = computed(() => {
   return driver.value.driverCars.map((car: any) => {
     return {
@@ -160,42 +201,169 @@ const sanitizeDriverCars = computed(() => {
 const setSelectedCar = (value: any) => {
   const sanitizeCarString = value.split('-');
   selectedCar.value = {
-    model: sanitizeCarString[0],
-    color: sanitizeCarString[1],
-    plate: sanitizeCarString[2] + '-' + sanitizeCarString[3],
+    model: String(sanitizeCarString[0] || '').trim(),
+    color: String(sanitizeCarString[1] || '').trim(),
+    plate: `${String(sanitizeCarString[2] || '').trim()}-${String(sanitizeCarString[3] || '').trim()}`,
   };
   showConfirmCar.value = true;
 };
 
 const handleSetDriverCar = async () => {
-  const payload = {
-    ...ride?.value,
-    driver: {
-      ...ride?.value.driver,
+  if (
+    !selectedCar.value?.model ||
+    !selectedCar.value?.color ||
+    !selectedCar.value?.plate
+  ) {
+    toast({
+      title: 'Oops!',
+      description: `Selecione um veículo válido para continuar.`,
+      variant: 'destructive',
+    });
+    return;
+  }
+
+  loadingSetCar.value = true;
+  if (ride?.value?.driver) {
+    ride.value.driver = {
+      ...ride.value.driver,
       selectedCar: selectedCar.value,
       hasCarSelected: true,
-    },
-  };
+    };
+  }
+
+  showConfirmCar.value = false;
+  showSelectCar.value = false;
+  showChangeCar.value = false;
+  loadingSetCar.value = false;
+
+  toast({
+    title: 'Tudo pronto!',
+    class: 'bg-green-600 border-0 text-white text-2xl',
+    description: `Veículo selecionado. Clique em \"Aceitar Atendimento\" para confirmar o aceite.`,
+  });
+};
+
+const handleAcceptRide = async () => {
+  if (!ride?.value?.id) {
+    toast({
+      title: 'Oops!',
+      description: 'Atendimento inválido para aceite.',
+      variant: 'destructive',
+    });
+    return;
+  }
+
+  const selectedRideCar = ride?.value?.driver?.selectedCar;
+  if (!selectedRideCar?.model || !selectedRideCar?.color || !selectedRideCar?.plate) {
+    showSelectCar.value = true;
+    toast({
+      title: 'Atenção',
+      description: 'Selecione um veículo antes de aceitar o atendimento.',
+      variant: 'destructive',
+    });
+    return;
+  }
 
   try {
-    loadingSetCar.value = true;
-    await updateRideAction(payload);
+    loadingAcceptRide.value = true;
+    await $fetch('/api/rides-accept', {
+      method: 'POST',
+      body: {
+        id: ride.value.id,
+        selectedCar: selectedRideCar,
+      },
+    });
+
+    if (ride?.value) {
+      ride.value = {
+        ...ride.value,
+        accepted: true,
+        status: 'accepted',
+        driver: {
+          ...ride.value.driver,
+          selectedCar: selectedRideCar,
+          hasCarSelected: true,
+        },
+      };
+    }
+
     toast({
       title: 'Tudo pronto!',
       class: 'bg-green-600 border-0 text-white text-2xl',
-      description: `Carro selecionado com sucesso!`,
+      description: 'Atendimento aceito com sucesso!',
     });
-    setTimeout(() => {
-      loadingSetCar.value = false;
-      // navigateTo('/driver/rides/open');
-    }, 1000);
-  } catch (error) {
+  } catch (error: any) {
+    const errorMessage =
+      error?.data?.message ||
+      error?.data?.statusMessage ||
+      error?.statusMessage ||
+      'Ocorreu um erro ao aceitar o atendimento. Tente novamente.';
     toast({
       title: 'Oops!',
-      description: `Ocorreu um erro ao selecionar o carro. Tente novamente.`,
+      description: errorMessage,
       variant: 'destructive',
     });
+  } finally {
+    loadingAcceptRide.value = false;
   }
+};
+
+const formatDateForIcs = (dateValue: string) => {
+  const value = String(dateValue || '').trim();
+  if (!value) return '';
+  return value.replace(/-/g, '').slice(0, 8);
+};
+
+const formatTimeForIcs = (timeValue: string) => {
+  const value = String(timeValue || '').trim();
+  if (!value) return '000000';
+
+  if (!value.includes(':')) {
+    const numeric = value.replace(/\D/g, '').padStart(4, '0').slice(0, 4);
+    return `${numeric}00`;
+  }
+
+  const [hoursRaw, minutesRaw] = value.split(':');
+  const hours = String(Number(hoursRaw) || 0).padStart(2, '0');
+  const minutes = String(Number(minutesRaw) || 0).padStart(2, '0');
+  return `${hours}${minutes}00`;
+};
+
+const handleAddToCalendar = () => {
+  const rideData: any = ride?.value;
+  const date = String(rideData?.travel?.date || '');
+  const startTime = String(rideData?.travel?.departTime || '');
+  const endTime = travelEndTimeCalc(startTime, rideData?.travel?.duration);
+
+  const eventDate = formatDateForIcs(date);
+  const eventStartTime = formatTimeForIcs(startTime);
+  const eventEndTime = formatTimeForIcs(endTime);
+
+  if (!eventDate || !eventStartTime || !eventEndTime) {
+    toast({
+      title: 'Oops!',
+      description: 'Dados insuficientes para gerar o calendário do atendimento.',
+      variant: 'destructive',
+    });
+    return;
+  }
+
+  const summary = `Atendimento - ${rideData?.code || ''}`;
+  const location = String(rideData?.travel?.originAddress || '');
+  const description = `Corrida Urban Mobi - ${rideData?.code || ''}\nOrigem: ${rideData?.travel?.originAddress || ''}\nDestino: ${rideData?.travel?.destinationAddress || ''}`;
+
+  const googleCalendarUrl = new URL('https://calendar.google.com/calendar/render');
+  googleCalendarUrl.searchParams.set('action', 'TEMPLATE');
+  googleCalendarUrl.searchParams.set('text', summary);
+  googleCalendarUrl.searchParams.set(
+    'dates',
+    `${eventDate}T${eventStartTime}/${eventDate}T${eventEndTime}`,
+  );
+  googleCalendarUrl.searchParams.set('details', description);
+  googleCalendarUrl.searchParams.set('location', location);
+  googleCalendarUrl.searchParams.set('ctz', 'America/Sao_Paulo');
+
+  window.open(googleCalendarUrl.toString(), '_blank', 'noopener,noreferrer');
 };
 </script>
 <template>
@@ -208,29 +376,6 @@ const handleSetDriverCar = async () => {
         <CalendarDays :size="24" />
         Detalhes do Atendimento - #{{ ride?.code }}
       </h1>
-      <div
-        v-if="ride?.status !== 'completed' && ride?.status !== 'cancelled'"
-        class="flex items-center gap-6"
-      >
-        <Button
-          v-if="enableFinishRide"
-          @click="toggleFinishRideModal"
-          type="button"
-          class="p-6 bg-green-600 hover:bg-green-500"
-        >
-          <Check />
-          Finalizar Atendimento
-        </Button>
-        <Button
-          @click="toggleCancelationModal"
-          type="button"
-          variant="destructive"
-          class="p-6"
-        >
-          <Hand />
-          Recusar Atendimento
-        </Button>
-      </div>
     </section>
     <section v-if="loadingData" class="min-h-[300px] flex items-center justify-center">
       <LoaderCircle class="animate-spin" />
@@ -255,21 +400,11 @@ const handleSetDriverCar = async () => {
               <p class="mb-3 inline-block text-xl font-bold">
                 {{ sanitizeRideDate(ride.travel.date) }}
               </p>
-              <div v-if="ride?.status !== 'completed' && ride?.status !== 'cancelled'">
-                <add-to-calendar-button
-                  styleDark="--btn-background: #09090B; --btn-shadow: 0;"
-                  :name="`Atendimento - ${ride.code}`"
-                  :location="`${ride.travel.originAddress}`"
-                  :description="`[strong]Corrida Urban Mobi - ${ride.code}[/strong][strong][p]Origem:[/strong] ${ride.travel.originAddress}][strong][/p]Destino:[/strong] ${ride.travel.destinationAddress}`"
-                  :startDate="`${ride.travel.date}`"
-                  :startTime="`${ride.travel.departTime}`"
-                  :endTime="`${travelEndTimeCalc(ride.travel.departTime, ride.travel.duration)}`"
-                  timeZone="America/Sao_Paulo"
-                  label="Adicionar ao Calendário"
-                  options="'Apple','Google','Outlook.com'"
-                  lightMode="dark"
-                  size="3"
-                ></add-to-calendar-button>
+              <div v-if="ride?.status !== 'cancelled'">
+                <Button type="button" variant="secondary" @click="handleAddToCalendar">
+                  <CalendarDays :size="18" />
+                  Abrir no Google Calendar
+                </Button>
               </div>
             </div>
             <div class="p-6 bg-white rounded-md space-y-2">
@@ -313,19 +448,17 @@ const handleSetDriverCar = async () => {
                 class="text-sm"
                 :class="`${ride?.driver.hasCarSelected === false ? 'text-red-500 font-bold' : 'text-zinc-600'}`"
               >
-                Carro Selecionado
+                Veículo Selecionado
               </p>
               <div
                 v-if="!ride.driver.hasCarSelected"
                 class="lg:grid lg:grid-cols-4 lg:gap-6"
               >
                 <div class="space-y-4 col-span-2">
-                  <p>
-                    *Você ainda não selecionou o carro a ser utilizado neste atendimento.
-                  </p>
+                  <p>*Você ainda não selecionou o veículo para este atendimento.</p>
                   <Button type="button" class="p-6" @click="showSelectCar = true">
                     <Car />
-                    Selecionar carro
+                    Selecionar veículo
                   </Button>
                 </div>
               </div>
@@ -346,7 +479,7 @@ const handleSetDriverCar = async () => {
                     v-if="ride.status !== 'completed'"
                   >
                     <ArrowLeftRight />
-                    Alterar Carro
+                    Alterar Veículo
                   </Button>
                 </div>
                 <div class="lg:grid lg:grid-cols-4 lg:gap-6">
@@ -393,7 +526,7 @@ const handleSetDriverCar = async () => {
                 v-for="(stop, index) in ride?.travel.stops"
                 class="mt-3"
               >
-                <p class="font-normal">Parada {{ index + 1 }}</p>
+                <p class="font-normal">Parada {{ Number(index) + 1 }}</p>
                 <p class="text-xl font-bold flex items-center gap-2">
                   <SquareSquare />
                   {{ stop.address }}
@@ -412,46 +545,62 @@ const handleSetDriverCar = async () => {
             </div>
           </div>
         </section>
+
+        <section
+          v-if="ride?.status !== 'completed' && ride?.status !== 'cancelled'"
+          class="mt-8 pt-6 border-t border-zinc-300 flex flex-wrap items-center justify-start gap-4"
+        >
+          <Button
+            v-if="ride?.status !== 'accepted'"
+            type="button"
+            class="p-6 bg-green-600 hover:bg-green-500"
+            :disabled="loadingAcceptRide"
+            @click="handleAcceptRide"
+          >
+            <LoaderCircle v-if="loadingAcceptRide" class="animate-spin" />
+            <Check v-else />
+            Aceitar Atendimento
+          </Button>
+          <Button
+            type="button"
+            variant="destructive"
+            class="p-6"
+            @click="toggleCancelationModal"
+          >
+            <Hand />
+            Recusar Atendimento
+          </Button>
+        </section>
       </Card>
     </section>
   </main>
-  <Dialog :open="showCancelationModal" @update:open="showCancelationModal = $event">
+  <Dialog :open="showCancelationModal" @update:open="onCancelationModalOpenChange">
     <DialogContent class="space-y-4">
       <DialogHeader>
         <DialogTitle>Deseja Recusar este Atendimento?</DialogTitle>
       </DialogHeader>
       <DialogDescription>
-        Essa ação irá recusar o atendimento e notificar o usuário sobre a recusa.
+        Descreva o motivo da recusa. O atendimento voltará para pendente e ficará
+        disponível para novo aceite.
       </DialogDescription>
+      <Textarea
+        v-model="refusalReason"
+        placeholder="Informe o motivo da recusa"
+        class="min-h-[110px]"
+      />
       <DialogFooter>
         <div class="flex items-start justify-center gap-4 w-full">
           <Button type="button" variant="secondary" @click="toggleCancelationModal">
             Voltar
           </Button>
-          <Button type="button" variant="destructive" @click="handleRefuseRide">
+          <Button
+            type="button"
+            variant="destructive"
+            :disabled="loadingCancelAndFinish"
+            @click="handleRefuseRide"
+          >
             <LoaderCircle v-if="loadingCancelAndFinish" class="animate-spin" />
-            Recusar
-          </Button>
-        </div>
-      </DialogFooter>
-    </DialogContent>
-  </Dialog>
-  <Dialog :open="showFinishModal" @update:open="showFinishModal = $event">
-    <DialogContent class="space-y-4">
-      <DialogHeader>
-        <DialogTitle>Deseja Finalizar este Atendimento?</DialogTitle>
-      </DialogHeader>
-      <DialogDescription>
-        Essa ação irá finalizar o atendimento e notificar o usuário.
-      </DialogDescription>
-      <DialogFooter>
-        <div class="flex items-start justify-center gap-4 w-full">
-          <Button type="button" variant="secondary" @click="toggleFinishRideModal">
-            Voltar
-          </Button>
-          <Button type="button" @click="handleFinishRide" class="bg-green-600">
-            <LoaderCircle v-if="loadingCancelAndFinish" class="animate-spin" />
-            Finalizar
+            <span v-else>Confirmar recusa</span>
           </Button>
         </div>
       </DialogFooter>

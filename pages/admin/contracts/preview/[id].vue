@@ -310,14 +310,7 @@ await getUsersAccountsAction();
                     <Button
                       type="button"
                       variant="outline"
-                      @click="
-                        navigateTo({
-                          name: 'admin-accounts-edit-id',
-                          params: {
-                            id: account.id,
-                          },
-                        })
-                      "
+                      @click="navigateTo(`/profile/${account.id}`)"
                     >
                       <User />
                       Editar Usuário

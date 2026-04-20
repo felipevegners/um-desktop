@@ -4,7 +4,7 @@ import TableActions from '@/components/shared/TableActions.vue';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/components/ui/toast';
 import { createColumnHelper } from '@tanstack/vue-table';
-import { LoaderCircle, Plus, UserPen, X } from 'lucide-vue-next';
+import { LoaderCircle, Plus, UserPen } from 'lucide-vue-next';
 import { useAccountStore } from '~/stores/account.store';
 
 import { columns } from './columns';
@@ -54,12 +54,7 @@ const deleteUserAccount = async (accountId: string) => {
 };
 
 const editAccount = (accountId: string) => {
-  navigateTo({
-    name: 'admin-accounts-edit-id',
-    params: {
-      id: accountId,
-    },
-  });
+  navigateTo(`/profile/${accountId}`);
 };
 
 const finalColumns = [
