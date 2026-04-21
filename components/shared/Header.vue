@@ -2,6 +2,8 @@
 import { CircleUser, LogOut } from 'lucide-vue-next';
 import { rolesTypes } from '~/config/roles';
 
+import Notification from './Notification.vue';
+
 const { data, signOut, status } = useAuth();
 const route = useRoute();
 
@@ -30,7 +32,7 @@ const getUserRole = computed(() => {
       </Breadcrumb> -->
     </div>
     <div class="flex items-center justify-between gap-6">
-      <!-- <Notification /> -->
+      <Notification />
       <!-- <ThemeSelector /> -->
       <!-- @vue-skip -->
       <div class="flex items-center gap-6">

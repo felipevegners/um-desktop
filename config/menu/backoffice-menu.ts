@@ -187,8 +187,8 @@ export const backofficeMenu = {
   ],
   communications: [
     {
-      name: 'Notificações Push',
-      url: '/admin/communications/notifications',
+      name: 'Histórico de Notificações',
+      url: '/notifications',
       icon: Bell,
       active: route.path.startsWith('notifications'),
     },

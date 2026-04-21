@@ -240,7 +240,7 @@ const cookiesPoliceFileUrl =
         <div v-if="menuData?.communications?.length > 0">
           <SidebarGroup>
             <SidebarGroupLabel class="text-[#33ffcc] text-md">
-              Mensagens
+              Histórico
             </SidebarGroupLabel>
             <SidebarMenu>
               <SidebarMenuItem v-for="item in menuData.communications" :key="item.name">

@@ -1,0 +1,46 @@
+import { createError } from 'h3';
+import { $fetch } from 'ofetch';
+
+import { resolveNotificationRequestScope } from '../utils/notification-scope';
+import { buildUmApiAuthHeaders, resolveUmApiBaseUrl } from '../utils/um-api';
+
+type NotificationQuery = {
+  read?: string;
+};
+
+export default defineEventHandler(async (event) => {
+  const apiBaseUrl = resolveUmApiBaseUrl();
+  const scope = await resolveNotificationRequestScope(event);
+  const query = getQuery<NotificationQuery>(event);
+
+  if (scope.isManager && !scope.contractId) {
+    return [];
+  }
+
+  const notificationsUrl = new URL('/notifications', apiBaseUrl);
+
+  if (scope.isManager && scope.contractId) {
+    notificationsUrl.searchParams.set('contractId', scope.contractId);
+  }
+
+  if (query.read === 'true' || query.read === 'false') {
+    notificationsUrl.searchParams.set('read', query.read);
+  }
+
+  try {
+    return await $fetch(notificationsUrl.toString(), {
+      method: 'GET',
+      headers: await buildUmApiAuthHeaders(event),
+    });
+  } catch (error: any) {
+    const statusCode = error?.statusCode || error?.response?.status || 500;
+    const statusMessage =
+      error?.data?.message || error?.statusMessage || 'Erro ao buscar notificações';
+
+    throw createError({
+      statusCode,
+      statusMessage,
+      data: error?.data,
+    });
+  }
+});
