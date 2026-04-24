@@ -36,7 +36,7 @@ export const useDriverStore = defineStore('driver', {
           (driver: Driver) => driver.enabled === false,
         );
       } catch (error) {
-        console.log('Driver Store Error -> ', error);
+        console.debug('Driver Store Error -> ', error);
         throw error;
       } finally {
         this.loadingData = false;
@@ -49,7 +49,7 @@ export const useDriverStore = defineStore('driver', {
         this.driver = data as unknown;
         return data;
       } catch (error) {
-        console.log('Driver Store Error -> ', error);
+        console.debug('Driver Store Error -> ', error);
         throw error;
       } finally {
         this.loadingData = false;

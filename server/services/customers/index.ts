@@ -7,7 +7,7 @@ export const createCustomer = async (customerData: Customer) => {
       body: customerData,
     });
   } catch (error) {
-    console.log('Error during POST -> ', error);
+    console.debug('Error during POST -> ', error);
     throw error;
   }
 };
@@ -20,7 +20,7 @@ export const getCustomers = async (userId: string) => {
 
     return await $fetch('/api/customers');
   } catch (error) {
-    console.log('Error -> ', error);
+    console.debug('Error -> ', error);
     throw error;
   }
 };
@@ -32,7 +32,7 @@ export const updateCustomer = async (customerData: Customer) => {
       body: customerData,
     });
   } catch (error) {
-    console.log('Error Service -> error ');
+    console.debug('Error Service -> error ');
     throw error;
   }
 };
@@ -44,7 +44,7 @@ export const deleteCustomer = async (id: string) => {
       body: { id },
     });
   } catch (error) {
-    console.log('Error -> ', error);
+    console.debug('Error -> ', error);
     throw error;
   }
 };

@@ -34,7 +34,7 @@ export const getRidesService = async (
 
     return await $fetch('/api/rides');
   } catch (error) {
-    console.log('Error during service GET -> ', error);
+    console.debug('Error during service GET -> ', error);
     throw error;
   }
 };
@@ -43,7 +43,7 @@ export const getRideByCodeService = async (code: string) => {
   try {
     return await $fetch(`/api/rides?code=${encodeURIComponent(code)}`);
   } catch (error) {
-    console.log('Error during service GET by code -> ', error);
+    console.debug('Error during service GET by code -> ', error);
     throw error;
   }
 };
@@ -52,7 +52,7 @@ export const getContractRidesService = async (contractId: string) => {
   try {
     return await $fetch(`/api/rides?contractId=${contractId}`);
   } catch (error) {
-    console.log('Error during rides by contract ID service GET -> ', error);
+    console.debug('Error during rides by contract ID service GET -> ', error);
     throw error;
   }
 };
@@ -61,7 +61,7 @@ export const getRidesByDateRangeService = async (startDate: string, endDate: str
   try {
     return await $fetch(`/api/rides?startDate=${startDate}&endDate=${endDate}`);
   } catch (error) {
-    console.log('Error during rides by date range service GET -> ', error);
+    console.debug('Error during rides by date range service GET -> ', error);
     throw error;
   }
 };
@@ -76,7 +76,7 @@ export const getRidesByDateRangeAndContractIdService = async (
       `/api/rides?startDate=${startDate}&endDate=${endDate}&contractId=${contractId}`,
     );
   } catch (error) {
-    console.log('Error during rides by date range service GET -> ', error);
+    console.debug('Error during rides by date range service GET -> ', error);
     throw error;
   }
 };
@@ -88,7 +88,7 @@ export const createRideService = async (rideData: any) => {
       body: rideData,
     });
   } catch (error) {
-    console.log('Error during service POST -> ', error);
+    console.debug('Error during service POST -> ', error);
     throw error;
   }
 };
@@ -100,7 +100,7 @@ export const updateRideService = async (rideData: any) => {
       body: rideData,
     });
   } catch (error) {
-    console.log('Error during update Service -> ', error);
+    console.debug('Error during update Service -> ', error);
     throw error;
   }
 };
@@ -111,7 +111,7 @@ export const deleteRideService = async (id: string) => {
       body: { id },
     });
   } catch (error) {
-    console.log('Error during delete Service -> ', error);
+    console.debug('Error during delete Service -> ', error);
     throw error;
   }
 };

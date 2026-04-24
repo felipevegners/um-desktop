@@ -72,7 +72,7 @@ export default defineEventHandler(async (event) => {
     return JSON.stringify(paymentStatus);
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
-      console.log('Error Prisma -> ', error);
+      console.debug('Error Prisma -> ', error);
       throw error;
     }
     console.error('Cielo Notification Catch Error ->', error);

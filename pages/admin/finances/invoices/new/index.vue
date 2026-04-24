@@ -106,7 +106,7 @@ const setSelectedPeriod = (value: any) => {
 const handleSelectionChange = (rows: any[]) => {
   selectedRides.value = rows;
   // eslint-disable-next-line no-console
-  console.log('Selected invoices:', rows);
+  console.debug('Selected invoices:', rows);
 };
 </script>
 <template>

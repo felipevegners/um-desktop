@@ -181,7 +181,7 @@ const handleUserBranches = (checked: boolean, branch: any) => {
     );
   }
   // eslint-disable-next-line no-console
-  console.log('Selected branches:', userManagerBranches.value);
+  console.debug('Selected branches:', userManagerBranches.value);
 };
 
 const isBranchSelected = (branchId: string) => {

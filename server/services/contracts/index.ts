@@ -5,7 +5,7 @@ export const getContractsService = async (contractId: string) => {
     }
     return await $fetch('/api/contracts');
   } catch (error) {
-    console.log('Error during service GET -> ', error);
+    console.debug('Error during service GET -> ', error);
     throw error;
   }
 };
@@ -17,7 +17,7 @@ export const createContractService = async (contractData: any) => {
       body: contractData,
     });
   } catch (error) {
-    console.log('Error during service POST -> ', error);
+    console.debug('Error during service POST -> ', error);
     throw error;
   }
 };
@@ -29,7 +29,7 @@ export const updateContractService = async (contractData: any) => {
       body: contractData,
     });
   } catch (error) {
-    console.log('Error during update Service -> ', error);
+    console.debug('Error during update Service -> ', error);
     throw error;
   }
 };

@@ -4,7 +4,7 @@ export const getDrivers = async () => {
   try {
     return await $fetch(`/api/drivers`);
   } catch (error) {
-    console.log('Error -> ', error);
+    console.debug('Error -> ', error);
     throw error;
   }
 };
@@ -13,7 +13,7 @@ export const getDriver = async (driverId: string) => {
   try {
     return await $fetch(`/api/drivers?id=${driverId}`);
   } catch (error) {
-    console.log('Error -> ', error);
+    console.debug('Error -> ', error);
     throw error;
   }
 };
@@ -36,7 +36,7 @@ export const updateDriver = async (driverData: Driver) => {
       body: driverData,
     });
   } catch (error) {
-    console.log('Error during PUT Driver -> ', error);
+    console.debug('Error during PUT Driver -> ', error);
     throw error;
   }
 };

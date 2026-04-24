@@ -13,12 +13,12 @@ const allowedEndpoints = new Set([
 ]);
 
 export default defineEventHandler(async (event) => {
-  console.log('[Files Handler] Request received');
+  console.debug('[Files Handler] Request received');
   const url = getRequestURL(event);
-  console.log('[Files Handler] URL:', url.toString());
+  console.debug('[Files Handler] URL:', url.toString());
 
   const files = await readMultipartFormData(event);
-  console.log('[Files Handler] Files received:', files?.length || 0);
+  console.debug('[Files Handler] Files received:', files?.length || 0);
   const filePart = files?.find((part) => part.name === 'file') ?? files?.[0];
 
   if (!filePart?.data) {
@@ -29,7 +29,7 @@ export default defineEventHandler(async (event) => {
     });
   }
 
-  console.log('[Files Handler] File data size:', filePart.data.length, 'bytes');
+  console.debug('[Files Handler] File data size:', filePart.data.length, 'bytes');
 
   const query = getQuery(event);
   const endpoint =
@@ -37,7 +37,7 @@ export default defineEventHandler(async (event) => {
       ? query.endpoint
       : 'driverFiles';
 
-  console.log('[Files Handler] Endpoint:', endpoint);
+  console.debug('[Files Handler] Endpoint:', endpoint);
   if (!allowedEndpoints.has(endpoint)) {
     throw createError({
       statusCode: 400,
@@ -55,9 +55,9 @@ export default defineEventHandler(async (event) => {
       customId,
     });
 
-    console.log('[Files Handler] Uploading to UploadThing...');
+    console.debug('[Files Handler] Uploading to UploadThing...');
     const result: any = await utapi.uploadFiles(uploadFile);
-    console.log(
+    console.debug(
       '[Files Handler] UploadThing result:',
       JSON.stringify(result).substring(0, 200),
     );
@@ -78,7 +78,7 @@ export default defineEventHandler(async (event) => {
         url: result?.data?.url || result?.data?.ufsUrl,
       },
     };
-    console.log(
+    console.debug(
       '[Files Handler] Returning response:',
       JSON.stringify(responsePayload).substring(0, 200),
     );

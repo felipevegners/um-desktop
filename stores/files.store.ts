@@ -25,7 +25,7 @@ export const useFilesStore = defineStore('files', {
         if (response.success) {
           this.loadingFileData = false;
         }
-        console.log('Response from STORE -> ', response);
+        console.debug('Response from STORE -> ', response);
       } catch (error) {
         return error;
       }

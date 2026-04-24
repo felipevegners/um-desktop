@@ -223,7 +223,7 @@ async function directions() {
       }
     });
   } catch (e) {
-    console.log(e);
+    console.debug(e);
   }
 }
 </script>

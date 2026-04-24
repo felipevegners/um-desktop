@@ -69,7 +69,7 @@ export const useAccountStore = defineStore('accounts', {
           (account: any) => account.enabled === false,
         );
       } catch (error) {
-        console.log('Error durging user register -> ', error);
+        console.debug('Error durging user register -> ', error);
         throw error;
       } finally {
         this.isLoading = false;
@@ -81,7 +81,7 @@ export const useAccountStore = defineStore('accounts', {
         const data = await getUsersAccountsService(accountId, '');
         this.account = data as any;
       } catch (error) {
-        console.log('Error durging user register -> ', error);
+        console.debug('Error durging user register -> ', error);
         throw error;
       } finally {
         this.isLoading = false;
@@ -96,7 +96,7 @@ export const useAccountStore = defineStore('accounts', {
           (account: any) => account.enabled === false,
         );
       } catch (error) {
-        console.log('Error durging user register -> ', error);
+        console.debug('Error durging user register -> ', error);
         throw error;
       } finally {
         this.isLoading = false;
@@ -124,7 +124,7 @@ export const useAccountStore = defineStore('accounts', {
       try {
         await updateUserAccountService(accountData);
       } catch (error) {
-        console.log('Error durging user update -> ', error);
+        console.debug('Error durging user update -> ', error);
         throw error;
       } finally {
         this.isLoadingSend = false;
@@ -136,7 +136,7 @@ export const useAccountStore = defineStore('accounts', {
       try {
         await deleteUserAccountService(accountId);
       } catch (error) {
-        console.log('Error durging user delete -> ', error);
+        console.debug('Error durging user delete -> ', error);
         throw error;
       } finally {
         this.isLoadingSend = false;

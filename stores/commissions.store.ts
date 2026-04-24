@@ -30,7 +30,7 @@ export const useCommissionsStore = defineStore('commissions', {
         this.commissions = response;
         this.isLoading = false;
       } catch (error) {
-        console.log(error);
+        console.debug(error);
         throw error;
       }
     },

@@ -426,8 +426,8 @@ const setPaymentMethod = (value: any) => {
     parseFloat(calculatedEstimates.value.estimatedTotalPrice) >
     parseFloat(availableBranchBudget.value);
 
-  console.log('ridePriceOverQuota', ridePriceOverQuota);
-  console.log('value', value);
+  console.debug('ridePriceOverQuota', ridePriceOverQuota);
+  console.debug('value', value);
 
   if (value === 'corporative' && ridePriceOverQuota) {
     showBranchBudgetAlert.value = true;

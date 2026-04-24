@@ -4,14 +4,14 @@ export const getPassenger = async (passId: string) => {
   try {
     return await $fetch(`/api/passengers?id=${passId}`);
   } catch (error) {
-    console.log('Error -> ', error);
+    console.debug('Error -> ', error);
   }
 };
 export const getPassengers = async () => {
   try {
     return await $fetch('/api/passengers');
   } catch (error) {
-    console.log('Error -> ', error);
+    console.debug('Error -> ', error);
   }
 };
 
@@ -22,7 +22,7 @@ export const createPassenger = async (passengerData: any) => {
       body: passengerData,
     });
   } catch (error) {
-    console.log('Error during POST Passenger -> ', error);
+    console.debug('Error during POST Passenger -> ', error);
   }
 };
 
@@ -33,7 +33,7 @@ export const updatePassenger = async (passengerData: Passenger) => {
       body: passengerData,
     });
   } catch (error) {
-    console.log('Error Service -> error ');
+    console.debug('Error Service -> error ');
   }
 };
 
@@ -44,6 +44,6 @@ export const deletePassenger = async (id: string) => {
       body: { id },
     });
   } catch (error) {
-    console.log('Error -> ', error);
+    console.debug('Error -> ', error);
   }
 };

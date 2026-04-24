@@ -11,7 +11,7 @@ export const getUsersAccountsService = async (
     }
     return await $fetch('/api/auth/accounts');
   } catch (error) {
-    console.log('Error -> ', error);
+    console.debug('Error -> ', error);
     return error;
   }
 };
@@ -20,7 +20,7 @@ export const getUsersByContractIdService = async (contractId: string) => {
   try {
     return await $fetch(`/api/auth/accounts?contractId=${contractId}`);
   } catch (error) {
-    console.log('Error -> ', error);
+    console.debug('Error -> ', error);
     return error;
   }
 };
@@ -43,7 +43,7 @@ export const updateUserAccountService = async (accountData: any) => {
       body: accountData,
     });
   } catch (error) {
-    console.log('Error during POST Account -> ', error);
+    console.debug('Error during POST Account -> ', error);
     return error;
   }
 };
@@ -55,7 +55,7 @@ export const deleteUserAccountService = async (accountId: string) => {
       body: { id: accountId },
     });
   } catch (error) {
-    console.log('Error during DELETE Account -> ', error);
+    console.debug('Error during DELETE Account -> ', error);
     throw error;
   }
 };

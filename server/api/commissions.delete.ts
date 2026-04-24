@@ -8,7 +8,7 @@ export default defineEventHandler(async (event) => {
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
       if (error.code === 'P2002') {
-        console.log('Error Prisma During Delete Commission -> ', error.message);
+        console.debug('Error Prisma During Delete Commission -> ', error.message);
         return new Error(error.message);
       }
     }

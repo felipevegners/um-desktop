@@ -8,7 +8,7 @@ export default defineEventHandler(async (event) => {
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
       if (error.code === 'P2002') {
-        console.log('Error Prisma -> ', error.message);
+        console.debug('Error Prisma -> ', error.message);
         return new Error(error.message);
       }
     }

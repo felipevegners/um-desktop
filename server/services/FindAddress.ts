@@ -7,7 +7,7 @@ export const findAddressByZipcode = async (zipcode: string) => {
     const address = await $fetch(path);
     return address;
   } catch (error) {
-    console.log('Erro ao buscar endereço server --> ', error);
+    console.debug('Erro ao buscar endereço server --> ', error);
     return error;
   }
 };

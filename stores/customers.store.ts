@@ -34,7 +34,7 @@ export const useCustomerStore = defineStore('customer', {
         const data = await getCustomers('');
         this.customers = data as any;
       } catch (error) {
-        console.log('Store Error -> ', error);
+        console.debug('Store Error -> ', error);
       }
     },
     async getCustomerByIdAction(customerId: string) {
@@ -43,21 +43,21 @@ export const useCustomerStore = defineStore('customer', {
         this.customer = data;
         return data;
       } catch (error) {
-        console.log('Store Error -> ', error);
+        console.debug('Store Error -> ', error);
       }
     },
     async createNewCustomerAction(customerData: Customer) {
       try {
         await createCustomer(customerData);
       } catch (error) {
-        console.log('Store Error Create -> ', error);
+        console.debug('Store Error Create -> ', error);
       }
     },
     async editCustomer(customerData: any) {
       try {
         await updateCustomer(customerData);
       } catch (error) {
-        console.log('Store Error Create -> ', error);
+        console.debug('Store Error Create -> ', error);
       }
     },
     async deleteCustomerAction(customerId: string) {
@@ -65,7 +65,7 @@ export const useCustomerStore = defineStore('customer', {
         this.loading = true;
         await deleteCustomer(customerId);
       } catch (error) {
-        console.log('Store Error delete -> ', error);
+        console.debug('Store Error delete -> ', error);
       } finally {
         setTimeout(() => {
           this.loading = false;

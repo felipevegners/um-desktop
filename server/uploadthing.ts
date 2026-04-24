@@ -26,7 +26,7 @@ export const uploadRouter = {
       // Whatever is returned here is accessible in onUploadComplete as `metadata`
       return { userId: user.id };
     })
-    .onUploadComplete((data) => console.log('file uploaded -> ', data)),
+    .onUploadComplete((data) => console.debug('file uploaded -> ', data)),
 
   driverCarFiles: f({
     image: { maxFileSize: '2MB', maxFileCount: 1 },
@@ -37,7 +37,7 @@ export const uploadRouter = {
       if (!user) throw new Error('Não autorizado');
       return { userId: user.id };
     })
-    .onUploadComplete((data) => console.log('file uploaded -> ', data)),
+    .onUploadComplete((data) => console.debug('file uploaded -> ', data)),
 
   customerLogo: f({
     image: { maxFileSize: '4MB', maxFileCount: 1 },
@@ -47,7 +47,7 @@ export const uploadRouter = {
       if (!user) throw new Error('Não autorizado');
       return { userId: user.id };
     })
-    .onUploadComplete((data) => console.log('file uploaded -> ', data)),
+    .onUploadComplete((data) => console.debug('file uploaded -> ', data)),
   productImage: f({
     image: { maxFileSize: '4MB', maxFileCount: 1 },
   })
@@ -56,7 +56,7 @@ export const uploadRouter = {
       if (!user) throw new Error('Não autorizado');
       return { userId: user.id };
     })
-    .onUploadComplete((data) => console.log('file uploaded -> ', data)),
+    .onUploadComplete((data) => console.debug('file uploaded -> ', data)),
 } satisfies FileRouter;
 
 export type UploadRouter = typeof uploadRouter;

@@ -148,7 +148,7 @@ export const useRidesStore = defineStore('rides', {
         end: { era: string; year: number; month: number; day: number };
       } | null,
     ) {
-      console.log('Fetching rides for date range:', dateRange);
+      console.debug('Fetching rides for date range:', dateRange);
       this.loadingData = true;
       try {
         if (!dateRange || !dateRange.start || !dateRange.end) {
@@ -173,7 +173,7 @@ export const useRidesStore = defineStore('rides', {
         const startDateISO = startDate.toISOString();
         const endDateISO = endDate.toISOString();
 
-        console.log(startDateISO, endDateISO);
+        console.debug(startDateISO, endDateISO);
 
         const response: any = await getRidesByDateRangeService(startDateISO, endDateISO);
         const normalized = normalizeRideListResponse(response);
@@ -195,7 +195,7 @@ export const useRidesStore = defineStore('rides', {
       } | null,
       contractId: string,
     ) {
-      console.log('Fetching rides for date range:', dateRange);
+      console.debug('Fetching rides for date range:', dateRange);
       this.loadingData = true;
       try {
         if (!dateRange || !dateRange.start || !dateRange.end) {
@@ -220,7 +220,7 @@ export const useRidesStore = defineStore('rides', {
         const startDateISO = startDate.toISOString();
         const endDateISO = endDate.toISOString();
 
-        console.log(startDateISO, endDateISO);
+        console.debug(startDateISO, endDateISO);
 
         const response: any = await getRidesByDateRangeAndContractIdService(
           startDateISO,

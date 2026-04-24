@@ -30,7 +30,7 @@ export const useFeeStore = defineStore('fees', {
         this.fees = response;
         this.isLoading = false;
       } catch (error) {
-        console.log(error);
+        console.debug(error);
         throw error;
       }
     },
