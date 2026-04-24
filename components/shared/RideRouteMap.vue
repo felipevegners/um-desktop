@@ -3,7 +3,7 @@ import { cn } from '@/lib/utils';
 import { LoaderCircle } from 'lucide-vue-next';
 import { useRuntimeConfig } from 'nuxt/app';
 import { computed, reactive, ref, watch } from 'vue';
-import { CustomMarker, GoogleMap, Polyline, Marker } from 'vue3-google-map';
+import { CustomMarker, GoogleMap, Marker, Polyline } from 'vue3-google-map';
 import { polyLineCodec } from '~/lib/utils';
 
 const customIconStart = `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="#FFFFFF" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-square-dot-icon lucide-square-dot"><rect width="18" height="18" x="3" y="3" rx="2"/><circle cx="12" cy="12" r="1"/></svg>`;
@@ -51,11 +51,8 @@ const props = defineProps<{
 }>();
 
 const driverPath = ref<any>({
-  path:
-    props.rideProgress?.ridePath?.map((path: any) => ({
-      lat: path.latitude,
-      lng: path.longitude,
-    })) || [],
+  // `ridePath` removed — prefer server `canonicalPath` (magenta). Keep empty fallback.
+  path: [],
   geodesic: true,
   strokeColor: '#f0f',
   strokeOpacity: 1.0,
@@ -79,14 +76,16 @@ const finalPolyline = computed(() => {
   };
 });
 
-const checkIconData = 'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent(customIconEnd);
+const checkIconData =
+  'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent(customIconEnd);
 
 const canonicalCoords = computed(() => {
   const canonical = props.rideProgress?.canonicalPath;
   if (!Array.isArray(canonical)) return [];
-  return canonical
-    .map((p: any) => toLatLng(p))
-    .filter((p: any) => Boolean(p)) as { lat: number; lng: number }[];
+  return canonical.map((p: any) => toLatLng(p)).filter((p: any) => Boolean(p)) as {
+    lat: number;
+    lng: number;
+  }[];
 });
 
 const finishedLL = computed(() => toLatLng(props.rideProgress?.finishedLocation));
