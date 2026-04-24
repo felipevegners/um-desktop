@@ -29,9 +29,15 @@ const mockedSteps = [
     status: 'future',
   },
   {
+    type: 'in-route',
+    label: 'Em Rota',
+    icon: 'Car',
+    status: 'future',
+  },
+  {
     type: 'finished',
     label: 'Finalizado',
-    icon: 'MapPinCheckIcon',
+    icon: 'MapPinCheck',
     status: 'future',
   },
 ];
@@ -72,7 +78,7 @@ const getIndicatorClasses = (step: any) => {
     'bg-black text-white': step.status === 'past',
     'border-2 border-black bg-um-primary text-black animate-pulse':
       step.status === 'current',
-    'bg-um-primary-foreground text-um-primary-foreground/50 border-2 border-um-primary-foreground/50':
+    'bg-black/10 text-black/10 border-2 border-black/20 text-black/20':
       step.status === 'future',
   };
 };
@@ -100,12 +106,12 @@ const getIndicatorClasses = (step: any) => {
       </div>
       <small
         class="mt-2 text-xs text-black max-w-20 text-center leading-none"
-        :class="step.status === 'future' && 'text-um-primary-foreground'"
+        :class="step.status === 'future' && 'text-black/20'"
       >
         {{ step.label }}
       </small>
       <small v-if="step.status !== 'future'" class="mt-1 text-black/80 text-[11px]">
-        {{ new Date(step.timestamp).toLocaleTimeString('pt-BR') }}
+        {{ step.timestamp ? new Date(step.timestamp).toLocaleTimeString('pt-BR') : '' }}
       </small>
       <div
         v-if="Number(index) < sanitizedSteps.length - 1"

@@ -90,8 +90,8 @@ onUnmounted(() => {
     <DropdownMenu>
       <DropdownMenuTrigger as-child>
         <button type="button" class="notification-trigger" aria-label="Notificações">
-          <BellRing v-if="unreadCount > 0" :size="18" />
-          <Bell v-else :size="18" />
+          <BellRing v-if="unreadCount > 0" :size="24" />
+          <Bell v-else :size="24" />
         </button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" :side-offset="10" class="notification-menu">
@@ -195,8 +195,6 @@ onUnmounted(() => {
   justify-content: center;
   width: 2.5rem;
   height: 2.5rem;
-  border: 1px solid hsl(var(--border));
-  border-radius: 9999px;
   background: hsl(var(--background));
   color: hsl(var(--foreground));
   transition: border-color 0.2s ease;

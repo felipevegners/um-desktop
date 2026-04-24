@@ -43,7 +43,8 @@ const ridePath = ref<any>({
 });
 const canonicalCoords = ref<any[]>([]);
 const finishedLL = ref<any | null>(null);
-const checkIconData = 'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent(customIconEnd);
+const checkIconData =
+  'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent(customIconEnd);
 const origin = ref<any>({});
 const destination = ref<any>({});
 const rideDriverId = ref<string>('');
@@ -68,14 +69,14 @@ function updateCanonicalFromRide() {
             typeof p.lat === 'number'
               ? p.lat
               : typeof p.latitude === 'number'
-              ? p.latitude
-              : parseFloat(p.lat ?? p.latitude);
+                ? p.latitude
+                : parseFloat(p.lat ?? p.latitude);
           const lng =
             typeof p.lng === 'number'
               ? p.lng
               : typeof p.longitude === 'number'
-              ? p.longitude
-              : parseFloat(p.lng ?? p.longitude);
+                ? p.longitude
+                : parseFloat(p.lng ?? p.longitude);
           if (!isFinite(lat) || !isFinite(lng)) return null;
           return { lat, lng };
         })
