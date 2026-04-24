@@ -39,8 +39,11 @@ const ridePath = ref<any>({
   geodesic: true,
   strokeColor: '#000000',
   strokeOpacity: 1.0,
-  strokeWeight: 5,
+  strokeWeight: 4,
 });
+const canonicalCoords = ref<any[]>([]);
+const finishedLL = ref<any | null>(null);
+const checkIconData = 'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent(customIconEnd);
 const origin = ref<any>({});
 const destination = ref<any>({});
 const rideDriverId = ref<string>('');
@@ -53,6 +56,48 @@ await getRideByIdAction(route?.query.rideId as string);
 origin.value = ride?.value?.travel.origin;
 destination.value = ride?.value?.travel.destination;
 rideDriverId.value = ride?.value.driver.id;
+
+// Build canonical path and finished location from ride.progress when available
+function updateCanonicalFromRide() {
+  try {
+    const canonicalRaw = ride?.value?.progress?.canonicalPath;
+    if (Array.isArray(canonicalRaw) && canonicalRaw.length >= 1) {
+      canonicalCoords.value = canonicalRaw
+        .map((p: any) => {
+          const lat =
+            typeof p.lat === 'number'
+              ? p.lat
+              : typeof p.latitude === 'number'
+              ? p.latitude
+              : parseFloat(p.lat ?? p.latitude);
+          const lng =
+            typeof p.lng === 'number'
+              ? p.lng
+              : typeof p.longitude === 'number'
+              ? p.longitude
+              : parseFloat(p.lng ?? p.longitude);
+          if (!isFinite(lat) || !isFinite(lng)) return null;
+          return { lat, lng };
+        })
+        .filter(Boolean);
+    } else {
+      canonicalCoords.value = [];
+    }
+
+    const finished = ride?.value?.progress?.finishedLocation;
+    if (finished) {
+      const lat = typeof finished.lat === 'number' ? finished.lat : finished.latitude;
+      const lng = typeof finished.lng === 'number' ? finished.lng : finished.longitude;
+      if (isFinite(lat) && isFinite(lng)) finishedLL.value = { lat, lng };
+      else finishedLL.value = null;
+    } else {
+      finishedLL.value = null;
+    }
+  } catch (e) {
+    canonicalCoords.value = [];
+    finishedLL.value = null;
+  }
+}
 
 const fetchDriverLocation = async () => {
   loadingDriverLocation.value = true;
@@ -85,6 +130,7 @@ onMounted(() => {
   intervalId.value = setInterval(async () => {
     await fetchDriverLocation();
     await getRideByIdAction(route?.query.rideId as string);
+    updateCanonicalFromRide();
   }, 30000);
 });
 
@@ -262,7 +308,23 @@ const decodePolyline = (polyline: string) => {
             />
           </div>
         </CustomMarker>
-        <Polyline :options="ridePath" />
+        <!-- Prefer server-side canonicalPath when available -->
+        <Polyline
+          v-if="canonicalCoords.length >= 2"
+          :options="{
+            path: canonicalCoords,
+            geodesic: true,
+            strokeColor: '#f0f',
+            strokeOpacity: 1.0,
+            strokeWeight: 4,
+            zIndex: 10,
+          }"
+        />
+        <Marker
+          v-if="finishedLL"
+          :options="{ position: finishedLL, icon: checkIconData, title: 'Finalizado' }"
+        />
+        <Polyline v-else :options="ridePath" />
       </GoogleMap>
     </div>
     <section class="p-4 bg-zinc-200">
