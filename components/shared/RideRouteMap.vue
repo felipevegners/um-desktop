@@ -3,7 +3,7 @@ import { cn } from '@/lib/utils';
 import { LoaderCircle } from 'lucide-vue-next';
 import { useRuntimeConfig } from 'nuxt/app';
 import { computed, reactive, ref, watch } from 'vue';
-import { CustomMarker, GoogleMap, Polyline } from 'vue3-google-map';
+import { CustomMarker, GoogleMap, Polyline, Marker } from 'vue3-google-map';
 import { polyLineCodec } from '~/lib/utils';
 
 const customIconStart = `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="#FFFFFF" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-square-dot-icon lucide-square-dot"><rect width="18" height="18" x="3" y="3" rx="2"/><circle cx="12" cy="12" r="1"/></svg>`;
@@ -79,6 +79,18 @@ const finalPolyline = computed(() => {
   };
 });
 
+const checkIconData = 'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent(customIconEnd);
+
+const canonicalCoords = computed(() => {
+  const canonical = props.rideProgress?.canonicalPath;
+  if (!Array.isArray(canonical)) return [];
+  return canonical
+    .map((p: any) => toLatLng(p))
+    .filter((p: any) => Boolean(p)) as { lat: number; lng: number }[];
+});
+
+const finishedLL = computed(() => toLatLng(props.rideProgress?.finishedLocation));
+
 const directionsRenderer = ref(null);
 const originLL = computed(() => toLatLng(props.originCoords));
 const destLL = computed(() => toLatLng(props.destinationCoords));
@@ -146,7 +158,7 @@ async function directions() {
                 geodesic: true,
                 strokeColor: '#000',
                 strokeOpacity: 1.0,
-                strokeWeight: 12,
+                strokeWeight: 6,
                 zIndex: 8,
               },
             }),
@@ -263,7 +275,23 @@ async function directions() {
         </div>
       </CustomMarker>
       <Polyline :options="finalPolyline" />
-      <Polyline :options="driverPath" />
+      <!-- Prefer server-side canonicalPath (magenta) when available, fallback to driverPath -->
+      <Polyline
+        v-if="canonicalCoords.length >= 2"
+        :options="{
+          path: canonicalCoords,
+          geodesic: true,
+          strokeColor: '#f0f',
+          strokeOpacity: 1.0,
+          strokeWeight: 4,
+          zIndex: 10,
+        }"
+      />
+      <Marker
+        v-if="finishedLL"
+        :options="{ position: finishedLL, icon: checkIconData, title: 'Finalizado' }"
+      />
+      <Polyline v-else :options="driverPath" />
       <DirectionsRenderer />
     </GoogleMap>
   </section>
