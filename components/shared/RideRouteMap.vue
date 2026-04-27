@@ -11,6 +11,9 @@ const customIconStop = `<svg xmlns="http://www.w3.org/2000/svg" width="24" heigh
 const customIconEnd = `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="#FFFFFF" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-square-check-icon lucide-square-check"><rect width="18" height="18" x="3" y="3" rx="2"/><path d="m9 12 2 2 4-4"/></svg>`;
 
 const env = useRuntimeConfig();
+const DIRECTIONS_ENABLED = computed(
+  () => String(env.public.VITE_ENABLE_DIRECTIONS ?? 'false') === 'true',
+);
 const mapRef = ref<any>(null);
 const GMAPS_API_KEY = computed(() => env.public.VITE_GOOGLE_MAPS_API_KEY);
 const gmap = ref<any>(null);
@@ -60,8 +63,10 @@ const driverPath = ref<any>({
   zIndex: 10,
 });
 
+const serverPolyline = ref('');
 const finalPolyline = computed(() => {
-  const decode: any = polyLineCodec(props.realPolyline || '');
+  const encoded = props.realPolyline || serverPolyline.value || '';
+  const decode: any = polyLineCodec(encoded);
   const coords = decode.map((path: any) => ({
     lat: path[0],
     lng: path[1],
@@ -100,7 +105,15 @@ watch(
   (ready) => {
     if (!ready) return;
     gmap.value = mapRef.value?.map;
-    directions();
+    // Prefer server-side route when available. If directions toggle is enabled
+    // and there is no server-provided polyline/canonical path, fetch from server.
+    if (
+      DIRECTIONS_ENABLED.value &&
+      !props.realPolyline &&
+      canonicalCoords.value.length < 2
+    ) {
+      fetchServerRoute();
+    }
     const oLL = originLL.value;
     const dLL = destLL.value;
     if (oLL && dLL) {
@@ -114,116 +127,57 @@ watch(
     }
   },
 );
-function setDirection(val: any) {
-  directionsRenderer.value = val;
-}
-async function directions() {
-  const intermediates = props.stopsCoords?.map((stop: any) => {
-    return {
+async function fetchServerRoute() {
+  // Build locations array compatible with server-side proxy
+  const locations: any[] = [];
+  if (originLL.value)
+    locations.push({
       location: {
-        lat: stop.coords.lat,
-        lng: stop.coords.lng,
+        latLng: { latitude: originLL.value.lat, longitude: originLL.value.lng },
       },
-    };
-  });
+    });
+  if (props.stopsCoords && Array.isArray(props.stopsCoords)) {
+    for (const s of props.stopsCoords) {
+      if (s?.coords) {
+        locations.push({
+          location: { latLng: { latitude: s.coords.lat, longitude: s.coords.lng } },
+        });
+      }
+    }
+  }
+  if (destLL.value)
+    locations.push({
+      location: { latLng: { latitude: destLL.value.lat, longitude: destLL.value.lng } },
+    });
+
+  if (locations.length < 2) return;
+
   try {
-    const request = {
-      origin: props.originCoords, // Start point
-      waypoints: intermediates,
-      destination: props.destinationCoords, // End point
-      travelMode: 'DRIVING', // Travel mode: DRIVING, WALKING, BICYCLING, TRANSIT
-    };
-    //@ts-ignore
-    const directionsService = new window.google.maps.DirectionsService();
-    await directionsService.route(request, (response: any, status: any) => {
-      //@ts-ignore
-      if (status === window.google.maps.DirectionsStatus.OK) {
-        const customArrow = {
-          //@ts-ignore
-          path: 'M-1.547 12l6.563-6.609-1.406-1.406-5.156 5.203-2.063-2.109-1.406 1.406zM0 0q2.906 0 4.945 2.039t2.039 4.945q0 1.453-0.727 3.328t-1.758 3.516-2.039 3.070-1.711 2.273l-0.75 0.797q-0.281-0.328-0.75-0.867t-1.688-2.156-2.133-3.141-1.664-3.445-0.75-3.375q0-2.906 2.039-4.945t4.945-2.039z',
-          scale: 2,
-          strokeColor: '#f0f',
-          fillColor: '#f0f',
-          fillOpacity: 1,
-          //@ts-ignore
-          anchor: new google.maps.Point(0, 20),
-        };
-        if (!directionsRenderer.value) {
-          setDirection(
-            //@ts-ignore
-            new window.google.maps.DirectionsRenderer({
-              suppressMarkers: true,
-              polylineOptions: {
-                geodesic: true,
-                strokeColor: '#000',
-                strokeOpacity: 1.0,
-                strokeWeight: 6,
-                zIndex: 8,
-              },
-            }),
-          );
-          const route = response.routes[0];
-          const startLocation = route.legs[0].start_location;
-          const endLocation = route.legs[0].end_location;
-          //@ts-ignore
-          new google.maps.Marker({
-            position: startLocation,
-            map: gmap.value,
-            icon:
-              'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent(customIconStart),
-            title: 'Embarque',
-          });
+    const response: any = await $fetch('/api/travels/routes', {
+      method: 'POST',
+      body: { locations },
+    });
 
-          const legs = response.routes[0].legs;
-          legs.forEach((leg: any, index: number) => {
-            if (index > 0) {
-              //@ts-ignore
-              new google.maps.Marker({
-                position: leg.start_location,
-                map: gmap.value,
-                icon:
-                  'data:image/svg+xml;charset=UTF-8,' +
-                  encodeURIComponent(customIconStop),
-                title: `Parada ${index + 1}`,
-                scale: 8,
-              });
-            }
-          });
+    const route = Array.isArray(response) && response.length > 0 ? response[0] : null;
+    const encoded = route?.polyline?.encodedPolyline ?? '';
+    if (encoded) {
+      serverPolyline.value = encoded;
+      // If bounds are present, try to pan/fit
+      try {
+        if (gmap.value && route?.bounds) {
           //@ts-ignore
-          new google.maps.Marker({
-            position: endLocation,
-            map: gmap.value,
-            icon: 'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent(customIconEnd),
-            title: `Destino`,
-          });
-          const finishedLL = toLatLng(props.rideProgress?.finishedLocation);
-          if (finishedLL) {
-            //@ts-ignore
-            new google.maps.Marker({
-              position: finishedLL,
-              map: gmap.value,
-              icon: customArrow,
-              title: `Finalizado`,
-              alignment: 'TOP',
-            });
-          }
-
-          //@ts-ignore
-          directionsRenderer.value.setMap(gmap.value);
-          gmap.value.fitBounds(response.routes[0].bounds);
+          gmap.value.fitBounds(route.bounds);
           setTimeout(() => {
-            gmap.value.panTo(response.routes[0].bounds.getCenter());
+            //@ts-ignore
+            gmap.value.panTo(route.bounds.getCenter());
           }, 200);
         }
-        //@ts-ignore
-        directionsRenderer.value.setDirections(response);
-      } else {
-        console.error('Failed to calculate the route:', status);
-        alert('No route found. Please check your coordinates and travel mode.');
+      } catch (e) {
+        // ignore
       }
-    });
+    }
   } catch (e) {
-    console.debug(e);
+    console.debug('Failed fetching server route', e);
   }
 }
 </script>
