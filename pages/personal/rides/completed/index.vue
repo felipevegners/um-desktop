@@ -1,12 +1,11 @@
 <script setup lang="ts">
+import { columns } from '@/components/rides/columns/personal/completed';
 import { Button } from '@/components/ui/button';
 import { CalendarCheck2, LoaderCircle, Plus } from 'lucide-vue-next';
 import { storeToRefs } from 'pinia';
 import { onMounted } from 'vue';
 import DataTable from '~/components/shared/DataTable.vue';
 import { useRidesStore } from '~/stores/rides.store';
-
-import { columns } from './columns';
 
 const ridesStore = useRidesStore();
 const { getRidesAction } = ridesStore;

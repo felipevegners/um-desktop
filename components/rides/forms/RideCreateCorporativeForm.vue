@@ -57,15 +57,14 @@ const customIconEnd = `<svg xmlns="http://www.w3.org/2000/svg" width="24" height
 
 const { toast } = useToast();
 const { data } = useAuth();
-//@ts-ignore
-const contractId = data.value?.user.contract?.contractId;
-//@ts-ignore
-const userBranches = data.value?.user.contract?.branches;
-//@ts-ignore
-const role = data.value?.user?.role;
 
-//@ts-ignore
-const name = data.value?.user?.name;
+const currentUserId: string | undefined = (data.value?.user as any)?.id;
+const contractId: string | undefined = (data.value?.user as any)?.contract?.contractId;
+const userBranches: any[] | undefined = (data.value?.user as any)?.contract?.branches;
+const userBranchIdSession: string | undefined = (data.value?.user as any)?.contract
+  ?.branchId;
+const role: string | undefined = (data.value?.user as any)?.role;
+const name: string | undefined = (data.value?.user as any)?.name;
 
 const contractsStore = useContractsStore();
 const accountStore = useAccountStore();
@@ -237,25 +236,65 @@ const resolveRecurringDates = (baseDepartDate: string): string[] => {
 };
 
 onBeforeMount(async () => {
-  await getUsersAccountsByContractIdAction(contractId);
+  // Ensure we have contract details (branches) available
+  await getContractByIdAction(contractId as string);
+  await getUsersAccountsByContractIdAction(contractId as string);
+
+  // Resolve branches managed by current user: prefer explicit `contract.branches`,
+  // fallback to single `contract.branchId` (legacy shape).
+  let managedBranches: Array<any> = [];
+  const sessionBranches = userBranches;
+  const sessionBranchId = userBranchIdSession;
+
+  if (Array.isArray(sessionBranches) && sessionBranches.length > 0) {
+    managedBranches = sessionBranches;
+  } else if (
+    sessionBranchId &&
+    contract?.value?.branches &&
+    contract?.value?.branches.length > 0
+  ) {
+    const found = contract?.value?.branches.find((b: any) => b.id === sessionBranchId);
+    if (found) {
+      managedBranches = [found];
+    } else {
+      managedBranches = [{ id: sessionBranchId }];
+    }
+  }
 
   if (role === 'branch-manager') {
-    const filteredAccounts = accounts?.value.filter((user: any) =>
-      userBranches.some((branch: any) => branch.id === user.contract.branchId),
-    );
+    const filteredAccounts = (accounts?.value || []).filter((user: any) => {
+      const userBranchId =
+        user?.contract?.branchId ??
+        (Array.isArray(user?.contract?.branches) && user.contract.branches[0]?.id) ??
+        undefined;
+
+      if (!userBranchId) return false;
+      return managedBranches.some((branch) => branch.id === userBranchId);
+    });
+
     availableUsers.value = filteredAccounts.map((user: any) => {
-      const findBranch = userBranches.find(
-        (branch: any) => branch.id === user.contract.branchId,
-      );
+      const userBranchId =
+        user?.contract?.branchId ??
+        (Array.isArray(user?.contract?.branches) && user.contract.branches[0]?.id) ??
+        undefined;
+      const findBranch =
+        managedBranches.find((b: any) => b.id === userBranchId) ||
+        (contract?.value?.branches || []).find((b: any) => b.id === userBranchId) ||
+        null;
+
+      const branchLabel = findBranch?.fantasyName ? ' - ' + findBranch.fantasyName : '';
+      const isCurrent = currentUserId === user.id;
+
       return {
-        label: ` ${user.username} - ${findBranch.fantasyName}`,
+        label: `${user.username}${branchLabel}${isCurrent ? ' - Você' : ''}`,
         value: user.id,
       };
     });
   } else {
-    availableUsers.value = accounts?.value.map((user: any) => {
+    availableUsers.value = (accounts?.value || []).map((user: any) => {
+      const isCurrent = currentUserId === user.id;
       return {
-        label: ` ${user.username}`,
+        label: `${user.username}${isCurrent ? ' - Você' : ''}`,
         value: user.id,
       };
     });
@@ -550,11 +589,33 @@ const handleRideCalculation = async () => {
       departureTime,
     });
 
-    routePolyLine.value = routeCalculation[0]?.polyline?.encodedPolyline;
-    const basePrice = parseFloat(selectedProduct?.value.basePrice);
-    const sanitizeDurationResponse = routeCalculation[0].duration.replace('s', '');
-    const duration = Math.ceil(sanitizeDurationResponse) / 60;
-    const distance = routeCalculation[0].distanceMeters / 1000;
+    // Validate server response: must be a non-empty array of routes
+    if (
+      !routeCalculation ||
+      !Array.isArray(routeCalculation) ||
+      routeCalculation.length === 0
+    ) {
+      // Log entire response object to help debugging when server returns an error
+      // eslint-disable-next-line no-console
+      console.error('Route response is not an array:', routeCalculation);
+      const serverMsg =
+        (routeCalculation &&
+          (routeCalculation.message ||
+            routeCalculation.error ||
+            routeCalculation.statusMessage ||
+            routeCalculation.data?.message)) ||
+        'Nenhuma rota retornada pelo servidor';
+      throw new Error(serverMsg);
+    }
+
+    const firstRoute = routeCalculation[0] || {};
+    routePolyLine.value = firstRoute?.polyline?.encodedPolyline || '';
+    const basePrice = parseFloat(selectedProduct?.value.basePrice || '0');
+    const durationStr = firstRoute?.duration ? String(firstRoute.duration) : null;
+    if (!durationStr) throw new Error('Rota retornada sem duração');
+    const sanitizeDurationResponse = durationStr.replace('s', '');
+    const duration = Math.ceil(Number(sanitizeDurationResponse)) / 60;
+    const distance = (firstRoute?.distanceMeters || 0) / 1000;
 
     if (selectedProduct.value.type === 'contract') {
       let ridePrice = parseFloat(basePrice.toFixed(2));
@@ -589,7 +650,7 @@ const handleRideCalculation = async () => {
       calculatedEstimates.value.estimatedTotalPrice = ridePrice.toFixed(2).toString();
     }
 
-    calculatedEstimates.value.estimatedDistance = routeCalculation[0].distanceMeters;
+    calculatedEstimates.value.estimatedDistance = firstRoute?.distanceMeters || 0;
     calculatedEstimates.value.estimatedDuration = parseInt(sanitizeDurationResponse);
 
     if (form.values.rideAddons.length) {
@@ -609,6 +670,9 @@ const handleRideCalculation = async () => {
         calculatedEstimates.value.estimatedPrice;
     }
   } catch (error) {
+    // Log error to the browser console for debugging
+    // eslint-disable-next-line no-console
+    console.error('Failed to calculate route (corporative):', error);
     toast({
       title: 'Opss!',
       class: 'bg-red-500 border-0 text-white text-2xl',
@@ -616,20 +680,23 @@ const handleRideCalculation = async () => {
     });
     loadingRoute.value = false;
   } finally {
-    decodePolyline(routePolyLine.value);
-    loadingRoute.value = false;
-    showRenderedMap.value = true;
-    showGenerateRide.value = true;
+    if (routePolyLine.value) {
+      decodePolyline(routePolyLine.value);
+      showRenderedMap.value = true;
+      showGenerateRide.value = true;
 
-    const targetElement = document.getElementById('ride-map');
-    if (targetElement) {
-      setTimeout(() => {
-        targetElement.scrollIntoView({
-          behavior: 'smooth',
-          block: 'start',
-        });
-      }, 100);
+      const targetElement = document.getElementById('ride-map');
+      if (targetElement) {
+        setTimeout(() => {
+          targetElement.scrollIntoView({
+            behavior: 'smooth',
+            block: 'start',
+          });
+        }, 100);
+      }
     }
+
+    loadingRoute.value = false;
   }
 };
 
@@ -638,18 +705,15 @@ watch(
   (ready) => {
     if (ready) {
       const map = mapRef.value.map;
-      //@ts-ignore
-      const bounds = new google.maps.LatLngBounds();
-      bounds.extend(
-        //@ts-ignore
-        new google.maps.LatLng(originCoords.value.lat, originCoords.value.lng),
-      );
-      bounds.extend(
-        //@ts-ignore
-        new google.maps.LatLng(destinationCoords.value.lat, destinationCoords.value.lng),
-      );
-
-      map.fitBounds(bounds);
+      const g = (window as any).google;
+      if (g && g.maps) {
+        const bounds = new g.maps.LatLngBounds();
+        bounds.extend(new g.maps.LatLng(originCoords.value.lat, originCoords.value.lng));
+        bounds.extend(
+          new g.maps.LatLng(destinationCoords.value.lat, destinationCoords.value.lng),
+        );
+        map.fitBounds(bounds);
+      }
     }
   },
 );
@@ -875,6 +939,7 @@ const onSubmit = form.handleSubmit(async (values) => {
       : null;
   const successfulDates: string[] = [];
   const failedDates: string[] = [];
+  const failedErrors: string[] = [];
 
   const dispatcherBase = {
     user: data?.value?.user?.name,
@@ -918,14 +983,10 @@ const onSubmit = form.handleSubmit(async (values) => {
       isVisitor: visitorUser.value,
       visitorData: visitorUser.value
         ? {
-            //@ts-expect-error
-            name: values.visitorName,
-            //@ts-expect-error
-            phone: values.visitorPhone,
-            //@ts-expect-error
-            company: values.visitorCompany,
-            //@ts-expect-error
-            reason: values.visitorReason,
+            name: (values as any).visitorName,
+            phone: (values as any).visitorPhone,
+            company: (values as any).visitorCompany,
+            reason: (values as any).visitorReason,
             host: selectedUser.value.name,
           }
         : null,
@@ -945,8 +1006,7 @@ const onSubmit = form.handleSubmit(async (values) => {
     travel: {
       rideEstimatedPrice: calculatedEstimates.value.estimatedPrice,
       passengers: ridePassengers.value,
-      //@ts-ignore
-      date: values.departDate,
+      date: toIsoDate((values as any).departDate),
       departTime: values.departTime,
       originAddress: values.origin,
       origin: {
@@ -1028,6 +1088,14 @@ const onSubmit = form.handleSubmit(async (values) => {
       successfulDates.push(recurringDate);
     } else {
       failedDates.push(recurringDate);
+      const errMsg =
+        result?.error ??
+        result?.data?.message ??
+        (typeof result === 'string' ? result : 'Erro desconhecido');
+      failedErrors.push(errMsg);
+      // Log detailed error for debugging
+      // eslint-disable-next-line no-console
+      console.error('createRideAction failed for date', recurringDate, result);
     }
   }
 
@@ -1059,9 +1127,12 @@ const onSubmit = form.handleSubmit(async (values) => {
     }, 1000);
   } else {
     loadingGenerateRide.value = false;
+    const message = failedErrors.length
+      ? failedErrors.join('\n')
+      : 'Ocorreu um erro ao criar o atendimento. Tente novamente.';
     toast({
       title: 'Oops!',
-      description: 'Ocorreu um erro ao criar o atendimento. Tente novamente.',
+      description: message,
       variant: 'destructive',
     });
   }

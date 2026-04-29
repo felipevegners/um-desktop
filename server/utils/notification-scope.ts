@@ -4,13 +4,13 @@ import type { H3Event } from 'h3';
 const managerRoles = new Set([
   'master-manager',
   'branch-manager',
-  'branch-admin',
   'platform-admin',
 ]);
 
 export type NotificationRequestScope = {
   role: string | null;
   contractId: string | null;
+  branchId: string | null;
   driverId: string | null;
   isAdmin: boolean;
   isManager: boolean;
@@ -26,6 +26,8 @@ export async function resolveNotificationRequestScope(
     user?.contract && typeof user.contract === 'object' ? user.contract : null;
   const contractId =
     contract && typeof contract.contractId === 'string' ? contract.contractId : null;
+  const branchId =
+    contract && typeof contract.branchId === 'string' ? contract.branchId : null;
   const driverId =
     typeof user?.driverId === 'string'
       ? user.driverId
@@ -36,6 +38,7 @@ export async function resolveNotificationRequestScope(
   return {
     role,
     contractId,
+    branchId,
     driverId,
     isAdmin: role === 'admin',
     isManager: role !== null && managerRoles.has(role),

@@ -2,18 +2,22 @@
 import { cn } from '@/lib/utils';
 import { LoaderCircle } from 'lucide-vue-next';
 import { useRuntimeConfig } from 'nuxt/app';
-import { computed, reactive, ref, watch } from 'vue';
+import { computed, onMounted, reactive, ref, watch } from 'vue';
 import { CustomMarker, GoogleMap, Marker, Polyline } from 'vue3-google-map';
 import { polyLineCodec } from '~/lib/utils';
+
+// color mode is provided by Nuxt's color-mode module (auto-imported)
+// Use a safe runtime check so missing auto-import doesn't throw a ReferenceError.
+const colorMode =
+  typeof useColorMode !== 'undefined' && typeof useColorMode === 'function'
+    ? useColorMode()
+    : ref('light');
 
 const customIconStart = `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="#FFFFFF" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-square-dot-icon lucide-square-dot"><rect width="18" height="18" x="3" y="3" rx="2"/><circle cx="12" cy="12" r="1"/></svg>`;
 const customIconStop = `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="#FFFFFF" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-square-pause-icon lucide-square-pause"><rect width="18" height="18" x="3" y="3" rx="2"/><line x1="10" x2="10" y1="15" y2="9"/><line x1="14" x2="14" y1="15" y2="9"/></svg>`;
 const customIconEnd = `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="#FFFFFF" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-square-check-icon lucide-square-check"><rect width="18" height="18" x="3" y="3" rx="2"/><path d="m9 12 2 2 4-4"/></svg>`;
 
 const env = useRuntimeConfig();
-const DIRECTIONS_ENABLED = computed(
-  () => String(env.public.VITE_ENABLE_DIRECTIONS ?? 'false') === 'true',
-);
 const mapRef = ref<any>(null);
 const GMAPS_API_KEY = computed(() => env.public.VITE_GOOGLE_MAPS_API_KEY);
 const gmap = ref<any>(null);
@@ -37,21 +41,199 @@ function toLatLng(coords: any): { lat: number; lng: number } | null {
   return { lat, lng };
 }
 
+// Map styles copied from `um-driver-app` `NAVIGATION_MAP_STYLE_*` to ensure visual consistency
+const DESKTOP_MAP_STYLE_LIGHT = [
+  { elementType: 'labels.icon', stylers: [{ visibility: 'off' }] },
+  { elementType: 'labels.text.fill', stylers: [{ color: '#5f6368' }] },
+  { elementType: 'labels.text.stroke', stylers: [{ color: '#f5f5f5' }] },
+
+  {
+    featureType: 'road',
+    elementType: 'geometry',
+    stylers: [{ color: '#e9e9ea' }],
+  },
+  {
+    featureType: 'road',
+    elementType: 'geometry.stroke',
+    stylers: [{ color: '#d0d0d0' }],
+  },
+
+  {
+    featureType: 'road.highway',
+    elementType: 'geometry',
+    stylers: [{ color: '#e0e0e0' }],
+  },
+  {
+    featureType: 'road.highway',
+    elementType: 'geometry.stroke',
+    stylers: [{ color: '#cfcfcf' }],
+  },
+
+  { featureType: 'poi', stylers: [{ visibility: 'off' }] },
+  {
+    featureType: 'poi.park',
+    elementType: 'geometry',
+    stylers: [{ color: '#e6f1e8' }],
+  },
+
+  {
+    featureType: 'water',
+    elementType: 'geometry',
+    stylers: [{ color: '#b3d9ed' }],
+  },
+  {
+    featureType: 'water',
+    elementType: 'labels.text.fill',
+    stylers: [{ color: '#9e9e9e' }],
+  },
+
+  { featureType: 'transit', stylers: [{ visibility: 'off' }] },
+];
+
+const DESKTOP_MAP_STYLE_DARK = [
+  { elementType: 'labels.icon', stylers: [{ visibility: 'off' }] },
+  { elementType: 'labels.text.fill', stylers: [{ color: '#d5dde8' }] },
+  {
+    elementType: 'labels.text.stroke',
+    stylers: [{ color: '#1a2430' }],
+  },
+
+  // Navy background — not pure black, easier on eyes
+  { elementType: 'geometry', stylers: [{ color: '#242f3e' }] },
+
+  {
+    featureType: 'road',
+    elementType: 'geometry',
+    stylers: [{ color: '#3f4958' }],
+  },
+  {
+    featureType: 'road',
+    elementType: 'geometry.stroke',
+    stylers: [{ color: '#263241' }],
+  },
+
+  {
+    featureType: 'road',
+    elementType: 'labels.text.fill',
+    stylers: [{ color: '#e2e8f0' }],
+  },
+  {
+    featureType: 'road.local',
+    elementType: 'labels.text.fill',
+    stylers: [{ color: '#cbd5e1' }],
+  },
+
+  {
+    featureType: 'road.highway',
+    elementType: 'geometry',
+    stylers: [{ color: '#746855' }],
+  },
+  {
+    featureType: 'road.highway',
+    elementType: 'geometry.stroke',
+    stylers: [{ color: '#1f2835' }],
+  },
+  {
+    featureType: 'road.highway',
+    elementType: 'labels.text.fill',
+    stylers: [{ color: '#f3d19c' }],
+  },
+
+  {
+    featureType: 'poi',
+    elementType: 'labels.text.fill',
+    stylers: [{ color: '#8fa1b6' }],
+  },
+  {
+    featureType: 'poi.park',
+    elementType: 'geometry',
+    stylers: [{ color: '#263c3f' }],
+  },
+
+  {
+    featureType: 'water',
+    elementType: 'geometry',
+    stylers: [{ color: '#17263c' }],
+  },
+  {
+    featureType: 'water',
+    elementType: 'labels.text.fill',
+    stylers: [{ color: '#515c6d' }],
+  },
+
+  {
+    featureType: 'transit',
+    elementType: 'labels.text.fill',
+    stylers: [{ color: '#7f8ea3' }],
+  },
+];
+
 const mapOptions = reactive({
   zoom: 20,
   maxZoom: 10,
   minZoom: 3,
-  styles: [],
+  styles: colorMode.value === 'dark' ? DESKTOP_MAP_STYLE_DARK : DESKTOP_MAP_STYLE_LIGHT,
+});
+
+// Theme synchronization (light/dark or explicit override) handled after `props` is defined.
+
+onMounted(() => {
+  // Debug: ensure color mode and styles are available at runtime
+  // debug logs removed
 });
 const props = defineProps<{
   originCoords?: any;
-  stopsCoords?: any;
+  stopsCoords?: any[];
   destinationCoords?: any;
   rideProgress?: any;
   driverData?: any;
   realPolyline?: any;
   rideStatus?: string;
+  // mapTheme: 'auto' (follow colorMode) | 'light' | 'dark' — allows forcing map theme
+  mapTheme?: 'auto' | 'light' | 'dark';
 }>();
+
+// Compute effective theme: explicit `mapTheme` prop overrides Nuxt `colorMode` when provided
+const effectiveTheme = computed(() => {
+  const override = props.mapTheme ?? 'auto';
+  if (override !== 'auto') return override;
+  return colorMode?.value ?? 'light';
+});
+
+const mapStyles = computed(() =>
+  effectiveTheme.value === 'dark' ? DESKTOP_MAP_STYLE_DARK : DESKTOP_MAP_STYLE_LIGHT,
+);
+
+// Initialize styles based on effective theme
+mapOptions.styles = mapStyles.value;
+
+// Watch effective theme (either colorMode or explicit prop) and apply styles + StyledMapType
+watch(
+  () => effectiveTheme.value,
+  (v) => {
+    mapOptions.styles = v === 'dark' ? DESKTOP_MAP_STYLE_DARK : DESKTOP_MAP_STYLE_LIGHT;
+    if (gmap.value && typeof gmap.value.setOptions === 'function') {
+      // debug log removed
+      gmap.value.setOptions({ styles: mapOptions.styles });
+      try {
+        const gm: any = (globalThis as any).google;
+        if (gm && gm.maps && typeof gm.maps.StyledMapType === 'function') {
+          const styled = new gm.maps.StyledMapType(mapOptions.styles, {
+            name: 'UM Style',
+          });
+          gmap.value.mapTypes.set('um_style', styled);
+          gmap.value.setMapTypeId('um_style');
+          // debug log removed
+        }
+      } catch (e) {
+        // eslint-disable-next-line no-console
+        console.warn('RideRouteMap StyledMapType apply failed (theme change):', e);
+      }
+    }
+    // debug log removed
+  },
+  { immediate: true },
+);
 
 const driverPath = ref<any>({
   // `ridePath` removed — prefer server `canonicalPath` (magenta). Keep empty fallback.
@@ -64,25 +246,77 @@ const driverPath = ref<any>({
 });
 
 const serverPolyline = ref('');
+// Accept a variety of shapes for `realPolyline`:
+// - encoded polyline string
+// - object { encodedPolyline: string }
+// - array of [lat,lng] pairs
+// - array of { lat, lng } points
 const finalPolyline = computed(() => {
-  const encoded = props.realPolyline || serverPolyline.value || '';
-  const decode: any = polyLineCodec(encoded);
-  const coords = decode.map((path: any) => ({
-    lat: path[0],
-    lng: path[1],
-  }));
+  let raw: any = props.realPolyline ?? serverPolyline.value ?? null;
+  if (!raw) {
+    try {
+      const gm: any = (globalThis as any).google;
+      if (gm && gm.maps && typeof gm.maps.StyledMapType === 'function') {
+        const styled = new gm.maps.StyledMapType(mapOptions.styles, { name: 'UM Style' });
+        gmap.value.mapTypes.set('um_style', styled);
+        gmap.value.setMapTypeId('um_style');
+        // debug log removed
+      }
+    } catch (e) {
+      // eslint-disable-next-line no-console
+      console.warn('RideRouteMap StyledMapType apply failed (theme change):', e);
+    }
+    raw = raw.encodedPolyline;
+  }
+
+  let coords: { lat: number; lng: number }[] = [];
+  if (typeof raw === 'string') {
+    const decoded: any = polyLineCodec(raw);
+    coords = decoded.map((p: any) => ({ lat: p[0], lng: p[1] }));
+  } else if (Array.isArray(raw)) {
+    const first = raw[0];
+    if (Array.isArray(first) && typeof first[0] === 'number') {
+      // [[lat, lng], ...]
+      coords = raw.map((p: any) => ({ lat: p[0], lng: p[1] }));
+    } else if (first && (first.lat !== undefined || first.latitude !== undefined)) {
+      // [{lat, lng}, ...] or [{latitude, longitude}, ...]
+      coords = raw
+        .map((p: any) => {
+          const lat =
+            typeof p.lat === 'number'
+              ? p.lat
+              : p.latitude
+                ? p.latitude
+                : parseFloat(p.lat || p.latitude);
+          const lng =
+            typeof p.lng === 'number'
+              ? p.lng
+              : p.longitude
+                ? p.longitude
+                : parseFloat(p.lng || p.longitude);
+          if (!isFinite(lat) || !isFinite(lng)) return null;
+          return { lat, lng } as { lat: number; lng: number };
+        })
+        .filter(Boolean) as { lat: number; lng: number }[];
+    }
+  }
+
   return {
     path: coords,
     geodesic: true,
-    strokeColor: '#33ccff',
+    strokeColor: '#000000',
     strokeOpacity: 1.0,
-    strokeWeight: 8,
+    strokeWeight: 5,
     zIndex: 9,
   };
 });
 
 const checkIconData =
   'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent(customIconEnd);
+const startIconData =
+  'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent(customIconStart);
+const stopIconData =
+  'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent(customIconStop);
 
 const canonicalCoords = computed(() => {
   const canonical = props.rideProgress?.canonicalPath;
@@ -95,7 +329,17 @@ const canonicalCoords = computed(() => {
 
 const finishedLL = computed(() => toLatLng(props.rideProgress?.finishedLocation));
 
-const directionsRenderer = ref(null);
+const stopsLL = computed(() => {
+  if (!Array.isArray(props.stopsCoords)) return [];
+  return (props.stopsCoords || [])
+    .map((p: any) => toLatLng(p.coords))
+    .filter(Boolean) as {
+    lat: number;
+    lng: number;
+  }[];
+});
+
+// no client-side DirectionsRenderer in editor view
 const originLL = computed(() => toLatLng(props.originCoords));
 const destLL = computed(() => toLatLng(props.destinationCoords));
 const center = computed(() => originLL.value ?? { lat: -15.7801, lng: -47.9292 });
@@ -105,15 +349,37 @@ watch(
   (ready) => {
     if (!ready) return;
     gmap.value = mapRef.value?.map;
-    // Prefer server-side route when available. If directions toggle is enabled
-    // and there is no server-provided polyline/canonical path, fetch from server.
-    if (
-      DIRECTIONS_ENABLED.value &&
-      !props.realPolyline &&
-      canonicalCoords.value.length < 2
-    ) {
-      fetchServerRoute();
+    // Ensure styles are applied on initial map creation too
+    if (gmap.value && typeof gmap.value.setOptions === 'function') {
+      // debug log removed
+      gmap.value.setOptions({ styles: mapOptions.styles });
+      try {
+        const gm: any = (globalThis as any).google;
+        if (gm && gm.maps && typeof gm.maps.StyledMapType === 'function') {
+          const styled = new gm.maps.StyledMapType(mapOptions.styles, {
+            name: 'UM Style',
+          });
+          gmap.value.mapTypes.set('um_style', styled);
+          gmap.value.setMapTypeId('um_style');
+          // debug log removed
+        }
+      } catch (e) {
+        // eslint-disable-next-line no-console
+        console.warn('RideRouteMap StyledMapType apply failed (map ready):', e);
+      }
     }
+    const path = finalPolyline.value.path || [];
+    if (path.length >= 2) {
+      //@ts-ignore
+      const bounds = new google.maps.LatLngBounds();
+      for (const p of path) {
+        //@ts-ignore
+        bounds.extend(new google.maps.LatLng(p.lat, p.lng));
+      }
+      gmap.value.fitBounds(bounds);
+      return;
+    }
+
     const oLL = originLL.value;
     const dLL = destLL.value;
     if (oLL && dLL) {
@@ -127,59 +393,7 @@ watch(
     }
   },
 );
-async function fetchServerRoute() {
-  // Build locations array compatible with server-side proxy
-  const locations: any[] = [];
-  if (originLL.value)
-    locations.push({
-      location: {
-        latLng: { latitude: originLL.value.lat, longitude: originLL.value.lng },
-      },
-    });
-  if (props.stopsCoords && Array.isArray(props.stopsCoords)) {
-    for (const s of props.stopsCoords) {
-      if (s?.coords) {
-        locations.push({
-          location: { latLng: { latitude: s.coords.lat, longitude: s.coords.lng } },
-        });
-      }
-    }
-  }
-  if (destLL.value)
-    locations.push({
-      location: { latLng: { latitude: destLL.value.lat, longitude: destLL.value.lng } },
-    });
-
-  if (locations.length < 2) return;
-
-  try {
-    const response: any = await $fetch('/api/travels/routes', {
-      method: 'POST',
-      body: { locations },
-    });
-
-    const route = Array.isArray(response) && response.length > 0 ? response[0] : null;
-    const encoded = route?.polyline?.encodedPolyline ?? '';
-    if (encoded) {
-      serverPolyline.value = encoded;
-      // If bounds are present, try to pan/fit
-      try {
-        if (gmap.value && route?.bounds) {
-          //@ts-ignore
-          gmap.value.fitBounds(route.bounds);
-          setTimeout(() => {
-            //@ts-ignore
-            gmap.value.panTo(route.bounds.getCenter());
-          }, 200);
-        }
-      } catch (e) {
-        // ignore
-      }
-    }
-  } catch (e) {
-    console.debug('Failed fetching server route', e);
-  }
-}
+// No client-side route calculation in editor; map only renders server polyline.
 </script>
 
 <template>
@@ -228,6 +442,20 @@ async function fetchServerRoute() {
         </div>
       </CustomMarker>
       <Polyline :options="finalPolyline" />
+      <!-- Origin / Stops / Destination markers -->
+      <Marker
+        v-if="originLL"
+        :options="{ position: originLL, icon: startIconData, title: 'Embarque' }"
+      />
+      <Marker
+        v-for="(stop, idx) in stopsLL"
+        :key="'stop-' + idx"
+        :options="{ position: stop, icon: stopIconData, title: 'Parada ' + (idx + 1) }"
+      />
+      <Marker
+        v-if="destLL"
+        :options="{ position: destLL, icon: checkIconData, title: 'Destino' }"
+      />
       <!-- Prefer server-side canonicalPath (magenta) when available, fallback to driverPath -->
       <Polyline
         v-if="canonicalCoords.length >= 2"
@@ -235,7 +463,7 @@ async function fetchServerRoute() {
           path: canonicalCoords,
           geodesic: true,
           strokeColor: '#f0f',
-          strokeOpacity: 1.0,
+          strokeOpacity: 0.8,
           strokeWeight: 4,
           zIndex: 10,
         }"
@@ -245,7 +473,6 @@ async function fetchServerRoute() {
         :options="{ position: finishedLL, icon: checkIconData, title: 'Finalizado' }"
       />
       <Polyline v-else :options="driverPath" />
-      <DirectionsRenderer />
     </GoogleMap>
   </section>
 </template>

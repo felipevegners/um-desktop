@@ -7,7 +7,7 @@ import ProductTag from '@/components/shared/ProductTag.vue';
 import RenderIcon from '@/components/shared/RenderIcon.vue';
 import { useToast } from '@/components/ui/toast/use-toast';
 import { paymentMethods } from '@/config/paymentMethods';
-import { getRideRoutesService } from '@/server/services/rides';
+import { getRideDistanceService } from '@/server/services/rides';
 import { useContractsStore } from '@/stores/contracts.store';
 import { useProductsStore } from '@/stores/products.store';
 import { useRidesStore } from '@/stores/rides.store';
@@ -276,13 +276,37 @@ const getRideCalculation = async () => {
   try {
     loadingRoute.value = true;
 
-    const routeCalculation: any = await getRideRoutesService({ locations });
-    // const {polyline, duration, distanceMeters} = routeCalculation[0]
-    routePolyLine.value = routeCalculation[0]?.polyline?.encodedPolyline;
+    // Build Distance Matrix request payload (lightweight):
+    const originStr = `${originCoords.value.lat},${originCoords.value.lng}`;
+    const stopsArr = waypointLocationDetails.value
+      .map((wp: any) => (wp.coords ? `${wp.coords.lat},${wp.coords.lng}` : ''))
+      .filter(Boolean);
+    const destStr = `${destinationCoords.value.lat},${destinationCoords.value.lng}`;
+
+    // origins: [origin, stop1, stop2, ...]
+    const origins = [originStr, ...stopsArr];
+    // destinations: [stop1, stop2, ..., destination]
+    const destinations = [...stopsArr, destStr];
+
+    const matrix: any = await getRideDistanceService({ origins, destinations });
+
+    // Sum sequential legs: picks matrix.rows[i].elements[i] for i in 0..origins.length-1
+    let totalDistanceMeters = 0;
+    let totalDurationSeconds = 0;
+    for (let i = 0; i < origins.length; i++) {
+      const row = matrix?.rows?.[i];
+      const elem = row?.elements?.[i];
+      if (elem && elem.status === 'OK') {
+        totalDistanceMeters += Number(elem.distance?.value ?? 0);
+        totalDurationSeconds += Number(elem.duration?.value ?? 0);
+      }
+    }
+
+    const distance = totalDistanceMeters / 1000;
+    const duration = Math.round(totalDurationSeconds / 60);
+    routePolyLine.value = undefined; // do not request polyline here to save costs
+
     const basePrice = parseFloat(selectedProduct?.value.basePrice);
-    const sanitizeDurationResponse = routeCalculation[0].duration.replace('s', '');
-    const duration = parseInt(sanitizeDurationResponse) / 60;
-    const distance = routeCalculation[0].distanceMeters / 1000;
 
     if (selectedProduct.value.type === 'contract') {
       const ridePrice = parseFloat(basePrice.toFixed(2));
@@ -296,12 +320,14 @@ const getRideCalculation = async () => {
       calculatedEstimates.value.estimatedPrice = ridePrice.toFixed(2).toString();
     }
 
-    calculatedEstimates.value.estimatedDistance = convertMetersToDistance(
-      routeCalculation[0].distanceMeters,
-    );
+    calculatedEstimates.value.estimatedDistance =
+      convertMetersToDistance(totalDistanceMeters);
     //@ts-ignore
     calculatedEstimates.value.travelTime = convertSecondsToTime(duration);
   } catch (error) {
+    // Log error to the browser console for debugging
+    // eslint-disable-next-line no-console
+    console.error('Failed to calculate route (personal new):', error);
     toast({
       title: 'Opss!',
       class: 'bg-red-500 border-0 text-white text-2xl',
@@ -309,7 +335,9 @@ const getRideCalculation = async () => {
     });
     loadingRoute.value = false;
   } finally {
-    decodePolyline(routePolyLine.value);
+    if (routePolyLine.value) {
+      decodePolyline(routePolyLine.value);
+    }
     loadingRoute.value = false;
     showRenderedMap.value = true;
     showGenerateRide.value = true;
@@ -533,14 +561,20 @@ const onSubmit = form.handleSubmit(async (values) => {
   };
 
   try {
-    await createRideAction(ridePayload);
-  } catch (error) {
-    toast({
-      title: 'Oops!',
-      description: `Ocorreu um erro ao criar o atendimento. Tente novamente.`,
-      variant: 'destructive',
-    });
-  } finally {
+    const result: any = await createRideAction(ridePayload);
+
+    if (!result || result.success !== true) {
+      const message =
+        result?.error || 'Ocorreu um erro ao criar o atendimento. Tente novamente.';
+      toast({
+        title: 'Oops!',
+        description: message,
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    // Success
     toast({
       title: 'Tudo pronto!',
       class: 'bg-green-600 border-0 text-white text-2xl',
@@ -550,6 +584,15 @@ const onSubmit = form.handleSubmit(async (values) => {
     if (paymentMethod.value === 'corporative' || paymentStatus.value === 'paid') {
       navigateTo('/personal/rides/open');
     }
+  } catch (error) {
+    // Log for debugging and show generic error toast
+    // eslint-disable-next-line no-console
+    console.error('Failed to create ride', error);
+    toast({
+      title: 'Oops!',
+      description: `Ocorreu um erro ao criar o atendimento. Tente novamente.`,
+      variant: 'destructive',
+    });
   }
 });
 

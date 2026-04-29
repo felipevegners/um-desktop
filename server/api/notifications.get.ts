@@ -13,7 +13,8 @@ export default defineEventHandler(async (event) => {
   const scope = await resolveNotificationRequestScope(event);
   const query = getQuery<NotificationQuery>(event);
 
-  if (scope.isManager && !scope.contractId) {
+  // If user is a manager but we have neither contractId nor branchId, deny access
+  if (scope.isManager && !scope.contractId && !scope.branchId) {
     return [];
   }
 
@@ -21,6 +22,11 @@ export default defineEventHandler(async (event) => {
 
   if (scope.isManager && scope.contractId) {
     notificationsUrl.searchParams.set('contractId', scope.contractId);
+  }
+
+  // If branch-level scope is available, prefer requesting filtered by branchId
+  if (scope.isManager && (scope.branchId || '') !== '') {
+    notificationsUrl.searchParams.set('branchId', scope.branchId as string);
   }
 
   if (query.read === 'true' || query.read === 'false') {

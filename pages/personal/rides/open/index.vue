@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { columns } from '@/components/rides/columns/personal/open';
 import { Button } from '@/components/ui/button';
 import { createColumnHelper } from '@tanstack/vue-table';
 import { CalendarClock, LoaderCircle, Plus } from 'lucide-vue-next';
@@ -7,8 +8,6 @@ import { onMounted } from 'vue';
 import DataTable from '~/components/shared/DataTable.vue';
 import TableActions from '~/components/shared/TableActions.vue';
 import { useRidesStore } from '~/stores/rides.store';
-
-import { columns } from './columns';
 
 const ridesStore = useRidesStore();
 const { getUserRidesAction } = ridesStore;

@@ -133,7 +133,11 @@ onMounted(() => {
           Central de Notificações
         </h1>
       </div>
-      <button type="button" class="reload-button" @click="loadNotifications">
+      <button
+        type="button"
+        class="inline-flex items-center justify-center gap-2 h-10 px-4 rounded-full text-sm font-semibold transition-colors border border-zinc-200 bg-white text-zinc-900 hover:bg-zinc-50"
+        @click="loadNotifications"
+      >
         Atualizar
       </button>
     </section>
@@ -165,19 +169,26 @@ onMounted(() => {
       </Card>
     </section>
 
-    <section class="filter-panel">
-      <label class="filter-search">
+    <section
+      class="grid gap-4 p-4 border border-zinc-200 rounded-xl bg-white lg:grid-cols-[1fr_16rem_auto] lg:items-center"
+    >
+      <label
+        class="flex items-center gap-3 min-h-12 px-4 border border-zinc-200 rounded-full bg-white text-zinc-900 flex-1"
+      >
         <Search class="h-4 w-4 text-zinc-400" />
         <input
           v-model="searchTerm"
           type="text"
           placeholder="Buscar por título, atendimento ou código"
+          class="flex-1 bg-transparent outline-none"
         />
       </label>
 
-      <label class="filter-select">
+      <label
+        class="flex items-center gap-3 min-h-12 px-4 border border-zinc-200 rounded-full bg-white text-zinc-900"
+      >
         <Filter class="h-4 w-4 text-zinc-400" />
-        <select v-model="typeFilter">
+        <select v-model="typeFilter" class="bg-transparent outline-none">
           <option value="all">Todos os tipos</option>
           <option v-for="type in uniqueTypes" :key="type" :value="type">
             {{ getNotificationTypeLabel(type) }}
@@ -185,24 +196,39 @@ onMounted(() => {
         </select>
       </label>
 
-      <div class="filter-statuses">
+      <div class="flex flex-wrap gap-3">
         <button
           type="button"
-          :class="['filter-status', { active: readFilter === 'all' }]"
+          :class="[
+            readFilter === 'all'
+              ? 'bg-primary text-primary-foreground'
+              : 'border border-zinc-200 bg-white text-zinc-500',
+            'inline-flex items-center gap-2 h-10 px-4 rounded-full text-sm font-semibold',
+          ]"
           @click="readFilter = 'all'"
         >
           Todas
         </button>
         <button
           type="button"
-          :class="['filter-status', { active: readFilter === 'unread' }]"
+          :class="[
+            readFilter === 'unread'
+              ? 'bg-primary text-primary-foreground'
+              : 'border border-zinc-200 bg-white text-zinc-500',
+            'inline-flex items-center gap-2 h-10 px-4 rounded-full text-sm font-semibold',
+          ]"
           @click="readFilter = 'unread'"
         >
           Não lidas
         </button>
         <button
           type="button"
-          :class="['filter-status', { active: readFilter === 'read' }]"
+          :class="[
+            readFilter === 'read'
+              ? 'bg-primary text-primary-foreground'
+              : 'border border-zinc-200 bg-white text-zinc-500',
+            'inline-flex items-center gap-2 h-10 px-4 rounded-full text-sm font-semibold',
+          ]"
           @click="readFilter = 'read'"
         >
           Lidas
@@ -210,16 +236,25 @@ onMounted(() => {
       </div>
     </section>
 
-    <section v-if="isLoading" class="state-panel">
+    <section
+      v-if="isLoading"
+      class="flex items-center justify-center gap-3 min-h-40 p-8 border border-dashed rounded-xl bg-zinc-50 text-zinc-500"
+    >
       <LoaderCircle class="h-5 w-5 animate-spin" />
       Carregando notificações...
     </section>
 
-    <section v-else-if="errorMessage" class="state-panel error">
+    <section
+      v-else-if="errorMessage"
+      class="flex items-center justify-center gap-3 min-h-40 p-8 border border-solid border-red-200 rounded-xl bg-red-50 text-red-600"
+    >
       {{ errorMessage }}
     </section>
 
-    <section v-else-if="filteredNotifications.length === 0" class="state-panel">
+    <section
+      v-else-if="filteredNotifications.length === 0"
+      class="flex items-center justify-center gap-3 min-h-40 p-8 border border-dashed rounded-xl bg-zinc-50 text-zinc-500"
+    >
       Nenhuma notificação encontrada com os filtros atuais.
     </section>
 
@@ -227,43 +262,47 @@ onMounted(() => {
       <article
         v-for="notification in filteredNotifications"
         :key="notification.id"
-        class="notification-card"
+        class="p-6 border border-zinc-200 rounded-xl bg-white"
       >
-        <div class="notification-card-head">
+        <div class="flex flex-col gap-4 lg:flex-row lg:justify-between lg:items-start">
           <div class="space-y-2">
             <div class="flex flex-wrap items-center gap-2">
-              <span class="notification-chip type">
-                {{ getNotificationTypeLabel(notification.type) }}
-              </span>
-              <span class="notification-chip neutral">
-                {{ formatNotificationDate(notification.createdAt) }}
-              </span>
               <span
-                :class="['notification-chip', notification.read ? 'success' : 'warning']"
+                class="inline-flex items-center h-8 px-3 rounded-full text-xs font-bold bg-primary/10 text-primary"
+                >{{ getNotificationTypeLabel(notification.type) }}</span
               >
-                {{ notification.read ? 'Lida' : 'Não lida' }}
-              </span>
+              <span
+                class="inline-flex items-center h-8 px-3 rounded-full text-xs font-bold bg-zinc-100 text-zinc-500"
+                >{{ formatNotificationDate(notification.createdAt) }}</span
+              >
+              <span
+                :class="[
+                  notification.read
+                    ? 'inline-flex items-center h-8 px-3 rounded-full text-xs font-bold bg-emerald-50 text-emerald-800'
+                    : 'inline-flex items-center h-8 px-3 rounded-full text-xs font-bold bg-amber-50 text-amber-700',
+                ]"
+                >{{ notification.read ? 'Lida' : 'Não lida' }}</span
+              >
             </div>
-            <h2 class="text-lg font-semibold text-zinc-950">{{ notification.title }}</h2>
+            <h2 class="text-lg font-semibold text-zinc-900">{{ notification.title }}</h2>
             <p class="text-sm leading-6 text-zinc-600">
               {{ getNotificationDescription(notification) }}
             </p>
           </div>
 
-          <div class="notification-actions">
+          <div class="flex flex-wrap gap-3">
             <NuxtLink
               v-if="
                 notification.type === 'ride_created' &&
                 getNotificationRideCode(notification)
               "
               :to="`/rides/form/edit/${getNotificationRideCode(notification)}`"
-              class="secondary-button"
+              class="inline-flex items-center gap-2 h-10 px-4 rounded-full text-sm font-semibold border border-zinc-200 bg-white text-zinc-900 hover:bg-zinc-50"
+              >Ver atendimento</NuxtLink
             >
-              Ver atendimento
-            </NuxtLink>
             <button
               type="button"
-              class="secondary-button"
+              class="inline-flex items-center gap-2 h-10 px-4 rounded-full text-sm font-semibold border border-zinc-200 bg-white text-zinc-900 hover:bg-zinc-50"
               @click="goToDetail(notification.id)"
             >
               Ver completa
@@ -271,7 +310,7 @@ onMounted(() => {
             <button
               v-if="!notification.read"
               type="button"
-              class="primary-button"
+              class="inline-flex items-center gap-2 h-10 px-4 rounded-full text-sm font-semibold bg-primary text-primary-foreground hover:opacity-90"
               @click="markAsRead(notification.id)"
             >
               <LoaderCircle
@@ -281,236 +320,28 @@ onMounted(() => {
               <CheckCheck v-else class="h-4 w-4" />
               Marcar como lida
             </button>
-            <span v-else class="read-indicator">
-              <MailOpen class="h-4 w-4" />
-              Já lida
-            </span>
+            <span
+              v-else
+              class="inline-flex items-center gap-1 text-zinc-500 text-sm font-semibold"
+              ><MailOpen class="h-4 w-4" />Já lida</span
+            >
           </div>
         </div>
 
-        <div class="notification-summary-grid">
+        <div class="grid gap-3 mt-5 lg:grid-cols-3">
           <div
             v-for="item in getNotificationSummaryItems(notification)"
             :key="`${notification.id}-${item.label}`"
-            class="notification-summary-item"
+            class="p-4 rounded-lg bg-zinc-50"
           >
-            <span class="notification-summary-label">{{ item.label }}</span>
-            <strong class="notification-summary-value">{{ item.value }}</strong>
+            <span
+              class="block text-zinc-500 text-xs font-bold uppercase tracking-wider"
+              >{{ item.label }}</span
+            >
+            <strong class="block mt-1 text-zinc-900 leading-6">{{ item.value }}</strong>
           </div>
         </div>
       </article>
     </section>
   </main>
 </template>
-
-<style scoped>
-.reload-button,
-.primary-button,
-.secondary-button,
-.filter-status {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.5rem;
-  min-height: 2.6rem;
-  padding: 0 1rem;
-  border-radius: 9999px;
-  font-size: 0.85rem;
-  font-weight: 700;
-  transition:
-    background-color 0.15s ease,
-    color 0.15s ease,
-    border-color 0.15s ease;
-}
-
-.reload-button,
-.secondary-button {
-  border: 1px solid hsl(var(--border));
-  background: hsl(var(--background));
-  color: hsl(var(--foreground));
-}
-
-.primary-button,
-.filter-status.active {
-  background: hsl(var(--primary));
-  color: hsl(var(--primary-foreground));
-}
-
-.reload-button:hover,
-.secondary-button:hover {
-  background: hsl(var(--muted));
-}
-
-.primary-button:hover {
-  opacity: 0.9;
-}
-
-.filter-panel {
-  display: grid;
-  gap: 1rem;
-  padding: 1rem;
-  border: 1px solid hsl(var(--border));
-  border-radius: 1.5rem;
-  background: hsl(var(--card));
-}
-
-.filter-search,
-.filter-select {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  min-height: 3rem;
-  padding: 0 1rem;
-  border: 1px solid hsl(var(--border));
-  border-radius: 9999px;
-  background: hsl(var(--background));
-  color: hsl(var(--foreground));
-}
-
-.filter-search input,
-.filter-select select {
-  width: 100%;
-  background: transparent;
-  color: inherit;
-  outline: none;
-}
-
-.filter-statuses {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.75rem;
-}
-
-.filter-status {
-  border: 1px solid hsl(var(--border));
-  background: hsl(var(--background));
-  color: hsl(var(--muted-foreground));
-}
-
-.state-panel {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.75rem;
-  min-height: 10rem;
-  padding: 2rem;
-  border: 1px dashed hsl(var(--border));
-  border-radius: 1.5rem;
-  background: hsl(var(--muted));
-  color: hsl(var(--muted-foreground));
-}
-
-.state-panel.error {
-  border-style: solid;
-  border-color: hsl(var(--destructive) / 0.3);
-  background: hsl(var(--destructive) / 0.06);
-  color: hsl(var(--destructive));
-}
-
-.notification-card {
-  padding: 1.5rem;
-  border: 1px solid hsl(var(--border));
-  border-radius: 1.5rem;
-  background: hsl(var(--card));
-}
-
-.notification-card-head {
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
-}
-
-.notification-actions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.75rem;
-}
-
-.read-indicator {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.4rem;
-  color: hsl(var(--muted-foreground));
-  font-size: 0.85rem;
-  font-weight: 600;
-}
-
-.notification-chip {
-  display: inline-flex;
-  align-items: center;
-  min-height: 1.9rem;
-  padding: 0 0.7rem;
-  border-radius: 9999px;
-  font-size: 0.72rem;
-  font-weight: 700;
-}
-
-.notification-chip.type {
-  background: hsl(var(--primary) / 0.1);
-  color: hsl(var(--primary));
-}
-
-.notification-chip.neutral {
-  background: hsl(var(--muted));
-  color: hsl(var(--muted-foreground));
-}
-
-.notification-chip.success {
-  background: #ecfdf5;
-  color: #15803d;
-}
-
-.notification-chip.warning {
-  background: #fef3c7;
-  color: #b45309;
-}
-
-.notification-summary-grid {
-  display: grid;
-  gap: 0.9rem;
-  margin-top: 1.25rem;
-}
-
-.notification-summary-item {
-  padding: 0.9rem 1rem;
-  border-radius: 1rem;
-  background: hsl(var(--muted));
-}
-
-.notification-summary-label {
-  display: block;
-  color: hsl(var(--muted-foreground));
-  font-size: 0.72rem;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-}
-
-.notification-summary-value {
-  display: block;
-  margin-top: 0.35rem;
-  color: hsl(var(--card-foreground));
-  line-height: 1.45;
-}
-
-@media (min-width: 960px) {
-  .filter-panel {
-    grid-template-columns: minmax(0, 2fr) minmax(16rem, 1fr) auto;
-    align-items: center;
-  }
-
-  .notification-card-head {
-    flex-direction: row;
-    justify-content: space-between;
-    align-items: flex-start;
-  }
-
-  .notification-actions {
-    justify-content: flex-end;
-  }
-
-  .notification-summary-grid {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-  }
-}
-</style>

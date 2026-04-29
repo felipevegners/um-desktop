@@ -297,11 +297,18 @@ export const useRidesStore = defineStore('rides', {
         const result = await createRideService(rideData);
         return { success: true, data: result };
       } catch (error: any) {
-        const message = error?.data?.message || error?.message || 'Erro desconhecido';
+        const responseData = error?.data ?? error?.response?.data ?? null;
+        const message =
+          responseData?.message ||
+          responseData?.error ||
+          error?.message ||
+          (typeof error === 'string' ? error : 'Erro desconhecido');
+
         return {
           success: false,
           error: message,
-          statusCode: error?.statusCode || 500,
+          statusCode: error?.statusCode || error?.response?.status || 500,
+          data: responseData,
         };
       } finally {
         this.loadingData = false;

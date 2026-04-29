@@ -84,21 +84,32 @@ onMounted(() => {
   <main class="space-y-6 p-6">
     <section class="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
       <div class="space-y-3">
-        <button type="button" class="back-link" @click="navigateTo('/notifications')">
+        <button
+          type="button"
+          class="inline-flex items-center gap-2 h-10 px-4 rounded-full text-sm font-semibold border border-zinc-200 bg-white text-zinc-900 hover:bg-zinc-50"
+          @click="navigateTo('/notifications')"
+        >
           <ArrowLeft class="h-4 w-4" />
           Voltar para notificações
         </button>
         <div v-if="notification" class="space-y-3">
           <div class="flex flex-wrap items-center gap-2">
-            <span class="detail-chip type">{{
-              getNotificationTypeLabel(notification.type)
-            }}</span>
-            <span class="detail-chip neutral">
-              {{ formatNotificationDate(notification.createdAt) }}
-            </span>
-            <span :class="['detail-chip', notification.read ? 'success' : 'warning']">
-              {{ notification.read ? 'Lida' : 'Não lida' }}
-            </span>
+            <span
+              class="inline-flex items-center h-8 px-3 rounded-full text-xs font-bold bg-primary/10 text-primary"
+              >{{ getNotificationTypeLabel(notification.type) }}</span
+            >
+            <span
+              class="inline-flex items-center h-8 px-3 rounded-full text-xs font-bold bg-zinc-100 text-zinc-500"
+              >{{ formatNotificationDate(notification.createdAt) }}</span
+            >
+            <span
+              :class="[
+                notification.read
+                  ? 'inline-flex items-center h-8 px-3 rounded-full text-xs font-bold bg-emerald-50 text-emerald-800'
+                  : 'inline-flex items-center h-8 px-3 rounded-full text-xs font-bold bg-amber-50 text-amber-700',
+              ]"
+              >{{ notification.read ? 'Lida' : 'Não lida' }}</span
+            >
           </div>
           <h1 class="flex items-center gap-2 text-2xl font-bold text-zinc-950">
             <BellRing :size="24" />
@@ -116,33 +127,41 @@ onMounted(() => {
             notification.type === 'ride_created' && getNotificationRideCode(notification)
           "
           :to="`/rides/form/edit/${getNotificationRideCode(notification)}`"
-          class="mark-read-button"
+          class="inline-flex items-center gap-2 h-10 px-4 rounded-full text-sm font-semibold bg-primary text-primary-foreground hover:opacity-90"
+          >Ver atendimento {{ getNotificationRideCode(notification) }}</NuxtLink
         >
-          Ver atendimento {{ getNotificationRideCode(notification) }}
-        </NuxtLink>
         <button
           v-if="!notification.read"
           type="button"
-          class="mark-read-button"
+          class="inline-flex items-center gap-2 h-10 px-4 rounded-full text-sm font-semibold bg-primary text-primary-foreground hover:opacity-90"
           @click="markAsRead"
         >
           <LoaderCircle v-if="isMarking" class="h-4 w-4 animate-spin" />
           <CheckCheck v-else class="h-4 w-4" />
           Marcar como lida
         </button>
-        <span v-else class="read-pill">
+        <span
+          v-else
+          class="inline-flex items-center gap-2 text-zinc-500 text-sm font-semibold"
+        >
           <MailOpen class="h-4 w-4" />
           Notificação já lida
         </span>
       </div>
     </section>
 
-    <section v-if="isLoading" class="detail-state">
+    <section
+      v-if="isLoading"
+      class="flex items-center justify-center gap-3 min-h-48 p-8 border border-dashed rounded-xl bg-zinc-50 text-zinc-500"
+    >
       <LoaderCircle class="h-5 w-5 animate-spin" />
       Carregando notificação...
     </section>
 
-    <section v-else-if="errorMessage" class="detail-state error">
+    <section
+      v-else-if="errorMessage"
+      class="flex items-center justify-center gap-3 min-h-48 p-8 border border-solid border-red-200 rounded-xl bg-red-50 text-red-600"
+    >
       {{ errorMessage }}
     </section>
 
@@ -156,10 +175,13 @@ onMounted(() => {
             <div
               v-for="item in getNotificationSummaryItems(notification)"
               :key="`${notification.id}-${item.label}`"
-              class="detail-summary-item"
+              class="p-4 rounded-lg bg-zinc-50"
             >
-              <span class="detail-summary-label">{{ item.label }}</span>
-              <strong class="detail-summary-value">{{ item.value }}</strong>
+              <span
+                class="block text-zinc-500 text-xs font-bold uppercase tracking-wider"
+                >{{ item.label }}</span
+              >
+              <strong class="block mt-1 text-zinc-900 leading-6">{{ item.value }}</strong>
             </div>
           </CardContent>
         </Card>
@@ -180,10 +202,13 @@ onMounted(() => {
           </CardContent>
         </Card>
       </section>
-
       <Card class="border-zinc-200 bg-white">
         <CardHeader>
           <CardTitle>Payload completo</CardTitle>
+          <pre
+            class="overflow-x-auto p-4 rounded-lg bg-slate-900 text-slate-200 text-sm leading-6 font-mono"
+            >{{ stringifyNotificationBody(notification) }}</pre
+          >
         </CardHeader>
         <CardContent>
           <pre class="payload-view">{{ stringifyNotificationBody(notification) }}</pre>
@@ -192,126 +217,4 @@ onMounted(() => {
     </template>
   </main>
 </template>
-
-<style scoped>
-.back-link,
-.mark-read-button {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.5rem;
-  min-height: 2.6rem;
-  padding: 0 1rem;
-  border-radius: 9999px;
-  font-size: 0.85rem;
-  font-weight: 700;
-  transition:
-    background-color 0.15s ease,
-    opacity 0.15s ease,
-    border-color 0.15s ease;
-}
-
-.back-link {
-  border: 1px solid hsl(var(--border));
-  background: hsl(var(--background));
-  color: hsl(var(--foreground));
-}
-
-.mark-read-button {
-  background: hsl(var(--primary));
-  color: hsl(var(--primary-foreground));
-}
-
-.back-link:hover {
-  background: hsl(var(--muted));
-}
-
-.mark-read-button:hover {
-  opacity: 0.9;
-}
-
-.read-pill,
-.detail-chip {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.35rem;
-  min-height: 2rem;
-  padding: 0 0.75rem;
-  border-radius: 9999px;
-  font-size: 0.74rem;
-  font-weight: 700;
-}
-
-.detail-chip.type {
-  background: hsl(var(--primary) / 0.1);
-  color: hsl(var(--primary));
-}
-
-.detail-chip.neutral {
-  background: hsl(var(--muted));
-  color: hsl(var(--muted-foreground));
-}
-
-.detail-chip.success,
-.read-pill {
-  background: #ecfdf5;
-  color: #15803d;
-}
-
-.detail-chip.warning {
-  background: #fef3c7;
-  color: #b45309;
-}
-
-.detail-state {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.75rem;
-  min-height: 12rem;
-  padding: 2rem;
-  border: 1px dashed hsl(var(--border));
-  border-radius: 1.5rem;
-  background: hsl(var(--muted));
-  color: hsl(var(--muted-foreground));
-}
-
-.detail-state.error {
-  border-style: solid;
-  border-color: hsl(var(--destructive) / 0.3);
-  background: hsl(var(--destructive) / 0.06);
-  color: hsl(var(--destructive));
-}
-
-.detail-summary-item {
-  padding: 1rem;
-  border-radius: 1rem;
-  background: hsl(var(--muted));
-}
-
-.detail-summary-label {
-  display: block;
-  color: hsl(var(--muted-foreground));
-  font-size: 0.72rem;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-}
-
-.detail-summary-value {
-  display: block;
-  margin-top: 0.35rem;
-  color: hsl(var(--card-foreground));
-  line-height: 1.5;
-}
-
-.payload-view {
-  overflow-x: auto;
-  padding: 1rem;
-  border-radius: 1rem;
-  background: #0f172a;
-  color: #e2e8f0;
-  font-size: 0.82rem;
-  line-height: 1.6;
-}
-</style>
+<style scoped></style>

@@ -1,11 +1,10 @@
 <script setup lang="ts">
+import { columns } from '@/components/rides/columns/driver/canceled';
 import { CalendarX2, LoaderCircle } from 'lucide-vue-next';
 import { storeToRefs } from 'pinia';
 import { onMounted } from 'vue';
 import DataTable from '~/components/shared/DataTable.vue';
 import { useRidesStore } from '~/stores/rides.store';
-
-import { columns } from './columns';
 
 const ridesStore = useRidesStore();
 const { getDriverRidesAction } = ridesStore;

@@ -746,8 +746,13 @@ const handleAcceptBudgetOverQuota = () => {
                     }"
                     :ride-progress="ride?.status === 'completed' ? ride?.progress : {}"
                     :driverData="ride?.status === 'in-progress' ? driverData : {}"
-                    :real-polyline="ride?.travel.finalPolyline"
+                    :real-polyline="
+                      ride?.travel.polyLineCoords ||
+                      ride?.travel.finalPolyline ||
+                      ride?.travel.polyline
+                    "
                     :ride-status="ride?.status"
+                    :map-theme="'light'"
                   />
                   <div
                     v-if="ride?.status === 'completed'"

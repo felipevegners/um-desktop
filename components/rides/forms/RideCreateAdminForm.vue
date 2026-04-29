@@ -568,11 +568,33 @@ const handleRideCalculation = async () => {
       departureTime,
     });
 
-    routePolyLine.value = routeCalculation[0]?.polyline?.encodedPolyline;
-    const basePrice = parseFloat(selectedProduct?.value.basePrice);
-    const sanitizeDurationResponse = routeCalculation[0].duration.replace('s', '');
-    const duration = Math.ceil(sanitizeDurationResponse) / 60;
-    const distance = routeCalculation[0].distanceMeters / 1000;
+    // Validate server response: must be a non-empty array of routes
+    if (
+      !routeCalculation ||
+      !Array.isArray(routeCalculation) ||
+      routeCalculation.length === 0
+    ) {
+      // Log entire response object to help debugging when server returns an error
+      // eslint-disable-next-line no-console
+      console.error('Route response is not an array:', routeCalculation);
+      const serverMsg =
+        (routeCalculation &&
+          (routeCalculation.message ||
+            routeCalculation.error ||
+            routeCalculation.statusMessage ||
+            routeCalculation.data?.message)) ||
+        'Nenhuma rota retornada pelo servidor';
+      throw new Error(serverMsg);
+    }
+
+    const firstRoute = routeCalculation[0] || {};
+    routePolyLine.value = firstRoute?.polyline?.encodedPolyline || '';
+    const basePrice = parseFloat(selectedProduct?.value.basePrice || '0');
+    const durationStr = firstRoute?.duration ? String(firstRoute.duration) : null;
+    if (!durationStr) throw new Error('Rota retornada sem duração');
+    const sanitizeDurationResponse = durationStr.replace('s', '');
+    const duration = Math.ceil(Number(sanitizeDurationResponse)) / 60;
+    const distance = (firstRoute?.distanceMeters || 0) / 1000;
 
     if (selectedProduct.value.type === 'contract') {
       let ridePrice = parseFloat(basePrice.toFixed(2));
@@ -608,7 +630,7 @@ const handleRideCalculation = async () => {
       remainingRideAmount.value = ridePrice.toFixed(2).toString();
     }
 
-    calculatedEstimates.value.estimatedDistance = routeCalculation[0].distanceMeters;
+    calculatedEstimates.value.estimatedDistance = firstRoute?.distanceMeters || 0;
     calculatedEstimates.value.estimatedDuration = parseInt(sanitizeDurationResponse);
 
     if (form.values.rideAddons.length) {
@@ -626,6 +648,9 @@ const handleRideCalculation = async () => {
       remainingRideAmount.value = finalPrice.toFixed(2).toString();
     }
   } catch (error) {
+    // Log error to the browser console for debugging
+    // eslint-disable-next-line no-console
+    console.error('Failed to calculate route (admin):', error);
     toast({
       title: 'Opss!',
       class: 'bg-red-500 border-0 text-white text-2xl',
@@ -633,20 +658,23 @@ const handleRideCalculation = async () => {
     });
     loadingRoute.value = false;
   } finally {
-    decodePolyline(routePolyLine.value);
-    loadingRoute.value = false;
-    showRenderedMap.value = true;
-    showGenerateRide.value = true;
+    if (routePolyLine.value) {
+      decodePolyline(routePolyLine.value);
+      showRenderedMap.value = true;
+      showGenerateRide.value = true;
 
-    const targetElement = document.getElementById('ride-map');
-    if (targetElement) {
-      setTimeout(() => {
-        targetElement.scrollIntoView({
-          behavior: 'smooth',
-          block: 'start',
-        });
-      }, 100);
+      const targetElement = document.getElementById('ride-map');
+      if (targetElement) {
+        setTimeout(() => {
+          targetElement.scrollIntoView({
+            behavior: 'smooth',
+            block: 'start',
+          });
+        }, 100);
+      }
     }
+
+    loadingRoute.value = false;
   }
 };
 
@@ -878,6 +906,7 @@ const onSubmit = form.handleSubmit(async (values) => {
       : null;
   const successfulDates: string[] = [];
   const failedDates: string[] = [];
+  const failedErrors: string[] = [];
 
   const dispatcherBase = {
     user: data?.value?.user?.name,
@@ -1018,6 +1047,13 @@ const onSubmit = form.handleSubmit(async (values) => {
       successfulDates.push(recurringDate);
     } else {
       failedDates.push(recurringDate);
+      const errMsg =
+        result?.error ??
+        result?.data?.message ??
+        (typeof result === 'string' ? result : 'Erro desconhecido');
+      failedErrors.push(errMsg);
+      // eslint-disable-next-line no-console
+      console.error('createRideAction failed for date', recurringDate, result);
     }
   }
 
@@ -1050,9 +1086,12 @@ const onSubmit = form.handleSubmit(async (values) => {
     }, 1000);
   } else {
     loadingGenerateRide.value = false;
+    const message = failedErrors.length
+      ? failedErrors.join('\n')
+      : 'Ocorreu um erro ao criar o atendimento. Tente novamente.';
     toast({
       title: 'Oops!',
-      description: 'Ocorreu um erro ao criar o atendimento. Tente novamente.',
+      description: message,
       variant: 'destructive',
     });
   }

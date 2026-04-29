@@ -6,7 +6,7 @@ import AvatarEdit from '@/components/shared/AvatarEdit.vue';
 import { useToast } from '@/components/ui/toast/use-toast';
 import { driverOffersList } from '@/config/drivers';
 import { toTypedSchema } from '@vee-validate/zod';
-import { Car, Check, Edit, Eye, EyeOff, File, LoaderCircle, X } from 'lucide-vue-next';
+import { Car, Check, Eye, EyeOff, File, LoaderCircle, Upload, X } from 'lucide-vue-next';
 import { vMaska } from 'maska/vue';
 import { storeToRefs } from 'pinia';
 import { useForm } from 'vee-validate';
@@ -161,7 +161,7 @@ driverFiles.value = {
   addressCopy: normalizeFileEntry(driver?.value?.driverFiles?.addressCopy),
   bankCopy: normalizeFileEntry(driver?.value?.driverFiles?.bankCopy),
 };
-const driverProfilePicture = reactive({
+const driverProfilePicture = ref({
   name: driver?.value?.driverFiles?.picture?.name || '',
   url: driver?.value?.driverFiles?.picture?.url || '',
   key: driver?.value?.driverFiles?.picture?.key || '',
@@ -263,7 +263,7 @@ const onSubmit = driversForm.handleSubmit(async (values) => {
     offers: values.driverOffers,
     driverFiles: {
       ...driverFiles.value,
-      picture: driverProfilePicture,
+      picture: driverProfilePicture.value,
     },
     address: {
       zipcode: values.zipcode,
@@ -594,7 +594,7 @@ const onSubmit = driversForm.handleSubmit(async (values) => {
             <section
               id="files"
               class="my-10"
-              :class="`${hasPendingActions ? 'p-6 rounded-md border border-red-500 bg-red-200' : ''}`"
+              :class="`${hasPendingActions ? 'p-6 rounded-md border-2 border-red-500 bg-white' : ''}`"
             >
               <h2 class="mb-4 text-lg font-bold flex items-center gap-2">
                 <File />
@@ -605,7 +605,7 @@ const onSubmit = driversForm.handleSubmit(async (values) => {
                 <div
                   class="border-2 border-dashed border-gray-300 p-4 rounded-lg flex flex-col gap-4"
                 >
-                  <div class="flex items-center gap-2">
+                  <div class="flex items-center justify-between gap-2">
                     <span class="font-bold">CNH (Frente e Verso)</span>
                     <Button
                       type="button"
@@ -613,7 +613,7 @@ const onSubmit = driversForm.handleSubmit(async (values) => {
                       size="icon"
                       @click="editDriverCnhCopy = !editDriverCnhCopy"
                     >
-                      <Edit :size="16" />
+                      <Upload :size="16" />
                     </Button>
                   </div>
                   <div
@@ -671,7 +671,7 @@ const onSubmit = driversForm.handleSubmit(async (values) => {
                 <div
                   class="border-2 border-dashed border-gray-300 p-4 rounded-lg flex flex-col gap-4"
                 >
-                  <div class="flex items-center gap-2">
+                  <div class="flex items-center justify-between gap-2">
                     <span class="font-bold">Comprovante de Residência</span>
                     <Button
                       type="button"
@@ -679,14 +679,14 @@ const onSubmit = driversForm.handleSubmit(async (values) => {
                       size="icon"
                       @click="editDriverAddressCopy = !editDriverAddressCopy"
                     >
-                      <Edit :size="16" />
+                      <Upload :size="16" />
                     </Button>
                   </div>
                   <div
                     v-if="!editDriverAddressCopy && driverFiles?.addressCopy?.name"
                     class="space-y-2"
                   >
-                    <div class="flex items-center gap-2">
+                    <div class="flex items-center justify-between gap-2">
                       <Check class="text-green-500" :size="20" />
                       <span>{{ driverFiles?.addressCopy?.name }}</span>
                     </div>
@@ -737,7 +737,7 @@ const onSubmit = driversForm.handleSubmit(async (values) => {
                 <div
                   class="border-2 border-dashed border-gray-300 p-4 rounded-lg flex flex-col gap-4"
                 >
-                  <div class="flex items-center gap-2">
+                  <div class="flex items-center justify-between gap-2">
                     <span class="font-bold">Extrato Bancário</span>
                     <Button
                       type="button"
@@ -745,14 +745,14 @@ const onSubmit = driversForm.handleSubmit(async (values) => {
                       size="icon"
                       @click="editDriverBankCopy = !editDriverBankCopy"
                     >
-                      <Edit :size="16" />
+                      <Upload :size="16" />
                     </Button>
                   </div>
                   <div
                     v-if="!editDriverBankCopy && driverFiles?.bankCopy?.name"
                     class="space-y-2"
                   >
-                    <div class="flex items-center gap-2">
+                    <div class="flex items-center justify-between gap-2">
                       <Check class="text-green-500" :size="20" />
                       <span>{{ driverFiles?.bankCopy?.name }}</span>
                     </div>

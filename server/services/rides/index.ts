@@ -12,6 +12,29 @@ export const getRideRoutesService = async (rideData: any) => {
   }
 };
 
+export const getRideDistanceService = async (payload: {
+  origins: string[];
+  destinations: string[];
+}) => {
+  try {
+    const { origins, destinations } = payload;
+    // Join with pipe as expected by the Distance Matrix API
+    const params = {
+      origins: Array.isArray(origins) ? origins.join('|') : origins,
+      destinations: Array.isArray(destinations) ? destinations.join('|') : destinations,
+    } as Record<string, string>;
+
+    const response = await $fetch('/api/travels/distance', {
+      method: 'GET',
+      params,
+    });
+
+    return response;
+  } catch (error) {
+    return error;
+  }
+};
+
 export const getRidesService = async (
   rideId: string,
   query?: Record<string, string | number | boolean | undefined>,

@@ -1,75 +1,67 @@
+import { createError } from 'h3';
+
+import { resolveUmApiBaseUrl } from '../../utils/um-api';
+
 export default defineEventHandler(async (event) => {
   const body = await readBody(event);
   const { locations, departureTime } = body;
-  const API_KEY = process.env.VITE_GOOGLE_MAPS_API_KEY;
-  const routesUrl = 'https://routes.googleapis.com/directions/v2:computeRoutes';
-  const routesMaskOptions =
-    'routes.duration,routes.distanceMeters,routes.polyline.encodedPolyline';
-  // routes.legs
 
-  // Validate input
-  if (!Array.isArray(locations) || locations.length < 2) {
-    return { statusCode: 400, message: 'locations array of at least 2 required' };
+  // Read runtime config first (Nuxt public runtime config), then fall back
+  // to environment variables. Support the new per-service flag
+  // `UM_DESKTOP_ENABLE_DIRECTIONS` while keeping backward compatibility
+  // with `VITE_ENABLE_DIRECTIONS`.
+  const config = useRuntimeConfig();
+  const ENABLE_DIRECTIONS =
+    String(
+      config.public?.UM_DESKTOP_ENABLE_DIRECTIONS ??
+        config.public?.VITE_ENABLE_DIRECTIONS ??
+        process.env.UM_DESKTOP_ENABLE_DIRECTIONS ??
+        process.env.VITE_ENABLE_DIRECTIONS ??
+        'false',
+    ) === 'true';
+
+  // Short-circuit when directions are disabled via runtime config to avoid
+  // making expensive external calls during tests or while the feature is off.
+  if (!ENABLE_DIRECTIONS) {
+    // eslint-disable-next-line no-console
+    console.debug('Directions disabled (desktop flag not true), returning empty array', {
+      ENABLE_DIRECTIONS,
+    });
+    return [];
   }
 
-  // Normalization supports string lat,lng, plain address, or {lat, lng}
-  const toWaypoint = (wp: any) => {
-    if (wp && wp.location && wp.location.latLng) return wp;
-    if (typeof wp === 'string' && /^-?\d+(\.\d+)?,-?\d+(\.\d+)?$/.test(wp.trim())) {
-      const [latitude, longitude] = wp.split(',').map(Number);
-      return { location: { latLng: { latitude, longitude } } };
-    }
-    if (typeof wp === 'object' && wp.lat !== undefined && wp.lng !== undefined) {
-      return {
-        location: { latLng: { latitude: Number(wp.lat), longitude: Number(wp.lng) } },
-      };
-    }
-    if (
-      typeof wp === 'object' &&
-      wp.coords &&
-      wp.coords.lat !== undefined &&
-      wp.coords.lng !== undefined
-    ) {
-      return {
-        location: {
-          latLng: { latitude: Number(wp.coords.lat), longitude: Number(wp.coords.lng) },
-        },
-      };
-    }
-    if (typeof wp === 'object' && wp.address) return { address: wp.address };
-    return { address: String(wp) };
-  };
+  // Proxy to configured um-api (server-side) rather than calling Google directly
+  const runtimeBase =
+    (config.public.PUBLIC_API_BASE_URL as string) || process.env.PUBLIC_API_BASE_URL;
+  const base = runtimeBase || resolveUmApiBaseUrl();
+  const url = `${base.replace(/\/$/, '')}/travels/routes`;
 
-  const origin = toWaypoint(locations[0]);
-  const destination = toWaypoint(locations[locations.length - 1]);
-  const intermediates = locations.slice(1, -1).map(toWaypoint);
+  // Log the resolved target for easier debugging in dev
+  // eslint-disable-next-line no-console
+  console.debug('Proxying /api/travels/routes to', { base, url, ENABLE_DIRECTIONS });
 
   try {
-    const data: any = await $fetch(routesUrl, {
+    const data: any = await $fetch(url, {
       method: 'POST',
+      body: { locations, departureTime },
       headers: {
-        'X-Goog-Api-Key': API_KEY as string,
-        'X-Goog-FieldMask': routesMaskOptions,
-      },
-      body: {
-        origin: origin,
-        destination: destination,
-        intermediates: intermediates,
-        travelMode: 'DRIVE',
-        routingPreference: 'TRAFFIC_AWARE_OPTIMAL',
-        // departureTime: departureTime,
-        computeAlternativeRoutes: false,
-        routeModifiers: {
-          avoidTolls: false,
-          avoidHighways: false,
-          avoidFerries: false,
-        },
-        languageCode: 'pt-BR',
-        units: 'METRIC',
+        'X-UM-CLIENT': 'um-desktop',
       },
     });
-    return data?.routes;
-  } catch (error) {
-    throw error;
+    return data;
+  } catch (error: any) {
+    // Log error details for server-side debugging
+    console.error('Failed proxying routes to um-api', {
+      url,
+      status: error?.status || error?.response?.status,
+      message: error?.data?.message || error?.message || String(error),
+      error,
+    });
+    // normalize error to provide useful message to client
+    throw createError({
+      statusCode: error?.status || 502,
+      statusMessage:
+        error?.data?.message || error?.message || 'Failed proxying routes to um-api',
+    });
   }
 });

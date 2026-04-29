@@ -394,7 +394,7 @@ const handleAcceptBudgetOverQuota = () => {
       </div>
     </section>
     <section v-if="ride?.status === 'over_quota'" class="mb-10">
-      <div class="p-4 bg-amber-300 border border-amber-600 rounded-md">
+      <div class="p-4 bg-amber-100 border border-amber-600 rounded-md">
         <div class="flex flex-col gap-2">
           <MessageSquareWarning class="text-amber-900" />
           <h3 class="font-bold text-amber-900 text-xl">ATENÇÃO!</h3>
@@ -407,8 +407,8 @@ const handleAcceptBudgetOverQuota = () => {
           </p>
           <p v-else>
             Este atendimento excedeu o budget da filial. Entre em contato com o Gestor
-            Master ({{ contract.manager.username }} - {{ contract.manager.email }}) para
-            mais informações.
+            Master ({{ contract?.manager?.username }} - {{ contract?.manager?.email }})
+            para mais informações.
           </p>
           <small class="block mb-6 text-amber-900">
             Atendimentos com status "BUDGET" não são confirmados e estão sujeitos a
@@ -471,8 +471,13 @@ const handleAcceptBudgetOverQuota = () => {
                     }"
                     :ride-progress="ride?.status === 'completed' ? ride?.progress : {}"
                     :driverData="ride?.status === 'in-progress' ? driverData : {}"
-                    :real-polyline="ride?.travel.finalPolyline"
+                    :real-polyline="
+                      ride?.travel.polyLineCoords ||
+                      ride?.travel.finalPolyline ||
+                      ride?.travel.polyline
+                    "
                     :ride-status="ride?.status"
+                    :map-theme="'light'"
                   />
                   <div
                     v-if="ride?.status === 'completed'"

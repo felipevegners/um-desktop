@@ -1,20 +1,21 @@
 <script setup lang="ts">
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuTrigger,
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { Bell, BellRing, CheckCheck, ChevronRight, LoaderCircle } from 'lucide-vue-next';
+import { useAccountStore } from '@/stores/account.store';
+import { Bell, CheckCheck, ChevronRight, LoaderCircle } from 'lucide-vue-next';
 import {
-  getNotificationsService,
-  markNotificationAsReadService,
+    getNotificationsService,
+    markNotificationAsReadService,
 } from '~/server/services/notifications';
 import {
-  type NotificationHistoryItem,
-  formatNotificationDate,
-  getNotificationDescription,
-  getNotificationRideCode,
-  getNotificationTypeLabel,
+    type NotificationHistoryItem,
+    formatNotificationDate,
+    getNotificationDescription,
+    getNotificationRideCode,
+    getNotificationTypeLabel,
 } from '~/utils/notifications';
 
 const POLL_INTERVAL_MS = 30_000;
@@ -25,29 +26,139 @@ const markingId = ref<string | null>(null);
 
 let pollingTimer: ReturnType<typeof setInterval> | null = null;
 
+const accountStore = useAccountStore();
+const currentAccount = computed(() => accountStore.account || {});
+
+function toRecord(value: unknown): Record<string, unknown> | null {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return null;
+  return value as Record<string, unknown>;
+}
+
+function readNestedValue(source: Record<string, unknown> | null, path: string[]) {
+  let current: unknown = source;
+  for (const segment of path) {
+    const next = toRecord(current);
+    if (!next || !(segment in next)) return null;
+    current = next[segment];
+  }
+
+  if (typeof current === 'string') return current.trim();
+  if (typeof current === 'number' || typeof current === 'boolean') return String(current);
+  return null;
+}
+
+function hasContractMatch(
+  notification: NotificationHistoryItem,
+  contractId?: string | null,
+) {
+  if (!contractId) return false;
+  // Prefer top-level contractId
+  if (notification.contractId && String(notification.contractId) === contractId)
+    return true;
+  const body = toRecord(notification.body);
+  return (
+    readNestedValue(body, ['billing', 'paymentData', 'contractId']) === contractId ||
+    readNestedValue(body, ['user', 'contract', 'contractId']) === contractId
+  );
+}
+
+function hasBranchMatch(notification: NotificationHistoryItem, branchId?: string | null) {
+  if (!branchId) return false;
+  // Prefer top-level branchId
+  if (
+    (notification as any).branchId &&
+    String((notification as any).branchId) === branchId
+  )
+    return true;
+  const body = toRecord(notification.body);
+  return (
+    readNestedValue(body, ['user', 'contract', 'branchId']) === branchId ||
+    readNestedValue(body, ['branchId']) === branchId ||
+    readNestedValue(body, ['contract', 'branchId']) === branchId ||
+    readNestedValue(body, ['billing', 'paymentData', 'branchId']) === branchId ||
+    readNestedValue(body, ['billing', 'paymentData', 'contract', 'branchId']) === branchId
+  );
+}
+
+const filteredNotifications = computed(() => {
+  const role = String(currentAccount.value?.role || '').toLowerCase();
+  const accountId = String(currentAccount.value?.id || '');
+  const contractId = String(currentAccount.value?.contract?.contractId || '');
+  const branchId = String(currentAccount.value?.contract?.branchId || '');
+
+  // If local account not ready, trust server-scoped list
+  if (!accountId && !role) return notifications.value;
+
+  // If user is a manager but local contract/branch info is missing, trust server-side scope
+  const managerRoles = [
+    'master-manager',
+    'branch-manager',
+    'platform-admin',
+  ];
+  if (managerRoles.includes(role) && !contractId && !branchId) return notifications.value;
+
+  return notifications.value.filter((notification) => {
+    // explicit roles on notification
+    if (Array.isArray(notification.roles) && notification.roles.length > 0) {
+      const normalizedRoles = notification.roles.map((r: string) =>
+        String(r || '').toLowerCase(),
+      );
+      if (normalizedRoles.includes(role)) return true;
+    }
+
+    if (role === 'admin') return true;
+
+    if (role === 'master-manager') {
+      return hasContractMatch(notification, contractId);
+    }
+
+    if (['branch-manager', 'platform-admin'].includes(role)) {
+      // branch managers must match both contract and branch
+      const type = String(notification.type || '').toLowerCase();
+      const isRideType = /ride_/.test(type) || type.includes('ride');
+      return (
+        isRideType &&
+        hasContractMatch(notification, contractId) &&
+        hasBranchMatch(notification, branchId)
+      );
+    }
+
+    if (role === 'platform-user' || role === 'platform-corp-user') {
+      return String(notification.userId || '') === accountId;
+    }
+
+    if (role === 'platform-driver') {
+      return String(notification.driverId || '') === accountId;
+    }
+
+    // fallback to explicit userId
+    if (notification.userId && String(notification.userId) === accountId) return true;
+
+    return false;
+  });
+});
+
+const latestNotifications = computed(() => filteredNotifications.value.slice(0, 5));
+
 const unreadCount = computed(
-  () => notifications.value.filter((notification) => !notification.read).length,
+  () => filteredNotifications.value.filter((notification) => !notification.read).length,
 );
-const latestNotifications = computed(() => notifications.value.slice(0, 5));
 
 const loadNotifications = async () => {
   isLoading.value = true;
 
   try {
     const response = await getNotificationsService();
-    notifications.value = Array.isArray(response)
-      ? (response as NotificationHistoryItem[])
-      : [];
+    if (Array.isArray(response)) {
+      notifications.value = response as NotificationHistoryItem[];
+    }
   } finally {
     isLoading.value = false;
   }
 };
 
 const markAsRead = async (notificationId: string) => {
-  if (markingId.value === notificationId) {
-    return;
-  }
-
+  if (markingId.value === notificationId) return;
   markingId.value = notificationId;
 
   try {
@@ -64,7 +175,6 @@ const openNotification = async (notification: NotificationHistoryItem) => {
   if (!notification.read) {
     await markAsRead(notification.id);
   }
-
   await navigateTo(`/notifications/${notification.id}`);
 };
 
@@ -86,55 +196,78 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <div class="notification-wrapper">
+  <div class="relative inline-flex items-center justify-center p-1">
     <DropdownMenu>
       <DropdownMenuTrigger as-child>
-        <button type="button" class="notification-trigger" aria-label="Notificações">
-          <BellRing v-if="unreadCount > 0" :size="24" />
+        <div class="relative">
+          <Bell v-if="unreadCount > 0" :size="24" />
           <Bell v-else :size="24" />
-        </button>
+        </div>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" :side-offset="10" class="notification-menu">
-        <div class="notification-header">
+
+      <DropdownMenuContent
+        align="end"
+        :side-offset="10"
+        class="w-96 min-w-[24rem] p-0 overflow-hidden"
+      >
+        <div
+          class="flex items-start justify-between gap-4 p-4 border-b border-zinc-200 bg-zinc-50"
+        >
           <div>
-            <p class="notification-title">Notificações</p>
-            <p class="notification-subtitle">
+            <p class="text-sm font-bold text-zinc-900">Notificações</p>
+            <p class="mt-1 text-xs text-zinc-500">
               {{ unreadCount }} não lida<span v-if="unreadCount !== 1">s</span>
             </p>
           </div>
-          <button type="button" class="notification-link" @click="openNotificationsList">
-            Ver todas
-          </button>
+          <Button variant="secondary" @click="openNotificationsList"> Ver todas </Button>
         </div>
 
-        <div v-if="isLoading" class="notification-state">
-          <LoaderCircle class="h-4 w-4 animate-spin" />
-          Carregando notificações...
+        <div v-if="isLoading" class="max-h-96 overflow-y-auto">
+          <!-- single skeleton row to avoid dropdown height jump -->
+          <div
+            class="flex items-start justify-between gap-3 w-full p-4 border-b border-zinc-200"
+          >
+            <div class="min-w-0 flex-1">
+              <div class="flex items-center justify-between gap-3">
+                <span class="block h-3 w-28 rounded bg-zinc-200 animate-pulse"></span>
+                <span class="block h-3 w-16 rounded bg-zinc-200 animate-pulse"></span>
+              </div>
+              <div class="mt-3 h-4 w-3/5 rounded bg-zinc-200 animate-pulse"></div>
+              <div class="mt-2 h-3 w-4/5 rounded bg-zinc-200 animate-pulse"></div>
+            </div>
+            <div class="flex items-center gap-2 pt-1">
+              <span class="block h-7 w-7 rounded-full bg-zinc-200 animate-pulse"></span>
+              <ChevronRight class="h-4 w-4 text-zinc-400" />
+            </div>
+          </div>
         </div>
 
-        <div v-else-if="latestNotifications.length === 0" class="notification-state">
+        <div
+          v-else-if="latestNotifications.length === 0"
+          class="flex items-center justify-center gap-2 min-h-24 p-4 text-zinc-500 text-sm"
+        >
           Nenhuma notificação disponível.
         </div>
 
-        <div v-else class="notification-list">
+        <div v-else class="max-h-96 overflow-y-auto">
           <button
             v-for="notification in latestNotifications"
             :key="notification.id"
             type="button"
-            class="notification-item"
+            class="flex items-start justify-between gap-3 w-full p-4 border-b border-zinc-200 hover:bg-zinc-50"
             @click="openNotification(notification)"
           >
-            <div class="notification-item-main">
-              <div class="notification-item-topline">
-                <span class="notification-type">{{
+            <div class="min-w-0 flex-1">
+              <div class="flex items-center justify-between gap-3">
+                <span class="text-primary text-xs font-bold uppercase tracking-wider">{{
                   getNotificationTypeLabel(notification.type)
                 }}</span>
-                <span class="notification-date">
-                  {{ formatNotificationDate(notification.createdAt) }}
-                </span>
+                <span class="text-xs text-zinc-500 whitespace-nowrap">{{
+                  formatNotificationDate(notification.createdAt)
+                }}</span>
               </div>
-              <p class="notification-item-title">{{ notification.title }}</p>
-              <p class="notification-item-description">
+              <p class="mt-1 text-sm font-bold text-zinc-900">{{ notification.title }}</p>
+              <p class="mt-2 text-sm text-zinc-600 leading-5">
                 {{ getNotificationDescription(notification) }}
               </p>
               <NuxtLink
@@ -143,17 +276,16 @@ onUnmounted(() => {
                   getNotificationRideCode(notification)
                 "
                 :to="`/rides/form/edit/${getNotificationRideCode(notification)}`"
-                class="notification-ride-link"
+                class="inline-flex items-center mt-2 text-primary text-sm font-semibold underline underline-offset-2"
                 @click.stop
+                >Ver atendimento {{ getNotificationRideCode(notification) }}</NuxtLink
               >
-                Ver atendimento {{ getNotificationRideCode(notification) }}
-              </NuxtLink>
             </div>
-            <div class="notification-item-side">
+            <div class="flex items-center gap-2 pt-1">
               <button
                 v-if="!notification.read"
                 type="button"
-                class="notification-mark-read"
+                class="inline-flex items-center justify-center w-7 h-7 rounded-full bg-zinc-100 text-primary"
                 @click.stop="markAsRead(notification.id)"
               >
                 <LoaderCircle
@@ -162,8 +294,12 @@ onUnmounted(() => {
                 />
                 <CheckCheck v-else class="h-3.5 w-3.5" />
               </button>
-              <span v-else class="notification-read-pill">Lida</span>
-              <ChevronRight class="h-4 w-4 text-muted-foreground" />
+              <span
+                v-else
+                class="px-2 py-0.5 rounded-full bg-zinc-100 text-zinc-500 text-xs font-bold"
+                >Lida</span
+              >
+              <ChevronRight class="h-4 w-4 text-zinc-400" />
             </div>
           </button>
         </div>
@@ -172,196 +308,9 @@ onUnmounted(() => {
 
     <span
       v-if="unreadCount > 0"
-      class="notification-badge"
+      class="absolute top-0 right-0 min-w-[1.2rem] h-5 px-1 rounded-full bg-um-primary text-black text-[0.68rem] font-bold leading-5 text-center pointer-events-none"
       aria-label="notificações não lidas"
+      >{{ unreadCount > 9 ? '9+' : unreadCount }}</span
     >
-      {{ unreadCount > 9 ? '9+' : unreadCount }}
-    </span>
   </div>
 </template>
-
-<style scoped>
-.notification-wrapper {
-  position: relative;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  padding: 0.25rem;
-}
-
-.notification-trigger {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 2.5rem;
-  height: 2.5rem;
-  background: hsl(var(--background));
-  color: hsl(var(--foreground));
-  transition: border-color 0.2s ease;
-}
-
-.notification-trigger:hover {
-  border-color: hsl(var(--primary));
-}
-
-.notification-badge {
-  position: absolute;
-  top: 0;
-  right: 0;
-  min-width: 1.2rem;
-  height: 1.2rem;
-  padding: 0 0.25rem;
-  border-radius: 9999px;
-  background: hsl(var(--destructive));
-  color: hsl(var(--destructive-foreground));
-  font-size: 0.68rem;
-  font-weight: 700;
-  line-height: 1.2rem;
-  text-align: center;
-  pointer-events: none;
-}
-
-.notification-menu {
-  width: 24rem;
-  padding: 0;
-  overflow: hidden;
-}
-
-.notification-header {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 1rem;
-  padding: 1rem;
-  border-bottom: 1px solid hsl(var(--border));
-  background: hsl(var(--muted));
-}
-
-.notification-title {
-  font-size: 0.95rem;
-  font-weight: 700;
-  color: hsl(var(--foreground));
-}
-
-.notification-subtitle {
-  margin-top: 0.25rem;
-  font-size: 0.75rem;
-  color: hsl(var(--muted-foreground));
-}
-
-.notification-link {
-  color: hsl(var(--primary));
-  font-size: 0.78rem;
-  font-weight: 600;
-}
-
-.notification-state {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.5rem;
-  min-height: 6rem;
-  padding: 1rem;
-  color: hsl(var(--muted-foreground));
-  font-size: 0.82rem;
-}
-
-.notification-list {
-  max-height: 25rem;
-  overflow-y: auto;
-}
-
-.notification-item {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 0.75rem;
-  width: 100%;
-  padding: 0.95rem 1rem;
-  text-align: left;
-  border-bottom: 1px solid hsl(var(--border));
-  transition: background-color 0.15s ease;
-}
-
-.notification-item:hover {
-  background: hsl(var(--muted));
-}
-
-.notification-item-main {
-  min-width: 0;
-  flex: 1;
-}
-
-.notification-item-topline {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 0.75rem;
-}
-
-.notification-type {
-  color: hsl(var(--primary));
-  font-size: 0.72rem;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-}
-
-.notification-date {
-  color: hsl(var(--muted-foreground));
-  font-size: 0.72rem;
-  white-space: nowrap;
-}
-
-.notification-item-title {
-  margin-top: 0.35rem;
-  color: hsl(var(--foreground));
-  font-size: 0.9rem;
-  font-weight: 700;
-}
-
-.notification-item-description {
-  margin-top: 0.25rem;
-  color: hsl(var(--muted-foreground));
-  font-size: 0.8rem;
-  line-height: 1.35;
-}
-
-.notification-ride-link {
-  display: inline-flex;
-  align-items: center;
-  margin-top: 0.4rem;
-  color: hsl(var(--primary));
-  font-size: 0.76rem;
-  font-weight: 600;
-  text-decoration: underline;
-  text-underline-offset: 2px;
-}
-
-.notification-item-side {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding-top: 0.15rem;
-}
-
-.notification-mark-read {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 1.75rem;
-  height: 1.75rem;
-  border-radius: 9999px;
-  background: hsl(var(--muted));
-  color: hsl(var(--primary));
-}
-
-.notification-read-pill {
-  padding: 0.15rem 0.45rem;
-  border-radius: 9999px;
-  background: hsl(var(--muted));
-  color: hsl(var(--muted-foreground));
-  font-size: 0.68rem;
-  font-weight: 700;
-}
-</style>

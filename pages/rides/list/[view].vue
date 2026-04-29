@@ -1,13 +1,13 @@
 <script setup lang="ts">
 import RidesListPage from '@/components/rides/RidesListPage.vue';
+import { columns as adminCancelledColumns } from '@/components/rides/columns/admin/cancelled';
+import { columns as adminCompletedColumns } from '@/components/rides/columns/admin/completed';
+import { columns as adminOpenColumns } from '@/components/rides/columns/admin/open';
+import { columns as corporativeCancelledColumns } from '@/components/rides/columns/corporative/cancelled';
+import { columns as corporativeCompletedColumns } from '@/components/rides/columns/corporative/completed';
+import { columns as corporativeOpenColumns } from '@/components/rides/columns/corporative/open';
 import { useSessionAccess } from '@/composables/auth/useSessionAccess';
 import { CalendarCheck2, CalendarClock, CalendarX2 } from 'lucide-vue-next';
-import { columns as adminCancelledColumns } from '~/pages/admin/rides/cancelled/columns';
-import { columns as adminCompletedColumns } from '~/pages/admin/rides/completed/columns';
-import { columns as adminOpenColumns } from '~/pages/admin/rides/open/columns';
-import { columns as corporativeCancelledColumns } from '~/pages/corporative/rides/cancelled/columns';
-import { columns as corporativeCompletedColumns } from '~/pages/corporative/rides/completed/columns';
-import { columns as corporativeOpenColumns } from '~/pages/corporative/rides/open/columns';
 
 definePageMeta({
   layout: 'admin',
