@@ -80,63 +80,8 @@ function hasBranchMatch(notification: NotificationHistoryItem, branchId?: string
   );
 }
 
-const filteredNotifications = computed(() => {
-  const role = String(currentAccount.value?.role || '').toLowerCase();
-  const accountId = String(currentAccount.value?.id || '');
-  const contractId = String(currentAccount.value?.contract?.contractId || '');
-  const branchId = String(currentAccount.value?.contract?.branchId || '');
-
-  // If local account not ready, trust server-scoped list
-  if (!accountId && !role) return notifications.value;
-
-  // If user is a manager but local contract/branch info is missing, trust server-side scope
-  const managerRoles = [
-    'master-manager',
-    'branch-manager',
-    'platform-admin',
-  ];
-  if (managerRoles.includes(role) && !contractId && !branchId) return notifications.value;
-
-  return notifications.value.filter((notification) => {
-    // explicit roles on notification
-    if (Array.isArray(notification.roles) && notification.roles.length > 0) {
-      const normalizedRoles = notification.roles.map((r: string) =>
-        String(r || '').toLowerCase(),
-      );
-      if (normalizedRoles.includes(role)) return true;
-    }
-
-    if (role === 'admin') return true;
-
-    if (role === 'master-manager') {
-      return hasContractMatch(notification, contractId);
-    }
-
-    if (['branch-manager', 'platform-admin'].includes(role)) {
-      // branch managers must match both contract and branch
-      const type = String(notification.type || '').toLowerCase();
-      const isRideType = /ride_/.test(type) || type.includes('ride');
-      return (
-        isRideType &&
-        hasContractMatch(notification, contractId) &&
-        hasBranchMatch(notification, branchId)
-      );
-    }
-
-    if (role === 'platform-user' || role === 'platform-corp-user') {
-      return String(notification.userId || '') === accountId;
-    }
-
-    if (role === 'platform-driver') {
-      return String(notification.driverId || '') === accountId;
-    }
-
-    // fallback to explicit userId
-    if (notification.userId && String(notification.userId) === accountId) return true;
-
-    return false;
-  });
-});
+// Server now handles scoping. The client shows whatever the API returns.
+const filteredNotifications = computed(() => notifications.value);
 
 const latestNotifications = computed(() => filteredNotifications.value.slice(0, 5));
 

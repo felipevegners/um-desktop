@@ -8,6 +8,7 @@ import {
   MailOpen,
   Search,
 } from 'lucide-vue-next';
+import { useNotificationClientFilter } from '~/composables/useNotificationClientFilter';
 import {
   getNotificationsService,
   markNotificationAsReadService,
@@ -74,26 +75,23 @@ const counters = computed(() => ({
   read: notifications.value.filter((notification) => notification.read).length,
 }));
 
+const filteredByRole = useNotificationClientFilter(notifications.value);
 const filteredNotifications = computed(() => {
+  if (filteredByRole.value === null) return null; // loading
   const normalizedSearch = searchTerm.value.trim().toLowerCase();
-
-  return notifications.value.filter((notification) => {
+  return filteredByRole.value.filter((notification) => {
     if (typeFilter.value !== 'all' && notification.type !== typeFilter.value) {
       return false;
     }
-
     if (readFilter.value === 'unread' && notification.read) {
       return false;
     }
-
     if (readFilter.value === 'read' && !notification.read) {
       return false;
     }
-
     if (!normalizedSearch) {
       return true;
     }
-
     return getNotificationSearchText(notification).includes(normalizedSearch);
   });
 });
@@ -237,7 +235,7 @@ onMounted(() => {
     </section>
 
     <section
-      v-if="isLoading"
+      v-if="isLoading || filteredNotifications === null"
       class="flex items-center justify-center gap-3 min-h-40 p-8 border border-dashed rounded-xl bg-zinc-50 text-zinc-500"
     >
       <LoaderCircle class="h-5 w-5 animate-spin" />

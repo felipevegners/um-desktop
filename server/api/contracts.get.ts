@@ -8,6 +8,15 @@ export default defineEventHandler(async (event) => {
   const query = getQuery<ContractId>(event);
   const contractId = query.id;
   if (contractId) {
+    // Validate contractId looks like a valid Mongo ObjectId hex string before
+    // passing to Prisma. This prevents malformed ids (eg '-' or other placeholders)
+    // from causing a runtime error in the MongoDB adapter.
+    const isValidObjectId =
+      typeof contractId === 'string' && /^[a-fA-F0-9]{24}$/.test(contractId);
+    if (!isValidObjectId) {
+      throw createError({ statusCode: 400, statusMessage: 'Invalid contract id' });
+    }
+
     const contract = await prisma.contracts.findUnique({
       where: {
         id: contractId,

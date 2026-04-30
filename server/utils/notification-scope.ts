@@ -1,19 +1,22 @@
 import { getServerSession } from '#auth';
 import type { H3Event } from 'h3';
 
-const managerRoles = new Set([
-  'master-manager',
-  'branch-manager',
-  'platform-admin',
-]);
+const managerRoles = new Set(['master-manager', 'branch-manager', 'platform-admin']);
+const corpRoles = new Set(['platform-corp-user']);
+const driverRoles = new Set(['platform-driver']);
+const userRoles = new Set(['platform-user']);
 
 export type NotificationRequestScope = {
   role: string | null;
   contractId: string | null;
   branchId: string | null;
   driverId: string | null;
+  userId: string | null;
   isAdmin: boolean;
   isManager: boolean;
+  isCorp: boolean;
+  isDriver: boolean;
+  isUser: boolean;
 };
 
 export async function resolveNotificationRequestScope(
@@ -34,13 +37,18 @@ export async function resolveNotificationRequestScope(
       : typeof user?.driver?.id === 'string'
         ? user.driver.id
         : null;
+  const userId = typeof user?.id === 'string' ? user.id : null;
 
   return {
     role,
     contractId,
     branchId,
     driverId,
+    userId,
     isAdmin: role === 'admin',
     isManager: role !== null && managerRoles.has(role),
+    isCorp: role !== null && corpRoles.has(role),
+    isDriver: role !== null && driverRoles.has(role),
+    isUser: role !== null && userRoles.has(role),
   };
 }

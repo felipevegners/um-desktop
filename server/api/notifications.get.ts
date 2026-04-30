@@ -4,33 +4,42 @@ import { $fetch } from 'ofetch';
 import { resolveNotificationRequestScope } from '../utils/notification-scope';
 import { buildUmApiAuthHeaders, resolveUmApiBaseUrl } from '../utils/um-api';
 
-type NotificationQuery = {
-  read?: string;
-};
-
 export default defineEventHandler(async (event) => {
   const apiBaseUrl = resolveUmApiBaseUrl();
+  const query = getQuery(event) as Record<string, string | undefined>;
   const scope = await resolveNotificationRequestScope(event);
-  const query = getQuery<NotificationQuery>(event);
-
-  // If user is a manager but we have neither contractId nor branchId, deny access
-  if (scope.isManager && !scope.contractId && !scope.branchId) {
-    return [];
-  }
 
   const notificationsUrl = new URL('/notifications', apiBaseUrl);
 
-  if (scope.isManager && scope.contractId) {
-    notificationsUrl.searchParams.set('contractId', scope.contractId);
+  // Envia os parâmetros corretos conforme o role
+  if (scope.role === 'admin') {
+    // nada, admin vê tudo
+  } else if (scope.role === 'master-manager') {
+    if (scope.contractId)
+      notificationsUrl.searchParams.set('contractId', scope.contractId);
+  } else if (scope.role === 'platform-admin') {
+    if (scope.branchId) notificationsUrl.searchParams.set('branchId', scope.branchId);
+  } else if (scope.role === 'platform-corp-user') {
+    if (scope.userId) notificationsUrl.searchParams.set('userId', scope.userId);
+    if (scope.contractId)
+      notificationsUrl.searchParams.set('contractId', scope.contractId);
+  } else if (scope.role === 'platform-driver') {
+    if (scope.userId) notificationsUrl.searchParams.set('userId', scope.userId);
+    if (scope.driverId) notificationsUrl.searchParams.set('driverId', scope.driverId);
+  } else if (scope.role === 'platform-user') {
+    if (scope.userId) notificationsUrl.searchParams.set('userId', scope.userId);
   }
 
-  // If branch-level scope is available, prefer requesting filtered by branchId
-  if (scope.isManager && (scope.branchId || '') !== '') {
-    notificationsUrl.searchParams.set('branchId', scope.branchId as string);
-  }
-
-  if (query.read === 'true' || query.read === 'false') {
-    notificationsUrl.searchParams.set('read', query.read);
+  // forward any explicit provided query params (but don't override session-provided ones)
+  for (const [k, v] of Object.entries(query)) {
+    if (
+      !notificationsUrl.searchParams.has(k) &&
+      v !== undefined &&
+      v !== null &&
+      String(v) !== ''
+    ) {
+      notificationsUrl.searchParams.set(k, String(v));
+    }
   }
 
   try {

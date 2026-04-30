@@ -12,16 +12,38 @@ export default defineEventHandler(async (event) => {
   }
 
   const apiBaseUrl = resolveUmApiBaseUrl();
+  const query = getQuery(event) as Record<string, string | undefined>;
   const scope = await resolveNotificationRequestScope(event);
-
-  if (scope.isManager && !scope.contractId) {
-    throw createError({ statusCode: 404, statusMessage: 'Notificação não encontrada' });
-  }
 
   const notificationUrl = new URL(`/notifications/${id}`, apiBaseUrl);
 
-  if (scope.isManager && scope.contractId) {
-    notificationUrl.searchParams.set('contractId', scope.contractId);
+  // Envia os parâmetros corretos conforme o role
+  if (scope.role === 'admin') {
+    // nada, admin vê tudo
+  } else if (scope.role === 'master-manager') {
+    if (scope.contractId)
+      notificationUrl.searchParams.set('contractId', scope.contractId);
+  } else if (scope.role === 'branch-manager' || scope.role === 'platform-admin') {
+    if (scope.branchId) notificationUrl.searchParams.set('branchId', scope.branchId);
+  } else if (scope.role === 'platform-corp-user') {
+    if (scope.userId) notificationUrl.searchParams.set('userId', scope.userId);
+    if (scope.contractId)
+      notificationUrl.searchParams.set('contractId', scope.contractId);
+  } else if (scope.role === 'platform-driver') {
+    if (scope.userId) notificationUrl.searchParams.set('userId', scope.userId);
+    if (scope.driverId) notificationUrl.searchParams.set('driverId', scope.driverId);
+  } else if (scope.role === 'platform-user') {
+    if (scope.userId) notificationUrl.searchParams.set('userId', scope.userId);
+  }
+
+  for (const [k, v] of Object.entries(query)) {
+    if (
+      !notificationUrl.searchParams.has(k) &&
+      v !== undefined &&
+      v !== null &&
+      String(v) !== ''
+    )
+      notificationUrl.searchParams.set(k, String(v));
   }
 
   try {
