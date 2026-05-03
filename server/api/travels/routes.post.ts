@@ -6,17 +6,11 @@ export default defineEventHandler(async (event) => {
   const body = await readBody(event);
   const { locations, departureTime } = body;
 
-  // Read runtime config first (Nuxt public runtime config), then fall back
-  // to environment variables. Support the new per-service flag
-  // `UM_DESKTOP_ENABLE_DIRECTIONS` while keeping backward compatibility
-  // with `VITE_ENABLE_DIRECTIONS`.
   const config = useRuntimeConfig();
   const ENABLE_DIRECTIONS =
     String(
       config.public?.UM_DESKTOP_ENABLE_DIRECTIONS ??
-        config.public?.VITE_ENABLE_DIRECTIONS ??
         process.env.UM_DESKTOP_ENABLE_DIRECTIONS ??
-        process.env.VITE_ENABLE_DIRECTIONS ??
         'false',
     ) === 'true';
 
