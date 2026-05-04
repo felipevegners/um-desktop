@@ -99,8 +99,8 @@ const { getContractByIdAction } = contractsStore;
 const { contract } = storeToRefs(contractsStore);
 
 const driversStore = useDriverStore();
-const { getDriversAction, getDriverByIdAction } = driversStore;
-const { drivers, driver } = storeToRefs(driversStore);
+const { getDriversAction } = driversStore;
+const { drivers } = storeToRefs(driversStore);
 
 const productsStore = useProductsStore();
 const { getProductsAction } = productsStore;
@@ -140,13 +140,6 @@ const loadingCancelAndDelete = ref<boolean>(false);
 const showFinishModal = ref<boolean>(false);
 const showWaypointsForm = ref<boolean>(false);
 const loadingRemoveDriver = ref<boolean>(false);
-const driverData = ref<any>({
-  loading: true,
-  location: {},
-  name: '',
-  picture: '',
-});
-const driverLocationInterval = ref<any>(null);
 const extraChargesData = reactive(ride?.value.extraCharges || []);
 // Track removed charges for price consistency
 const removedCharges = ref<any[]>([]);
@@ -430,33 +423,9 @@ onMounted(async () => {
     await loadSelectedDriverPushStatus(selectedDriver.value.id);
   }
 
-  if (ride?.value?.status === 'in-progress') {
-    driverLocationInterval.value = setInterval(async () => {
-      driverData.value = {
-        loading: driverData.value.loading,
-        location: driverData.value.location,
-        name: driverData.value.name,
-        picture: driverData.value.picture,
-      };
-      await getDriverByIdAction(ride?.value.driver.id);
-      driverData.value = {
-        loading: false,
-        location: driver?.value.location,
-        name: driver?.value.name,
-        picture: driver?.value.driverFiles.picture.url,
-      };
-    }, 10000);
-  }
-
   const branchId = ride?.value?.billing?.paymentData?.branchId;
   if (branchId) {
     await getBranchByIdAction(branchId);
-  }
-});
-
-onUnmounted(() => {
-  if (driverLocationInterval.value) {
-    clearInterval(driverLocationInterval.value);
   }
 });
 
@@ -745,7 +714,6 @@ const handleAcceptBudgetOverQuota = () => {
                       lng: ride?.travel.destination.lng,
                     }"
                     :ride-progress="ride?.status === 'completed' ? ride?.progress : {}"
-                    :driverData="ride?.status === 'in-progress' ? driverData : {}"
                     :real-polyline="
                       ride?.travel.polyLineCoords ||
                       ride?.travel.finalPolyline ||

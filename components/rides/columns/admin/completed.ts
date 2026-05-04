@@ -266,6 +266,13 @@ export const columns: any = [
     header: () => h('div', { class: 'text-xs leading-none text-center' }, 'Valor Total'),
     cell: ({ row }) => {
       const data = row.original;
+      const hasFinalPrice = data.rideFinalPrice && Number(data.rideFinalPrice) > 0;
+      if (hasFinalPrice) {
+        return h('div', { class: 'flex flex-col items-start gap-0.5' }, [
+          h('span', { class: 'text-xs text-muted-foreground line-through' }, currencyFormat(data.estimatedPrice)),
+          h('span', { class: 'text-xs font-bold text-green-600' }, currencyFormat(data.rideFinalPrice)),
+        ]);
+      }
       return h(
         'span',
         { class: 'text-xs font-bold' },

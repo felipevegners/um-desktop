@@ -21,6 +21,13 @@ definePageMeta({
 });
 
 const route = useRoute();
+// The driver app syncs location to the backend profile every 3 minutes.
+// Polling faster than that only burns requests for no new data.
+const DRIVER_LOCATION_SYNC_INTERVAL_MS = 3 * 60_000;
+const TRACK_POLL_INTERVAL_MS = DRIVER_LOCATION_SYNC_INTERVAL_MS;
+// 1s tick so both relative-location label and stop stopwatch stay precise
+const RELATIVE_TIME_TICK_MS = 1_000;
+const MARKER_MOVE_TRANSITION_MS = 1400;
 const ridesStore = useRidesStore();
 const { getRideByIdAction } = ridesStore;
 const { ride, loadingData } = storeToRefs(ridesStore);
@@ -51,7 +58,117 @@ const rideDriverId = ref<string>('');
 const loadingDriverLocation = ref<boolean>(false);
 const driverLocation = ref<any>({});
 const intervalId = ref<any>(null);
+const relativeTimeIntervalId = ref<any>(null);
+const pollProgressKey = ref(0);
 const driverName = ref<any>('');
+const driverMarkerRef = ref<any>(null);
+const driverPosition = ref<{ lat: number; lng: number } | null>(null);
+const nowMs = ref<number>(Date.now());
+const isRideTerminal = computed(() => {
+  const status = String(ride?.value?.status || '');
+  return status === 'completed' || status === 'cancelled';
+});
+
+const normalizeDriverSpeedKmh = (rawSpeed: unknown): number => {
+  const raw = typeof rawSpeed === 'number' ? rawSpeed : Number(rawSpeed);
+  if (!Number.isFinite(raw) || raw <= 0) return 0;
+
+  // Some historical payloads were double-converted (km/h * 3.6),
+  // producing unrealistic values like 300+ km/h.
+  if (raw > 220) {
+    const corrected = raw / 3.6;
+    return Math.round(Math.max(0, corrected));
+  }
+
+  return Math.round(raw);
+};
+
+const parseLocationTimestampMs = (rawTimestamp: unknown): number | null => {
+  if (typeof rawTimestamp === 'number' && Number.isFinite(rawTimestamp))
+    return rawTimestamp;
+  if (typeof rawTimestamp === 'string') {
+    const numeric = Number(rawTimestamp);
+    if (Number.isFinite(numeric)) return numeric;
+    const parsed = Date.parse(rawTimestamp);
+    if (Number.isFinite(parsed)) return parsed;
+  }
+  return null;
+};
+
+const formatRelativeLocationTime = (timestampMs: number | null): string => {
+  if (!timestampMs) return 'Atualizado há --';
+
+  const elapsedMs = Math.max(0, nowMs.value - timestampMs);
+  const elapsedSec = Math.floor(elapsedMs / 1000);
+
+  if (elapsedSec < 5) return 'Atualizado agora';
+  if (elapsedSec < 60) return `Atualizado há ${elapsedSec}s`;
+
+  const elapsedMin = Math.floor(elapsedSec / 60);
+  if (elapsedMin < 60) return `Atualizado há ${elapsedMin}min`;
+
+  const elapsedHours = Math.floor(elapsedMin / 60);
+  return `Atualizado há ${elapsedHours}h`;
+};
+
+const animateDriverPosition = (target: { lat: number; lng: number }) => {
+  if (!driverPosition.value) {
+    // First render — set directly without animation
+    driverPosition.value = target;
+    return;
+  }
+
+  // Apply a CSS transition to the overlay container that vue3-google-map uses
+  // to position the CustomMarker (it sets style.left / style.top on that element).
+  // This produces smooth movement entirely in CSS — no RAF loop, no per-frame
+  // Vue reactive updates. The transition is removed after completion so that
+  // normal map pan / zoom movements are not inadvertently animated.
+  const overlayContainer = driverMarkerRef.value?.$el?.parentElement as
+    | HTMLElement
+    | undefined;
+  if (overlayContainer) {
+    const transition = `left ${MARKER_MOVE_TRANSITION_MS}ms cubic-bezier(0.25, 0.46, 0.45, 0.94), top ${MARKER_MOVE_TRANSITION_MS}ms cubic-bezier(0.25, 0.46, 0.45, 0.94)`;
+    overlayContainer.style.transition = transition;
+    const cleanup = () => {
+      overlayContainer.style.transition = '';
+      overlayContainer.removeEventListener('transitionend', cleanup);
+    };
+    overlayContainer.addEventListener('transitionend', cleanup, { once: true });
+  }
+
+  // Single reactive update — Vue re-renders CustomMarker once,
+  // the map overlay sets new left/top, CSS transition takes over.
+  driverPosition.value = target;
+};
+
+const driverSpeedKmh = computed(() =>
+  normalizeDriverSpeedKmh(driverLocation.value?.speed),
+);
+const driverLocationFreshness = computed(() =>
+  formatRelativeLocationTime(driverLocation.value?.timestampMs ?? null),
+);
+
+// Active stop: last entry in progress.stops that has stopStart but no stopEnd
+const activeStop = computed(() => {
+  const stops = ride?.value?.progress?.stops as any[] | undefined;
+  if (!Array.isArray(stops) || stops.length === 0) return null;
+  const last = stops[stops.length - 1] as any;
+  if (!last?.stopStart || last?.stopEnd) return null;
+  return last;
+});
+
+const stopElapsedFormatted = computed(() => {
+  if (!activeStop.value) return null;
+  const startMs = parseLocationTimestampMs(activeStop.value.stopStart);
+  if (startMs === null) return null;
+  const totalSec = Math.max(0, Math.floor((nowMs.value - startMs) / 1000));
+  const h = Math.floor(totalSec / 3600);
+  const m = Math.floor((totalSec % 3600) / 60);
+  const s = totalSec % 60;
+  const mm = String(m).padStart(2, '0');
+  const ss = String(s).padStart(2, '0');
+  return h > 0 ? `${h}:${mm}:${ss}` : `${mm}:${ss}`;
+});
 
 await getRideByIdAction(route?.query.rideId as string, { publicTrack: true });
 origin.value = ride?.value?.travel.origin;
@@ -101,48 +218,90 @@ function updateCanonicalFromRide() {
 }
 
 const fetchDriverLocation = async () => {
+  if (!rideDriverId.value || isRideTerminal.value) {
+    loadingDriverLocation.value = false;
+    return;
+  }
+
   loadingDriverLocation.value = true;
-  await getDriverByIdAction(rideDriverId.value, { publicTrack: true });
-  if (driver.value) {
+  try {
+    await getDriverByIdAction(rideDriverId.value, { publicTrack: true });
+    if (!driver.value) return;
+
+    const lat = Number(driver?.value.location?.latitude);
+    const lng = Number(driver?.value.location?.longitude);
+
     driverName.value = getFirstAndLastNameString(driver?.value.name);
-    const hour = new Date(driver?.value.location?.timestamp).getHours() || 0;
-    const minutes = new Date(driver?.value.location?.timestamp).getMinutes() || 0;
     driverLocation.value = {
-      time: `${hour}:${minutes < 10 ? '0' + minutes : minutes}`,
-      speed: driver?.value.location?.speed,
-      lat: driver?.value.location?.latitude,
-      lng: driver?.value.location?.longitude,
+      timestampMs: parseLocationTimestampMs(driver?.value.location?.timestamp),
+      speed: normalizeDriverSpeedKmh(driver?.value.location?.speed),
+      lat,
+      lng,
     };
 
-    center.value = {
-      lat: driver?.value.location.latitude,
-      lng: driver?.value.location.longitude,
-    };
-  }
-  setTimeout(() => {
+    if (Number.isFinite(lat) && Number.isFinite(lng)) {
+      const target = { lat, lng };
+      animateDriverPosition(target);
+      center.value = target;
+    }
+  } finally {
     loadingDriverLocation.value = false;
-  }, 1000);
+  }
 };
 
 onMounted(() => {
-  fetchDriverLocation();
-  decodePolyline(ride?.value.travel.polyLineCoords);
-  routePolyLine.value = ride?.value.travel.polyLineCoords;
+  decodePolyline(
+    ride?.value?.travel?.polyLineCoords ||
+      ride?.value?.travel?.finalPolyline ||
+      ride?.value?.travel?.polyline ||
+      '',
+  );
+  routePolyLine.value =
+    ride?.value?.travel?.polyLineCoords ||
+    ride?.value?.travel?.finalPolyline ||
+    ride?.value?.travel?.polyline ||
+    '';
+  updateCanonicalFromRide();
+
+  if (!isRideTerminal.value) {
+    fetchDriverLocation();
+    pollProgressKey.value++;
+  }
+
+  relativeTimeIntervalId.value = setInterval(() => {
+    nowMs.value = Date.now();
+  }, RELATIVE_TIME_TICK_MS);
+
   intervalId.value = setInterval(async () => {
-    await fetchDriverLocation();
     await getRideByIdAction(route?.query.rideId as string, { publicTrack: true });
+    rideDriverId.value = ride?.value?.driver?.id || '';
     updateCanonicalFromRide();
-  }, 30000);
+
+    if (isRideTerminal.value) {
+      if (intervalId.value) {
+        clearInterval(intervalId.value);
+      }
+      loadingDriverLocation.value = false;
+      return;
+    }
+
+    await fetchDriverLocation();
+    pollProgressKey.value++;
+  }, TRACK_POLL_INTERVAL_MS);
 });
 
 onUnmounted(() => {
   if (intervalId.value) {
     clearInterval(intervalId.value);
   }
+
+  if (relativeTimeIntervalId.value) {
+    clearInterval(relativeTimeIntervalId.value);
+  }
 });
 
 const driverSpeedConverted = computed(() => {
-  return parseInt(driver?.value?.location?.speed);
+  return driverSpeedKmh.value;
 });
 
 // watch(
@@ -174,7 +333,25 @@ const driverSpeedConverted = computed(() => {
 
 // Google Maps Area
 const decodePolyline = (polyline: string) => {
+  if (!polyline || typeof polyline !== 'string') {
+    ridePath.value = {
+      ...ridePath.value,
+      path: [],
+    };
+    markers.value = [];
+    return;
+  }
+
   const decode: any = polyLineCodec(polyline);
+  if (!Array.isArray(decode) || decode.length === 0) {
+    ridePath.value = {
+      ...ridePath.value,
+      path: [],
+    };
+    markers.value = [];
+    return;
+  }
+
   const coords = decode.map((path: any) => ({
     lat: path[0],
     lng: path[1],
@@ -188,7 +365,7 @@ const decodePolyline = (polyline: string) => {
 
   // Find the center of ride path to center the map
   const centerCoord = coords.length > 2 ? coords.length / 2 : coords.length;
-  const parseCenterCoord = parseInt(centerCoord, 10) + 10; // parseInt if centerCoord is not divisivle by 2
+  const parseCenterCoord = Math.floor(centerCoord) + 10;
   center.value = {
     lat: coords[parseCenterCoord].lat,
     lng: coords[parseCenterCoord].lng,
@@ -249,7 +426,27 @@ const decodePolyline = (polyline: string) => {
   </section>
   <section v-else>
     <SharedRideStepper :steps="ride?.progress.steps" v-if="ride.status !== 'accepted'" />
-    <div v-if="ride.status !== 'accepted'" class="h-[600px]">
+    <!-- Poll countdown bar: restarts on each fetch via key change -->
+    <div
+      v-if="ride.status !== 'accepted' && !isRideTerminal"
+      class="h-1 w-full bg-zinc-200 overflow-hidden"
+      aria-hidden="true"
+    >
+      <div
+        :key="pollProgressKey"
+        class="h-full bg-zinc-800 poll-countdown-bar"
+        :style="{ '--poll-duration': TRACK_POLL_INTERVAL_MS + 'ms' }"
+      />
+    </div>
+    <div v-if="ride.status !== 'accepted'" class="relative h-[600px]">
+      <!-- Active stop floating badge -->
+      <div
+        v-if="activeStop"
+        class="absolute bottom-4 left-1/2 -translate-x-1/2 z-10 flex items-center gap-2 px-4 py-2 rounded-xl bg-amber-500 text-white shadow-lg text-sm font-semibold pointer-events-none select-none"
+      >
+        <span class="inline-block h-2 w-2 rounded-full bg-white animate-pulse" />
+        Em parada · {{ stopElapsedFormatted }}
+      </div>
       <GoogleMap
         ref="mapRef"
         :api-key="API_KEY"
@@ -272,21 +469,20 @@ const decodePolyline = (polyline: string) => {
           class="w-10 h-10"
         />
         <CustomMarker
-          v-show="!loadingDriverLocation"
-          :options="{ position: driverLocation, anchorPoint: 'TOP_CENTER' }"
+          v-if="driverPosition"
+          ref="driverMarkerRef"
+          :options="{ position: driverPosition, anchorPoint: 'TOP_CENTER' }"
           class="top-[-10px]"
         >
           <div class="relative flex flex-col items-center">
             <p
-              class="px-2 py-1 text-white rounded-md flex flex-row items-center gap-3"
-              :class="driver?.location?.speed <= 5 ? 'bg-amber-600' : 'bg-zinc-900'"
+              class="px-2 py-1 text-white rounded-md flex flex-row items-center gap-2 transition-all duration-300"
+              :class="driverSpeedKmh <= 5 ? 'bg-amber-600' : 'bg-zinc-900'"
             >
-              {{ driverName }} - {{ driverLocation.time }} -
-              {{ driverLocation?.speed && driverLocation.speed + ' Km/h' }}
-              <LoaderCircle
+              {{ driverName }} - {{ driverLocationFreshness }} - {{ driverSpeedKmh }} Km/h
+              <span
                 v-if="loadingDriverLocation"
-                :size="12"
-                class="text-white animate-spin"
+                class="inline-block h-2 w-2 rounded-full bg-white/80 animate-pulse"
               />
             </p>
             <img
@@ -381,4 +577,17 @@ const decodePolyline = (polyline: string) => {
   </section>
 </template>
 
-<style scoped></style>
+<style scoped>
+@keyframes poll-countdown {
+  from {
+    width: 100%;
+  }
+  to {
+    width: 0%;
+  }
+}
+
+.poll-countdown-bar {
+  animation: poll-countdown var(--poll-duration) linear forwards;
+}
+</style>
