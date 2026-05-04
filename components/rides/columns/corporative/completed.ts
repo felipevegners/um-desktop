@@ -308,8 +308,16 @@ export const columns: any = [
       const hasFinalPrice = data.rideFinalPrice && Number(data.rideFinalPrice) > 0;
       if (hasFinalPrice) {
         return h('div', { class: 'flex flex-col items-start gap-0.5' }, [
-          h('span', { class: 'text-xs text-muted-foreground line-through' }, currencyFormat(data.estimatedPrice)),
-          h('span', { class: 'text-xs font-bold text-green-600' }, currencyFormat(data.rideFinalPrice)),
+          h(
+            'span',
+            { class: 'text-xs text-muted-foreground line-through' },
+            currencyFormat(data.estimatedPrice),
+          ),
+          h(
+            'span',
+            { class: 'text-xs font-bold text-green-600' },
+            currencyFormat(data.rideFinalPrice),
+          ),
         ]);
       }
       return h(
