@@ -19,6 +19,12 @@ const intervalId = ref<any>(null);
 const isZoomInDriver = ref<boolean>(false);
 const selectedDriverToFollow = ref<any>();
 
+const getFirstName = (name: unknown): string => {
+  if (typeof name !== 'string') return 'Motorista';
+  const first = name.trim().split(/\s+/)[0];
+  return first || 'Motorista';
+};
+
 const generateDriverMarkers = () => {
   if (driversWithLocation.value.length) {
     pointA.value = driversWithLocation.value[0];
@@ -26,7 +32,7 @@ const generateDriverMarkers = () => {
     markers.value = driversWithLocation.value?.map((driver: any) => {
       return {
         id: driver.id,
-        name: driver.name.split(' ')[0],
+        name: getFirstName(driver.name),
         picture: driver.picture ? driver.picture : noAvatar,
         lat: driver.lat,
         lng: driver.lng,
@@ -34,9 +40,11 @@ const generateDriverMarkers = () => {
         active: driver.active,
       };
     });
+  } else {
+    markers.value = [];
   }
 
-  if (!isZoomInDriver.value) {
+  if (!isZoomInDriver.value && pointA.value && pointB.value && mapRef.value?.map) {
     const map = mapRef.value.map;
     //@ts-ignore
     const bounds = new google.maps.LatLngBounds();
@@ -55,6 +63,7 @@ const generateDriverMarkers = () => {
     const driverLocation = markers.value.filter(
       (driver: any) => driver.id === selectedDriverToFollow.value.id,
     );
+    if (!driverLocation.length) return;
     center.value = {
       lat: driverLocation[0].lat,
       lng: driverLocation[0].lng,
@@ -79,6 +88,7 @@ const setMapCenterOnDriver = (driverData: any) => {
 };
 
 const calculateMapZoom = (lat: number, lng: number) => {
+  if (!mapRef.value?.map) return;
   const map = mapRef.value.map;
   //@ts-ignore
   const bounds = new google.maps.LatLngBounds();

@@ -343,6 +343,19 @@ const stopsLL = computed(() => {
 const originLL = computed(() => toLatLng(props.originCoords));
 const destLL = computed(() => toLatLng(props.destinationCoords));
 const center = computed(() => originLL.value ?? { lat: -15.7801, lng: -47.9292 });
+const isDriverLoading = computed(() => Boolean(props.driverData?.loading));
+const driverMarkerPosition = computed(() => toLatLng(props.driverData?.location));
+const driverFirstName = computed(() => {
+  const name = props.driverData?.name;
+  if (typeof name !== 'string') return 'Motorista';
+  return name.trim().split(/\s+/)[0] || 'Motorista';
+});
+const showDriverMarker = computed(
+  () =>
+    props.rideStatus === 'in-progress' &&
+    !isDriverLoading.value &&
+    Boolean(driverMarkerPosition.value),
+);
 
 watch(
   () => mapRef.value?.ready,
@@ -398,10 +411,7 @@ watch(
 
 <template>
   <section>
-    <div
-      v-if="driverData?.loading"
-      class="p-3 flex flex-row items-center gap-3 bg-zinc-900"
-    >
+    <div v-if="isDriverLoading" class="p-3 flex flex-row items-center gap-3 bg-zinc-900">
       <LoaderCircle class="animate-spin text-white" />
       <small class="text-white">Carregando localização do motorista...</small>
     </div>
@@ -414,18 +424,15 @@ watch(
       :disable-default-ui="true"
     >
       <CustomMarker
-        v-if="rideStatus === 'in-progress' && !driverData.loading"
+        v-if="showDriverMarker"
         :options="{
-          position: {
-            lat: driverData?.location?.latitude,
-            lng: driverData?.location?.longitude,
-          },
+          position: driverMarkerPosition,
           anchorPoint: 'TOP_CENTER',
         }"
       >
         <div class="relative flex flex-col items-center">
           <span class="px-2 py-1 rounded-md bg-zinc-900 text-white">
-            {{ driverData?.name.split(' ')[0] }}
+            {{ driverFirstName }}
           </span>
           <img
             :src="driverData?.picture || '/images/no-avatar.png'"

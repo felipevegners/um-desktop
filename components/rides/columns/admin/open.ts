@@ -251,7 +251,7 @@ export const columns: any = [
   }),
 
   columnHelper.accessor('status', {
-    meta: { label: 'Status', width: '110px' },
+    meta: { label: 'Status', width: '150px' },
     header: ({ column }) => {
       return h(
         Button,

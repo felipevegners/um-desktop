@@ -207,7 +207,7 @@ export const columns: any = [
     },
   }),
   columnHelper.accessor('extraCharges', {
-    meta: { label: 'Adicionais' },
+    meta: { label: 'Adicionais', width: '120px' },
     header: () => h('div', { class: 'text-xs leading-none text-center' }, 'Adicionais'),
     cell: ({ row }) => {
       const data = row.original;
@@ -242,7 +242,7 @@ export const columns: any = [
     },
   }),
   columnHelper.accessor('status', {
-    meta: { label: 'Status' },
+    meta: { label: 'Status', width: '150px' },
     header: ({ column }) => {
       return h(
         Button,
