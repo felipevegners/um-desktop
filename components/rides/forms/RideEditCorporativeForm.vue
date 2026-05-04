@@ -748,7 +748,8 @@ const handleAcceptBudgetOverQuota = () => {
                     <div class="space-y-2">
                       <small class="text-[10px] text-muted-foreground"> FILIAL </small>
                       <p class="text-sm uppercase font-bold">
-                        {{ getPaymentBranch }}
+                        {{ ride?.billing?.paymentData?.branchCode }} -
+                        {{ ride?.billing?.paymentData?.branchName }}
                       </p>
                     </div>
                     <div class="space-y-2">
@@ -757,9 +758,9 @@ const handleAcceptBudgetOverQuota = () => {
                       </small>
                       <p class="text-sm uppercase font-bold">
                         {{
-                          ride?.billing.paymentData.area === 'splited'
+                          ride?.billing.paymentData.splitedPayment.length
                             ? 'RATEIO'
-                            : ride?.billing.paymentData.area
+                            : ride?.billing.paymentData.areaCode
                         }}
                       </p>
                     </div>
@@ -783,7 +784,7 @@ const handleAcceptBudgetOverQuota = () => {
                     </p>
                   </div>
                   <div
-                    v-if="ride?.billing.paymentData.area === 'splited'"
+                    v-if="ride?.billing.paymentData.splitedPayment.length"
                     class="p-4 border border-amber-500 bg-amber-100 rounded-md w-full space-y-4"
                   >
                     <p class="font-bold">Pagamento rateado entre filiais</p>
@@ -797,7 +798,8 @@ const handleAcceptBudgetOverQuota = () => {
                             Cód. do CC
                           </small>
                           <p class="font-bold">
-                            {{ splited.area }}
+                            {{ splited.areaCode }} - {{ splited.branchCode }} -
+                            {{ splited.branchName }}
                           </p>
                         </div>
                         <div>
