@@ -263,13 +263,21 @@ onBeforeMount(async () => {
 
   if (role === 'branch-manager') {
     const filteredAccounts = (accounts?.value || []).filter((user: any) => {
-      const userBranchId =
-        user?.contract?.branchId ??
-        (Array.isArray(user?.contract?.branches) && user.contract.branches[0]?.id) ??
-        undefined;
+      const accountBranchIds = [
+        ...(typeof user?.contract?.branchId === 'string' ? [user.contract.branchId] : []),
+        ...(Array.isArray(user?.contract?.branches)
+          ? user.contract.branches
+              .map((branch: any) => branch?.id)
+              .filter(
+                (id: unknown): id is string => typeof id === 'string' && id.length > 0,
+              )
+          : []),
+      ];
 
-      if (!userBranchId) return false;
-      return managedBranches.some((branch) => branch.id === userBranchId);
+      if (accountBranchIds.length === 0) return false;
+      return accountBranchIds.some((branchId: string) =>
+        managedBranches.some((branch) => branch.id === branchId),
+      );
     });
 
     availableUsers.value = filteredAccounts.map((user: any) => {
@@ -408,10 +416,19 @@ const setSelectedUser = async (user: any) => {
     contractBranches.value = contract?.value.branches;
 
     const isMasterManager = userData.role === 'master-manager';
+    const userPrimaryBranchId =
+      (typeof userData?.contract?.branchId === 'string' && userData.contract.branchId) ||
+      (Array.isArray(userData?.contract?.branches) &&
+        userData.contract.branches[0]?.id) ||
+      '';
 
-    const filterUserBranch = contract?.value.branches.find(
-      (branch: any) => branch.id === userData.contract.branchId,
+    const filterUserBranch = contract?.value?.branches?.find(
+      (branch: any) => branch.id === userPrimaryBranchId,
     );
+
+    if (!filterUserBranch) {
+      throw new Error('Filial de origem do usuário não encontrada para faturamento.');
+    }
 
     selectedUserBranchName.value = filterUserBranch.fantasyName;
 

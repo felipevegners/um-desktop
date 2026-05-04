@@ -1,5 +1,6 @@
 import { createError } from 'h3';
 import { $fetch } from 'ofetch';
+import { prisma } from '~/utils/prisma';
 
 import { buildUmApiAuthHeaders, resolveUmApiBaseUrl } from '../utils/um-api';
 
@@ -12,7 +13,13 @@ type RideID = {
   status: string;
   startDate: string;
   endDate: string;
+  publicTrack?: string;
 };
+
+function isPublicTrackRequest(query: RideID) {
+  return String(query.publicTrack || '') === '1' && typeof query.id === 'string';
+}
+
 export default defineEventHandler(async (event) => {
   const query = getQuery<RideID>(event);
   const apiBaseUrl = resolveUmApiBaseUrl();
@@ -28,6 +35,23 @@ export default defineEventHandler(async (event) => {
 
   try {
     if (query.id) {
+      if (isPublicTrackRequest(query)) {
+        const ride = await prisma.rides.findUnique({
+          where: {
+            id: query.id,
+          },
+        });
+
+        if (!ride) {
+          throw createError({
+            statusCode: 404,
+            statusMessage: 'Atendimento não encontrado',
+          });
+        }
+
+        return ride;
+      }
+
       const rideByIdUrl = new URL(`/rides/${query.id}`, apiBaseUrl);
       return await $fetch(rideByIdUrl.toString(), {
         method: 'GET',

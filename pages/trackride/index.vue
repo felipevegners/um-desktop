@@ -53,7 +53,7 @@ const driverLocation = ref<any>({});
 const intervalId = ref<any>(null);
 const driverName = ref<any>('');
 
-await getRideByIdAction(route?.query.rideId as string);
+await getRideByIdAction(route?.query.rideId as string, { publicTrack: true });
 origin.value = ride?.value?.travel.origin;
 destination.value = ride?.value?.travel.destination;
 rideDriverId.value = ride?.value.driver.id;
@@ -102,7 +102,7 @@ function updateCanonicalFromRide() {
 
 const fetchDriverLocation = async () => {
   loadingDriverLocation.value = true;
-  await getDriverByIdAction(rideDriverId.value);
+  await getDriverByIdAction(rideDriverId.value, { publicTrack: true });
   if (driver.value) {
     driverName.value = getFirstAndLastNameString(driver?.value.name);
     const hour = new Date(driver?.value.location?.timestamp).getHours() || 0;
@@ -130,7 +130,7 @@ onMounted(() => {
   routePolyLine.value = ride?.value.travel.polyLineCoords;
   intervalId.value = setInterval(async () => {
     await fetchDriverLocation();
-    await getRideByIdAction(route?.query.rideId as string);
+    await getRideByIdAction(route?.query.rideId as string, { publicTrack: true });
     updateCanonicalFromRide();
   }, 30000);
 });

@@ -20,6 +20,19 @@ type NotificationSummaryItem = {
   value: string;
 };
 
+export type NotificationRideContext = {
+  userName: string | null;
+  requesterName: string | null;
+  driverName: string | null;
+  origin: string | null;
+  destination: string | null;
+  stops: string[];
+  product: string | null;
+  branchName: string | null;
+  area: string | null;
+  reason: string | null;
+};
+
 function toRecord(value: unknown): Record<string, unknown> | null {
   if (!value || typeof value !== 'object' || Array.isArray(value)) {
     return null;
@@ -72,6 +85,34 @@ function pushSummaryItem(
   items.push({ label, value });
 }
 
+function readTravelStopLabels(body: Record<string, unknown> | null): string[] {
+  const travel = body && 'travel' in body ? toRecord(body.travel) : null;
+
+  if (!travel || !Array.isArray(travel.stops)) {
+    return [];
+  }
+
+  return travel.stops
+    .map((stop) => {
+      if (typeof stop === 'string') {
+        const trimmed = stop.trim();
+        return trimmed.length > 0 ? trimmed : null;
+      }
+
+      const stopRecord = toRecord(stop);
+      if (!stopRecord) {
+        return null;
+      }
+
+      return (
+        toDisplayValue(stopRecord.address) ??
+        toDisplayValue(stopRecord.description) ??
+        toDisplayValue(stopRecord.name)
+      );
+    })
+    .filter((value): value is string => Boolean(value));
+}
+
 export function formatNotificationDate(value?: string | null): string {
   if (!value) {
     return '-';
@@ -93,9 +134,99 @@ export function getNotificationTypeLabel(type: string): string {
   const labels: Record<string, string> = {
     ride_created: 'Atendimento criado',
     ride_accepted: 'Atendimento aceito',
+    ride_cancelled: 'Atendimento cancelado',
   };
 
   return labels[type] ?? type.replace(/_/g, ' ');
+}
+
+export function getNotificationChannelLabel(
+  notification: NotificationHistoryItem,
+): string {
+  const rawChannel = String(notification.channel ?? '')
+    .trim()
+    .toLowerCase();
+
+  if (rawChannel === 'driver-app' || rawChannel === 'driver_app') {
+    return 'Driver App';
+  }
+
+  if (rawChannel === 'backoffice') {
+    return 'Backoffice';
+  }
+
+  const body = toRecord(notification.body);
+  const createdByRole = readNestedValue(body, ['createdBy', 'role']);
+
+  if (notification.type === 'ride_accepted' || createdByRole === 'platform-driver') {
+    return 'Driver App';
+  }
+
+  return 'Backoffice';
+}
+
+export function getNotificationRideContext(
+  notification: NotificationHistoryItem,
+): NotificationRideContext {
+  const body = toRecord(notification.body);
+
+  return {
+    userName:
+      readNestedValue(body, ['user', 'name']) ??
+      readNestedValue(body, ['user', 'username']),
+    requesterName:
+      readNestedValue(body, ['createdBy', 'name']) ??
+      readNestedValue(body, ['createdBy', 'email']),
+    driverName:
+      readNestedValue(body, ['driver', 'name']) ??
+      readNestedValue(body, ['driverName']) ??
+      readNestedValue(body, ['acceptedBy', 'name']) ??
+      readNestedValue(body, ['driverEmail']),
+    origin:
+      readNestedValue(body, ['travel', 'originAddress']) ??
+      readNestedValue(body, ['travel', 'origin', 'address']) ??
+      readNestedValue(body, ['travel', 'origin', 'description']) ??
+      readNestedValue(body, ['travel', 'origin', 'name']) ??
+      readNestedValue(body, ['travel', 'origin']),
+    destination:
+      readNestedValue(body, ['travel', 'destinationAddress']) ??
+      readNestedValue(body, ['travel', 'destination', 'address']) ??
+      readNestedValue(body, ['travel', 'destination', 'description']) ??
+      readNestedValue(body, ['travel', 'destination', 'name']) ??
+      readNestedValue(body, ['travel', 'destination']),
+    stops: readTravelStopLabels(body),
+    product:
+      readNestedValue(body, ['product', 'name']) ??
+      readNestedValue(body, ['product', 'code']),
+    branchName:
+      readNestedValue(body, ['billing', 'paymentData', 'branchName']) ??
+      readNestedValue(body, ['contract', 'branchName']),
+    area:
+      readNestedValue(body, ['billing', 'paymentData', 'area']) ??
+      readNestedValue(body, ['billing', 'paymentData', 'areaName']) ??
+      readNestedValue(body, ['billing', 'paymentData', 'areaCode']) ??
+      readNestedValue(body, ['user', 'contract', 'area']),
+    reason:
+      readNestedValue(body, ['reason', 'name']) ??
+      readNestedValue(body, ['reason', 'description']) ??
+      readNestedValue(body, ['reason']),
+  };
+}
+
+export function isRideNotification(notification: NotificationHistoryItem): boolean {
+  return notification.type.startsWith('ride_');
+}
+
+export function getNotificationRideStatus(
+  notification: NotificationHistoryItem,
+): string | null {
+  const body = toRecord(notification.body);
+
+  return (
+    readNestedValue(body, ['status']) ??
+    readNestedValue(body, ['progress', 'status']) ??
+    null
+  );
 }
 
 export function getNotificationDescription(
@@ -123,6 +254,17 @@ export function getNotificationDescription(
       : `O atendimento ${code} foi aceito pelo motorista.`;
   }
 
+  if (notification.type === 'ride_cancelled' && code) {
+    const body = toRecord(notification.body);
+    const cancelledBy =
+      readNestedValue(body, ['createdBy', 'name']) ??
+      readNestedValue(body, ['createdBy', 'email']);
+
+    return cancelledBy
+      ? `${cancelledBy} cancelou o atendimento ${code}.`
+      : `O atendimento ${code} foi cancelado.`;
+  }
+
   return notification.title;
 }
 
@@ -133,7 +275,7 @@ export function getNotificationSummaryItems(
   const items: NotificationSummaryItem[] = [];
 
   pushSummaryItem(items, 'Tipo', getNotificationTypeLabel(notification.type));
-  pushSummaryItem(items, 'Canal', notification.channel ?? null);
+  pushSummaryItem(items, 'Canal', getNotificationChannelLabel(notification));
   pushSummaryItem(items, 'Status', notification.status ?? null);
   pushSummaryItem(
     items,
@@ -143,11 +285,6 @@ export function getNotificationSummaryItems(
       readNestedValue(body, ['user', 'contract', 'contractId']),
   );
   pushSummaryItem(items, 'Atendimento', readNestedValue(body, ['code']));
-  pushSummaryItem(
-    items,
-    'Ride ID',
-    readNestedValue(body, ['rideId']) ?? readNestedValue(body, ['id']),
-  );
   pushSummaryItem(
     items,
     'Motorista',

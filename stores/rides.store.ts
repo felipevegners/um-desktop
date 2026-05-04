@@ -267,10 +267,12 @@ export const useRidesStore = defineStore('rides', {
         throw error;
       }
     },
-    async getRideByIdAction(rideId: string) {
+    async getRideByIdAction(rideId: string, options?: { publicTrack?: boolean }) {
       this.loadingData = true;
       try {
-        const response = await getRidesService(rideId);
+        const response = await getRidesService(rideId, {
+          publicTrack: options?.publicTrack === true,
+        });
         const normalized = normalizeRideDetailResponse(response);
         this.capabilities = normalized.capabilities;
         this.ride = normalized.ride;

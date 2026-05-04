@@ -1,24 +1,24 @@
 <script setup lang="ts">
 import {
-    DropdownMenu,
-    DropdownMenuContent,
-    DropdownMenuTrigger,
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { useAccountStore } from '@/stores/account.store';
-import { Bell, CheckCheck, ChevronRight, LoaderCircle } from 'lucide-vue-next';
+import { Bell, Eye, LoaderCircle, Mail, MailCheck } from 'lucide-vue-next';
 import {
-    getNotificationsService,
-    markNotificationAsReadService,
+  getNotificationsService,
+  markNotificationAsReadService,
 } from '~/server/services/notifications';
 import {
-    type NotificationHistoryItem,
-    formatNotificationDate,
-    getNotificationDescription,
-    getNotificationRideCode,
-    getNotificationTypeLabel,
+  type NotificationHistoryItem,
+  formatNotificationDate,
+  getNotificationDescription,
+  getNotificationRideCode,
+  getNotificationTypeLabel,
 } from '~/utils/notifications';
 
-const POLL_INTERVAL_MS = 30_000;
+const POLL_INTERVAL_MS = 60_000;
 
 const notifications = ref<NotificationHistoryItem[]>([]);
 const isLoading = ref(false);
@@ -120,7 +120,6 @@ const openNotification = async (notification: NotificationHistoryItem) => {
   if (!notification.read) {
     await markAsRead(notification.id);
   }
-  await navigateTo(`/notifications/${notification.id}`);
 };
 
 const openNotificationsList = async () => {
@@ -144,7 +143,7 @@ onUnmounted(() => {
   <div class="relative inline-flex items-center justify-center p-1">
     <DropdownMenu>
       <DropdownMenuTrigger as-child>
-        <div class="relative">
+        <div class="relative cursor-pointer">
           <Bell v-if="unreadCount > 0" :size="24" />
           <Bell v-else :size="24" />
         </div>
@@ -153,10 +152,10 @@ onUnmounted(() => {
       <DropdownMenuContent
         align="end"
         :side-offset="10"
-        class="w-96 min-w-[24rem] p-0 overflow-hidden"
+        class="w-[38rem] max-w-[calc(100vw-2rem)] min-w-[32rem] overflow-hidden p-0"
       >
         <div
-          class="flex items-start justify-between gap-4 p-4 border-b border-zinc-200 bg-zinc-50"
+          class="flex items-start justify-between gap-4 border-b border-zinc-200 bg-zinc-50 px-5 py-4"
         >
           <div>
             <p class="text-sm font-bold text-zinc-900">Notificações</p>
@@ -182,7 +181,7 @@ onUnmounted(() => {
             </div>
             <div class="flex items-center gap-2 pt-1">
               <span class="block h-7 w-7 rounded-full bg-zinc-200 animate-pulse"></span>
-              <ChevronRight class="h-4 w-4 text-zinc-400" />
+              <Eye class="h-4 w-4 text-zinc-400" />
             </div>
           </div>
         </div>
@@ -199,52 +198,78 @@ onUnmounted(() => {
             v-for="notification in latestNotifications"
             :key="notification.id"
             type="button"
-            class="flex items-start justify-between gap-3 w-full p-4 border-b border-zinc-200 hover:bg-zinc-50"
+            class="flex w-full items-start justify-between gap-5 border-b border-zinc-200 px-6 py-5 text-left transition-colors hover:bg-emerald-50/40"
             @click="openNotification(notification)"
           >
-            <div class="min-w-0 flex-1">
-              <div class="flex items-center justify-between gap-3">
-                <span class="text-primary text-xs font-bold uppercase tracking-wider">{{
-                  getNotificationTypeLabel(notification.type)
-                }}</span>
-                <span class="text-xs text-zinc-500 whitespace-nowrap">{{
-                  formatNotificationDate(notification.createdAt)
-                }}</span>
-              </div>
-              <p class="mt-1 text-sm font-bold text-zinc-900">{{ notification.title }}</p>
-              <p class="mt-2 text-sm text-zinc-600 leading-5">
-                {{ getNotificationDescription(notification) }}
-              </p>
-              <NuxtLink
-                v-if="
-                  notification.type === 'ride_created' &&
-                  getNotificationRideCode(notification)
+            <div class="flex min-w-0 flex-1 items-start gap-5">
+              <div
+                class="mt-0.5 inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-full ring-1"
+                :class="
+                  notification.read
+                    ? 'bg-emerald-100 text-emerald-700 ring-emerald-200'
+                    : 'bg-emerald-50 text-emerald-600 ring-emerald-100'
                 "
-                :to="`/rides/form/edit/${getNotificationRideCode(notification)}`"
-                class="inline-flex items-center mt-2 text-primary text-sm font-semibold underline underline-offset-2"
-                @click.stop
-                >Ver atendimento {{ getNotificationRideCode(notification) }}</NuxtLink
               >
+                <MailCheck v-if="notification.read" class="h-5 w-5" />
+                <Mail v-else class="h-5 w-5" />
+              </div>
+
+              <div class="min-w-0 flex-1 space-y-3">
+                <div class="flex flex-wrap items-center gap-x-3 gap-y-1 pr-4">
+                  <span
+                    class="text-xs font-bold uppercase tracking-[0.16em] text-emerald-700"
+                  >
+                    {{ getNotificationTypeLabel(notification.type) }}
+                  </span>
+                  <span class="text-xs text-zinc-500">{{
+                    formatNotificationDate(notification.createdAt)
+                  }}</span>
+                </div>
+
+                <p class="max-w-[28rem] text-sm font-bold leading-6 text-zinc-900">
+                  {{ notification.title }}
+                </p>
+
+                <p class="max-w-[29rem] text-sm leading-7 text-zinc-600">
+                  {{ getNotificationDescription(notification) }}
+                </p>
+
+                <NuxtLink
+                  v-if="
+                    notification.type === 'ride_created' &&
+                    getNotificationRideCode(notification)
+                  "
+                  :to="`/rides/form/edit/${getNotificationRideCode(notification)}`"
+                  class="inline-flex items-center text-sm font-semibold text-emerald-700 underline underline-offset-2"
+                  @click.stop
+                >
+                  Ver atendimento
+                </NuxtLink>
+              </div>
             </div>
-            <div class="flex items-center gap-2 pt-1">
-              <button
-                v-if="!notification.read"
-                type="button"
-                class="inline-flex items-center justify-center w-7 h-7 rounded-full bg-zinc-100 text-primary"
-                @click.stop="markAsRead(notification.id)"
-              >
-                <LoaderCircle
-                  v-if="markingId === notification.id"
-                  class="h-3.5 w-3.5 animate-spin"
-                />
-                <CheckCheck v-else class="h-3.5 w-3.5" />
-              </button>
-              <span
-                v-else
-                class="px-2 py-0.5 rounded-full bg-zinc-100 text-zinc-500 text-xs font-bold"
-                >Lida</span
-              >
-              <ChevronRight class="h-4 w-4 text-zinc-400" />
+
+            <div class="flex shrink-0 items-start gap-2 pt-1">
+              <TooltipProvider v-if="!notification.read">
+                <Tooltip>
+                  <TooltipTrigger as-child>
+                    <button
+                      type="button"
+                      class="inline-flex h-8 w-8 items-center justify-center rounded-full bg-emerald-50 text-emerald-700 transition-colors hover:bg-emerald-100"
+                      @click.stop="markAsRead(notification.id)"
+                    >
+                      <LoaderCircle
+                        v-if="markingId === notification.id"
+                        class="h-3.5 w-3.5 animate-spin"
+                      />
+                      <MailCheck v-else class="h-3.5 w-3.5" />
+                    </button>
+                  </TooltipTrigger>
+                  <TooltipContent class="bg-zinc-700 text-white">
+                    <p>Marcar como lida</p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+              <Eye class="mt-2 h-4 w-4 text-zinc-400" />
             </div>
           </button>
         </div>

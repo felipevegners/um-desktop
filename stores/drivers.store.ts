@@ -42,10 +42,12 @@ export const useDriverStore = defineStore('driver', {
         this.loadingData = false;
       }
     },
-    async getDriverByIdAction(driverId: string) {
+    async getDriverByIdAction(driverId: string, options?: { publicTrack?: boolean }) {
       this.loadingData = true;
       try {
-        const data = await getDriver(driverId);
+        const data = await getDriver(driverId, {
+          publicTrack: options?.publicTrack === true,
+        });
         this.driver = data as unknown;
         return data;
       } catch (error) {

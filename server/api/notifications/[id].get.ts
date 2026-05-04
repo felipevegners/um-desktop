@@ -24,7 +24,7 @@ export default defineEventHandler(async (event) => {
     if (scope.contractId)
       notificationUrl.searchParams.set('contractId', scope.contractId);
   } else if (scope.role === 'branch-manager' || scope.role === 'platform-admin') {
-    if (scope.branchId) notificationUrl.searchParams.set('branchId', scope.branchId);
+    // UM API resolves manager branch scope from authenticated account context.
   } else if (scope.role === 'platform-corp-user') {
     if (scope.userId) notificationUrl.searchParams.set('userId', scope.userId);
     if (scope.contractId)

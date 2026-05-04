@@ -41,7 +41,12 @@ export const getRidesService = async (
 ) => {
   try {
     if (rideId) {
-      return await $fetch(`/api/rides?id=${rideId}`);
+      const params = new URLSearchParams({ id: rideId });
+      if (query?.publicTrack) {
+        params.set('publicTrack', '1');
+      }
+
+      return await $fetch(`/api/rides?${params.toString()}`);
     }
 
     if (query && Object.keys(query).length > 0) {

@@ -9,9 +9,19 @@ export const getDrivers = async () => {
   }
 };
 
-export const getDriver = async (driverId: string) => {
+export const getDriver = async (
+  driverId: string,
+  options?: {
+    publicTrack?: boolean;
+  },
+) => {
   try {
-    return await $fetch(`/api/drivers?id=${driverId}`);
+    const params = new URLSearchParams({ id: driverId });
+    if (options?.publicTrack) {
+      params.set('publicTrack', '1');
+    }
+
+    return await $fetch(`/api/drivers?${params.toString()}`);
   } catch (error) {
     console.debug('Error -> ', error);
     throw error;

@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import FormSelect from '@/components/shared/FormSelect.vue';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { useToast } from '@/components/ui/toast';
@@ -25,9 +26,9 @@ const props = withDefaults(defineProps<Props>(), {
   isAdminEditing: false,
 });
 
-const route = useRoute();
 const { toast } = useToast();
 const { data } = useAuth();
+const currentUserRole = computed(() => String((data.value as any)?.user?.role || ''));
 
 const accountSituation = ref<boolean>(false);
 const loadingDelete = ref<boolean>(false);
@@ -137,10 +138,117 @@ const isBranchSelected = (branchId: string) => {
   return userManagerBranches.value.some((b: any) => b.id === branchId);
 };
 
+const toggleRestriction = (restrictionId: string) => {
+  if (!account.value?.contract) {
+    return;
+  }
+
+  if (!Array.isArray(account.value.contract.restrictions)) {
+    account.value.contract.restrictions = [];
+  }
+
+  const idx = account.value.contract.restrictions.indexOf(restrictionId);
+  if (idx === -1) {
+    account.value.contract.restrictions.push(restrictionId);
+  } else {
+    account.value.contract.restrictions.splice(idx, 1);
+  }
+};
+
 // Determinar quais campos são obrigatórios baseado na mode
 const isAdminMode = props.mode === 'admin';
 const isCorporativeMode = props.mode === 'corporative';
 const isPersonalMode = props.mode === 'personal';
+
+const roleHierarchy: Record<string, number> = {
+  admin: 5,
+  'master-manager': 4,
+  'branch-manager': 3,
+  'platform-admin': 2,
+  'platform-corp-user': 1,
+  'platform-user': 1,
+  'platform-driver': 1,
+};
+
+const editableRolesByActor: Record<string, string[]> = {
+  admin: rolesList.map((item) => item.value),
+  'master-manager': [
+    'master-manager',
+    'branch-manager',
+    'platform-admin',
+    'platform-corp-user',
+  ],
+  'branch-manager': ['branch-manager', 'platform-admin', 'platform-corp-user'],
+  'platform-admin': ['platform-admin', 'platform-corp-user'],
+  'platform-corp-user': ['platform-corp-user'],
+};
+
+const canEditTargetAccount = computed(() => {
+  if (!account.value?.role) {
+    return true;
+  }
+
+  if (isAdminMode) {
+    return true;
+  }
+
+  const editorRank = roleHierarchy[currentUserRole.value] || 0;
+  const targetRank = roleHierarchy[account.value.role] || 0;
+  return editorRank >= targetRank;
+});
+
+const rolesSelectList = computed(() => {
+  if (isAdminMode) {
+    return rolesList;
+  }
+
+  if (!isCorporativeMode) {
+    return [];
+  }
+
+  const allowedRoles = editableRolesByActor[currentUserRole.value] || [];
+  const filteredRoles = rolesList.filter((item) => allowedRoles.includes(item.value));
+  const currentTargetRole = account.value?.role;
+  const hasCurrentRoleInList = filteredRoles.some(
+    (item) => item.value === currentTargetRole,
+  );
+
+  if (!currentTargetRole || hasCurrentRoleInList) {
+    return filteredRoles;
+  }
+
+  const currentRoleOption = rolesList.find((item) => item.value === currentTargetRole);
+  return currentRoleOption ? [currentRoleOption, ...filteredRoles] : filteredRoles;
+});
+
+const canChangeTargetRole = computed(() => {
+  if (!canEditTargetAccount.value) {
+    return false;
+  }
+
+  if (isAdminMode) {
+    return true;
+  }
+
+  return ['master-manager'].includes(currentUserRole.value);
+});
+
+const canManageBranchAssignments = computed(() => {
+  const targetRole = account.value?.role || '';
+  const editorRole = currentUserRole.value;
+  const canSeeByTargetRole = ['branch-manager', 'platform-admin'].includes(targetRole);
+  const canManageByEditorRole = ['admin', 'master-manager'].includes(editorRole);
+
+  return (
+    !!contract?.value?.branches?.length && canSeeByTargetRole && canManageByEditorRole
+  );
+});
+
+const canManageRestrictions = computed(() => {
+  return (
+    isAdminMode || ['master-manager', 'branch-manager'].includes(currentUserRole.value)
+  );
+});
 
 let baseSchema: any = {
   userName: z
@@ -249,6 +357,15 @@ const onSubmit = form.handleSubmit(async (values) => {
     return;
   }
 
+  if (!canEditTargetAccount.value) {
+    toast({
+      title: 'Oops!',
+      description: 'Você não pode editar usuários com nível de acesso superior ao seu.',
+      variant: 'destructive',
+    });
+    return;
+  }
+
   let accountData: any = {
     accountId: account.value.id as string,
   };
@@ -259,6 +376,8 @@ const onSubmit = form.handleSubmit(async (values) => {
       username: values.username,
       password: values.newPassword ? values.newPassword : '',
       email: values.email,
+      role: account.value.role,
+      phone: values.phone,
       enabled: accountSituation.value,
       address: {
         zipcode: values.zipcode,
@@ -301,13 +420,14 @@ const onSubmit = form.handleSubmit(async (values) => {
       position: values.position,
       department: values.department,
       contract: {
+        ...account.value.contract,
         contractId: values.contract,
+        name: contractName.value,
         branchId: values.branch,
         area: values.area,
         branches: userManagerBranches.value,
+        restrictions: account.value?.contract?.restrictions || [],
       },
-      restrictions:
-        account.value?.contract?.restrictions || userRestrictions.map((item) => item.id),
     };
 
     if (isAdminMode) {
@@ -491,160 +611,102 @@ const onSubmit = form.handleSubmit(async (values) => {
 
         <!-- ADMIN & CORPORATIVE MODE -->
         <template v-else>
+          <section class="mb-10 flex items-center justify-between">
+            <h1 class="flex items-center gap-2 text-3xl font-bold">
+              <UserPen :size="32" />
+              {{
+                isAdminMode ? 'Editar Conta de Usuário' : 'Gerenciar Usuário Corporativo'
+              }}
+            </h1>
+            <div class="flex gap-10 items-center">
+              <div>
+                <Label class="text-md font-bold"> Desativar Usuário </Label>
+                <div class="mt-2 flex items-center gap-3">
+                  <Label class="text-sm text-zinc-500"> Inativo </Label>
+                  <Switch
+                    v-model:checked="accountSituation"
+                    class="data-[state=checked]:bg-green-600 data-[state=unchecked]:bg-red-500"
+                  />
+                  <Label class="text-sm text-zinc-500"> Ativo </Label>
+                </div>
+              </div>
+            </div>
+          </section>
+
           <Card class="bg-zinc-200">
-            <CardHeader>
-              <CardTitle class="flex items-center gap-2">
-                <UserPen />
-                {{
-                  isAdminMode
-                    ? 'Editar Conta de Usuário'
-                    : 'Gerenciar Usuário Corporativo'
-                }}
-              </CardTitle>
-            </CardHeader>
-            <CardContent class="space-y-8">
-              <section>
-                <h2 class="mb-6 text-lg font-bold">Informações Básicas</h2>
-                <div class="mb-4 w-full grid grid-cols-3 gap-8">
-                  <FormField v-slot="{ componentField }" name="userName">
+            <CardHeader class="gap-6">
+              <div class="p-4 flex items-start justify-between">
+                <div class="md:max-w-[250px] w-full">
+                  <h3 class="mb-4 text-lg font-bold">Tipo de acesso</h3>
+                  <FormField v-slot="{ componentField }" name="role">
                     <FormItem>
-                      <FormLabel>Nome</FormLabel>
                       <FormControl>
-                        <Input type="text" v-bind="componentField" />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  </FormField>
-                  <FormField v-slot="{ componentField }" name="userEmail">
-                    <FormItem>
-                      <FormLabel>E-mail</FormLabel>
-                      <FormControl>
-                        <Input type="email" v-bind="componentField" />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  </FormField>
-                  <FormField v-slot="{ componentField }" name="phone">
-                    <FormItem>
-                      <FormLabel>Telefone</FormLabel>
-                      <FormControl>
-                        <Input
-                          type="text"
+                        <FormSelect
                           v-bind="componentField"
-                          v-maska="'(##) ####-####'"
+                          :items="rolesSelectList"
+                          :label="'Selecione'"
+                          :disabled="!canChangeTargetRole"
                         />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
                   </FormField>
                 </div>
-              </section>
-
-              <section>
-                <h2 class="mb-6 text-lg font-bold">Credenciais e Acesso</h2>
-                <div class="mb-4 w-full grid grid-cols-3 gap-8">
-                  <FormField v-slot="{ componentField }" name="role">
-                    <FormItem>
-                      <FormLabel>Perfil/Função</FormLabel>
-                      <FormControl>
-                        <select v-bind="componentField" class="border rounded-md p-2">
-                          <option value="">Selecione um perfil</option>
-                          <option
-                            v-for="role in isAdminMode
-                              ? rolesList
-                              : rolesList.filter(
-                                  (r) =>
-                                    r.value !== 'admin' &&
-                                    r.value !== 'platform-user' &&
-                                    r.value !== 'platform-driver',
-                                )"
-                            :key="role.value"
-                            :value="role.value"
-                          >
-                            {{ role.label }}
-                          </option>
-                        </select>
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  </FormField>
-                  <FormField v-slot="{ componentField }" name="status">
-                    <FormItem>
-                      <FormLabel>Status</FormLabel>
-                      <FormControl>
-                        <select v-bind="componentField" class="border rounded-md p-2">
-                          <option value="pending">Pendente</option>
-                          <option value="validated">Validado</option>
-                          <option value="rejected">Rejeitado</option>
-                        </select>
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  </FormField>
+                <div>
+                  <h4 class="mb-2 font-bold">Status</h4>
+                  <span
+                    :class="`mx-auto px-2 flex items-center justify-center h-6 rounded-full text-white text-xs w-fit ${
+                      account?.status === 'validated' ? 'bg-green-600' : 'bg-amber-500'
+                    }`"
+                  >
+                    {{ account?.status === 'validated' ? 'Validado' : 'Pendente' }}
+                  </span>
                 </div>
-                <div class="mb-4 w-full grid grid-cols-3 gap-8">
-                  <FormField v-slot="{ componentField }" name="newPassword">
-                    <FormItem class="col-span-2">
-                      <FormLabel>Nova Senha</FormLabel>
-                      <div class="flex gap-2">
-                        <FormControl class="flex-1">
-                          <Input
-                            :type="viewPassword ? 'password' : 'text'"
-                            v-bind="componentField"
-                            placeholder="Deixe em branco para manter a atual"
-                          />
-                        </FormControl>
-                        <Button
-                          type="button"
-                          variant="outline"
-                          size="icon"
-                          @click="revealPassword"
-                        >
-                          <Eye v-if="viewPassword" :size="20" />
-                          <EyeOff v-else :size="20" />
-                        </Button>
-                        <Button
-                          type="button"
-                          variant="outline"
-                          @click="handleGeneratePassword"
-                        >
-                          <WandSparkles :size="20" />
-                          Gerar
-                        </Button>
-                      </div>
-                      <FormMessage />
-                    </FormItem>
-                  </FormField>
-                </div>
-              </section>
+              </div>
 
-              <section v-if="contractRoles.includes(account?.role || '')">
-                <h2 class="mb-6 text-lg font-bold">Informações do Contrato</h2>
-                <div class="mb-4 w-full grid grid-cols-2 gap-8">
-                  <FormField v-slot="{ componentField }" name="contract">
+              <p
+                v-if="!canEditTargetAccount"
+                class="mx-4 rounded-md border border-red-300 bg-red-100 p-3 text-red-700"
+              >
+                Você pode editar apenas usuários com role igual ou abaixo do seu nível.
+              </p>
+            </CardHeader>
+            <CardContent>
+              <div class="p-4 border border-zinc-900 rounded-md">
+                <div
+                  v-if="contractRoles.includes(account?.role || '')"
+                  class="p-4 mb-6 w-full bg-white rounded-md"
+                >
+                  <p>Contrato</p>
+                  <h3 class="text-lg font-bold">{{ contractName }}</h3>
+                </div>
+
+                <h3 class="mb-4 text-lg font-bold">Dados do usuário</h3>
+                <div class="md:grid md:grid-cols-4 gap-6">
+                  <FormField v-slot="{ componentField }" name="userName">
                     <FormItem>
-                      <FormLabel>Contrato</FormLabel>
-                      <FormControl>
-                        <Input type="text" :value="contractName" disabled />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  </FormField>
-                  <FormField v-slot="{ componentField }" name="area">
-                    <FormItem>
-                      <FormLabel>Área</FormLabel>
+                      <FormLabel>Nome Completo</FormLabel>
                       <FormControl>
                         <Input type="text" v-bind="componentField" />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
                   </FormField>
-                </div>
-              </section>
 
-              <section>
-                <h2 class="mb-6 text-lg font-bold">Informações Adicionais</h2>
-                <div class="mb-4 w-full grid grid-cols-2 gap-8">
+                  <FormField v-slot="{ componentField }" name="phone">
+                    <FormItem>
+                      <FormLabel>Celular</FormLabel>
+                      <FormControl>
+                        <Input
+                          type="text"
+                          v-bind="componentField"
+                          v-maska="'(##) #####-####'"
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  </FormField>
+
                   <FormField v-slot="{ componentField }" name="position">
                     <FormItem>
                       <FormLabel>Cargo</FormLabel>
@@ -654,6 +716,7 @@ const onSubmit = form.handleSubmit(async (values) => {
                       <FormMessage />
                     </FormItem>
                   </FormField>
+
                   <FormField v-slot="{ componentField }" name="department">
                     <FormItem>
                       <FormLabel>Departamento</FormLabel>
@@ -663,56 +726,121 @@ const onSubmit = form.handleSubmit(async (values) => {
                       <FormMessage />
                     </FormItem>
                   </FormField>
-                </div>
-              </section>
 
-              <section v-if="isAdminMode">
-                <h2 class="mb-6 text-lg font-bold">Confirmações</h2>
-                <div class="space-y-4">
-                  <FormField
-                    v-slot="{ value, handleChange }"
-                    name="emailConfirmed"
-                    type="checkbox"
-                  >
-                    <FormItem class="flex flex-row items-start space-x-3 space-y-0">
+                  <FormField v-slot="{ componentField }" name="userEmail">
+                    <FormItem>
+                      <FormLabel>E-mail</FormLabel>
                       <FormControl>
-                        <Checkbox @update:checked="handleChange" :checked="value" />
+                        <Input type="text" v-bind="componentField" />
                       </FormControl>
-                      <FormLabel class="font-normal">E-mail Confirmado</FormLabel>
+                      <FormMessage />
                     </FormItem>
                   </FormField>
-                  <FormField
-                    v-slot="{ value, handleChange }"
-                    name="acceptTerms"
-                    type="checkbox"
-                  >
-                    <FormItem class="flex flex-row items-start space-x-3 space-y-0">
+
+                  <FormField v-slot="{ componentField }" name="newPassword">
+                    <FormItem class="relative">
+                      <FormLabel>Alterar Senha</FormLabel>
                       <FormControl>
-                        <Checkbox @update:checked="handleChange" :checked="value" />
+                        <div v-if="viewPassword" class="relative">
+                          <Input
+                            type="text"
+                            placeholder="Insira a senha"
+                            v-bind="componentField"
+                            :disabled="isLoadingSend"
+                          />
+                          <EyeOff
+                            class="h-5 w-5 absolute top-[10px] right-3 cursor-pointer hover:text-zinc-700"
+                            :class="viewPassword ? 'text-zinc-700' : 'text-zinc-400'"
+                            @click.prevent="revealPassword"
+                          />
+                        </div>
+                        <div v-else class="relative">
+                          <Input
+                            type="password"
+                            placeholder="Insira a senha"
+                            v-bind="componentField"
+                            :disabled="isLoadingSend"
+                          />
+                          <Eye
+                            class="h-5 w-5 absolute top-[10px] right-3 cursor-pointer hover:text-zinc-700"
+                            :class="viewPassword ? 'text-zinc-700' : 'text-zinc-400'"
+                            @click.prevent="revealPassword"
+                          />
+                        </div>
                       </FormControl>
-                      <FormLabel class="font-normal">Aceitar Termos</FormLabel>
+                      <small>*A senha deve conter de 6 a 8 caracteres</small>
+                      <FormMessage />
                     </FormItem>
                   </FormField>
-                </div>
-              </section>
 
-              <section
-                class="flex items-center gap-2 p-4 bg-yellow-100 border border-yellow-300 rounded-md"
-              >
-                <Checkbox v-model="accountSituation" />
-                <label>{{ accountSituation ? 'Conta Ativa' : 'Conta Inativa' }}</label>
-              </section>
+                  <div class="relative flex items-center">
+                    <Button
+                      class="relative px-2 top-[4px] max-w-[140px]"
+                      @click.prevent="handleGeneratePassword"
+                    >
+                      <WandSparkles class="w-6 h-6" />
+                      Gerar Senha
+                    </Button>
+                  </div>
+                </div>
+
+                <div
+                  v-if="canManageBranchAssignments"
+                  class="mt-4 p-4 mb-6 w-full bg-white rounded-md"
+                >
+                  <p>Filiais Gerenciadas por este usuário</p>
+                  <ul class="my-4 flex items-center gap-4">
+                    <li
+                      v-for="branch in contract.branches"
+                      :key="branch.id"
+                      class="p-3 border border-zinc-950 rounded-md flex items-center gap-3"
+                    >
+                      <Checkbox
+                        :checked="isBranchSelected(branch.id)"
+                        @update:checked="(checked) => handleUserBranches(checked, branch)"
+                      />
+                      <p class="font-bold text-xl">
+                        {{ branch.branchCode }} - {{ branch.fantasyName }}
+                      </p>
+                    </li>
+                  </ul>
+                </div>
+
+                <div v-if="canManageRestrictions">
+                  <h3 class="my-4 font-bold text-lg">Restrições de Atendimento</h3>
+                  <ul class="space-y-3">
+                    <li
+                      v-for="restriction in userRestrictions"
+                      :key="restriction.id"
+                      class="flex items-center gap-2"
+                    >
+                      <Checkbox
+                        :checked="
+                          account?.contract?.restrictions?.includes(restriction.id)
+                        "
+                        @update:checked="toggleRestriction(restriction.id)"
+                      />
+                      <label :for="restriction.id">{{ restriction.label }}</label>
+                    </li>
+                  </ul>
+                </div>
+              </div>
             </CardContent>
           </Card>
         </template>
 
-        <div class="mt-6 flex justify-end gap-4">
-          <FormButtons
-            cancel="/profile/me"
-            :loading="isLoadingSend"
-            sbm-label="Salvar Alterações"
-            cnc-label="Cancelar"
-          />
+        <div class="mt-6 flex justify-start gap-4">
+          <Button type="submit" :disabled="!canEditTargetAccount || isLoadingSend">
+            <LoaderCircle v-if="isLoadingSend" class="mr-2 h-5 w-5 animate-spin" />
+            Salvar Alterações
+          </Button>
+          <Button
+            type="button"
+            variant="ghost"
+            @click.prevent="navigateTo('/profile/me')"
+          >
+            Cancelar
+          </Button>
           <Button
             v-if="isAdminMode && account?.id"
             type="button"

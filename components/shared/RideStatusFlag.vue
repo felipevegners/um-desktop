@@ -3,7 +3,7 @@ defineOptions({
   name: 'RideStatusFlag',
 });
 const props = defineProps<{
-  rideStatus: null;
+  rideStatus: string | null;
   size?: string;
 }>();
 

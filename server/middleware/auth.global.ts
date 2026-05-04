@@ -1,5 +1,12 @@
 import { getServerSession } from '#auth';
-import { createError, defineEventHandler, getCookie, getHeader, getRequestURL } from 'h3';
+import {
+  createError,
+  defineEventHandler,
+  getCookie,
+  getHeader,
+  getQuery,
+  getRequestURL,
+} from 'h3';
 import jwt from 'jsonwebtoken';
 
 // Helper to detect mobile requests (for test purposes)
@@ -16,6 +23,15 @@ function isMobileRequest(event: any): boolean {
 export default defineEventHandler(async (event) => {
   const url = getRequestURL(event);
   const pathname = url.pathname || '';
+  const method = event.node.req?.method || 'GET';
+  const query = getQuery(event) as Record<string, string | string[] | undefined>;
+  const publicTrack = String(query.publicTrack || '') === '1';
+  const hasId = typeof query.id === 'string' && query.id.length > 0;
+  const isPublicTrackApiRequest =
+    method === 'GET' &&
+    publicTrack &&
+    hasId &&
+    (pathname === '/api/rides' || pathname === '/api/drivers');
 
   if (pathname.includes('/api/files')) {
     console.debug('[Auth Middleware] Files route detected, skipping auth');
@@ -23,6 +39,10 @@ export default defineEventHandler(async (event) => {
 
   // Only enforce auth for API routes. Allow root, auth endpoints, assets and OPTIONS.
   if (!pathname.startsWith('/api/')) {
+    return;
+  }
+
+  if (isPublicTrackApiRequest) {
     return;
   }
 

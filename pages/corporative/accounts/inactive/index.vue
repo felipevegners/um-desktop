@@ -26,6 +26,22 @@ const { isLoading, inactiveAccounts } = storeToRefs(accountStore);
 
 const userAllowedAccounts = ref<any>([]);
 
+const resolveAccountBranchIds = (targetAccount: any): string[] => {
+  const branchIdsFromArray = Array.isArray(targetAccount?.contract?.branches)
+    ? targetAccount.contract.branches
+        .map((branch: any) => branch?.id)
+        .filter((id: unknown): id is string => typeof id === 'string' && id.length > 0)
+    : [];
+
+  const singleBranchId =
+    typeof targetAccount?.contract?.branchId === 'string' &&
+    targetAccount.contract.branchId.length > 0
+      ? [targetAccount.contract.branchId]
+      : [];
+
+  return [...new Set([...branchIdsFromArray, ...singleBranchId])];
+};
+
 definePageMeta({
   layout: 'admin',
 });
@@ -40,12 +56,14 @@ onMounted(async () => {
     userAllowedAccounts.value = inactiveAccounts.value;
   }
   if (role === 'branch-manager') {
-    const filterBranchAccounts = inactiveAccounts.value.filter((account) =>
-      userBranches.some(
-        //@ts-ignore
-        (filterItem: any) => filterItem.id === account?.contract?.branchId,
-      ),
-    );
+    const managerBranchIds = (userBranches || [])
+      .map((branch: any) => branch?.id)
+      .filter((id: unknown): id is string => typeof id === 'string' && id.length > 0);
+
+    const filterBranchAccounts = inactiveAccounts.value.filter((targetAccount) => {
+      const accountBranchIds = resolveAccountBranchIds(targetAccount);
+      return accountBranchIds.some((id) => managerBranchIds.includes(id));
+    });
     userAllowedAccounts.value = filterBranchAccounts;
   }
 });

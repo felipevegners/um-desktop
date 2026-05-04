@@ -5,12 +5,17 @@ import type { NotificationHistoryItem } from '~/utils/notifications';
 export function useNotificationClientFilter(notifications: NotificationHistoryItem[]) {
   const { data, status } = useAuth();
   return computed(() => {
+    if (status.value === 'loading') return null;
+
     const user = (data.value as any)?.user;
     const role = user?.role;
     const branchId = user?.contract?.branchId;
-    // Só filtra se branchId estiver definido e status for 'authenticated'
-    if (role === 'branch-manager') {
-      if (!branchId || status.value !== 'authenticated') return null; // null = loading
+
+    // Keep a client-side branch safeguard for manager roles, but avoid blocking
+    // rendering when user contract data arrives later than auth status.
+    if (role === 'branch-manager' || role === 'platform-admin') {
+      if (!branchId) return notifications;
+
       const sanitize = (v: unknown) =>
         typeof v === 'string' ? v.trim() : String(v ?? '').trim();
       return notifications.filter((n: NotificationHistoryItem) => {

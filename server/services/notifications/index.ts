@@ -9,18 +9,6 @@ export const getNotificationsService = async (
   }
 };
 
-export const getNotificationByIdService = async (
-  id: string,
-  params?: Record<string, string>,
-) => {
-  try {
-    return await $fetch(`/api/notifications/${id}`, { params });
-  } catch (error) {
-    console.debug('Error during notification GET by id -> ', error);
-    throw error;
-  }
-};
-
 export const markNotificationAsReadService = async (
   id: string,
   params?: Record<string, string>,

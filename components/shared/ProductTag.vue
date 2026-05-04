@@ -5,7 +5,7 @@ defineOptions({
 
 const props = defineProps<{
   label: string;
-  type: tagType;
+  type: tagType | string;
 }>();
 
 enum tagType {
@@ -26,10 +26,15 @@ const tagTypeClasses = {
   [tagType.RECEPTIVO]: 'bg-product-receptivo text-black',
 };
 
-const classes = [
+const resolvedTypeClass = computed(() => {
+  const normalizedType = String(props.type || '').toUpperCase();
+  return tagTypeClasses[normalizedType as tagType] ?? 'bg-zinc-200 text-zinc-800';
+});
+
+const classes = computed(() => [
   'px-2 py-1 uppercase text-center rounded-md w-fit',
-  tagTypeClasses[props.type],
-];
+  resolvedTypeClass.value,
+]);
 </script>
 <template>
   <small :class="classes"> {{ label }} </small>
