@@ -18,6 +18,7 @@ import { useRidesStore } from '@/stores/rides.store';
 import type { Product } from '@/types/products/types';
 import { toTypedSchema } from '@vee-validate/zod';
 import {
+  CalendarPlus,
   CalendarRange,
   Info,
   LoaderCircle,
@@ -36,6 +37,7 @@ import { storeToRefs } from 'pinia';
 import { useForm } from 'vee-validate';
 import { GoogleMap, Marker, Polyline } from 'vue3-google-map';
 import * as z from 'zod';
+import VisitorUserForm from '~/components/forms/VisitorUserForm.vue';
 import SplitPaymentCCs from '~/components/shared/SplitPaymentCCs.vue';
 import {
   convertMetersToDistance,
@@ -49,21 +51,18 @@ useHead({
   title: 'Backoffice - Novo Atendimento | Urban Mobi',
 });
 
-const contractsStore = useContractsStore();
-const branchesStore = useBranchesStore();
-const accountStore = useAccountStore();
-const ridesStore = useRidesStore();
-const { getBranchByIdAction } = useBranchesStore();
-const { branch } = storeToRefs(branchesStore);
-const productsStore = useProductsStore();
-const { getContractByIdAction } = contractsStore;
-const { contract } = storeToRefs(contractsStore);
-const { getUsersAccountsAction } = accountStore;
-const { accounts } = storeToRefs(accountStore);
-const { createRideAction, getRidesAction, loadingData } = ridesStore;
-const { rides } = storeToRefs(ridesStore);
-const { getProductsAction } = productsStore;
-const { products } = storeToRefs(productsStore);
+// Component props
+interface Props {
+  userRole?: 'admin' | 'corporative';
+}
+
+const props = withDefaults(defineProps<Props>(), {
+  userRole: 'admin',
+});
+
+// Determine if this is admin mode or corporative mode
+const isAdminMode = computed(() => props.userRole === 'admin');
+const isCorporativeMode = computed(() => props.userRole === 'corporative');
 
 const API_KEY = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
 const customIconStart = `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="#FFFFFF" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-square-dot-icon lucide-square-dot"><rect width="18" height="18" x="3" y="3" rx="2"/><circle cx="12" cy="12" r="1"/></svg>`;
@@ -73,6 +72,33 @@ const customIconEnd = `<svg xmlns="http://www.w3.org/2000/svg" width="24" height
 const { toast } = useToast();
 const { data } = useAuth();
 
+// Session data (used for corporative mode)
+const currentUserId: string | undefined = (data.value?.user as any)?.id;
+const contractId: string | undefined = (data.value?.user as any)?.contract?.contractId;
+const userBranches: any[] | undefined = (data.value?.user as any)?.contract?.branches;
+const userBranchIdSession: string | undefined = (data.value?.user as any)?.contract
+  ?.branchId;
+const role: string | undefined = (data.value?.user as any)?.role;
+const name: string | undefined = (data.value?.user as any)?.name;
+
+const contractsStore = useContractsStore();
+const accountStore = useAccountStore();
+const ridesStore = useRidesStore();
+const productsStore = useProductsStore();
+const branchesStore = useBranchesStore();
+
+const { getContractByIdAction } = contractsStore;
+const { contract } = storeToRefs(contractsStore);
+const { getUsersAccountsByContractIdAction, getUsersAccountsAction } = accountStore;
+const { accounts } = storeToRefs(accountStore);
+const { createRideAction, getRidesAction } = ridesStore;
+const { rides } = storeToRefs(ridesStore);
+const { getBranchByIdAction, updateBranchAction } = branchesStore;
+const { branch } = storeToRefs(branchesStore);
+const { getProductsAction } = productsStore;
+const { products } = storeToRefs(productsStore);
+
+// State
 const rideCode = ref('');
 const loadingProducts = ref<boolean>(false);
 const showAvailableProducts = ref<boolean>(false);
@@ -85,8 +111,10 @@ const selectedUser = ref<any>({
   name: '',
   email: '',
   phone: '',
-  role: 'platform-user',
+  role: isAdminMode ? 'platform-user' : 'platform-corp-user',
 });
+
+const visitorUser = ref(false);
 const showGenerateRide = ref<boolean>(false);
 const ridePassengers = ref(1);
 const paymentMethod = ref<any>('');
@@ -99,6 +127,7 @@ const contractBranchesList = ref<any>();
 const selectedUserBranchName = ref<string>();
 const loadingAreas = ref<boolean>(false);
 const enablePayment = ref<boolean>(false);
+const showPaymentArea = ref<boolean>(false);
 const splitPaymentAreas = ref<boolean>(false);
 const totalRideRated = ref<any>('');
 const remainingRideAmount = ref<any>('0.00');
@@ -109,17 +138,14 @@ const calculatedEstimates = ref({
   estimatedDistance: 0,
   estimatedDuration: 0,
   estimatedPrice: '',
-  // Ride Price + Addons
   estimatedTotalPrice: '',
 });
 
 const availableContractBranchAreas = computed(() => {
   if (!contractBranchAreas.value) return [];
-
   const usedAreas = splitPaymentCCAreas.value
     .map((item: any) => item.area)
     .filter((area: string) => area && area !== '');
-
   return contractBranchAreas.value.map((item: any) => ({
     ...item,
     disabled: usedAreas.includes(item.value),
@@ -133,30 +159,17 @@ const recurrenceRange = ref<any>(null);
 const recurrenceWeekdays = ref<number[]>([]);
 const showContractProductAlert = ref<boolean>(false);
 const loadingGenerateRide = ref<boolean>(false);
-const routeWaypoints = ref<any>([]);
-const originCoords = ref<any>({
-  lat: '',
-  lng: '',
-});
-const originLocationDetails = ref<any>({
-  address: '',
-  url: '',
-});
+const routeWaypoints = ref<any>([{ address: '' }]);
+const originCoords = ref<any>({ lat: '', lng: '' });
+const originLocationDetails = ref<any>({ address: '', url: '' });
 const waypointCoords = ref<any>([]);
 const waypointLocationDetails = ref<any>([]);
-const destinationCoords = ref<any>({
-  lat: '',
-  lng: '',
-});
-const destinationLocationDetails = ref<any>({
-  address: '',
-  url: '',
-});
+const destinationCoords = ref<any>({ lat: '', lng: '' });
+const destinationLocationDetails = ref<any>({ address: '', url: '' });
 const routePolyLine = ref();
 const loadingRoute = ref<boolean>(false);
 const mapCenter = ref<any>({ lat: -23.55012592233407, lng: -46.63425371400603 });
 const mapRef = ref<any>(null);
-const initialZoom = ref(1);
 const ridePath = ref<any>({
   path: [],
   geodesic: true,
@@ -166,6 +179,9 @@ const ridePath = ref<any>({
 });
 const markers = ref<any>([]);
 const showRenderedMap = ref<boolean>(false);
+
+// Computed zoom based on mode
+const initialZoom = computed(() => (isAdminMode ? 1 : 2));
 
 const recurrenceWeekdayOptions = [
   { value: 1, label: 'Seg' },
@@ -182,13 +198,11 @@ const toggleRecurrenceWeekday = (weekday: number) => {
     recurrenceWeekdays.value = recurrenceWeekdays.value.filter((day) => day !== weekday);
     return;
   }
-
   recurrenceWeekdays.value = [...recurrenceWeekdays.value, weekday];
 };
 
 const toIsoDate = (dateValue: any): string | null => {
   if (!dateValue) return null;
-
   if (
     typeof dateValue === 'object' &&
     typeof dateValue.year === 'number' &&
@@ -199,7 +213,6 @@ const toIsoDate = (dateValue: any): string | null => {
     const day = String(dateValue.day).padStart(2, '0');
     return `${dateValue.year}-${month}-${day}`;
   }
-
   if (typeof dateValue === 'string') {
     const parsed = new Date(dateValue);
     if (!Number.isNaN(parsed.getTime())) {
@@ -207,7 +220,6 @@ const toIsoDate = (dateValue: any): string | null => {
     }
     return dateValue;
   }
-
   return null;
 };
 
@@ -215,49 +227,127 @@ const resolveRecurringDates = (baseDepartDate: string): string[] => {
   if (!isRecurringRide.value) {
     return [baseDepartDate];
   }
-
   const startIso = toIsoDate(recurrenceRange.value?.start);
   const endIso = toIsoDate(recurrenceRange.value?.end);
-
   if (!startIso || !endIso || recurrenceWeekdays.value.length === 0) {
     return [baseDepartDate];
   }
-
   const startDate = new Date(`${startIso}T00:00:00`);
   const endDate = new Date(`${endIso}T00:00:00`);
-
   if (Number.isNaN(startDate.getTime()) || Number.isNaN(endDate.getTime())) {
     return [baseDepartDate];
   }
-
   const dates: string[] = [];
   const cursor = new Date(startDate);
-
   while (cursor <= endDate) {
     if (recurrenceWeekdays.value.includes(cursor.getDay())) {
       dates.push(cursor.toISOString().slice(0, 10));
     }
     cursor.setDate(cursor.getDate() + 1);
   }
-
   return dates.length > 0 ? dates : [baseDepartDate];
 };
 
 onBeforeMount(async () => {
-  await getUsersAccountsAction();
-  const filteredUsers = accounts.value.filter(
-    (user: any) =>
-      user.enabled === true &&
-      user.role !== 'admin' &&
-      user.role !== 'platform-driver' &&
-      user.emailConfirmed === true,
-  );
-  availableUsers.value = filteredUsers.map((user: any) => {
-    return {
-      label: user.username,
-      value: user.id,
-    };
-  });
+  // Use props.userRole directly instead of computed to avoid race conditions
+  if (props.userRole === 'admin') {
+    // Admin mode initialization
+    await getUsersAccountsAction();
+
+    const filteredUsers = accounts.value.filter(
+      (user: any) =>
+        user.enabled === true &&
+        user.role !== 'admin' &&
+        user.role !== 'platform-driver' &&
+        user.emailConfirmed === true,
+    );
+
+    availableUsers.value = filteredUsers.map((user: any) => {
+      return {
+        label: user.username,
+        value: user.id,
+      };
+    });
+  } else if (props.userRole === 'corporative') {
+    // Corporative mode initialization
+    // Validate contractId before attempting to load
+    if (!contractId || contractId === '-' || !contractId.trim()) {
+      toast({
+        title: 'Erro de Inicialização',
+        description: 'ID de contrato inválido. Contate o administrador.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    await getContractByIdAction(contractId as string);
+    await getUsersAccountsByContractIdAction(contractId as string);
+
+    let managedBranches: Array<any> = [];
+    const sessionBranches = userBranches;
+    const sessionBranchId = userBranchIdSession;
+
+    if (Array.isArray(sessionBranches) && sessionBranches.length > 0) {
+      managedBranches = sessionBranches;
+    } else if (
+      sessionBranchId &&
+      contract?.value?.branches &&
+      contract?.value?.branches.length > 0
+    ) {
+      const found = contract?.value?.branches.find((b: any) => b.id === sessionBranchId);
+      if (found) {
+        managedBranches = [found];
+      } else {
+        managedBranches = [{ id: sessionBranchId }];
+      }
+    }
+
+    if (role === 'branch-manager') {
+      const filteredAccounts = (accounts?.value || []).filter((user: any) => {
+        const accountBranchIds = [
+          ...(typeof user?.contract?.branchId === 'string'
+            ? [user.contract.branchId]
+            : []),
+          ...(Array.isArray(user?.contract?.branches)
+            ? user.contract.branches
+                .map((branch: any) => branch?.id)
+                .filter(
+                  (id: unknown): id is string => typeof id === 'string' && id.length > 0,
+                )
+            : []),
+        ];
+        if (accountBranchIds.length === 0) return false;
+        return accountBranchIds.some((branchId: string) =>
+          managedBranches.some((branch) => branch.id === branchId),
+        );
+      });
+
+      availableUsers.value = filteredAccounts.map((user: any) => {
+        const userBranchId =
+          user?.contract?.branchId ??
+          (Array.isArray(user?.contract?.branches) && user.contract.branches[0]?.id) ??
+          undefined;
+        const findBranch =
+          managedBranches.find((b: any) => b.id === userBranchId) ||
+          (contract?.value?.branches || []).find((b: any) => b.id === userBranchId) ||
+          null;
+        const branchLabel = findBranch?.fantasyName ? ' - ' + findBranch.fantasyName : '';
+        const isCurrent = currentUserId === user.id;
+        return {
+          label: `${user.username}${branchLabel}${isCurrent ? ' - Você' : ''}`,
+          value: user.id,
+        };
+      });
+    } else {
+      availableUsers.value = (accounts?.value || []).map((user: any) => {
+        const isCurrent = currentUserId === user.id;
+        return {
+          label: `${user.username}${isCurrent ? ' - Você' : ''}`,
+          value: user.id,
+        };
+      });
+    }
+  }
 
   await getProductsAction();
   addonProducts.value = products.value.filter(
@@ -266,9 +356,7 @@ onBeforeMount(async () => {
 });
 
 const addWaypointRow = () => {
-  routeWaypoints.value.push({
-    address: '',
-  });
+  routeWaypoints.value.push({ address: '' });
 };
 
 const removeWaypointRow = (index: number) => {
@@ -277,19 +365,13 @@ const removeWaypointRow = (index: number) => {
   waypointCoords.value.splice(index, 1);
 };
 
-// // Set the waypoints of the ride
 const setWaypoints = (place: any, index: number) => {
   const lat = place.geometry.location.lat();
   const lng = place.geometry.location.lng();
-
   const waypoint = {
     address: place.formatted_address,
-    coords: {
-      lat,
-      lng,
-    },
+    coords: { lat, lng },
   };
-
   waypointCoords.value[index] = waypoint.coords;
   waypointLocationDetails.value[index] = waypoint;
   routeWaypoints.value[index].address = place.formatted_address;
@@ -306,10 +388,11 @@ const removePassengers = () => {
 };
 
 const setSelectedProduct = (value: any) => {
-  showContractProductAlert.value = false;
-  showRenderedMap.value = false;
-  selectedProduct.value = {};
-
+  if (isAdminMode) {
+    showContractProductAlert.value = false;
+    showRenderedMap.value = false;
+    selectedProduct.value = {};
+  }
   const targetElement = document.getElementById('ride-info');
   if (targetElement) {
     setTimeout(() => {
@@ -320,7 +403,7 @@ const setSelectedProduct = (value: any) => {
     }, 100);
   }
   selectedProduct.value = value;
-  if (value.type === 'contract') {
+  if (isAdminMode && value.type === 'contract') {
     showContractProductAlert.value = true;
   }
   ridePassengers.value = 1;
@@ -331,10 +414,19 @@ const getBranchAreas = (value: string) => {
   const selectedBranch = contractBranches.value.find(
     (branch: any) => branch.id === value,
   );
+
+  if (selectedBranch) {
+    selectedUserBranchName.value = selectedBranch.fantasyName;
+    const userBranchBudget = parseFloat(selectedBranch.budget);
+    const availableBudget = userBranchBudget - parseFloat(selectedBranch.usedBudget);
+    availableBranchBudget.value = availableBudget.toString();
+    usedBranchBudget.value = selectedBranch.usedBudget;
+  }
+
   contractBranchAreas.value = selectedBranch.areas.map((area: any) => {
     return {
-      label: `${area.areaCode} - ${area.areaName}`,
-      value: `${area.areaCode}`,
+      label: `${area.areaCode ? area.areaCode : '0000'} - ${area.areaName ? area.areaName : 'Geral'}`,
+      value: area.areaCode ? area.areaCode : '0000',
     };
   });
   setTimeout(() => {
@@ -347,7 +439,6 @@ const usedBranchBudget = ref<string>('');
 const showBranchBudgetAlert = ref<boolean>(false);
 
 const setSelectedUser = async (user: any) => {
-  // reseting state to show another products list
   showAvailableProducts.value = false;
   availableProducts.value = [];
   selectedProduct.value = [];
@@ -366,31 +457,115 @@ const setSelectedUser = async (user: any) => {
     role: userData?.role,
   };
 
-  if (userData.role === 'platform-user') {
-    try {
-      showAvailableProducts.value = true;
-      loadingProducts.value = true;
+  if (isAdminMode) {
+    // Admin mode logic
+    if (userData.role === 'platform-user') {
+      try {
+        showAvailableProducts.value = true;
+        loadingProducts.value = true;
+        const regularProducts = products.value.filter(
+          (product: Product) => product.type !== 'addon',
+        );
+        availableProducts.value = regularProducts.sort(
+          (a: Product, b: Product) =>
+            ['EASY', 'PREMIUM', 'GOLD', 'BLINDADO', 'VAN'].indexOf(a.name) -
+            ['EASY', 'PREMIUM', 'GOLD', 'BLINDADO', 'VAN'].indexOf(b.name),
+        );
+        loadingProducts.value = false;
+        paymentMethodList.value = paymentMethods.filter(
+          (method) => method.value !== 'corporative',
+        );
+      } catch (error) {
+        toast({
+          title: 'Opss!',
+          class: 'bg-red-500 border-0 text-white text-2xl',
+          description: `Erro ao buscar os produtos. Tente novamente.`,
+        });
+      }
+    } else if (userData.contract.contractId !== '-') {
+      try {
+        showAvailableProducts.value = true;
+        loadingProducts.value = true;
+        await getContractByIdAction(userData.contract.contractId);
+        availableProducts.value = contract?.value.products.sort(
+          (a: Product, b: Product) =>
+            ['EASY', 'PREMIUM', 'GOLD', 'BLINDADO', 'VAN'].indexOf(a.name) -
+            ['EASY', 'PREMIUM', 'GOLD', 'BLINDADO', 'VAN'].indexOf(b.name),
+        );
+        contractBranches.value = contract?.value.branches;
 
-      const regularProducts = products.value.filter(
-        (product: Product) => product.type !== 'addon',
-      );
-      availableProducts.value = regularProducts.sort(
-        (a: Product, b: Product) =>
-          ['EASY', 'PREMIUM', 'GOLD', 'BLINDADO', 'VAN'].indexOf(a.name) -
-          ['EASY', 'PREMIUM', 'GOLD', 'BLINDADO', 'VAN'].indexOf(b.name),
-      );
-      loadingProducts.value = false;
-      paymentMethodList.value = paymentMethods.filter(
-        (method) => method.value !== 'corporative',
-      );
-    } catch (error) {
-      toast({
-        title: 'Opss!',
-        class: 'bg-red-500 border-0 text-white text-2xl',
-        description: `Erro ao buscar os produtos. Tente novamente.`,
-      });
+        if (!contractBranches.value || contractBranches.value.length === 0) {
+          throw new Error('Nenhuma filial disponível no contrato.');
+        }
+
+        const isMasterManager = userData.role === 'master-manager';
+        let effectiveBranchId = userData?.contract?.branchId;
+        const isValidBranchId =
+          effectiveBranchId &&
+          typeof effectiveBranchId === 'string' &&
+          effectiveBranchId.trim() &&
+          effectiveBranchId.trim() !== '-';
+
+        if (!isValidBranchId) {
+          effectiveBranchId = contractBranches.value[0]?.id;
+        }
+
+        if (
+          !effectiveBranchId ||
+          typeof effectiveBranchId !== 'string' ||
+          !effectiveBranchId.trim()
+        ) {
+          throw new Error('Nenhuma filial disponível no contrato para faturamento.');
+        }
+
+        const filterUserBranch = contractBranches.value.find(
+          (branch: any) => branch.id === effectiveBranchId,
+        );
+
+        if (!filterUserBranch) {
+          throw new Error('Filial de origem do usuário não encontrada para faturamento.');
+        }
+
+        selectedUserBranchName.value = filterUserBranch.fantasyName;
+        const userBranchBudget = parseFloat(filterUserBranch.budget);
+        const availableBudget =
+          userBranchBudget - parseFloat(filterUserBranch.usedBudget);
+        availableBranchBudget.value = availableBudget.toString();
+        usedBranchBudget.value = filterUserBranch.usedBudget;
+
+        contractBranchesList.value = isMasterManager
+          ? contractBranches.value.map((branch: any) => {
+              return {
+                label: `${branch.branchCode} - ${branch.fantasyName}`,
+                value: branch.id,
+              };
+            })
+          : [
+              {
+                label: `${filterUserBranch.branchCode} - ${filterUserBranch.fantasyName}`,
+                value: filterUserBranch.id,
+              },
+            ];
+
+        if (!isMasterManager) {
+          form.setFieldValue('branch' as any, filterUserBranch.id);
+          getBranchAreas(filterUserBranch.id);
+        } else {
+          form.setFieldValue('area' as any, contractBranchesList.value[0].value);
+          getBranchAreas(contractBranchesList.value[0].value);
+        }
+        loadingProducts.value = false;
+        paymentMethodList.value = paymentMethods;
+      } catch (error) {
+        toast({
+          title: 'Opss!',
+          class: 'bg-red-500 border-0 text-white text-2xl',
+          description: `Erro ao buscar os produtos do contracto. Tente novamente.`,
+        });
+      }
     }
-  } else if (userData.contract.contractId !== '-') {
+  } else {
+    // Corporative mode logic - always assume contract products
     try {
       showAvailableProducts.value = true;
       loadingProducts.value = true;
@@ -402,21 +577,46 @@ const setSelectedUser = async (user: any) => {
       );
       contractBranches.value = contract?.value.branches;
 
-      const isMasterManager = userData.role === 'master-manager';
+      if (!contractBranches.value || contractBranches.value.length === 0) {
+        throw new Error('Nenhuma filial disponível no contrato.');
+      }
 
-      const filterUserBranch = contract?.value.branches.find(
-        (branch: any) => branch.id === userData.contract.branchId,
+      const isMasterManager = userData.role === 'master-manager';
+      let effectiveBranchId = userData?.contract?.branchId;
+      const isValidBranchId =
+        effectiveBranchId &&
+        typeof effectiveBranchId === 'string' &&
+        effectiveBranchId.trim() &&
+        effectiveBranchId.trim() !== '-';
+
+      if (!isValidBranchId) {
+        effectiveBranchId = contractBranches.value[0]?.id;
+      }
+
+      if (
+        !effectiveBranchId ||
+        typeof effectiveBranchId !== 'string' ||
+        !effectiveBranchId.trim()
+      ) {
+        throw new Error('Nenhuma filial disponível no contrato para faturamento.');
+      }
+
+      const filterUserBranch = contractBranches.value.find(
+        (branch: any) => branch.id === effectiveBranchId,
       );
 
-      selectedUserBranchName.value = filterUserBranch.fantasyName;
+      if (!filterUserBranch) {
+        throw new Error('Filial de origem do usuário não encontrada para faturamento.');
+      }
 
+      selectedUserBranchName.value = filterUserBranch.fantasyName;
       const userBranchBudget = parseFloat(filterUserBranch.budget);
       const availableBudget = userBranchBudget - parseFloat(filterUserBranch.usedBudget);
       availableBranchBudget.value = availableBudget.toString();
       usedBranchBudget.value = filterUserBranch.usedBudget;
 
       contractBranchesList.value = isMasterManager
-        ? contract?.value.branches.map((branch: any) => {
+        ? contractBranches.value.map((branch: any) => {
             return {
               label: `${branch.branchCode} - ${branch.fantasyName}`,
               value: branch.id,
@@ -436,13 +636,14 @@ const setSelectedUser = async (user: any) => {
         form.setFieldValue('area', contractBranchesList.value[0].value);
         getBranchAreas(contractBranchesList.value[0].value);
       }
+
       loadingProducts.value = false;
-      paymentMethodList.value = paymentMethods;
+      paymentMethodList.value = paymentMethods.filter((method) => method.value !== 'pix');
     } catch (error) {
       toast({
         title: 'Opss!',
         class: 'bg-red-500 border-0 text-white text-2xl',
-        description: `Erro ao buscar os produtos do contracto. Tente novamente.`,
+        description: `Erro ao buscar os produtos do seu contrato. Tente novamente.`,
       });
     }
   }
@@ -450,11 +651,9 @@ const setSelectedUser = async (user: any) => {
 
 const setPaymentMethod = (value: any) => {
   paymentMethod.value = value;
-
   const ridePriceOverQuota =
     parseFloat(calculatedEstimates.value.estimatedTotalPrice) >
     Number(availableBranchBudget.value);
-
   if (value === 'corporative' && ridePriceOverQuota) {
     showBranchBudgetAlert.value = true;
   } else {
@@ -468,7 +667,6 @@ const handleAcceptBudgetOverQuota = () => {
   branchBudgetOverQuota.value = true;
 };
 
-// Google Maps Area
 const decodePolyline = (polyline: string) => {
   const decode: any = polyLineCodec(polyline);
   const coords = decode.map((path: any) => ({
@@ -477,29 +675,18 @@ const decodePolyline = (polyline: string) => {
   }));
 
   if (!coords.length) {
-    ridePath.value = {
-      ...ridePath.value,
-      path: [],
-    };
+    ridePath.value = { ...ridePath.value, path: [] };
     markers.value = [];
     return;
   }
 
-  // Set the coords to build the path
-  ridePath.value = {
-    ...ridePath.value,
-    path: [...coords],
-  };
+  ridePath.value = { ...ridePath.value, path: [...coords] };
 
-  // Center map using route centroid to avoid out-of-bounds index offsets.
   const centerLat =
     coords.reduce((sum: number, point: any) => sum + point.lat, 0) / coords.length;
   const centerLng =
     coords.reduce((sum: number, point: any) => sum + point.lng, 0) / coords.length;
-  mapCenter.value = {
-    lat: centerLat,
-    lng: centerLng,
-  };
+  mapCenter.value = { lat: centerLat, lng: centerLng };
 
   const stopsMarkers = waypointLocationDetails.value
     .filter((waypoint: any) => waypoint?.coords?.lat && waypoint?.coords?.lng)
@@ -511,7 +698,6 @@ const decodePolyline = (polyline: string) => {
       };
     });
 
-  // Set the markers on the map
   markers.value = [
     {
       lat: coords[0].lat,
@@ -537,17 +723,13 @@ const handleRideCalculation = async () => {
   const validateForm = await form.validate();
   if (!validateForm.valid) {
     const targetElement = document.getElementById('ride-info');
-    targetElement?.scrollIntoView({
-      behavior: 'smooth',
-      block: 'start',
-    });
+    targetElement?.scrollIntoView({ behavior: 'smooth', block: 'start' });
     return;
   }
 
   try {
     loadingRoute.value = true;
 
-    // Build a locations array for the complete route
     const locations = [
       { lat: originCoords.value.lat, lng: originCoords.value.lng },
       ...waypointLocationDetails.value.map((wp: any) =>
@@ -568,14 +750,11 @@ const handleRideCalculation = async () => {
       departureTime,
     });
 
-    // Validate server response: must be a non-empty array of routes
     if (
       !routeCalculation ||
       !Array.isArray(routeCalculation) ||
       routeCalculation.length === 0
     ) {
-      // Log entire response object to help debugging when server returns an error
-      // eslint-disable-next-line no-console
       console.error('Route response is not an array:', routeCalculation);
       const serverMsg =
         (routeCalculation &&
@@ -603,7 +782,6 @@ const handleRideCalculation = async () => {
         const extraKms = distance - selectedProduct.value.includedKms;
         const diffPrice = extraKms * parseFloat(selectedProduct?.value.kmPrice);
         rideExtraKmPrice.value = diffPrice.toFixed(2).toString();
-
         rideExtraKms.value = extraKms;
         ridePrice += diffPrice;
       }
@@ -613,13 +791,15 @@ const handleRideCalculation = async () => {
         const diffPriceDuration =
           extraHours * parseFloat(selectedProduct?.value.minutePrice) * 60;
         rideExtraHourPrice.value = diffPriceDuration.toFixed(2).toString();
-
         rideExtraHours.value = extraHours;
         ridePrice += diffPriceDuration;
       }
       calculatedEstimates.value.estimatedPrice = ridePrice.toFixed(2).toString();
       calculatedEstimates.value.estimatedTotalPrice = ridePrice.toFixed(2).toString();
       remainingRideAmount.value = ridePrice.toFixed(2).toString();
+      if (isCorporativeMode) {
+        showContractProductAlert.value = true;
+      }
     } else {
       const ridePrice =
         basePrice +
@@ -648,9 +828,7 @@ const handleRideCalculation = async () => {
       remainingRideAmount.value = finalPrice.toFixed(2).toString();
     }
   } catch (error) {
-    // Log error to the browser console for debugging
-    // eslint-disable-next-line no-console
-    console.error('Failed to calculate route (admin):', error);
+    console.error('Failed to calculate route:', error);
     toast({
       title: 'Opss!',
       class: 'bg-red-500 border-0 text-white text-2xl',
@@ -666,10 +844,7 @@ const handleRideCalculation = async () => {
       const targetElement = document.getElementById('ride-map');
       if (targetElement) {
         setTimeout(() => {
-          targetElement.scrollIntoView({
-            behavior: 'smooth',
-            block: 'start',
-          });
+          targetElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
         }, 100);
       }
     }
@@ -693,48 +868,60 @@ watch(
         //@ts-ignore
         new google.maps.LatLng(destinationCoords.value.lat, destinationCoords.value.lng),
       );
-
       map.fitBounds(bounds);
     }
   },
 );
 
-// // Set the location based on the place selected
 const setOriginPlace = (place: any) => {
   originCoords.value.lat = place.geometry.location.lat();
   originCoords.value.lng = place.geometry.location.lng();
-  // Update the location details
   originLocationDetails.value.address = place.formatted_address;
   originLocationDetails.value.url = place.url;
-  form.setValues({
-    origin: place.formatted_address,
-  });
+  form.setValues({ origin: place.formatted_address });
 };
-// // Set the location based on the place selected
+
 const setDestinationPlace = (place: any) => {
   destinationCoords.value.lat = place.geometry.location.lat();
   destinationCoords.value.lng = place.geometry.location.lng();
-  // Update the location details
   destinationLocationDetails.value.address = place.formatted_address;
   destinationLocationDetails.value.url = place.url;
-  form.setValues({
-    destination: place.formatted_address,
-  });
+  form.setValues({ destination: place.formatted_address });
 };
 
 const newRideCode = computed(async () => {
   await getRidesAction();
   const ridesLength = rides?.value.length;
   const today = new Date();
-
   const day = String(today.getDate()).padStart(2, '0');
-  const month = String(today.getMonth() + 1).padStart(2, '0'); // Months are 0-indexed
-  const year = String(today.getFullYear()).slice(-2); // Get the last two digits of the year
-
+  const month = String(today.getMonth() + 1).padStart(2, '0');
+  const year = String(today.getFullYear()).slice(-2);
   return `UM-${day}${month}${year}${ridesLength + 1}`;
 });
 
 rideCode.value = await newRideCode.value;
+
+const validateDepartTime = (data: any) => {
+  const { departDate, departTime } = data;
+  if (!departDate || !departTime) {
+    return true;
+  }
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const todayIso = today.toISOString().split('T')[0];
+
+  if (departDate === todayIso) {
+    const [departHour, departMinute] = departTime.split(':').map(Number);
+    const departTimeInMinutes = departHour * 60 + departMinute;
+    const now = new Date();
+    const currentTimeInMinutes = now.getHours() * 60 + now.getMinutes();
+    const minimumTimeInMinutes = currentTimeInMinutes + 120;
+    if (departTimeInMinutes < minimumTimeInMinutes) {
+      return false;
+    }
+  }
+  return true;
+};
 
 const dynamicSchema = computed(() => {
   const baseSchema = z.object({
@@ -746,24 +933,33 @@ const dynamicSchema = computed(() => {
     destination: z.string(),
     observations: z.string().optional(),
     rideAddons: z.any(),
+    reason: z.string().min(1).max(100),
+    branch: z.string().optional(),
+    area: z.string().optional(),
   });
 
-  if (selectedUser?.value.role !== 'platform-user') {
-    return baseSchema.extend({
-      reason: z.string().min(1).max(100),
-      branch: z.string().optional(),
-      area: z.string().optional(),
-    });
-  } else {
-    return baseSchema.extend({
-      reason: z.string().optional(),
-      branch: z.string().optional(),
-      area: z.string().optional(),
+  let schemaToValidate = baseSchema;
+
+  if (visitorUser.value) {
+    schemaToValidate = baseSchema.extend({
+      visitorName: z
+        .string({ message: 'Obrigatório!' })
+        .min(2, 'Insira ao menos 2 caracteres!'),
+      visitorPhone: z
+        .string({ message: 'Obrigatório!' })
+        .min(2, 'Insira ao menos 2 caracteres!'),
+      visitorCompany: z.string().optional(),
+      visitorReason: z.string().optional(),
     });
   }
+
+  return schemaToValidate.refine((data) => validateDepartTime(data), {
+    message: 'Horário de embarque passado',
+    path: ['departTime'],
+  });
 });
 
-const newRideSchema = toTypedSchema(dynamicSchema.value);
+const newRideSchema = computed(() => toTypedSchema(dynamicSchema.value));
 
 const form = useForm({
   validationSchema: newRideSchema,
@@ -772,15 +968,12 @@ const form = useForm({
   },
 });
 
-const showPaymentSection = async () => {
+const showPaymentModal = async () => {
   const validateForm = await form.validate();
   if (validateForm.valid) {
     enablePayment.value = true;
-    // const targetElement = document.getElementById('payment');
-    // targetElement?.scrollIntoView({
-    //   behavior: 'smooth',
-    //   block: 'start',
-    // });
+    const targetElement = document.getElementById('payment-area');
+    targetElement?.scrollIntoView({ behavior: 'smooth', block: 'start' });
 
     if (paymentMethod.value === 'corporative' && form.values.branch) {
       onSubmit();
@@ -799,10 +992,7 @@ const showPaymentSection = async () => {
     }
   } else {
     const targetElement = document.getElementById('ride-info');
-    targetElement?.scrollIntoView({
-      behavior: 'smooth',
-      block: 'start',
-    });
+    targetElement?.scrollIntoView({ behavior: 'smooth', block: 'start' });
     toast({
       title: 'Oops!',
       description: `Preencha todos os dados do atendimento!`,
@@ -811,7 +1001,45 @@ const showPaymentSection = async () => {
   }
 };
 
-// Payment handlers for both Stripe and Cielo
+const showPaymentSection = async () => {
+  const validateForm = await form.validate();
+  if (validateForm.valid) {
+    enablePayment.value = true;
+
+    if (paymentMethod.value === 'corporative' && (form.values as any).branch) {
+      onSubmit();
+    } else {
+      form.setErrors({
+        area: 'Obrigatório!',
+        branch: 'Obrigatório!',
+      } as any);
+    }
+
+    if (paymentMethod.value === 'pix') {
+      window.alert('PAGAMENTO PIX');
+      setTimeout(() => {
+        onSubmit();
+      }, 2000);
+    }
+  } else {
+    const targetElement = document.getElementById('ride-info');
+    targetElement?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    toast({
+      title: 'Oops!',
+      description: `Preencha todos os dados do atendimento!`,
+      variant: 'destructive',
+    });
+  }
+};
+
+const goToPaymentSection = () => {
+  showPaymentArea.value = true;
+  const targetElement = document.getElementById('payment-area');
+  setTimeout(() => {
+    targetElement?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }, 500);
+};
+
 const handlePaymentComplete = (paymentResult: any) => {
   showGenerateRide.value = true;
 
@@ -826,8 +1054,6 @@ const handlePaymentComplete = (paymentResult: any) => {
   }
 
   enablePayment.value = false;
-
-  // Submit the form to generate new ride
   onSubmit();
 };
 
@@ -839,12 +1065,10 @@ const handlePaymentError = (error: string) => {
   });
 };
 
-// Handler for Cielo Checkout URL creation
 const handleCieloCheckoutCreated = (result: {
   checkoutUrl: string;
   orderNumber: string;
 }) => {
-  // Update payment status to pending as user will be redirected to Cielo
   paymentStatus.value = 'pending';
   paymentLinkUrl.value = result?.checkoutUrl;
   setTimeout(() => {
@@ -862,17 +1086,13 @@ const buildStaticMapUrl = () => {
   const origin = `${originCoords.value.lat},${originCoords.value.lng}`;
   const dest = `${destinationCoords.value.lat},${destinationCoords.value.lng}`;
 
-  // Gather stops as lat,lng
   const stops = waypointLocationDetails.value?.length
     ? waypointLocationDetails.value
         .map((wp: any) => (wp.coords ? `${wp.coords.lat},${wp.coords.lng}` : ''))
         .filter(Boolean)
     : [];
 
-  // const pathPoints = [origin, ...stops, dest].join('|');
   const path = `&path=color:0x000000FF%7Cenc:${routePolyLine.value}`;
-
-  // Markers: origin, stops, dest
   const markers = [`&markers=icon:${originIconUrl}|${origin}`];
   stops.forEach((stop: any) => markers.push(`&markers=icon:${stopIconUrl}|${stop}`));
   markers.push(`&markers=icon:${destIconUrl}|${dest}`);
@@ -880,8 +1100,33 @@ const buildStaticMapUrl = () => {
   return `https://maps.googleapis.com/maps/api/staticmap?maptype=${maptype}&size=${size}${markers.join('')}${path}&key=${key}`;
 };
 
-const onSubmit = form.handleSubmit(async (values) => {
+const onSubmit = form.handleSubmit(async (values: any) => {
   loadingGenerateRide.value = true;
+
+  // Validate conditional required fields
+  if (visitorUser.value) {
+    if (!values.visitorName || !values.visitorPhone) {
+      toast({
+        title: 'Dados do visitante incompletos',
+        description: 'Preencha nome e celular do visitante.',
+        variant: 'destructive',
+      });
+      loadingGenerateRide.value = false;
+      return;
+    }
+  }
+
+  if (selectedUser?.value.role !== 'platform-user') {
+    if (!values.reason) {
+      toast({
+        title: 'Motivo obrigatório',
+        description: 'Informe o motivo do atendimento.',
+        variant: 'destructive',
+      });
+      loadingGenerateRide.value = false;
+      return;
+    }
+  }
 
   if (
     isRecurringRide.value &&
@@ -948,6 +1193,16 @@ const onSubmit = form.handleSubmit(async (values) => {
       name: selectedUser.value.name,
       email: selectedUser.value.email,
       phone: selectedUser.value.phone,
+      isVisitor: visitorUser.value,
+      visitorData: visitorUser.value
+        ? {
+            name: values.visitorName,
+            phone: values.visitorPhone,
+            company: values.visitorCompany,
+            reason: values.visitorReason,
+            host: selectedUser.value.name,
+          }
+        : null,
     },
     product: {
       id: selectedProduct.value.id,
@@ -964,8 +1219,7 @@ const onSubmit = form.handleSubmit(async (values) => {
     travel: {
       rideEstimatedPrice: calculatedEstimates.value.estimatedPrice,
       passengers: ridePassengers.value,
-      //@ts-ignore
-      date: values.departDate,
+      date: toIsoDate(values.departDate),
       departTime: values.departTime,
       originAddress: values.origin,
       origin: {
@@ -1052,7 +1306,6 @@ const onSubmit = form.handleSubmit(async (values) => {
         result?.data?.message ??
         (typeof result === 'string' ? result : 'Erro desconhecido');
       failedErrors.push(errMsg);
-      // eslint-disable-next-line no-console
       console.error('createRideAction failed for date', recurringDate, result);
     }
   }
@@ -1064,7 +1317,7 @@ const onSubmit = form.handleSubmit(async (values) => {
       const totalCreatedAmount =
         parseFloat(calculatedEstimates.value.estimatedTotalPrice) *
         successfulDates.length;
-      await branchesStore.updateBranchAction({
+      await updateBranchAction({
         ...restBranchData,
         branchId: id,
         contract: restBranchData.contractId,
@@ -1081,8 +1334,9 @@ const onSubmit = form.handleSubmit(async (values) => {
         : `Atendimento cadastrado com sucesso!`,
     });
     loadingGenerateRide.value = false;
+    const redirectPath = isAdminMode ? '/admin/rides/open' : '/corporative/rides/open';
     setTimeout(() => {
-      navigateTo('/admin/rides/open');
+      navigateTo(redirectPath);
     }, 1000);
   } else {
     loadingGenerateRide.value = false;
@@ -1097,6 +1351,7 @@ const onSubmit = form.handleSubmit(async (values) => {
   }
 });
 </script>
+
 <template>
   <main class="p-6">
     <header>
@@ -1119,12 +1374,11 @@ const onSubmit = form.handleSubmit(async (values) => {
                 >
                   1
                 </span>
-                Selecione o Usuário e o Serviço UM
+                Selecione o Usuário e o Serviço
               </CardTitle>
-              <div class="lg:mx-w-lg">
-                <!-- COLUNA DE DADOS -->
+              <div class="lg:mx-w-lg flex flex-col gap-6">
                 <div class="flex flex-col w-full gap-6">
-                  <FormField v-slot="{ componentField }" name="user">
+                  <FormField v-if="!visitorUser" v-slot="{ componentField }" name="user">
                     <FormItem>
                       <FormLabel>Usuário*</FormLabel>
                       <FormControl>
@@ -1136,120 +1390,109 @@ const onSubmit = form.handleSubmit(async (values) => {
                       </FormControl>
                     </FormItem>
                   </FormField>
-                  <div
-                    v-if="selectedUserBranchName"
-                    class="p-4 border border-zinc-950 rounded-md max-w-[400px] bg-white"
-                  >
-                    <small>Filial</small>
-                    <p class="font-bold">{{ selectedUserBranchName }}</p>
-                    <small>Budget Utilizado</small>
-                    <p class="font-bold text-xl text-amber-600">
-                      {{ currencyFormat(usedBranchBudget) }}
-                    </p>
-                    <small>Budget Disponível</small>
-                    <p
-                      class="font-bold text-2xl"
-                      :class="availableBranchBudget <= '0' && 'text-red-500'"
-                    >
-                      {{ currencyFormat(availableBranchBudget) }}
-                    </p>
-                  </div>
-                  <div v-if="showAvailableProducts" class="lg:max-w-2xl">
-                    <LoaderCircle v-if="loadingProducts" class="animate-spin" />
-                    <div v-else>
-                      <label class="text-sm font-medium">Selecione o Serviço*</label>
-                      <ul class="mt-2 flex justify-evenly gap-4 flex-wrap">
-                        <li
-                          class="w-full"
-                          v-for="product in availableProducts"
-                          :key="product.id"
+                  <VisitorUserForm
+                    :users-list="availableUsers"
+                    :visitor-user="visitorUser"
+                    @toogle-form="visitorUser = !visitorUser"
+                    @selected-user="setSelectedUser"
+                  />
+                </div>
+                <div v-if="showAvailableProducts" class="lg:max-w-lg">
+                  <LoaderCircle v-if="loadingProducts" class="animate-spin" />
+                  <div v-else>
+                    <label class="text-sm font-medium">Selecione o Serviço UM*</label>
+                    <ul class="mt-2 flex justify-evenly gap-4 flex-wrap">
+                      <li
+                        class="w-full"
+                        v-for="product in availableProducts"
+                        :key="product.id"
+                      >
+                        <article
+                          class="p-4 flex items-center justify-between gap-4 bg-white rounded-md border border-zinc-900"
                         >
-                          <article
-                            class="p-4 flex items-center justify-between gap-4 bg-white rounded-md border border-zinc-900"
+                          <div
+                            class="font-normal uppercase flex items-center justify-start gap-2"
                           >
+                            <Checkbox
+                              @update:checked="setSelectedProduct(product)"
+                              :checked="selectedProduct?.id === product.id"
+                            />
                             <div
-                              class="font-normal uppercase flex items-center justify-start gap-2"
-                            >
-                              <Checkbox
-                                @update:checked="setSelectedProduct(product)"
-                                :checked="selectedProduct?.id === product.id"
-                              />
+                              class="w-[50px] h-[50px] rounded-md bg-zinc-200 bg-contain bg-no-repeat bg-center relative flex items-center justify-center"
+                              :style="{
+                                backgroundImage: `url(${product.image?.url})`,
+                              }"
+                            />
+                            <ProductTag :label="product.name" :type="product.name" />
+                            <div class="flex items-center justify-start gap-4">
+                              <div class="flex items-center">
+                                <Users :size="14" />
+                                <small class="ml-1 font-bold">
+                                  {{ product?.capacity }}
+                                </small>
+                              </div>
+                              <div class="ml-4 flex flex-col items-center">
+                                <small class="text-xs">Base</small>
+                                <small>{{ currencyFormat(product.basePrice) }}</small>
+                              </div>
+                              <div class="flex flex-col items-center">
+                                <small class="text-xs">Km</small>
+                                <small>{{ currencyFormat(product.kmPrice) }}</small>
+                              </div>
+                              <div class="flex flex-col items-center">
+                                <small class="text-xs">Min.</small>
+                                <small>{{ currencyFormat(product.minutePrice) }}</small>
+                              </div>
                               <div
-                                class="w-[50px] h-[50px] rounded-md bg-zinc-200 bg-contain bg-no-repeat bg-center relative flex items-center justify-center"
-                                :style="{
-                                  backgroundImage: `url(${product.image?.url})`,
-                                }"
-                              />
-                              <ProductTag :label="product.name" :type="product.name" />
-                              <div class="flex items-center justify-start gap-4">
-                                <div class="flex items-center">
-                                  <Users :size="14" />
-                                  <small class="ml-1 font-bold">
-                                    {{ product?.capacity }}
-                                  </small>
-                                </div>
-                                <div class="ml-4 flex flex-col items-center">
-                                  <small class="text-xs">Base</small>
-                                  <small>{{ currencyFormat(product.basePrice) }}</small>
+                                v-if="product.type === 'contract'"
+                                class="flex flex-row items-center gap-3"
+                              >
+                                <div class="flex flex-col items-center">
+                                  <small class="text-xs">KM</small>
+                                  <small>{{ product.includedKms }}</small>
                                 </div>
                                 <div class="flex flex-col items-center">
-                                  <small class="text-xs">Km</small>
-                                  <small>{{ currencyFormat(product.kmPrice) }}</small>
-                                </div>
-                                <div class="flex flex-col items-center">
-                                  <small class="text-xs">Min.</small>
-                                  <small>{{ currencyFormat(product.minutePrice) }}</small>
-                                </div>
-                                <div
-                                  v-if="product.type === 'contract'"
-                                  class="flex flex-row items-center gap-3"
-                                >
-                                  <div class="flex flex-col items-center">
-                                    <small class="text-xs">KM</small>
-                                    <small>{{ product.includedKms }}</small>
-                                  </div>
-                                  <div class="flex flex-col items-center">
-                                    <small class="text-xs">Horas</small>
-                                    <small>{{ product.includedHours }}</small>
-                                  </div>
+                                  <small class="text-xs">Horas</small>
+                                  <small>{{ product.includedHours }}</small>
                                 </div>
                               </div>
                             </div>
-                            <TooltipProvider>
-                              <Tooltip>
-                                <TooltipTrigger as-child class="hover:cursor-pointer">
-                                  <svg
-                                    xmlns="http://www.w3.org/2000/svg"
-                                    width="24"
-                                    height="24"
-                                    viewBox="0 0 24 24"
-                                    fill="none"
-                                    stroke="currentColor"
-                                    stroke-width="2"
-                                    stroke-linecap="round"
-                                    stroke-linejoin="round"
-                                    class="text-zinc-700 lucide lucide-circle-question-mark-icon lucide-circle-question-mark"
-                                  >
-                                    <circle cx="12" cy="12" r="10" />
-                                    <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3" />
-                                    <path d="M12 17h.01" />
-                                  </svg>
-                                </TooltipTrigger>
-                                <TooltipContent class="bg-zinc-700 text-white">
-                                  <p>{{ product.description }}</p>
-                                </TooltipContent>
-                              </Tooltip>
-                            </TooltipProvider>
-                          </article>
-                        </li>
-                      </ul>
-                    </div>
+                          </div>
+                          <TooltipProvider>
+                            <Tooltip>
+                              <TooltipTrigger as-child class="hover:cursor-pointer">
+                                <svg
+                                  xmlns="http://www.w3.org/2000/svg"
+                                  width="24"
+                                  height="24"
+                                  viewBox="0 0 24 24"
+                                  fill="none"
+                                  stroke="currentColor"
+                                  stroke-width="2"
+                                  stroke-linecap="round"
+                                  stroke-linejoin="round"
+                                  class="text-zinc-700 lucide lucide-circle-question-mark-icon lucide-circle-question-mark"
+                                >
+                                  <circle cx="12" cy="12" r="10" />
+                                  <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3" />
+                                  <path d="M12 17h.01" />
+                                </svg>
+                              </TooltipTrigger>
+                              <TooltipContent class="bg-zinc-700 text-white">
+                                <p>{{ product.description }}</p>
+                              </TooltipContent>
+                            </Tooltip>
+                          </TooltipProvider>
+                        </article>
+                      </li>
+                    </ul>
                   </div>
                 </div>
               </div>
             </CardContent>
           </Card>
         </section>
+
         <!-- FORM -->
         <section id="ride-info">
           <Card v-if="selectedProduct.name" class="mb-10 bg-zinc-200">
@@ -1264,15 +1507,59 @@ const onSubmit = form.handleSubmit(async (values) => {
               </CardTitle>
               <div class="lg:max-w-lg">
                 <div class="grid grid-cols-2 gap-6">
-                  <NewDatePicker :form="form" />
+                  <div
+                    class="col-span-2 rounded-md border border-zinc-900 bg-white p-4 space-y-4"
+                  >
+                    <div class="flex items-center justify-between gap-3">
+                      <div class="flex items-center gap-2">
+                        <CalendarRange :size="16" />
+                        <p class="font-semibold text-sm">Atendimento recorrente</p>
+                      </div>
+                      <Checkbox
+                        :checked="isRecurringRide"
+                        @update:checked="(v) => (isRecurringRide = !!v)"
+                      />
+                    </div>
+                    <div v-if="isRecurringRide" class="mt-4 space-y-4">
+                      <DatePickerRange v-model="recurrenceRange" />
+                      <div>
+                        <small class="text-xs text-muted-foreground"
+                          >Dias da semana</small
+                        >
+                        <div class="mt-2 flex flex-wrap gap-2">
+                          <Button
+                            v-for="weekday in recurrenceWeekdayOptions"
+                            :key="weekday.value"
+                            type="button"
+                            size="sm"
+                            :variant="
+                              recurrenceWeekdays.includes(weekday.value)
+                                ? 'default'
+                                : 'outline'
+                            "
+                            @click.prevent="toggleRecurrenceWeekday(weekday.value)"
+                          >
+                            {{ weekday.label }}
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  <NewDatePicker
+                    :form="form"
+                    :is-recurring-ride="isRecurringRide"
+                    :recurrence-range="recurrenceRange"
+                  />
                   <FormField v-slot="{ componentField }" name="departTime">
                     <FormItem>
                       <FormLabel>Hora da Partida*</FormLabel>
                       <FormControl>
                         <Input type="text" v-bind="componentField" v-maska="'##:##'" />
                       </FormControl>
+                      <FormMessage />
                     </FormItem>
                   </FormField>
+
                   <FormField name="passengers">
                     <FormItem>
                       <FormLabel>Passageiros*</FormLabel>
@@ -1329,59 +1616,6 @@ const onSubmit = form.handleSubmit(async (values) => {
                         <FormMessage />
                       </FormItem>
                     </FormField>
-                    <div
-                      class="col-span-2 rounded-md border border-zinc-900 bg-white p-4 space-y-4"
-                    >
-                      <div class="flex items-center justify-between gap-3">
-                        <div>
-                          <p class="font-semibold text-sm">Rota ida e volta</p>
-                          <small class="text-xs text-muted-foreground">
-                            Após chegar ao destino, retorna automaticamente para a origem
-                            no cálculo da rota.
-                          </small>
-                        </div>
-                        <Checkbox
-                          :checked="isRoundTrip"
-                          @update:checked="(v) => (isRoundTrip = !!v)"
-                        />
-                      </div>
-                      <div class="border-t pt-4">
-                        <div class="flex items-center justify-between gap-3">
-                          <div class="flex items-center gap-2">
-                            <CalendarRange :size="16" />
-                            <p class="font-semibold text-sm">Atendimento recorrente</p>
-                          </div>
-                          <Checkbox
-                            :checked="isRecurringRide"
-                            @update:checked="(v) => (isRecurringRide = !!v)"
-                          />
-                        </div>
-                        <div v-if="isRecurringRide" class="mt-4 space-y-4">
-                          <DatePickerRange v-model="recurrenceRange" />
-                          <div>
-                            <small class="text-xs text-muted-foreground"
-                              >Dias da semana</small
-                            >
-                            <div class="mt-2 flex flex-wrap gap-2">
-                              <Button
-                                v-for="weekday in recurrenceWeekdayOptions"
-                                :key="weekday.value"
-                                type="button"
-                                size="sm"
-                                :variant="
-                                  recurrenceWeekdays.includes(weekday.value)
-                                    ? 'default'
-                                    : 'outline'
-                                "
-                                @click.prevent="toggleRecurrenceWeekday(weekday.value)"
-                              >
-                                {{ weekday.label }}
-                              </Button>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
                     <div class="flex flex-col items-start gap-4">
                       <Button
                         v-if="!showWaypointsForm"
@@ -1406,7 +1640,7 @@ const onSubmit = form.handleSubmit(async (values) => {
                               <div class="flex items-center gap-2">
                                 <SquareSquare />
                                 <GMapAutocomplete
-                                  placeholder="Insira a parada"
+                                  placeholder="Endereço da Parada"
                                   @place_changed="setWaypoints($event, Number(index))"
                                   :value="waypoint.address"
                                   class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
@@ -1512,13 +1746,14 @@ const onSubmit = form.handleSubmit(async (values) => {
                     class="mb-4 p-6 col-span-2 uppercase"
                   >
                     <LoaderCircle v-if="loadingRoute" class="animate-spin" />
-                    Calcular Atendimento
+                    Próximo Passo
                   </Button>
                 </div>
               </div>
             </CardContent>
           </Card>
         </section>
+
         <!-- MAP AND RIDE DETAILS -->
         <section id="ride-map" class="mb-10">
           <Card v-if="showRenderedMap" class="bg-zinc-200">
@@ -1538,16 +1773,16 @@ const onSubmit = form.handleSubmit(async (values) => {
                 <LoaderCircle :size="60" class="animate-spin" />
                 <small class="text-muted-foreground uppercase">Calculando rota</small>
               </div>
-              <div v-else class="flex flex-col gap-10">
-                <div class="flex-1 space-y-6 flex flex-col items-start">
+              <div v-else class="grid grid-cols-2 gap-10">
+                <div class="space-y-6 flex flex-col items-start">
                   <h3 class="text-lg font-bold">Preview da Rota</h3>
                   <div class="p-4 bg-white rounded-md w-full">
                     <GoogleMap
                       ref="mapRef"
                       :api-key="API_KEY"
-                      style="width: 100%; height: 600px"
+                      style="width: 100%; height: 700px"
                       :center="mapCenter"
-                      :zoom="initialZoom"
+                      :zoom="10"
                       :zoom-control="true"
                     >
                       <Marker
@@ -1566,25 +1801,8 @@ const onSubmit = form.handleSubmit(async (values) => {
                       <Polyline :options="ridePath" />
                     </GoogleMap>
                   </div>
-                  <!-- <NuxtImg
-                    :src="buildStaticMapUrl()"
-                    alt="Mapa da rota"
-                    width="800"
-                    height="600"
-                    loading="lazy"
-                    class="p-4 bg-white rounded-md border border-zinc-900 w-full h-auto"
-                    v-slot="{ src, isLoaded, imgAttrs }"
-                    :custom="true"
-                  >
-                    <LoaderCircle
-                      v-if="!isLoaded"
-                      :size="48"
-                      class="animate-spin self-center justify-self-center"
-                    />
-                    <img v-else :src="src" v-bind="imgAttrs" />
-                  </NuxtImg> -->
                 </div>
-                <div class="flex-1 space-y-6">
+                <div class="w-full space-y-6">
                   <h3 class="text-lg font-bold">Resumo</h3>
                   <div class="p-6 bg-white rounded-md space-y-6">
                     <div>
@@ -1645,9 +1863,9 @@ const onSubmit = form.handleSubmit(async (values) => {
 
                     <div
                       v-if="showContractProductAlert"
-                      class="p-4 bg-amber-200 rounded-md border border-amber-900"
+                      class="p-4 bg-amber-100 rounded-md border border-amber-600"
                     >
-                      <h3 class="mb-2 font-bold uppercase text-amber-700">Importante</h3>
+                      <h3 class="mb-2 font-bold uppercase text-amber-600">Importante</h3>
                       <p>
                         O Serviço
                         <span class="font-bold">{{ selectedProduct.name }}</span> é
@@ -1748,12 +1966,240 @@ const onSubmit = form.handleSubmit(async (values) => {
                       </small>
                     </div>
                   </div>
+                  <Button
+                    v-if="isCorporativeMode"
+                    type="button"
+                    class="p-6 text-lg self-center"
+                    @click.prevent="goToPaymentSection"
+                  >
+                    Prosseguir para pagamento
+                  </Button>
                 </div>
               </div>
             </CardContent>
           </Card>
         </section>
-        <section id="payment">
+
+        <!-- PAYMENT SECTION - Only for corporative mode -->
+        <section v-if="isCorporativeMode" id="payment-area" class="mb-10">
+          <Card v-if="showPaymentArea" class="bg-zinc-200">
+            <CardContent>
+              <CardTitle class="mt-6 mb-10 flex items-center gap-3 font-bold">
+                <span
+                  class="w-8 h-8 flex items-center justify-center text-white bg-zinc-900 rounded-full text-lg"
+                >
+                  4
+                </span>
+                Pagamento
+              </CardTitle>
+              <div>
+                <ul class="space-y-2">
+                  <li
+                    v-for="method in paymentMethodList"
+                    :key="method.id"
+                    class="py-4 px-3 bg-white rounded-md shadow-md flex flex-col items-start gap-4 w-full"
+                  >
+                    <div class="flex flex-row items-center gap-x-3">
+                      <Checkbox
+                        @update:checked="setPaymentMethod(method.value)"
+                        :checked="paymentMethod.includes(method.value)"
+                      />
+                      <RenderIcon :name="method.icon" :size="24" />
+                      <small>{{ method.label }}</small>
+                      <img
+                        v-for="logo in method.logo"
+                        :src="logo"
+                        alt=""
+                        class="!mt-0 w-8"
+                      />
+                    </div>
+                    <div
+                      v-if="
+                        method.value === 'corporative' &&
+                        paymentMethod.includes(method.value)
+                      "
+                      class="p-4 mb-4 md:grid md:grid-cols-2 gap-6 w-full"
+                    >
+                      <div v-if="branchBudgetOverQuota" class="col-span-2">
+                        <p
+                          class="px-2 py-1.5 flex items-center gap-2 bg-red-100 rounded-md w-fit text-sm text-red-500"
+                        >
+                          <Info :size="16" />
+                          Orçamento da filial insuficiente
+                        </p>
+                      </div>
+                      <Dialog :open="showBranchBudgetAlert" :closable="false">
+                        <DialogContent>
+                          <DialogHeader>
+                            <DialogTitle class="font-bold text-xl">
+                              <Info />
+                              Budget Insuficiente
+                            </DialogTitle>
+                            <DialogDescription>
+                              <p class="text-base text-zinc-950">
+                                Este atendimento ultrapassou o limite de budget disponível
+                                para a filial do usuário.
+                                <br />
+                                <br />
+                                Entre em contato com o gestor para aprovar este
+                                atendimento.
+                              </p>
+                            </DialogDescription>
+                          </DialogHeader>
+                          <div class="flex items-center gap-6">
+                            <div>
+                              <small> Budget Disponível </small>
+                              <p
+                                class="font-bold"
+                                :class="
+                                  Number(availableBranchBudget) <
+                                  Number(calculatedEstimates.estimatedTotalPrice)
+                                    ? 'text-red-500'
+                                    : ''
+                                "
+                              >
+                                {{ currencyFormat(availableBranchBudget) }}
+                              </p>
+                            </div>
+                            <div>
+                              <small>Valor do Atendimento</small>
+                              <p class="font-bold">
+                                {{
+                                  currencyFormat(calculatedEstimates.estimatedTotalPrice)
+                                }}
+                              </p>
+                            </div>
+                          </div>
+                          <div class="my-6 text-zinc-950">
+                            <small> Gestor Master </small>
+                            <p class="font-bold">{{ contract.manager.username }}</p>
+                            <p>{{ contract.manager.email }}</p>
+                          </div>
+                          <DialogFooter>
+                            <Button
+                              variant="ghost"
+                              type="button"
+                              @click.prevent="
+                                () => {
+                                  showBranchBudgetAlert = false;
+                                }
+                              "
+                            >
+                              Cancelar
+                            </Button>
+                            <Button
+                              type="button"
+                              @click.prevent="handleAcceptBudgetOverQuota"
+                            >
+                              Concordar e continuar
+                            </Button>
+                          </DialogFooter>
+                        </DialogContent>
+                      </Dialog>
+                      <div v-if="visitorUser" class="col-span-2 flex items-center gap-10">
+                        <div
+                          class="p-4 flex flex-col border border-amber-500 rounded-md bg-amber-100 w-full"
+                        >
+                          <div>
+                            <h3 class="mb-4 font-bold">Atendimento para visitante</h3>
+                          </div>
+                          <div class="flex flex-col gap-3">
+                            <div>
+                              <small class="text-muted-foreground"
+                                >Nome do visitante</small
+                              >
+                              <p>{{ (form.values as any).visitorName || '-' }}</p>
+                            </div>
+                            <div>
+                              <small class="text-muted-foreground">Empresa</small>
+                              <p>{{ (form.values as any).visitorCompany || '-' }}</p>
+                            </div>
+                            <div>
+                              <small class="text-muted-foreground"
+                                >Motivo da visita</small
+                              >
+                              <p>{{ (form.values as any).visitorReason || '-' }}</p>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                      <FormField v-slot="{ componentField, value }" name="branch">
+                        <FormItem>
+                          <FormLabel>Filial*</FormLabel>
+                          <FormControl>
+                            <FormSelect
+                              :value="value"
+                              v-bind="componentField"
+                              :items="contractBranchesList"
+                              label="Selecione"
+                              @on-select="getBranchAreas"
+                            />
+                          </FormControl>
+                          <FormMessage class="text-xs" />
+                        </FormItem>
+                      </FormField>
+                      <div
+                        v-if="(form.values as any).branch"
+                        class="col-span-2 p-4 border border-zinc-950 rounded-md bg-white"
+                      >
+                        <p class="font-bold">{{ selectedUserBranchName }}</p>
+                        <small>Budget Utilizado</small>
+                        <p class="font-bold text-xl text-amber-600">
+                          {{ currencyFormat(usedBranchBudget) }}
+                        </p>
+                        <small>Budget Disponível</small>
+                        <p
+                          class="font-bold text-2xl"
+                          :class="availableBranchBudget <= '0' && 'text-red-500'"
+                        >
+                          {{ currencyFormat(availableBranchBudget) }}
+                        </p>
+                      </div>
+                      <div class="col-span-2">
+                        <div v-if="!splitPaymentAreas" class="flex items-end gap-6">
+                          <FormField v-slot="{ componentField }" name="area">
+                            <FormItem class="min-w-[250px]">
+                              <FormLabel>Centro de Custo*</FormLabel>
+                              <FormControl>
+                                <FormSelect
+                                  v-bind="componentField"
+                                  :items="contractBranchAreas"
+                                  :loading="loadingAreas"
+                                  label="Selecione"
+                                />
+                              </FormControl>
+                              <FormMessage class="text-xs" />
+                            </FormItem>
+                          </FormField>
+                          <Button
+                            v-if="contractBranchAreas?.length > 0"
+                            type="button"
+                            @click.prevent="splitPaymentAreas = !splitPaymentAreas"
+                          >
+                            <Percent />
+                            Ratear entre CCs
+                          </Button>
+                        </div>
+                      </div>
+                      <SplitPaymentCCs
+                        v-if="splitPaymentAreas"
+                        :branch-areas="contractBranchAreas"
+                        :contract-branches="contractBranchesList"
+                        :estimates="calculatedEstimates"
+                        @toogle-split-payment="splitPaymentAreas = !splitPaymentAreas"
+                        v-model="splitPaymentCCAreas"
+                        :form="form"
+                      />
+                    </div>
+                  </li>
+                </ul>
+              </div>
+            </CardContent>
+          </Card>
+        </section>
+
+        <!-- PAYMENT SECTION - For admin mode -->
+        <section v-if="isAdminMode" id="payment" class="mb-10">
           <Card v-if="showRenderedMap" class="bg-zinc-200">
             <CardContent>
               <CardTitle class="mt-6 mb-10 flex items-center gap-3 font-bold">
@@ -1869,6 +2315,33 @@ const onSubmit = form.handleSubmit(async (values) => {
                           </DialogFooter>
                         </DialogContent>
                       </Dialog>
+                      <div v-if="visitorUser" class="col-span-2 flex items-center gap-10">
+                        <div
+                          class="p-4 flex flex-col border border-amber-500 rounded-md bg-amber-100 w-full"
+                        >
+                          <div>
+                            <h3 class="mb-4 font-bold">Atendimento para visitante</h3>
+                          </div>
+                          <div class="flex flex-col gap-3">
+                            <div>
+                              <small class="text-muted-foreground"
+                                >Nome do visitante</small
+                              >
+                              <p>{{ (form.values as any).visitorName || '-' }}</p>
+                            </div>
+                            <div>
+                              <small class="text-muted-foreground">Empresa</small>
+                              <p>{{ (form.values as any).visitorCompany || '-' }}</p>
+                            </div>
+                            <div>
+                              <small class="text-muted-foreground"
+                                >Motivo da visita</small
+                              >
+                              <p>{{ (form.values as any).visitorReason || '-' }}</p>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
                       <FormField v-slot="{ componentField, value }" name="branch">
                         <FormItem>
                           <FormLabel>Filial*</FormLabel>
@@ -1884,6 +2357,23 @@ const onSubmit = form.handleSubmit(async (values) => {
                           <FormMessage class="text-xs" />
                         </FormItem>
                       </FormField>
+                      <div
+                        v-if="(form.values as any).branch"
+                        class="col-span-2 p-4 border border-zinc-950 rounded-md bg-white"
+                      >
+                        <p class="font-bold">{{ selectedUserBranchName }}</p>
+                        <small>Budget Utilizado</small>
+                        <p class="font-bold text-xl text-amber-600">
+                          {{ currencyFormat(usedBranchBudget) }}
+                        </p>
+                        <small>Budget Disponível</small>
+                        <p
+                          class="font-bold text-2xl"
+                          :class="availableBranchBudget <= '0' && 'text-red-500'"
+                        >
+                          {{ currencyFormat(availableBranchBudget) }}
+                        </p>
+                      </div>
                       <div class="col-span-2">
                         <div v-if="!splitPaymentAreas" class="flex items-end gap-6">
                           <FormField v-slot="{ componentField }" name="area">
@@ -1901,7 +2391,7 @@ const onSubmit = form.handleSubmit(async (values) => {
                             </FormItem>
                           </FormField>
                           <Button
-                            v-if="contractBranchAreas.length > 1"
+                            v-if="contractBranchAreas.length > 0"
                             type="button"
                             @click.prevent="splitPaymentAreas = !splitPaymentAreas"
                           >
@@ -1926,6 +2416,7 @@ const onSubmit = form.handleSubmit(async (values) => {
             </CardContent>
           </Card>
         </section>
+
         <div
           v-if="paymentMethod && calculatedEstimates.estimatedPrice"
           class="my-6 w-full flex gap-6"
@@ -1933,7 +2424,7 @@ const onSubmit = form.handleSubmit(async (values) => {
           <Button
             type="button"
             class="p-6 px-10 uppercase"
-            @click.prevent="showPaymentSection"
+            @click.prevent="isAdminMode ? showPaymentSection() : showPaymentModal()"
           >
             <LoaderCircle v-if="loadingGenerateRide" class="animate-spin" />
 
@@ -1949,7 +2440,7 @@ const onSubmit = form.handleSubmit(async (values) => {
             class="p-6 uppercase"
             @click.prevent="
               () => {
-                navigateTo('/admin/rides/open');
+                navigateTo(isAdminMode ? '/admin/rides/open' : '/corporative/rides/open');
               }
             "
           >
@@ -1959,6 +2450,7 @@ const onSubmit = form.handleSubmit(async (values) => {
       </form>
     </section>
   </main>
+
   <Dialog
     :open="paymentMethod === 'creditcard' && enablePayment"
     @update:open="enablePayment = $event"
@@ -1986,7 +2478,7 @@ const onSubmit = form.handleSubmit(async (values) => {
         <DialogTitle class="mb-6">Efetuar Pagamento - Crédito Parcelado</DialogTitle>
       </DialogHeader>
       <CieloCheckoutUrl
-        :admin="true"
+        :admin="isAdminMode"
         :rideData="{
           code: rideCode,
           selectedProduct: selectedProduct,
@@ -1999,8 +2491,8 @@ const onSubmit = form.handleSubmit(async (values) => {
           departTime: form.values.departTime,
           passengers: ridePassengers,
           dispatcher: {
-            user: data?.user?.name as string,
-            email: data?.user?.email as string,
+            user: (data as any)?.user?.name as string,
+            email: (data as any)?.user?.email as string,
             dispatchDate: new Date().toLocaleDateString('pt-BR').padStart(10, '0'),
           },
         }"

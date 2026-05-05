@@ -14,11 +14,13 @@ import { deleteRideService } from '@/server/services/rides';
 import { useAccountStore } from '@/stores/account.store';
 import { useBranchesStore } from '@/stores/branches.store';
 import { useContractsStore } from '@/stores/contracts.store';
+import { useDriverStore } from '@/stores/drivers.store';
 import { useProductsStore } from '@/stores/products.store';
 import { useRidesStore } from '@/stores/rides.store';
 import { DateFormatter } from '@internationalized/date';
 import {
   Banknote,
+  Building,
   CalendarDays,
   CarFront,
   Check,
@@ -1112,7 +1114,45 @@ const handleAcceptBudgetOverQuota = () => {
                 <div class="p-6 flex flex-col h-full gap-6 bg-white rounded-md">
                   <User />
                   <h3 class="text-xl font-bold">Dados do Usuário</h3>
-                  <div class="space-y-2">
+                  <div
+                    v-if="ride.user.isVisitor && ride.user.isVisitor === true"
+                    class="space-y-2"
+                  >
+                    <span
+                      class="block w-fit my-3 px-2 py-1.5 bg-green-600 text-xs text-white rounded-md uppercase"
+                    >
+                      visitante
+                    </span>
+                    <h2 class="font-bold text-lg">{{ ride?.user.visitorData.name }}</h2>
+                    <p class="flex items-center gap-2 text-sm">
+                      <Phone :size="16" />
+                      <a
+                        :href="
+                          WPP_API.replace(
+                            '[[phone]]',
+                            sanitizePhone(ride?.user.visitorData.phone as string),
+                          )
+                        "
+                        class="flex items-center gap-2"
+                        target="_blank"
+                      >
+                        {{ ride?.user.visitorData.phone }}
+                        <MessageCircleMore :size="18" class="text-green-500" />
+                      </a>
+                    </p>
+                    <p class="flex items-center gap-2 text-sm">
+                      <Building :size="16" />{{ ride?.user.visitorData.company }}
+                    </p>
+                    <p class="flex items-center gap-2 text-sm">
+                      <span class="font-bold">Motivo da visita:</span>
+                      {{ ride?.user.visitorData.reason }}
+                    </p>
+                    <p class="flex items-center gap-2 text-sm">
+                      <span class="font-bold">Responsável:</span>
+                      {{ ride?.user.visitorData.host }}
+                    </p>
+                  </div>
+                  <div v-else class="space-y-2">
                     <h2 class="font-bold text-lg">{{ ride?.user.name }}</h2>
                     <p class="flex items-center gap-2 text-sm">
                       <Phone :size="16" />

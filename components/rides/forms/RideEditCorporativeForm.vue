@@ -417,7 +417,7 @@ const handleAcceptBudgetOverQuota = () => {
                   </div>
                 </div>
                 <div
-                  v-if="ride.progress.steps.length"
+                  v-if="ride?.status === 'in_progress' && ride?.progress?.steps?.length"
                   class="col-span-4 p-3 bg-white rounded-md"
                 >
                   <span class="text-muted-foreground text-sm">Etapas do Atendimento</span>
@@ -794,7 +794,7 @@ const handleAcceptBudgetOverQuota = () => {
                   class="space-y-2"
                 >
                   <span
-                    class="block w-fit my-3 px-2 py-1.5 bg-zinc-950 text-xs text-white rounded-md uppercase"
+                    class="block w-fit my-3 px-2 py-1.5 bg-green-600 text-xs text-white rounded-md uppercase"
                   >
                     visitante
                   </span>

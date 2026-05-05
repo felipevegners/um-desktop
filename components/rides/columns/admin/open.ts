@@ -127,21 +127,53 @@ export const columns: any = [
     header: () => h('div', { class: 'text-xs leading-none text-left' }, 'Usuário'),
     cell: ({ row }: any) => {
       const data = row.original;
-      return h('div', { class: 'text-xs' }, [
-        data.user.name,
-        h(
-          'a',
-          {
-            href: WPP_API.replace('[[phone]]', sanitizePhone(data.user.phone as string)),
-            target: '_blank',
-            class: 'flex items-center gap-2 text-xs',
-          },
-          [
-            h('span', { class: 'text-muted-foreground' }, data.user.phone),
-            h(MessageCircleMore, { class: 'text-green-500 text-xs', size: 18 }),
-          ] as any,
-        ),
-      ]);
+      if (data.user.isVisitor) {
+        return h('div', { class: 'text-xs' }, [
+          data.user.visitorData.name,
+          h(
+            'span',
+            {
+              class:
+                'block my-1 w-fit px-1.5 py-1 bg-zinc-950 rounded-md text-white text-xxs uppercase',
+            },
+            'visitante',
+          ),
+          h(
+            'a',
+            {
+              href: WPP_API.replace(
+                '[[phone]]',
+                sanitizePhone(data.user.visitorData.phone as string),
+              ),
+              target: '_blank',
+              class: 'flex items-center gap-2 text-xs',
+            },
+            [
+              h('span', { class: 'text-muted-foreground' }, data.user.visitorData.phone),
+              h(MessageCircleMore, { class: 'text-green-500 text-xs', size: 18 }),
+            ] as any,
+          ),
+        ]);
+      } else {
+        return h('div', { class: 'text-xs' }, [
+          data.user.name,
+          h(
+            'a',
+            {
+              href: WPP_API.replace(
+                '[[phone]]',
+                sanitizePhone(data.user.phone as string),
+              ),
+              target: '_blank',
+              class: 'flex items-center gap-2 text-xs',
+            },
+            [
+              h('span', { class: 'text-muted-foreground' }, data.user.phone),
+              h(MessageCircleMore, { class: 'text-green-500 text-xs', size: 18 }),
+            ] as any,
+          ),
+        ]);
+      }
     },
   }),
   columnHelper.accessor('branch', {
