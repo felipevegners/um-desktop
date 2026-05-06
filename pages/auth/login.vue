@@ -3,6 +3,7 @@ import { toTypedSchema } from '@vee-validate/zod';
 import { Eye, EyeOff, LoaderCircle } from 'lucide-vue-next';
 import { useForm } from 'vee-validate';
 import * as z from 'zod';
+import { useToast } from '~/components/ui/toast';
 
 definePageMeta({
   layout: 'login',
@@ -31,6 +32,8 @@ const form = useForm({
 
 const { signIn } = useAuth();
 const route = useRoute();
+const router = useRouter();
+const { toast } = useToast();
 const isLoading = ref<boolean>(false);
 
 const viewPassword = ref<boolean>(false);
@@ -46,9 +49,23 @@ const onSubmit = form.handleSubmit(async (values) => {
       typeof route.query.callbackUrl === 'string' && route.query.callbackUrl
         ? route.query.callbackUrl
         : '/';
-    await signIn('credentials', { ...values, callbackUrl });
+    const result = await signIn('credentials', { ...values, redirect: false });
+    if (result?.error) {
+      toast({
+        title: 'Erro ao entrar',
+        description: 'E-mail ou senha inválidos.',
+        class: 'bg-red-500 border-0 text-white',
+      });
+      return;
+    }
+    await router.push(callbackUrl);
   } catch (error) {
     console.error('Erro no login -> ', error);
+    toast({
+      title: 'Erro ao entrar',
+      description: 'Ocorreu um erro inesperado. Tente novamente.',
+      class: 'bg-red-500 border-0 text-white',
+    });
   } finally {
     isLoading.value = false;
   }
@@ -140,7 +157,9 @@ const onSubmit = form.handleSubmit(async (values) => {
             class="mt-6 flex flex-col items-center justify-center gap-6 text-muted-foreground text-xs"
           >
             <div>
-              <NuxtLink to="#" class="hover:text-um-primary"> Recuperar senha </NuxtLink>
+              <NuxtLink to="/resetpassword" class="hover:text-um-primary">
+                Recuperar senha
+              </NuxtLink>
             </div>
             <div class="flex items-start gap-4">
               <NuxtLink to="/register?type=personal" class="hover:text-um-primary">

@@ -49,6 +49,11 @@ export default defineNuxtConfig({
     provider: {
       type: 'authjs',
     },
+    baseURL: undefined,
+    origin: undefined,
+  },
+  routeRules: {
+    '/resetpassword': { index: false },
   },
   shadcn: {
     /**

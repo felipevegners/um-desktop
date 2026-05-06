@@ -1,42 +1,33 @@
-import { Prisma, prisma } from '~/utils/prisma';
+import { createError } from 'h3';
+import { $fetch } from 'ofetch';
+
+import { buildUmApiAuthHeaders, resolveUmApiBaseUrl } from '../utils/um-api';
 
 export default defineEventHandler(async (event) => {
-  const payload = await readBody(event);
-  const {
-    id,
-    type,
-    ammount,
-    availableAt,
-    status,
-    discounts,
-    discountType,
-    ride,
-    driver,
-  } = payload;
-
   try {
-    const updatedCommission = await prisma.commissions.update({
-      where: {
-        id,
-      },
-      data: {
-        type,
-        ammount,
-        availableAt,
-        status,
-        discounts,
-        discountType,
-        ride,
-        driver,
-      },
-    });
-    return updatedCommission;
-  } catch (error) {
-    if (error instanceof Prisma.PrismaClientKnownRequestError) {
-      if (error.code === 'P2002') {
-        console.debug('Error Prisma During Edit Commission -> ', error.message);
-      }
+    const payload = await readBody(event);
+    const { id } = payload;
+
+    if (!id) {
+      throw createError({
+        statusCode: 400,
+        statusMessage: 'Commission id is required',
+      });
     }
-    throw error;
+
+    const apiBaseUrl = resolveUmApiBaseUrl();
+    const commissionsUrl = new URL(`/commissions/${id}`, apiBaseUrl);
+
+    return await $fetch(commissionsUrl.toString(), {
+      method: 'PUT',
+      headers: await buildUmApiAuthHeaders(event),
+      body: payload,
+    });
+  } catch (error: any) {
+    console.error('[commissions.put] Failed to update commission:', error);
+    throw createError({
+      statusCode: error?.response?.status || 500,
+      statusMessage: error?.data?.message || 'Failed to update commission',
+    });
   }
 });
