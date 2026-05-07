@@ -1,14 +1,26 @@
 import { defineStore } from 'pinia';
 import {
+  batchPayCommissionsService,
   createCommissionService,
   deleteCommissionService,
   getCommissionsService,
+  getCommissionsStatsService,
   updtateCommissionService,
 } from '~/server/services/commissions';
+
+export interface ICommissionsStats {
+  total: number;
+  totalAmount: number;
+  paid: number;
+  paidAmount: number;
+  pending: number;
+  pendingAmount: number;
+}
 
 export interface ICommissionsState {
   commissions: any;
   commission: any;
+  stats: ICommissionsStats;
   isLoading: boolean;
   isUpdating: boolean;
 }
@@ -18,6 +30,14 @@ export const useCommissionsStore = defineStore('commissions', {
     return {
       commissions: [],
       commission: {},
+      stats: {
+        total: 0,
+        totalAmount: 0,
+        paid: 0,
+        paidAmount: 0,
+        pending: 0,
+        pendingAmount: 0,
+      },
       isLoading: false,
       isUpdating: false,
     };
@@ -42,6 +62,24 @@ export const useCommissionsStore = defineStore('commissions', {
         this.isLoading = false;
       } catch (error) {
         throw error;
+      }
+    },
+    async getCommissionsStatsAction() {
+      try {
+        const response = await getCommissionsStatsService();
+        this.stats = response as ICommissionsStats;
+      } catch (error) {
+        console.debug(error);
+      }
+    },
+    async batchPayCommissionsAction(ids: string[]) {
+      this.isUpdating = true;
+      try {
+        return await batchPayCommissionsService(ids);
+      } catch (error) {
+        throw error;
+      } finally {
+        this.isUpdating = false;
       }
     },
     async createCommistionAction(commissionData: any) {

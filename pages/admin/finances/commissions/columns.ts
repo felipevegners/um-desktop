@@ -1,6 +1,7 @@
+import CommissionStatusFlag from '@/components/shared/CommissionStatusFlag.vue';
 import Input from '@/components/ui/input/Input.vue';
 import { createColumnHelper } from '@tanstack/vue-table';
-import { commissionStatus, commissionType, discountType } from '~/config/commissions';
+import { commissionType, discountType } from '~/config/commissions';
 import { currencyFormat, dateFormat } from '~/lib/utils';
 
 const columnHelper = createColumnHelper<any>();
@@ -92,11 +93,7 @@ export const columns = [
   columnHelper.accessor('status', {
     header: () => h('div', { class: 'text-left' }, 'Status'),
     cell: ({ row }) => {
-      return h(
-        'div',
-        { class: 'text-left' },
-        commissionStatus[row.getValue('status') as string],
-      );
+      return h(CommissionStatusFlag, { status: row.getValue('status') as string });
     },
   }),
 ];

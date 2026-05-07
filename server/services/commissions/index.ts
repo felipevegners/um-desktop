@@ -21,6 +21,25 @@ export const getCommissionsService = async (commissionId: string) => {
   }
 };
 
+export const getCommissionsStatsService = async () => {
+  try {
+    return await $fetch('/api/commissions.stats');
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const batchPayCommissionsService = async (ids: string[]) => {
+  try {
+    return await $fetch('/api/commissions.batch-pay', {
+      method: 'POST',
+      body: { ids },
+    });
+  } catch (error) {
+    throw error;
+  }
+};
+
 export const updtateCommissionService = async (commissionData: any) => {
   try {
     return await $fetch('/api/commissions', {

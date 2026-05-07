@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { OctagonX } from 'lucide-vue-next';
+import { LoaderCircle } from 'lucide-vue-next';
 
 const { data }: any = useAuth();
 const role = data?.value?.user?.role;
@@ -20,10 +20,11 @@ onMounted(() => {
 });
 </script>
 <template>
-  <div class="w-full h-screen flex flex-col gap-6 items-center justify-center">
-    <OctagonX :size="48" />
-    <h3>Acesso não permitido</h3>
-    <small class="text-muted-foreground">Redirecionando...</small>
+  <div
+    class="w-full h-screen flex flex-col gap-6 items-center justify-center bg-zinc-950"
+  >
+    <LoaderCircle :size="48" class="text-um-primary animate-spin" />
+    <small class="text-um-primary text-sm">Redirecionando</small>
   </div>
 </template>
 

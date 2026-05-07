@@ -12,10 +12,19 @@ import FormSelect from '../shared/FormSelect.vue';
 
 const { toast } = useToast();
 
+const props = withDefaults(
+  defineProps<{
+    commission?: any | null;
+  }>(),
+  {
+    commission: null,
+  },
+);
+
 const emit = defineEmits(['cancel', 'finish']);
 
 const store = useCommissionsStore();
-const { createCommistionAction } = store;
+const { createCommistionAction, updateCommissionAction } = store;
 const { isUpdating } = storeToRefs(store);
 
 const driversStore = useDriverStore();
@@ -112,29 +121,129 @@ const discountTypes = [
   },
 ];
 
+const isEditMode = computed(() => Boolean(props.commission?.id));
+const isPaidCommission = computed(() => props.commission?.status === 'paid');
+
 const formSchema = toTypedSchema(
   z.object({
-    type: z.string().min(2).max(50),
-    ammount: z.string(),
-    status: z.string(),
+    type: z.string().optional(),
+    ammount: z.string().min(1, 'Informe o valor'),
+    status: z.string().optional(),
     discounts: z.string().optional().default('0'),
     discountType: z.string().optional().default('-'),
-    availableAt: z.number().optional(),
-    driver: z.string(),
-    ride: z.string(),
+    availableAt: z.union([z.number(), z.string()]).optional(),
+    driver: z.string().optional(),
+    ride: z.string().optional(),
   }),
 );
 
 const form = useForm({
   validationSchema: formSchema,
+  initialValues: {
+    type: '',
+    ammount: '',
+    status: 'created',
+    discounts: '0',
+    discountType: '-',
+    availableAt: '',
+    driver: '',
+    ride: '',
+  },
 });
 
+watch(
+  () => props.commission,
+  (commission) => {
+    if (commission?.id) {
+      form.setValues({
+        type: commission.type || '',
+        ammount: commission.ammount || '',
+        status: commission.status || 'created',
+        discounts: commission.discounts || '0',
+        discountType: commission.discountType || '-',
+        availableAt: commission.availableAt || '',
+        driver: commission?.driver?.id || commission?.driver?._id || '',
+        ride: commission?.ride?.id || commission?.ride?._id || '',
+      });
+      return;
+    }
+
+    form.resetForm({
+      values: {
+        type: '',
+        ammount: '',
+        status: 'created',
+        discounts: '0',
+        discountType: '-',
+        availableAt: '',
+        driver: '',
+        ride: '',
+      },
+    });
+  },
+  { immediate: true },
+);
+
 const onSubmit = form.handleSubmit(async (values) => {
+  if (isEditMode.value) {
+    if (isPaidCommission.value) {
+      toast({
+        title: 'Atenção',
+        variant: 'destructive',
+        description: 'Comissões pagas não podem ser editadas.',
+      });
+      return;
+    }
+
+    const payload = {
+      id: props.commission.id,
+      ammount: values.ammount,
+      discounts: values.discounts || '0',
+      discountType: values.discountType || '-',
+      availableAt:
+        values.availableAt !== undefined && values.availableAt !== null
+          ? values.availableAt.toString()
+          : '',
+    };
+
+    try {
+      await updateCommissionAction(payload);
+      toast({
+        title: 'Tudo pronto!',
+        class: 'bg-green-600 border-0 text-white text-2xl',
+        description: 'Pagamento atualizado com sucesso!',
+      });
+    } catch (error) {
+      toast({
+        title: 'Opss!',
+        variant: 'destructive',
+        description: 'Ocorreu um erro ao atualizar o pagamento. Tente novamente.',
+      });
+    } finally {
+      emit('finish');
+      emit('cancel');
+    }
+
+    return;
+  }
+
+  if (!values.driver || !values.ride || !values.type || !values.status) {
+    toast({
+      title: 'Atenção',
+      variant: 'destructive',
+      description: 'Preencha os campos obrigatórios para criar o pagamento.',
+    });
+    return;
+  }
+
   const driverData = drivers?.value.find((driver) => driver.id === values.driver);
   const rideData = rides?.value.find((ride: any) => ride.id === values.ride);
   const payload = {
     ...values,
-    availableAt: values.availableAt?.toString(),
+    availableAt:
+      values.availableAt !== undefined && values.availableAt !== null
+        ? values.availableAt.toString()
+        : '',
     driver: {
       id: values.driver,
       name: driverData?.name,
@@ -166,7 +275,7 @@ const onSubmit = form.handleSubmit(async (values) => {
 });
 
 const onCancel = () => {
-  form.values = {};
+  form.resetForm();
   emit('cancel');
 };
 </script>
@@ -182,6 +291,7 @@ const onCancel = () => {
                 v-bind="componentField"
                 :items="sanitizeDrivers"
                 :label="'Selecione'"
+                :disabled="isEditMode"
               />
             </FormControl>
           </FormItem>
@@ -194,6 +304,7 @@ const onCancel = () => {
                 v-bind="componentField"
                 :items="sanitizeRides"
                 :label="'Selecione'"
+                :disabled="isEditMode"
               />
             </FormControl>
           </FormItem>
@@ -202,7 +313,12 @@ const onCancel = () => {
           <FormItem class="col-span-1">
             <FormLabel>Tipo de Pagamento</FormLabel>
             <FormControl>
-              <FormSelect v-bind="componentField" :items="types" :label="'Selecione'" />
+              <FormSelect
+                v-bind="componentField"
+                :items="types"
+                :label="'Selecione'"
+                :disabled="isEditMode"
+              />
             </FormControl>
           </FormItem>
         </FormField>
@@ -210,7 +326,12 @@ const onCancel = () => {
           <FormItem class="col-span-1">
             <FormLabel>Situação</FormLabel>
             <FormControl>
-              <FormSelect v-bind="componentField" :items="status" :label="'Selecione'" />
+              <FormSelect
+                v-bind="componentField"
+                :items="status"
+                :label="'Selecione'"
+                :disabled="isEditMode"
+              />
             </FormControl>
           </FormItem>
         </FormField>
@@ -272,10 +393,10 @@ const onCancel = () => {
         </FormField>
       </div>
       <div class="mt-6 flex items-center gap-2">
-        <Button type="submit" form="form">
+        <Button type="submit" form="form" :disabled="isUpdating || isPaidCommission">
           <LoaderCircle v-if="isUpdating" class="animate-spin" />
           <Save v-else />
-          Salvar
+          {{ isEditMode ? 'Salvar Alterações' : 'Salvar' }}
         </Button>
         <Button type="button" variant="ghost" @click="onCancel"> Cancelar </Button>
       </div>

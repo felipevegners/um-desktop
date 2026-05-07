@@ -1,7 +1,7 @@
 import Button from '@/components/ui/button/Button.vue';
 import { WPP_API } from '@/config/paths';
 import { createColumnHelper } from '@tanstack/vue-table';
-import { ArrowUpDown, MessageCircleMore } from 'lucide-vue-next';
+import { ArrowUpDown } from 'lucide-vue-next';
 import { sanitizePhone } from '~/lib/utils';
 
 const columnHelper = createColumnHelper<any>();
@@ -59,7 +59,7 @@ export const columns = [
       return h(
         'div',
         {
-          class: `px-2 flex items-center justify-center h-6 rounded-full text-white text-xs w-fit ${
+          class: `px-2 flex items-center justify-center h-6 rounded-md text-white text-xs w-fit ${
             status ? 'bg-green-600' : 'bg-red-600'
           }`,
         },
@@ -74,7 +74,7 @@ export const columns = [
       return h(
         'div',
         {
-          class: `px-2 flex items-center justify-center h-6 rounded-full text-white text-xs w-fit ${
+          class: `px-2 flex items-center justify-center h-6 rounded-md text-white text-xs w-fit ${
             status === 'validated' ? 'bg-blue-600' : 'bg-amber-500'
           }`,
         },

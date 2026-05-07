@@ -143,9 +143,9 @@ onUnmounted(() => {
   <div class="relative inline-flex items-center justify-center p-1">
     <DropdownMenu>
       <DropdownMenuTrigger as-child>
-        <div class="relative cursor-pointer">
-          <Bell v-if="unreadCount > 0" :size="24" />
-          <Bell v-else :size="24" />
+        <div class="relative">
+          <Bell v-if="unreadCount > 0" :size="24" class="cursor-pointer" />
+          <Bell v-else :size="24" class="cursor-pointer" />
         </div>
       </DropdownMenuTrigger>
 
@@ -278,7 +278,7 @@ onUnmounted(() => {
 
     <span
       v-if="unreadCount > 0"
-      class="absolute top-0 right-0 min-w-[1.2rem] h-5 px-1 rounded-full bg-um-primary text-black text-[0.68rem] font-bold leading-5 text-center pointer-events-none"
+      class="absolute -top-1 -right-2 min-w-[1.2rem] h-5 px-1 rounded-full bg-um-primary text-black text-[0.68rem] font-bold leading-5 text-center pointer-events-none"
       aria-label="notificações não lidas"
       >{{ unreadCount > 9 ? '9+' : unreadCount }}</span
     >
