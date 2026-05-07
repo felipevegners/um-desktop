@@ -45,7 +45,10 @@ export default defineNuxtConfig({
     '@nuxt/image',
   ],
   auth: {
-    globalAppMiddleware: true,
+    globalAppMiddleware: {
+      isEnabled: true,
+      addDefaultCallbackUrl: false,
+    },
     provider: {
       type: 'authjs',
     },

@@ -42,14 +42,45 @@ const revealPassword = () => {
   viewPassword.value = !viewPassword.value;
 };
 
+const getSafeCallbackUrl = (value: unknown): string => {
+  if (typeof value !== 'string' || !value.trim()) {
+    return '/';
+  }
+
+  if (value.startsWith('/')) {
+    return value;
+  }
+
+  try {
+    const parsed = new URL(value);
+
+    if (process.client && parsed.origin === window.location.origin) {
+      return `${parsed.pathname}${parsed.search}${parsed.hash}` || '/';
+    }
+  } catch {
+    return '/';
+  }
+
+  return '/';
+};
+
+const getAbsoluteCallbackUrl = (path: string): string => {
+  if (process.client) {
+    return new URL(path, window.location.origin).toString();
+  }
+
+  return path;
+};
+
 const onSubmit = form.handleSubmit(async (values) => {
   try {
     isLoading.value = true;
-    const callbackUrl =
-      typeof route.query.callbackUrl === 'string' && route.query.callbackUrl
-        ? route.query.callbackUrl
-        : '/';
-    const result = await signIn('credentials', { ...values, redirect: false });
+    const callbackPath = getSafeCallbackUrl(route.query.callbackUrl);
+    const result = await signIn('credentials', {
+      ...values,
+      redirect: false,
+      callbackUrl: getAbsoluteCallbackUrl(callbackPath),
+    });
     if (result?.error) {
       toast({
         title: 'Erro ao entrar',
@@ -58,7 +89,7 @@ const onSubmit = form.handleSubmit(async (values) => {
       });
       return;
     }
-    await router.push(callbackUrl);
+    await router.push(callbackPath);
   } catch (error) {
     console.error('Erro no login -> ', error);
     toast({
