@@ -34,18 +34,45 @@ onMounted(async () => {
 });
 
 const getRideMonthData = computed(() => {
-  const months = rides?.value.map((ride: any) => {
-    return new Date(ride.travel.date).toLocaleString('pt-BR', { month: 'long' });
+  // Agrupa por mês/ano e status usando chave numérica para ordenar corretamente
+  const monthMap: Record<
+    string,
+    { key: number; name: string; open: number; finished: number; cancelled: number }
+  > = {};
+  (rides?.value || []).forEach((ride: any) => {
+    const d = new Date(ride.travel.date);
+    const year = d.getUTCFullYear();
+    const month = d.getUTCMonth();
+    const keyNum = year * 100 + month;
+    const name = new Date(Date.UTC(year, month, 1)).toLocaleDateString('pt-BR', {
+      month: 'short',
+      year: '2-digit',
+      timeZone: 'UTC',
+    });
+    const mapKey = String(keyNum);
+    if (!monthMap[mapKey])
+      monthMap[mapKey] = {
+        key: keyNum,
+        name,
+        date: new Date(Date.UTC(year, month, 1)),
+        open: 0,
+        finished: 0,
+        cancelled: 0,
+      };
+    if (ride.status === 'completed') monthMap[mapKey].finished++;
+    else if (ride.status === 'cancelled') monthMap[mapKey].cancelled++;
+    else monthMap[mapKey].open++;
   });
-
-  const result = Object.entries(
-    months.reduce((acc: any, str: any) => {
-      acc[str] = (acc[str] || 0) + 1;
-      return acc;
-    }, {}),
-  ).map(([name, total]) => ({ name, total }));
-
-  return result;
+  const sorted = Object.values(monthMap)
+    .sort((a, b) => a.key - b.key)
+    .map(({ name, date, open, finished, cancelled }) => ({
+      name,
+      date,
+      open,
+      finished,
+      cancelled,
+    }));
+  return sorted;
 });
 
 const userName = computed(() => {
@@ -80,7 +107,7 @@ const userName = computed(() => {
     </div>
     <div class="grid auto-rows-min gap-4 md:grid-cols-3">
       <div class="p-6 rounded-xl bg-muted/90 h-full">
-        <p class="font-bold text-lg">
+        <p class="font-bold text-lg min-w-0">
           <CalendarDays class="mb-2" :size="32" />
           Atendimentos recentes
         </p>
@@ -117,7 +144,7 @@ const userName = computed(() => {
           Ver Todos
         </Button>
       </div>
-      <div class="p-6 rounded-xl bg-muted/90">
+      <div class="p-6 rounded-xl bg-muted/90 min-w-0">
         <p class="mb-6 font-bold text-lg">
           <ChartArea class="mb-2" :size="32" />
           Meus Atendimentos por período

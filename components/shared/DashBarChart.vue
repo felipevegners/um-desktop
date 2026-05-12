@@ -1,18 +1,23 @@
 <script setup lang="ts">
-import { BarChart } from '@/components/ui/chart-bar';
+import { GroupedBarChart } from '@/components/ui/chart-line';
 
 const props = defineProps<{
-  data: any;
+  data: Array<{
+    name: string;
+    date?: Date;
+    open: number;
+    finished: number;
+    cancelled: number;
+  }>;
 }>();
 </script>
 
 <template>
-  <BarChart
-    index="name"
+  <GroupedBarChart
+    index="date"
     :data="props.data"
-    :categories="['total']"
-    :show-legend="false"
-    :type="'stacked'"
+    :categories="['open', 'finished', 'cancelled']"
+    :show-legend="true"
     class="p-4 h-[360px] bg-white"
     :margin="{ top: 20 }"
     :show-grid-line="true"
@@ -21,5 +26,10 @@ const props = defineProps<{
         return typeof tick === 'number' ? `${tick}` : '';
       }
     "
+    :category-labels="{
+      open: 'Abertos',
+      finished: 'Finalizados',
+      cancelled: 'Cancelados',
+    }"
   />
 </template>
