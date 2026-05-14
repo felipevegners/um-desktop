@@ -133,8 +133,10 @@ export function formatNotificationDate(value?: string | null): string {
 export function getNotificationTypeLabel(type: string): string {
   const labels: Record<string, string> = {
     ride_created: 'Atendimento criado',
+    ride_assigned: 'Atendimento atribuído',
     ride_accepted: 'Atendimento aceito',
     ride_cancelled: 'Atendimento cancelado',
+    commission_paid: 'Comissão paga',
   };
 
   return labels[type] ?? type.replace(/_/g, ' ');
