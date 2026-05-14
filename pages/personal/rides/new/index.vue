@@ -49,8 +49,7 @@ useHead({
 });
 
 const ridesStore = useRidesStore();
-const { createRideAction, getRidesAction, loadingData } = ridesStore;
-const { rides } = storeToRefs(ridesStore);
+const { createRideAction, loadingData } = ridesStore;
 
 const productsStore = useProductsStore();
 const { getProductsAction } = productsStore;
@@ -419,19 +418,22 @@ const userData = computed(() => {
 
 const rideCode = ref('');
 
-const newRideCode = computed(async () => {
-  await getRidesAction();
-  const ridesLength = rides?.value.length;
+const generateRideCode = () => {
   const today = new Date();
 
   const day = String(today.getDate()).padStart(2, '0');
-  const month = String(today.getMonth() + 1).padStart(2, '0'); // Months are 0-indexed
-  const year = String(today.getFullYear()).slice(-2); // Get the last two digits of the year
+  const month = String(today.getMonth() + 1).padStart(2, '0');
+  const year = String(today.getFullYear()).slice(-2);
+  const hours = String(today.getHours()).padStart(2, '0');
+  const minutes = String(today.getMinutes()).padStart(2, '0');
+  const seconds = String(today.getSeconds()).padStart(2, '0');
+  const milliseconds = String(today.getMilliseconds()).padStart(3, '0');
+  const randomSuffix = Math.random().toString(36).slice(2, 5).toUpperCase();
 
-  return `UM-${day}${month}${year}${ridesLength + 1}`;
-});
+  return `UM-${day}${month}${year}${hours}${minutes}${seconds}${milliseconds}${randomSuffix}`;
+};
 
-rideCode.value = await newRideCode.value;
+rideCode.value = generateRideCode();
 
 const dynamicSchema = computed(() => {
   const baseSchema = z.object({
@@ -499,8 +501,9 @@ const showPaymentSection = async () => {
 };
 
 const onSubmit = form.handleSubmit(async (values) => {
+  rideCode.value = generateRideCode();
+
   const ridePayload = {
-    code: rideCode.value,
     price: calculatedEstimates.value.estimatedPrice,
     billing: {
       paymentMethod: paymentMethod.value,

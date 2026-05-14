@@ -91,8 +91,7 @@ const { getContractByIdAction } = contractsStore;
 const { contract } = storeToRefs(contractsStore);
 const { getUsersAccountsByContractIdAction, getUsersAccountsAction } = accountStore;
 const { accounts } = storeToRefs(accountStore);
-const { createRideAction, getRidesAction } = ridesStore;
-const { rides } = storeToRefs(ridesStore);
+const { createRideAction } = ridesStore;
 const { getBranchByIdAction, updateBranchAction } = branchesStore;
 const { branch } = storeToRefs(branchesStore);
 const { getProductsAction } = productsStore;
@@ -889,17 +888,21 @@ const setDestinationPlace = (place: any) => {
   form.setValues({ destination: place.formatted_address });
 };
 
-const newRideCode = computed(async () => {
-  await getRidesAction();
-  const ridesLength = rides?.value.length;
+const generateRideCode = () => {
   const today = new Date();
   const day = String(today.getDate()).padStart(2, '0');
   const month = String(today.getMonth() + 1).padStart(2, '0');
   const year = String(today.getFullYear()).slice(-2);
-  return `UM-${day}${month}${year}${ridesLength + 1}`;
-});
+  const hours = String(today.getHours()).padStart(2, '0');
+  const minutes = String(today.getMinutes()).padStart(2, '0');
+  const seconds = String(today.getSeconds()).padStart(2, '0');
+  const milliseconds = String(today.getMilliseconds()).padStart(3, '0');
+  const randomSuffix = Math.random().toString(36).slice(2, 5).toUpperCase();
 
-rideCode.value = await newRideCode.value;
+  return `UM-${day}${month}${year}${hours}${minutes}${seconds}${milliseconds}${randomSuffix}`;
+};
+
+rideCode.value = generateRideCode();
 
 const validateDepartTime = (data: any) => {
   const { departDate, departTime } = data;
@@ -1102,6 +1105,7 @@ const buildStaticMapUrl = () => {
 
 const onSubmit = form.handleSubmit(async (values: any) => {
   loadingGenerateRide.value = true;
+  rideCode.value = generateRideCode();
 
   // Validate conditional required fields
   if (visitorUser.value) {
@@ -1160,7 +1164,6 @@ const onSubmit = form.handleSubmit(async (values: any) => {
   };
 
   const ridePayloadBase = {
-    code: rideCode.value,
     estimatedPrice: calculatedEstimates.value.estimatedTotalPrice,
     billing: {
       paymentMethod: paymentMethod.value,
@@ -1817,7 +1820,9 @@ const onSubmit = form.handleSubmit(async (values: any) => {
                       <p>{{ originLocationDetails.address }}</p>
                     </div>
                     <div
-                      v-if="routeWaypoints.length > 0"
+                      v-if="
+                        routeWaypoints.length > 0 && waypointLocationDetails.length > 0
+                      "
                       v-for="(waypoint, index) in routeWaypoints"
                     >
                       <small class="font-bold">Parada {{ Number(index) + 1 }}</small>
