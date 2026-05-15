@@ -356,6 +356,10 @@ const showDriverMarker = computed(
     !isDriverLoading.value &&
     Boolean(driverMarkerPosition.value),
 );
+const isTerminalRide = computed(() => {
+  const status = String(props.rideStatus ?? '').toLowerCase();
+  return status === 'completed' || status === 'cancelled' || status === 'rejected';
+});
 
 watch(
   () => mapRef.value?.ready,
@@ -463,7 +467,7 @@ watch(
         v-if="destLL"
         :options="{ position: destLL, icon: checkIconData, title: 'Destino' }"
       />
-      <!-- Prefer server-side canonicalPath (magenta) when available, fallback to driverPath -->
+      <!-- Prefer server-side canonicalPath (magenta) when available -->
       <Polyline
         v-if="canonicalCoords.length >= 2"
         :options="{
@@ -479,7 +483,7 @@ watch(
         v-if="finishedLL"
         :options="{ position: finishedLL, icon: checkIconData, title: 'Finalizado' }"
       />
-      <Polyline v-else :options="driverPath" />
+      <Polyline v-else-if="!isTerminalRide" :options="driverPath" />
     </GoogleMap>
   </section>
 </template>

@@ -521,7 +521,7 @@ const decodePolyline = (polyline: string) => {
           v-if="finishedLL"
           :options="{ position: finishedLL, icon: checkIconData, title: 'Finalizado' }"
         />
-        <Polyline v-else :options="ridePath" />
+        <Polyline v-else-if="!isRideTerminal" :options="ridePath" />
       </GoogleMap>
     </div>
     <section class="p-4 bg-zinc-200">
