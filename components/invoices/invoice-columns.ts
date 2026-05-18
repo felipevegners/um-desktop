@@ -1,5 +1,6 @@
 import TableActions from '@/components/shared/TableActions.vue';
 import { createColumnHelper } from '@tanstack/vue-table';
+import { Paperclip } from 'lucide-vue-next';
 import { currencyFormat } from '~/lib/utils';
 
 const columnHelper = createColumnHelper<any>();
@@ -67,9 +68,9 @@ export const getColumns = (options: InvoiceColumnsOptions = {}): any => [
   }),
   columnHelper.display({
     id: 'createdAt',
-    meta: { label: 'Gerada em' },
+    meta: { label: 'Emitida em' },
     enableHiding: false,
-    header: () => h('div', { class: 'text-left' }, 'Gerada em'),
+    header: () => h('div', { class: 'text-left' }, 'Emitida em'),
     cell: ({ row }) => {
       const value = row.original?.createdAt;
       if (!value) return h('div', { class: 'text-xs' }, '-');
@@ -104,6 +105,43 @@ export const getColumns = (options: InvoiceColumnsOptions = {}): any => [
           class: `inline-flex rounded-md px-2 py-1 text-xxs text-white uppercase ${invoiceStatusClass[value] || 'bg-zinc-700'}`,
         },
         invoiceStatusLabel[value] || value,
+      );
+    },
+  }),
+  columnHelper.display({
+    id: 'nf',
+    meta: { label: 'NF' },
+    enableHiding: false,
+    header: () => h('div', { class: 'text-left' }, 'NF'),
+    cell: ({ row }) => {
+      const invoice = row.original;
+      const hasNfUrl = Boolean(invoice?.customer?.invoiceTracking?.nfDocument?.url);
+      const hasNf = invoice?.status === 'paid' && hasNfUrl;
+      const nfUrl = invoice?.customer?.invoiceTracking?.nfDocument?.url;
+
+      if (!hasNf) {
+        return h(
+          'span',
+          {
+            class:
+              'inline-flex rounded-md px-2 py-1 text-xxs text-white uppercase bg-zinc-500',
+          },
+          'NÃO',
+        );
+      }
+
+      return h(
+        'a',
+        {
+          href: nfUrl,
+          target: '_blank',
+          rel: 'noopener noreferrer',
+          class:
+            'inline-flex items-center gap-1 rounded-md px-2 py-1 text-xxs text-white uppercase bg-green-600 transition-colors hover:bg-green-700',
+          title: 'Abrir NF',
+          'aria-label': 'Abrir NF',
+        },
+        ['SIM', h(Paperclip, { size: 14 })],
       );
     },
   }),
