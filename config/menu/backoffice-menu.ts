@@ -139,19 +139,11 @@ export const backofficeMenu = {
       isActive: route.path.startsWith('invoices'),
       items: [
         {
-          title: 'Faturas em aberto',
+          title: 'Faturas Emitidas',
           url: '/admin/finances/invoices/open',
         },
         {
-          title: 'Balanço',
-          url: '#',
-        },
-        {
-          title: 'Canceladas',
-          url: '#',
-        },
-        {
-          title: '+ Gerar Nova Fatura',
+          title: '+ Emitir Fatura',
           url: '/admin/finances/invoices/new',
         },
         {

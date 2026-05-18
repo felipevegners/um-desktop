@@ -41,11 +41,16 @@ const userName = computed(() => {
 
 onMounted(async () => {
   loadingRides.value = true;
-  await getCommissionsAction();
-  await getRidesAction();
-  await getFeeByTypeAction('driver_fee');
-  allRides.value = (rides?.value || []).slice(-4).reverse();
-  loadingRides.value = false;
+  try {
+    await Promise.allSettled([
+      getCommissionsAction(),
+      getRidesAction(),
+      getFeeByTypeAction('driver_fee'),
+    ]);
+    allRides.value = (rides?.value || []).slice(-4).reverse();
+  } finally {
+    loadingRides.value = false;
+  }
 });
 
 const getRideMonthData = computed(() => {
@@ -182,110 +187,73 @@ definePageMeta({
       </div>
     </div> -->
     <div class="grid auto-rows-min gap-4 md:grid-cols-3">
-      <div class="col-span-3 p-6 flex flex-col rounded-xl bg-muted/90">
-        <p class="mb-6 font-bold text-lg">
-          <Receipt class="mb-2" :size="32" />
-          Faturamento - Totais
-        </p>
+      <div class="col-span-3 p-6 flex flex-col rounded-xl">
+        <div class="flex items-center gap-2 mb-6">
+          <Receipt :size="32" />
+          <p class="font-bold text-lg">Faturamento - Totais</p>
+        </div>
 
         <div>
           <div
             v-if="calculateOpenRidePrices !== ''"
             class="flex flex-col md:grid md:grid-cols-3 gap-6"
           >
-            <div
-              class="p-6 bg-zinc-950 text-white border border-zinc-950 rounded-lg w-full"
-            >
-              <span class="block mb-6 text-sm text-muted-foreground">
-                Total de Atendimentos
-              </span>
-              <LoaderCircle
-                v-if="calculateAllRidesPrices === 'NaN'"
-                class="animate-spin"
-              />
-              <h1 v-else class="text-3xl lg:text-5xl font-bold">
-                {{
-                  currencyFormat(
-                    calculateAllRidesPrices === 'NaN' ? '0' : calculateAllRidesPrices,
-                  )
-                }}
-              </h1>
-            </div>
-            <div class="p-6 bg-zinc-950 text-white border border-zinc-950 rounded-lg">
-              <span class="block mb-6 text-sm text-muted-foreground">
-                Atendimentos em Aberto
-              </span>
-              <LoaderCircle
-                v-if="calculateOpenRidePrices === 'NaN'"
-                class="animate-spin"
-              />
-              <h1 v-else class="text-3xl lg:text-5xl font-bold">
-                {{
-                  currencyFormat(
-                    calculateOpenRidePrices === 'NaN' ? '0' : calculateOpenRidePrices,
-                  )
-                }}
-              </h1>
-            </div>
-            <div class="p-6 bg-zinc-950 text-white border border-zinc-950 rounded-lg">
-              <span class="block mb-6 text-sm text-muted-foreground">
-                Atendimentos Finalizados
-              </span>
-              <LoaderCircle
-                v-if="calculateFinishedRideAmmount === 'NaN'"
-                class="animate-spin"
-              />
-              <h1 v-else class="text-3xl lg:text-5xl font-bold">
-                {{
-                  currencyFormat(
-                    calculateFinishedRideAmmount === 'NaN'
-                      ? '0'
-                      : calculateFinishedRideAmmount,
-                  )
-                }}
-              </h1>
-            </div>
-            <div class="p-6 bg-zinc-950 text-white border border-zinc-950 rounded-lg">
-              <span class="block mb-6 text-sm text-muted-foreground">
-                Atendimentos Cancelados
-              </span>
-              <LoaderCircle
-                v-if="calculateCancelledRideAmmount === 'NaN'"
-                class="animate-spin"
-              />
-              <h1 v-else class="text-3xl lg:text-5xl font-bold text-red-600">
-                {{
-                  currencyFormat(
-                    calculateCancelledRideAmmount === 'NaN'
-                      ? '0'
-                      : calculateCancelledRideAmmount,
-                  )
-                }}
-              </h1>
-            </div>
-            <div class="p-6 bg-zinc-950 text-white border border-zinc-950 rounded-lg">
-              <span class="block mb-6 text-sm text-muted-foreground">
-                Repasse Motoristas
-              </span>
-              <LoaderCircle
-                v-if="calculateTotalCommissions === 'NaN'"
-                class="animate-spin"
-              />
-              <h1 v-else class="font-bold text-amber-600 text-3xl lg:text-5xl">
-                {{
-                  currencyFormat(
-                    calculateTotalCommissions === 'NaN' ? '0' : calculateTotalCommissions,
-                  )
-                }}
-              </h1>
-            </div>
-            <div class="p-6 bg-zinc-950 text-white border border-zinc-950 rounded-lg">
-              <span class="block mb-6 text-sm text-muted-foreground">Receita Bruta</span>
-              <LoaderCircle v-if="totalRevenue === 'NaN'" class="animate-spin" />
-              <h1 v-else class="text-3xl lg:text-5xl font-bold text-um-primary">
-                {{ currencyFormat(totalRevenue === 'NaN' ? '0' : totalRevenue) }}
-              </h1>
-            </div>
+            <SharedStatsCard
+              label="Total em Atendimentos"
+              :value="
+                calculateAllRidesPrices === 'NaN'
+                  ? ''
+                  : currencyFormat(calculateAllRidesPrices)
+              "
+              variant="default"
+              :loading="calculateAllRidesPrices === 'NaN'"
+            />
+            <SharedStatsCard
+              label="Atendimentos em Aberto"
+              :value="
+                calculateOpenRidePrices === 'NaN'
+                  ? ''
+                  : currencyFormat(calculateOpenRidePrices)
+              "
+              variant="warning"
+              :loading="calculateOpenRidePrices === 'NaN'"
+            />
+            <SharedStatsCard
+              label="Atendimentos Finalizados"
+              :value="
+                calculateFinishedRideAmmount === 'NaN'
+                  ? ''
+                  : currencyFormat(calculateFinishedRideAmmount)
+              "
+              variant="success"
+              :loading="calculateFinishedRideAmmount === 'NaN'"
+            />
+            <SharedStatsCard
+              label="Atendimentos Cancelados"
+              :value="
+                calculateCancelledRideAmmount === 'NaN'
+                  ? ''
+                  : currencyFormat(calculateCancelledRideAmmount)
+              "
+              variant="danger"
+              :loading="calculateCancelledRideAmmount === 'NaN'"
+            />
+            <SharedStatsCard
+              label="Repasse Motoristas"
+              :value="
+                calculateTotalCommissions === 'NaN'
+                  ? ''
+                  : currencyFormat(calculateTotalCommissions)
+              "
+              variant="warning"
+              :loading="calculateTotalCommissions === 'NaN'"
+            />
+            <SharedStatsCard
+              label="Receita Bruta"
+              :value="totalRevenue === 'NaN' ? '' : currencyFormat(totalRevenue)"
+              variant="info"
+              :loading="totalRevenue === 'NaN'"
+            />
           </div>
           <p v-else class="text-muted-foreground">Não há dados no momento.</p>
         </div>

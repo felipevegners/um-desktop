@@ -279,24 +279,25 @@ const finalColumns = computed(() => {
     </section>
 
     <!-- Stats cards -->
-    <section
-      class="my-10 md:grid md:grid-cols-3 flex items-center justify-start gap-6 mb-6"
-    >
-      <div class="p-4 rounded-md bg-zinc-950 text-white">
-        <small>Total de Pagamentos</small>
-        <h3 class="font-bold text-2xl">{{ stats.total }}</h3>
-        <h2 class="text-um-primary text-lg">{{ currencyFormat(stats.totalAmount) }}</h2>
-      </div>
-      <div class="p-4 rounded-md bg-zinc-950 text-white">
-        <small>Total Pago</small>
-        <h3 class="font-bold text-2xl">{{ stats.paid }}</h3>
-        <h2 class="text-um-primary text-lg">{{ currencyFormat(stats.paidAmount) }}</h2>
-      </div>
-      <div class="p-4 rounded-md bg-zinc-950 text-white">
-        <small>Total Pendente</small>
-        <h3 class="font-bold text-2xl">{{ stats.pending }}</h3>
-        <h2 class="text-um-primary text-lg">{{ currencyFormat(stats.pendingAmount) }}</h2>
-      </div>
+    <section class="my-6 grid grid-cols-1 gap-4 md:grid-cols-3">
+      <SharedStatsCard
+        label="Total de Pagamentos"
+        :value="stats.total"
+        :sub-value="currencyFormat(stats.totalAmount)"
+        variant="default"
+      />
+      <SharedStatsCard
+        label="Total Pago"
+        :value="stats.paid"
+        :sub-value="currencyFormat(stats.paidAmount)"
+        variant="success"
+      />
+      <SharedStatsCard
+        label="Total Pendente"
+        :value="stats.pending"
+        :sub-value="currencyFormat(stats.pendingAmount)"
+        variant="warning"
+      />
     </section>
 
     <!-- Batch mode toolbar -->

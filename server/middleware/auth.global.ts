@@ -58,6 +58,7 @@ export default defineEventHandler(async (event) => {
   if (
     pathname === '/' ||
     pathname.startsWith('/api/auth') ||
+    pathname.startsWith('/api/uploadthing') ||
     pathname.startsWith('/api/products') ||
     pathname.startsWith('/api/travels/routes') ||
     pathname.startsWith('/_nuxt') ||

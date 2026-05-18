@@ -81,13 +81,13 @@ export const branchManagerMenu: any = {
       isActive: route.path.startsWith('invoices'),
       items: [
         {
-          title: 'Faturas em Aberto',
-          url: '#',
+          title: 'Relatórios Financeiros',
+          url: '/corporative/finances/reports',
         },
-        // {
-        //   title: 'Faturas canceladas',
-        //   url: '#',
-        // },
+        {
+          title: 'Faturas',
+          url: '/corporative/finances/invoices',
+        },
       ],
     },
   ],

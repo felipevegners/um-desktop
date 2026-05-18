@@ -62,7 +62,11 @@ watch(
     branchIdsKey.value,
   ],
   async () => {
-    await loadRides();
+    try {
+      await loadRides();
+    } catch (error) {
+      console.error('Failed to hydrate rides list:', error);
+    }
   },
   { immediate: true },
 );

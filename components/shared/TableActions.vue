@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { Button } from '@/components/ui/button';
-import { Edit, Eye, LoaderCircle, Trash } from 'lucide-vue-next';
+import { Download, Edit, Eye, LoaderCircle, Trash } from 'lucide-vue-next';
 import { computed, ref } from 'vue';
 
 defineOptions({
@@ -27,7 +27,7 @@ const toggleConfirmationModal = () => {
   showConfirmationModal.value = !showConfirmationModal.value;
 };
 
-const emit = defineEmits(['view', 'edit', 'delete']);
+const emit = defineEmits(['view', 'edit', 'delete', 'download']);
 
 const viewFn = () => {
   emit('view', props.dataId);
@@ -40,37 +40,71 @@ const editFn = () => {
 const deleteFn = () => {
   emit('delete', props.dataId);
 };
+
+const downloadFn = () => {
+  emit('download', props.dataId);
+};
 </script>
 <template>
-  <div class="flex items-center gap-1">
-    <Button
-      v-if="props.options?.includes('preview')"
-      variant="ghost"
-      size="icon"
-      class="text-zinc-700 hover:bg-zinc-700 hover:text-white"
-      @click="viewFn"
-    >
-      <Eye class="w-4 h-4" />
-    </Button>
-    <Button
-      v-if="props.options?.includes('edit')"
-      variant="ghost"
-      size="icon"
-      class="text-zinc-700 hover:bg-zinc-700 hover:text-white"
-      @click="editFn"
-    >
-      <Edit :size="14" />
-    </Button>
-    <Button
-      v-if="props.options?.includes('delete') && isAdmin"
-      variant="ghost"
-      size="icon"
-      class="text-zinc-700 hover:bg-red-500 hover:text-white"
-      @click="toggleConfirmationModal"
-    >
-      <Trash class="w-4 h-4" />
-    </Button>
-  </div>
+  <TooltipProvider>
+    <div class="flex items-center gap-1">
+      <Tooltip v-if="props.options?.includes('preview')">
+        <TooltipTrigger as-child>
+          <Button
+            variant="ghost"
+            size="icon"
+            class="text-zinc-700 hover:bg-zinc-700 hover:text-white"
+            @click="viewFn"
+          >
+            <Eye class="w-4 h-4" />
+          </Button>
+        </TooltipTrigger>
+        <TooltipContent class="bg-zinc-700 text-white">Preview</TooltipContent>
+      </Tooltip>
+
+      <Tooltip v-if="props.options?.includes('edit')">
+        <TooltipTrigger as-child>
+          <Button
+            variant="ghost"
+            size="icon"
+            class="text-zinc-700 hover:bg-zinc-700 hover:text-white"
+            @click="editFn"
+          >
+            <Edit :size="14" />
+          </Button>
+        </TooltipTrigger>
+        <TooltipContent class="bg-zinc-700 text-white">Editar</TooltipContent>
+      </Tooltip>
+
+      <Tooltip v-if="props.options?.includes('download')">
+        <TooltipTrigger as-child>
+          <Button
+            variant="ghost"
+            size="icon"
+            class="text-zinc-700 hover:bg-zinc-700 hover:text-white"
+            @click="downloadFn"
+          >
+            <Download class="w-4 h-4" />
+          </Button>
+        </TooltipTrigger>
+        <TooltipContent class="bg-zinc-700 text-white">Download</TooltipContent>
+      </Tooltip>
+
+      <Tooltip v-if="props.options?.includes('delete') && isAdmin">
+        <TooltipTrigger as-child>
+          <Button
+            variant="ghost"
+            size="icon"
+            class="text-zinc-700 hover:bg-red-500 hover:text-white"
+            @click="toggleConfirmationModal"
+          >
+            <Trash class="w-4 h-4" />
+          </Button>
+        </TooltipTrigger>
+        <TooltipContent class="bg-zinc-700 text-white">Excluir</TooltipContent>
+      </Tooltip>
+    </div>
+  </TooltipProvider>
 
   <AlertDialog :open="showConfirmationModal">
     <AlertDialogContent>

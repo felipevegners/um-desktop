@@ -48,10 +48,11 @@ export const useCommissionsStore = defineStore('commissions', {
       try {
         const response = await getCommissionsService('');
         this.commissions = response;
-        this.isLoading = false;
       } catch (error) {
         console.debug(error);
         throw error;
+      } finally {
+        this.isLoading = false;
       }
     },
     async getCommissionByIdAction(commissionId: string) {
@@ -59,9 +60,10 @@ export const useCommissionsStore = defineStore('commissions', {
       try {
         const response = await getCommissionsService(commissionId);
         this.commission = response;
-        this.isLoading = false;
       } catch (error) {
         throw error;
+      } finally {
+        this.isLoading = false;
       }
     },
     async getCommissionsStatsAction() {

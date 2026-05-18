@@ -124,9 +124,10 @@ export const useRidesStore = defineStore('rides', {
         const normalized = normalizeRideListResponse(response);
         this.capabilities = normalized.capabilities;
         this.rides = normalized.items.filter((ride: any) => ride.status !== 'canceled');
-        this.loadingData = false;
       } catch (error) {
         throw error;
+      } finally {
+        this.loadingData = false;
       }
     },
     async getUserRidesAction(userId: string) {
@@ -137,9 +138,10 @@ export const useRidesStore = defineStore('rides', {
         this.capabilities = normalized.capabilities;
         const filtered = normalized.items.filter((ride: any) => ride.user.id === userId);
         this.rides = filtered;
-        this.loadingData = false;
       } catch (error) {
         throw error;
+      } finally {
+        this.loadingData = false;
       }
     },
     async getRidesByDateRangeAction(
@@ -246,9 +248,10 @@ export const useRidesStore = defineStore('rides', {
         const normalized = normalizeRideListResponse(response);
         this.capabilities = normalized.capabilities;
         this.rides = normalized.items;
-        this.loadingData = false;
       } catch (error) {
         throw error;
+      } finally {
+        this.loadingData = false;
       }
     },
     async getDriverRidesAction(driverId: string) {
@@ -262,9 +265,10 @@ export const useRidesStore = defineStore('rides', {
           return typeof assignedDriverId === 'string' && assignedDriverId === driverId;
         });
         this.rides = filtered;
-        this.loadingData = false;
       } catch (error) {
         throw error;
+      } finally {
+        this.loadingData = false;
       }
     },
     async getRideByIdAction(rideId: string, options?: { publicTrack?: boolean }) {
@@ -276,9 +280,10 @@ export const useRidesStore = defineStore('rides', {
         const normalized = normalizeRideDetailResponse(response);
         this.capabilities = normalized.capabilities;
         this.ride = normalized.ride;
-        this.loadingData = false;
       } catch (error) {
         throw error;
+      } finally {
+        this.loadingData = false;
       }
     },
     async getRideByCodeAction(code: string) {
@@ -288,9 +293,10 @@ export const useRidesStore = defineStore('rides', {
         const normalized = normalizeRideListResponse(response);
         this.capabilities = normalized.capabilities;
         this.ride = normalized.items?.[0] || null;
-        this.loadingData = false;
       } catch (error) {
         throw error;
+      } finally {
+        this.loadingData = false;
       }
     },
     async createRideAction(rideData: any) {

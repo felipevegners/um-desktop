@@ -142,6 +142,7 @@ model Drivers {
   address           Json?
   actuationArea     String?
   offers            Json?
+  products          Json?
   driverCars        Json?
   rating            Json?
   history           Json?

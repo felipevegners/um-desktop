@@ -2,6 +2,7 @@ import Button from '@/components/ui/button/Button.vue';
 import { WPP_API } from '@/config/paths';
 import { createColumnHelper } from '@tanstack/vue-table';
 import { ArrowUpDown } from 'lucide-vue-next';
+import ProductTag from '~/components/shared/ProductTag.vue';
 import { sanitizePhone } from '~/lib/utils';
 
 const columnHelper = createColumnHelper<any>();
@@ -79,6 +80,28 @@ export const columns = [
           }`,
         },
         status === 'validated' ? 'Validado' : 'Pendente',
+      );
+    },
+  }),
+  columnHelper.accessor('Produtos Atendidos', {
+    header: () => h('div', { class: 'text-left' }, 'Produtos Atendidos'),
+    cell: ({ row }) => {
+      const data = row.original;
+      return h(
+        'div',
+        { class: 'relative text-left flex gap-4' },
+        data.products && data.products.length > 0
+          ? data.products.map((product: any) =>
+              h(ProductTag, {
+                label: product.name,
+                type: product.name,
+              }),
+            )
+          : h(
+              'div',
+              { class: 'px-2 py-1 bg-zinc-200 rounded-md text-xs text-zinc-700' },
+              'Nenhum produto',
+            ),
       );
     },
   }),

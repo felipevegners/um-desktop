@@ -10,6 +10,7 @@ export interface Driver {
   licenseExpiration?: string;
   driverFiles?: DriverFiles;
   driverCars?: DriverCar[];
+  products?: DriverProduct[];
   address?: Record<string, string>;
   actuationArea?: string;
   rating?: Array<any>;
@@ -42,4 +43,10 @@ type DriverFiles = {
     name: string;
     url: string;
   };
+};
+
+type DriverProduct = {
+  id: string;
+  name?: string;
+  code?: string;
 };

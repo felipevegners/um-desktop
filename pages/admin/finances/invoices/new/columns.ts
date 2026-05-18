@@ -1,15 +1,14 @@
-import PaymentStatusFlag from '@/components/shared/PaymentStatusFlag.vue';
-import { Button } from '@/components/ui/button';
 import Checkbox from '@/components/ui/checkbox/Checkbox.vue';
 import { createColumnHelper } from '@tanstack/vue-table';
-import { ArrowUpDown } from 'lucide-vue-next';
-import { currencyFormat, sanitizeRideDate } from '~/lib/utils';
+import ProductTag from '~/components/shared/ProductTag.vue';
+import { currencyFormat, sanitizeAmount } from '~/lib/utils';
 
 const columnHelper = createColumnHelper<any>();
 
 export const columns: any = [
   {
     id: 'select',
+    meta: { width: 30 },
     header: ({ table }: any) => {
       return h(Checkbox, {
         checked:
@@ -34,70 +33,122 @@ export const columns: any = [
     enableHiding: false,
   },
   columnHelper.accessor('code', {
-    meta: 'Código',
+    meta: { label: 'Código' },
     header: () => h('div', { class: 'text-left' }, 'Código'),
-    cell: ({ row }) => h('div', { class: 'capitalize text-xs' }, row.getValue('code')),
-  }),
-  columnHelper.accessor('user', {
-    meta: 'Usuário',
-    enablePinning: true,
-    header: ({ column }) => {
-      return h(
-        Button,
-        {
-          variant: 'ghost',
-          class: 'pl-0',
-          onClick: () => column.toggleSorting(column.getIsSorted() === 'asc'),
-        },
-        () => ['Usuário', h(ArrowUpDown, { class: 'ml-2 h-4 w-4' })],
-      );
-    },
-    cell: ({ row }: any) =>
-      h('div', { class: 'capitalize text-xs' }, row.getValue('user').name),
+    cell: ({ row }) =>
+      h('div', { class: 'capitalize text-sm font-semibold' }, row.getValue('code')),
   }),
   columnHelper.display({
-    id: 'routeDateTime',
-    meta: 'Rota/Data/Hora',
+    id: 'user',
+    meta: { label: 'Usuário' },
     enableHiding: false,
-    header: () => h('div', { class: 'text-left' }, 'Rota/Data/Hora'),
+    header: () => h('div', { class: 'text-left' }, 'Usuário'),
     cell: ({ row }) => {
-      const data = row.original;
-      const normalizeOrigin = data.travel.originAddress.split('-').slice(0, 1).pop();
-      const normalizeDestination = data.travel.destinationAddress
-        .split('-')
-        .slice(0, 1)
-        .pop();
-      const travelDateTime = `${sanitizeRideDate(data.travel.date as string)} - ${data.travel.departTime}`;
-      return h('div', { class: 'capitalize text-xs text-wrap' }, [
-        `${normalizeOrigin} → ${normalizeDestination} | ${travelDateTime}`,
-        data?.travel.stops?.length > 0
-          ? h(
-              'span',
-              {
-                class:
-                  'ml-1 px-2 py-0.5 text-center bg-zinc-900 text-zinc-300 text-xs w-fit rounded-md',
-              },
-              `${data?.travel.stops?.length > 1 ? data?.travel.stops?.length + ' paradas' : data?.travel.stops?.length + ' parada'}`,
-            )
-          : '',
-      ]);
+      const ride = row.original;
+      return h('div', { class: 'capitalize text-sm' }, ride?.user?.name || '-');
     },
   }),
-  columnHelper.accessor('billing', {
-    header: () => h('div', { class: 'text-left' }, 'Valor Final'),
+  columnHelper.display({
+    id: 'branch',
+    meta: { label: 'Filial' },
+    enableHiding: false,
+    header: () => h('div', { class: 'text-left' }, 'Filial'),
     cell: ({ row }) => {
-      const data = row.original;
-      return h('div', { class: 'font-bold' }, currencyFormat(data.billing.ammount));
+      const ride = row.original;
+      return h(
+        'div',
+        { class: 'capitalize text-sm text-wrap' },
+        ride?.billing?.paymentData?.branchName || '-all-',
+      );
     },
   }),
-  columnHelper.accessor('payment', {
-    header: () => h('div', { class: 'text-left' }, 'Tipo Pagamento'),
+  columnHelper.display({
+    id: 'costCenter',
+    meta: { label: 'Centro de Custo' },
+    enableHiding: false,
+    header: () => h('div', { class: 'text-left' }, 'Centro de Custo'),
     cell: ({ row }) => {
-      const data = row.original;
-      return h(PaymentStatusFlag, {
-        paymentStatus: data.billing.status,
-        paymentUrl: data.billing.paymentUrl || '',
-      });
+      const ride = row.original;
+      const areaCode = ride?.billing?.paymentData?.areaCode;
+      const areaName = ride?.billing?.paymentData?.areaName;
+      return h(
+        'div',
+        { class: 'text-sm text-wrap text-center' },
+        areaCode || (areaName && `${areaCode}`) || '-',
+      );
+    },
+  }),
+  columnHelper.display({
+    id: 'product',
+    meta: { label: 'Produto' },
+    enableHiding: false,
+    header: () => h('div', { class: 'text-left' }, 'Produto'),
+    cell: ({ row }) => {
+      const ride = row.original;
+      return h(
+        'div',
+        { class: 'text-sm text-wrap' },
+        h(ProductTag, {
+          label: ride?.product?.name as string,
+          type: ride?.product?.name as string,
+        }),
+      );
+    },
+  }),
+  columnHelper.display({
+    id: 'requestedBy',
+    meta: { label: 'Solicitante' },
+    enableHiding: false,
+    header: () => h('div', { class: 'text-left' }, 'Solicitante'),
+    cell: ({ row }) => {
+      const ride = row.original;
+      const requesterName =
+        ride?.reason?.requestedByName || ride?.reason?.requestedBy || ride?.user?.name;
+      return h('div', { class: 'text-sm text-wrap' }, requesterName || '-');
+    },
+  }),
+  columnHelper.display({
+    id: 'finishedAt',
+    meta: { label: 'Data Finalização' },
+    enableHiding: false,
+    header: () => h('div', { class: 'text-left' }, 'Data Finalização'),
+    cell: ({ row }) => {
+      const ride = row.original;
+      const finishedAt = ride?.progress?.finishedAt || ride?.updatedAt || ride?.createdAt;
+      if (!finishedAt) return h('div', { class: 'text-sm' }, '-');
+      return h(
+        'div',
+        { class: 'text-sm' },
+        new Date(finishedAt).toLocaleDateString('pt-BR'),
+      );
+    },
+  }),
+  columnHelper.display({
+    id: 'total',
+    meta: { label: 'Valor Total' },
+    enableHiding: false,
+    header: () => h('div', { class: 'text-left' }, 'Valor Total'),
+    cell: ({ row }) => {
+      const ride = row.original;
+      const extraChargesTotal = Array.isArray(ride?.extraCharges)
+        ? ride.extraCharges.reduce((acc: number, charge: any) => {
+            return acc + sanitizeAmount(charge?.amount);
+          }, 0)
+        : 0;
+
+      const billingWithExtras =
+        ride?.billing?.ammountWithExtras ?? ride?.billing?.amountWithExtras;
+      const base =
+        sanitizeAmount(billingWithExtras) ||
+        sanitizeAmount(ride?.rideFinalPrice) ||
+        sanitizeAmount(ride?.billing?.ammount);
+
+      const finalTotal =
+        sanitizeAmount(billingWithExtras) > 0
+          ? base
+          : Math.max(base + extraChargesTotal, 0);
+
+      return h('div', { class: 'text-sm font-bold' }, currencyFormat(finalTotal));
     },
   }),
 ];

@@ -1,7 +1,10 @@
+const REQUEST_TIMEOUT_MS = 20000;
+
 export const getRideRoutesService = async (rideData: any) => {
   try {
     const response = await $fetch('/api/travels/routes', {
       method: 'POST',
+      timeout: REQUEST_TIMEOUT_MS,
       body: {
         ...rideData,
       },
@@ -26,6 +29,7 @@ export const getRideDistanceService = async (payload: {
 
     const response = await $fetch('/api/travels/distance', {
       method: 'GET',
+      timeout: REQUEST_TIMEOUT_MS,
       params,
     });
 
@@ -46,7 +50,9 @@ export const getRidesService = async (
         params.set('publicTrack', '1');
       }
 
-      return await $fetch(`/api/rides?${params.toString()}`);
+      return await $fetch(`/api/rides?${params.toString()}`, {
+        timeout: REQUEST_TIMEOUT_MS,
+      });
     }
 
     if (query && Object.keys(query).length > 0) {
@@ -57,10 +63,14 @@ export const getRidesService = async (
       }
 
       const queryString = params.toString();
-      return await $fetch(queryString ? `/api/rides?${queryString}` : '/api/rides');
+      return await $fetch(queryString ? `/api/rides?${queryString}` : '/api/rides', {
+        timeout: REQUEST_TIMEOUT_MS,
+      });
     }
 
-    return await $fetch('/api/rides');
+    return await $fetch('/api/rides', {
+      timeout: REQUEST_TIMEOUT_MS,
+    });
   } catch (error) {
     console.debug('Error during service GET -> ', error);
     throw error;
@@ -69,7 +79,9 @@ export const getRidesService = async (
 
 export const getRideByCodeService = async (code: string) => {
   try {
-    return await $fetch(`/api/rides?code=${encodeURIComponent(code)}`);
+    return await $fetch(`/api/rides?code=${encodeURIComponent(code)}`, {
+      timeout: REQUEST_TIMEOUT_MS,
+    });
   } catch (error) {
     console.debug('Error during service GET by code -> ', error);
     throw error;
@@ -78,7 +90,9 @@ export const getRideByCodeService = async (code: string) => {
 
 export const getContractRidesService = async (contractId: string) => {
   try {
-    return await $fetch(`/api/rides?contractId=${contractId}`);
+    return await $fetch(`/api/rides?contractId=${contractId}`, {
+      timeout: REQUEST_TIMEOUT_MS,
+    });
   } catch (error) {
     console.debug('Error during rides by contract ID service GET -> ', error);
     throw error;
@@ -87,7 +101,9 @@ export const getContractRidesService = async (contractId: string) => {
 
 export const getRidesByDateRangeService = async (startDate: string, endDate: string) => {
   try {
-    return await $fetch(`/api/rides?startDate=${startDate}&endDate=${endDate}`);
+    return await $fetch(`/api/rides?startDate=${startDate}&endDate=${endDate}`, {
+      timeout: REQUEST_TIMEOUT_MS,
+    });
   } catch (error) {
     console.debug('Error during rides by date range service GET -> ', error);
     throw error;
@@ -102,6 +118,9 @@ export const getRidesByDateRangeAndContractIdService = async (
   try {
     return await $fetch(
       `/api/rides?startDate=${startDate}&endDate=${endDate}&contractId=${contractId}`,
+      {
+        timeout: REQUEST_TIMEOUT_MS,
+      },
     );
   } catch (error) {
     console.debug('Error during rides by date range service GET -> ', error);
@@ -113,6 +132,7 @@ export const createRideService = async (rideData: any) => {
   try {
     return await $fetch('/api/rides', {
       method: 'POST',
+      timeout: REQUEST_TIMEOUT_MS,
       body: rideData,
     });
   } catch (error) {
@@ -125,6 +145,7 @@ export const updateRideService = async (rideData: any) => {
   try {
     await $fetch('/api/rides', {
       method: 'PUT',
+      timeout: REQUEST_TIMEOUT_MS,
       body: rideData,
     });
   } catch (error) {
@@ -136,6 +157,7 @@ export const deleteRideService = async (id: string) => {
   try {
     await $fetch('/api/rides', {
       method: 'DELETE',
+      timeout: REQUEST_TIMEOUT_MS,
       body: { id },
     });
   } catch (error) {

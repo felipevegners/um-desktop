@@ -57,10 +57,11 @@ const handleDateRangeUpdate = (value: any) => {
       id="date-picker-range"
       locale="pt-br"
       @update:modelValue="handleDateRangeUpdate"
+      class="w-full"
     >
       <DateRangePickerField
         v-slot="{ segments }"
-        class="flex select-none bg-white items-center rounded-md text-center border shadow-sm px-2 py-1 data-[invalid]:border-red-500"
+        class="w-full min-w-0 flex select-none bg-white items-center rounded-md text-center border shadow-sm px-2 py-1 data-[invalid]:border-red-500"
       >
         <template v-for="item in segments.start" :key="item.part">
           <DateRangePickerInput
@@ -79,7 +80,7 @@ const handleDateRangeUpdate = (value: any) => {
             {{ item.value }}
           </DateRangePickerInput>
         </template>
-        <span class="mx-2"> - </span>
+        <span class="mx-1.5 shrink-0"> - </span>
         <template v-for="item in segments.end" :key="item.part">
           <DateRangePickerInput
             v-if="item.part === 'literal'"
@@ -99,9 +100,9 @@ const handleDateRangeUpdate = (value: any) => {
         </template>
 
         <DateRangePickerTrigger
-          class="focus:shadow-[0_0_0_2px] focus:shadow-black focus:outline-none rounded-md"
+          class="ml-1 shrink-0 focus:shadow-[0_0_0_2px] focus:shadow-black focus:outline-none rounded-md"
         >
-          <CalendarDays class="ml-2" />
+          <CalendarDays />
         </DateRangePickerTrigger>
       </DateRangePickerField>
 

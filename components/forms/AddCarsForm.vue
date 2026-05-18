@@ -53,7 +53,6 @@ const removeRow = (index: any) => {
 </script>
 <template>
   <div class="p-6 rounded-md bg-zinc-100">
-    <h3 class="mb-4 font-bold">Adicionar veículo</h3>
     <div
       class="grid grid-cols-12 gap-4"
       v-for="(car, index) in props.modelValue"
@@ -141,11 +140,12 @@ const removeRow = (index: any) => {
                 >
                   <Paperclip class="w-4 h-4 text-zinc-500" />
                   <div
-                    class="px-4 py-2 border border-dashed border-zinc-500 rounded-md bg-white"
+                    class="px-4 py-2 border border-dashed border-zinc-500 rounded-md bg-white w-[200px]"
                   >
                     <a
-                      class="underline"
+                      class="block w-full truncate underline"
                       :href="props.modelValue[index]?.carDocumentFile?.url"
+                      :title="props.modelValue[index]?.carDocumentFile?.name || ''"
                       target="_blank"
                       rel="noopener noreferrer"
                     >

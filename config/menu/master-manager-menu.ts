@@ -107,6 +107,10 @@ export const masterManagerMenu = {
           title: 'Relatórios Financeiros',
           url: '/corporative/finances/reports',
         },
+        {
+          title: 'Faturas',
+          url: '/corporative/finances/invoices',
+        },
       ],
     },
   ],
