@@ -173,7 +173,7 @@ const cookiesPoliceFileUrl =
             >
               <SidebarMenuItem>
                 <CollapsibleTrigger as-child>
-                  <SidebarMenuButton :tooltip="item.title" class="my-3">
+                  <SidebarMenuButton :tooltip="item.title" class="my-1.5">
                     <component
                       :is="item.icon"
                       :class="`${item.isActive ? 'text-um-primary' : 'text-white'}`"
@@ -214,13 +214,13 @@ const cookiesPoliceFileUrl =
           </SidebarMenu>
         </SidebarGroup>
         <SidebarSeparator class="border-b border-zinc-700" />
-        <div v-if="menuData?.settings?.length > 0">
+        <div v-if="menuData?.communications?.length > 0">
           <SidebarGroup>
             <SidebarGroupLabel class="text-[#33ffcc] text-md">
-              Configurações
+              Notificações
             </SidebarGroupLabel>
             <SidebarMenu>
-              <SidebarMenuItem v-for="item in menuData.settings" :key="item.name">
+              <SidebarMenuItem v-for="item in menuData.communications" :key="item.name">
                 <SidebarMenuButton as-child>
                   <!-- @vue-skip -->
                   <NuxtLink
@@ -237,13 +237,13 @@ const cookiesPoliceFileUrl =
           </SidebarGroup>
           <SidebarSeparator class="border-b border-zinc-700" />
         </div>
-        <div v-if="menuData?.communications?.length > 0">
+        <div v-if="menuData?.settings?.length > 0">
           <SidebarGroup>
             <SidebarGroupLabel class="text-[#33ffcc] text-md">
-              Histórico
+              Configurações
             </SidebarGroupLabel>
             <SidebarMenu>
-              <SidebarMenuItem v-for="item in menuData.communications" :key="item.name">
+              <SidebarMenuItem v-for="item in menuData.settings" :key="item.name">
                 <SidebarMenuButton as-child>
                   <!-- @vue-skip -->
                   <NuxtLink

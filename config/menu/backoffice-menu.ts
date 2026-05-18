@@ -179,7 +179,7 @@ export const backofficeMenu = {
   ],
   communications: [
     {
-      name: 'Histórico de Notificações',
+      name: 'Central de Notificações',
       url: '/notifications',
       icon: Bell,
       active: route.path.startsWith('notifications'),
