@@ -200,10 +200,17 @@ const cookiesPoliceFileUrl =
                         <NuxtLink
                           :href="subItem.url"
                           exact-active-class="text-um-primary"
+                          class="gap-0.5"
                         >
                           <!-- @vue-skip -->
                           <component :v-if="subItem.icon" :is="subItem.icon" />
                           <span>{{ subItem.title }}</span>
+                          <span
+                            v-if="subItem.isNew"
+                            class="text-xxs bg-um-primary text-black leading-none p-0.5 rounded"
+                          >
+                            Novo
+                          </span>
                         </NuxtLink>
                       </SidebarMenuSubButton>
                     </SidebarMenuSubItem>

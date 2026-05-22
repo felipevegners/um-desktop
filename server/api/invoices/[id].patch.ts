@@ -10,7 +10,7 @@ export default defineEventHandler(async (event) => {
   if (!id) {
     throw createError({
       statusCode: 400,
-      statusMessage: 'ID da fatura é obrigatório.',
+      statusMessage: 'ID do fechamento é obrigatório.',
     });
   }
 
@@ -26,7 +26,8 @@ export default defineEventHandler(async (event) => {
   } catch (error: any) {
     throw createError({
       statusCode: error?.statusCode || error?.response?.status || 500,
-      statusMessage: error?.data?.message || error?.message || 'Erro ao atualizar fatura',
+      statusMessage:
+        error?.data?.message || error?.message || 'Erro ao atualizar fechamento',
       data: error?.data,
     });
   }

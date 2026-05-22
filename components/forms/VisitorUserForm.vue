@@ -47,7 +47,7 @@ const emit = defineEmits(['toogleForm', 'selectedUser']);
     </FormField>
     <FormField v-slot="{ componentField }" name="visitorPhone">
       <FormItem class="space-y-2">
-        <FormLabel class="block mb-2">Celular*</FormLabel>
+        <FormLabel class="block mb-2">Celular</FormLabel>
         <FormControl>
           <Input type="text" v-bind="componentField" v-maska="'(##) #####-####'" />
         </FormControl>

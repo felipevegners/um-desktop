@@ -6,12 +6,20 @@ import { currencyFormat } from '~/lib/utils';
 const columnHelper = createColumnHelper<any>();
 
 const invoiceStatusLabel: Record<string, string> = {
-  open: 'Em aberto',
-  paid: 'Faturada',
-  canceled: 'Cancelada',
+  pending: 'Pendente',
+  approved: 'Aprovado',
+  rejected: 'Recusado',
+  in_adjustment: 'Ajuste',
+  open: 'Pendente',
+  paid: 'Aprovado',
+  canceled: 'Recusado',
 };
 
 const invoiceStatusClass: Record<string, string> = {
+  pending: 'bg-amber-600',
+  approved: 'bg-green-600',
+  rejected: 'bg-red-600',
+  in_adjustment: 'bg-yellow-500',
   open: 'bg-amber-600',
   paid: 'bg-green-600',
   canceled: 'bg-red-600',
@@ -26,77 +34,117 @@ type InvoiceColumnsOptions = {
 export const getColumns = (options: InvoiceColumnsOptions = {}): any => [
   columnHelper.accessor('number', {
     meta: { label: 'Número' },
-    header: () => h('div', { class: 'text-left' }, 'Número'),
+    header: () => h('div', { class: 'text-left text-[11px]' }, 'Número'),
     cell: ({ row }) =>
-      h('div', { class: 'text-xs font-semibold' }, row.getValue('number')),
+      h(
+        'div',
+        { class: 'text-[11px] font-semibold leading-tight whitespace-nowrap' },
+        row.getValue('number'),
+      ),
   }),
   columnHelper.display({
     id: 'customer',
     meta: { label: 'Cliente' },
     enableHiding: false,
-    header: () => h('div', { class: 'text-left' }, 'Cliente'),
+    header: () => h('div', { class: 'text-left text-[11px]' }, 'Cliente'),
     cell: ({ row }) => {
       const customerName = row.original?.customer?.customerName || '-';
-      return h('div', { class: 'text-xs text-wrap' }, customerName);
+      return h(
+        'div',
+        { class: 'max-w-[220px] truncate text-[11px] leading-tight' },
+        customerName,
+      );
+    },
+  }),
+  columnHelper.display({
+    id: 'costCenterCode',
+    meta: { label: 'CC' },
+    enableHiding: false,
+    header: () => h('div', { class: 'text-left text-[11px]' }, 'CC'),
+    cell: ({ row }) => {
+      const areaCode =
+        row.original?.customer?.areaCode ||
+        row.original?.customer?.periodFilter?.areaCode ||
+        '-';
+      return h('div', { class: 'text-[11px] leading-tight whitespace-nowrap' }, areaCode);
     },
   }),
   columnHelper.display({
     id: 'document',
     meta: { label: 'CNPJ' },
     enableHiding: false,
-    header: () => h('div', { class: 'text-left' }, 'CNPJ'),
+    header: () => h('div', { class: 'text-left text-[11px]' }, 'CNPJ'),
     cell: ({ row }) => {
       const document = row.original?.customer?.document || '-';
-      return h('div', { class: 'text-xs text-wrap' }, document);
+      return h('div', { class: 'text-[11px] leading-tight whitespace-nowrap' }, document);
     },
   }),
   columnHelper.accessor('period', {
     meta: { label: 'Período' },
-    header: () => h('div', { class: 'text-left' }, 'Período'),
-    cell: ({ row }) => h('div', { class: 'text-xs' }, row.getValue('period')),
+    header: () => h('div', { class: 'text-left text-[11px]' }, 'Período'),
+    cell: ({ row }) =>
+      h(
+        'div',
+        { class: 'text-[11px] leading-tight whitespace-nowrap' },
+        row.getValue('period'),
+      ),
   }),
   columnHelper.display({
     id: 'itemsCount',
     meta: { label: 'Itens', width: 50 },
     enableHiding: false,
-    header: () => h('div', { class: 'text-left' }, 'Itens'),
+    header: () => h('div', { class: 'text-left text-[11px]' }, 'Itens'),
     cell: ({ row }) => {
       const items = row.original?.items;
       const count = Array.isArray(items) ? items.length : 0;
-      return h('div', { class: 'text-xs' }, count);
+      return h('div', { class: 'text-[11px] leading-tight whitespace-nowrap' }, count);
     },
   }),
   columnHelper.display({
     id: 'createdAt',
-    meta: { label: 'Emitida em' },
+    meta: { label: 'Emitido em' },
     enableHiding: false,
-    header: () => h('div', { class: 'text-left' }, 'Emitida em'),
+    header: () => h('div', { class: 'text-left text-[11px]' }, 'Emitido em'),
     cell: ({ row }) => {
       const value = row.original?.createdAt;
-      if (!value) return h('div', { class: 'text-xs' }, '-');
-      return h('div', { class: 'text-xs' }, new Date(value).toLocaleDateString('pt-BR'));
+      if (!value)
+        return h('div', { class: 'text-[11px] leading-tight whitespace-nowrap' }, '-');
+      return h(
+        'div',
+        { class: 'text-[11px] leading-tight whitespace-nowrap' },
+        new Date(value).toLocaleDateString('pt-BR'),
+      );
     },
   }),
   columnHelper.display({
     id: 'dueDate',
     meta: { label: 'Vencimento' },
     enableHiding: false,
-    header: () => h('div', { class: 'text-left' }, 'Vencimento'),
+    header: () => h('div', { class: 'text-left text-[11px]' }, 'Vencimento'),
     cell: ({ row }) => {
       const value = row.original?.dueDate;
-      if (!value) return h('div', { class: 'text-xs' }, '-');
-      return h('div', { class: 'text-xs' }, new Date(value).toLocaleDateString('pt-BR'));
+      if (!value)
+        return h('div', { class: 'text-[11px] leading-tight whitespace-nowrap' }, '-');
+      return h(
+        'div',
+        { class: 'text-[11px] leading-tight whitespace-nowrap' },
+        new Date(value).toLocaleDateString('pt-BR'),
+      );
     },
   }),
   columnHelper.accessor('value', {
     meta: { label: 'Valor' },
-    header: () => h('div', { class: 'text-left' }, 'Valor'),
+    header: () => h('div', { class: 'text-left text-[11px]' }, 'Valor'),
     cell: ({ row }) =>
-      h('div', { class: 'text-xs font-bold' }, currencyFormat(row.getValue('value'))),
+      h(
+        'div',
+        { class: 'text-[11px] font-bold leading-tight whitespace-nowrap' },
+        currencyFormat(row.getValue('value')),
+      ),
   }),
   columnHelper.accessor('status', {
     meta: { label: 'Status' },
-    header: () => h('div', { class: 'text-left' }, 'Status'),
+    header: () => h('div', { class: 'text-left text-[11px]' }, 'Status'),
     cell: ({ row }) => {
       const value = row.getValue('status') as string;
       return h(
@@ -112,11 +160,12 @@ export const getColumns = (options: InvoiceColumnsOptions = {}): any => [
     id: 'nf',
     meta: { label: 'NF' },
     enableHiding: false,
-    header: () => h('div', { class: 'text-left' }, 'NF'),
+    header: () => h('div', { class: 'text-left text-[11px]' }, 'NF'),
     cell: ({ row }) => {
       const invoice = row.original;
       const hasNfUrl = Boolean(invoice?.customer?.invoiceTracking?.nfDocument?.url);
-      const hasNf = invoice?.status === 'paid' && hasNfUrl;
+      const hasNf =
+        ['approved', 'paid'].includes(String(invoice?.status || '')) && hasNfUrl;
       const nfUrl = invoice?.customer?.invoiceTracking?.nfDocument?.url;
 
       if (!hasNf) {
@@ -149,7 +198,7 @@ export const getColumns = (options: InvoiceColumnsOptions = {}): any => [
     id: 'actions',
     meta: { label: 'Ações' },
     enableHiding: false,
-    header: () => h('div', { class: 'text-left' }, 'Ações'),
+    header: () => h('div', { class: 'text-left text-[11px]' }, 'Ações'),
     cell: ({ row }) => {
       const invoice = row.original;
       return h(TableActions, {

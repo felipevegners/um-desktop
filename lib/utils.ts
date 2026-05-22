@@ -101,14 +101,14 @@ export const convertSecondsToTime = (seconds: any) => {
   if (time < 3600) {
     const minutes = Math.floor(time / 60);
 
-    return `00:${minutes.toString().padStart(2, '0')} min`;
+    return `00:${minutes.toString().padStart(2, '0')}`;
   }
 
   // If an hour or more, return HH:MM format
   const hours = Math.floor(time / 3600);
   const minutes = Math.floor((time % 3600) / 60);
 
-  return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')} hs`;
+  return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
 };
 
 export const convertMetersToDistance = (meters: any, threshold = 1000) => {

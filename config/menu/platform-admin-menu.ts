@@ -81,12 +81,8 @@ export const platformAdminMenu = {
       isActive: false,
       items: [
         {
-          title: 'Faturas em aberto',
+          title: 'Fechamentos',
           url: '/corporative/invoices/active',
-        },
-        {
-          title: 'Faturas canceladas',
-          url: '/corporative/invoices/canceled',
         },
       ],
     },

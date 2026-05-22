@@ -57,6 +57,16 @@ export const uploadRouter = {
       return { userId: user.id };
     })
     .onUploadComplete((data) => console.debug('file uploaded -> ', data)),
+  rideAdditionalInfoFiles: f({
+    image: { maxFileSize: '8MB', maxFileCount: 10 },
+    pdf: { maxFileSize: '8MB', maxFileCount: 10 },
+  })
+    .middleware(async ({ event }) => {
+      const user = await auth(event);
+      if (!user) throw new Error('Não autorizado');
+      return { userId: user.id };
+    })
+    .onUploadComplete((data) => console.debug('file uploaded -> ', data)),
 } satisfies FileRouter;
 
 export type UploadRouter = typeof uploadRouter;

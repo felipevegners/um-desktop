@@ -32,11 +32,15 @@ export default defineEventHandler(async (event) => {
     emailConfirmed,
   } = body;
 
+  // Normalizar e-mail: remover espaços e forçar lowercase
+  const normalizedEmail =
+    typeof email === 'string' && email ? email.trim().toLowerCase() : email;
+
   try {
     const newAccount = await prisma.accounts.create({
       data: {
         username,
-        email,
+        email: normalizedEmail,
         password: hashedPassword,
         role,
         contract,
@@ -132,7 +136,7 @@ export default defineEventHandler(async (event) => {
     );
 
     // Sending email verification
-    await mailer.sendEmail(email, `${url}?token=${token}`);
+    await mailer.sendEmail(normalizedEmail, `${url}?token=${token}`);
 
     return newAccount;
   } catch (error) {
@@ -143,7 +147,7 @@ export default defineEventHandler(async (event) => {
         throw createError({
           statusCode: 409,
           statusMessage: 'E-mail já cadastrado!',
-          message: `Já existe uma conta vinculada a este e-mail: "${email}". Tente novamente!`,
+          message: `Já existe uma conta vinculada a este e-mail: "${normalizedEmail}". Tente novamente!`,
         });
       }
       // P2025: Record not found

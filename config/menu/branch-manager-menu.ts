@@ -81,12 +81,14 @@ export const branchManagerMenu: any = {
       isActive: route.path.startsWith('invoices'),
       items: [
         {
-          title: 'Relatórios Financeiros',
-          url: '/corporative/finances/reports',
+          title: 'Fechamentos',
+          url: '/corporative/finances/invoices',
+          isNew: true,
         },
         {
-          title: 'Faturas',
-          url: '/corporative/finances/invoices',
+          title: 'Relatórios',
+          url: '/corporative/finances/reports',
+          isNew: true,
         },
       ],
     },

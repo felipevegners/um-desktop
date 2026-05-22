@@ -137,6 +137,11 @@ export function getNotificationTypeLabel(type: string): string {
     ride_accepted: 'Atendimento aceito',
     ride_cancelled: 'Atendimento cancelado',
     commission_paid: 'Comissão paga',
+    invoice_pending_approval: 'Fechamento pendente',
+    invoice_approved: 'Fechamento aprovado',
+    invoice_rejected: 'Fechamento recusado',
+    invoice_adjustment_requested: 'Fechamento em ajuste',
+    invoice_auto_approved: 'Fechamento autoaprovado',
   };
 
   return labels[type] ?? type.replace(/_/g, ' ');
@@ -265,6 +270,26 @@ export function getNotificationDescription(
     return cancelledBy
       ? `${cancelledBy} cancelou o atendimento ${code}.`
       : `O atendimento ${code} foi cancelado.`;
+  }
+
+  if (notification.type === 'invoice_pending_approval') {
+    return 'Um novo fechamento foi gerado e aguarda aprovação.';
+  }
+
+  if (notification.type === 'invoice_adjustment_requested') {
+    return 'Foram solicitados ajustes no fechamento.';
+  }
+
+  if (notification.type === 'invoice_approved') {
+    return 'O fechamento foi aprovado.';
+  }
+
+  if (notification.type === 'invoice_rejected') {
+    return 'O fechamento foi recusado.';
+  }
+
+  if (notification.type === 'invoice_auto_approved') {
+    return 'O fechamento foi autoaprovado após 24h úteis sem ação.';
   }
 
   return notification.title;

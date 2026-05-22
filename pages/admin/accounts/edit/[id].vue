@@ -149,8 +149,8 @@ const form = useForm({
     branch: account?.value.contract?.branchId,
     area: account?.value.contract?.area,
     status: account?.value.status,
-    emailConfirmed: account?.value.emailConfirmed ? account?.value.emailConfirmed : false,
-    acceptTerms: account?.value.acceptTerms ? account?.value.acceptTerms : false,
+    emailConfirmed: account?.value.emailConfirmed,
+    acceptTerms: account?.value.acceptTerms,
   },
 });
 

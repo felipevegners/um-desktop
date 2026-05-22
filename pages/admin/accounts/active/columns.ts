@@ -17,7 +17,7 @@ const Roles = {
 
 export const columns = [
   columnHelper.accessor((row) => row.username ?? '', {
-    id: 'user',
+    id: 'username',
     meta: { label: 'Usuário' },
     header: () => h('div', { class: 'text-xs leading-none text-left' }, 'Usuário'),
     cell: ({ row }: any) => {
@@ -61,10 +61,11 @@ export const columns = [
     header: () => h('div', { class: 'text-xs leading-none text-left' }, 'Filial'),
     cell: ({ row }) => {
       const data: any = row.original;
+      const branchName = data?.contract?.branchName;
       return h(
         'div',
         { class: 'capitalize text-xs' },
-        data.contract.branchName === 'all' ? 'Todas' : data.contract.branchName || '-',
+        branchName === 'all' ? 'Todas' : branchName || '-',
       );
     },
   }),
@@ -101,7 +102,7 @@ export const columns = [
       return h(
         'div',
         {
-          class: `mx-auto px-2 flex items-center justify-center h-6 rounded-full text-white text-xs w-fit ${
+          class: `mx-auto px-2 flex items-center justify-center h-6 rounded-md text-white text-xs w-fit ${
             status === 'validated' ? 'bg-green-600' : 'bg-amber-500'
           }`,
         },
@@ -118,7 +119,7 @@ export const columns = [
       return h(
         'div',
         {
-          class: `mx-auto px-2 flex items-center justify-center h-6 rounded-full text-white text-xs w-fit ${
+          class: `mx-auto px-2 flex items-center justify-center h-6 rounded-md text-white text-xs w-fit ${
             status === true ? 'bg-green-600' : 'bg-red-500'
           }`,
         },

@@ -21,6 +21,7 @@ import {
   CalendarPlus,
   CalendarRange,
   Info,
+  InfoIcon,
   LoaderCircle,
   Minus,
   Percent,
@@ -948,9 +949,7 @@ const dynamicSchema = computed(() => {
       visitorName: z
         .string({ message: 'Obrigatório!' })
         .min(2, 'Insira ao menos 2 caracteres!'),
-      visitorPhone: z
-        .string({ message: 'Obrigatório!' })
-        .min(2, 'Insira ao menos 2 caracteres!'),
+      visitorPhone: z.string().min(2, 'Insira ao menos 2 caracteres!').optional(),
       visitorCompany: z.string().optional(),
       visitorReason: z.string().optional(),
     });
@@ -1400,92 +1399,97 @@ const onSubmit = form.handleSubmit(async (values: any) => {
                     @selected-user="setSelectedUser"
                   />
                 </div>
-                <div v-if="showAvailableProducts" class="lg:max-w-lg">
+                <div v-if="showAvailableProducts" class="lg:min-w-2xl">
                   <LoaderCircle v-if="loadingProducts" class="animate-spin" />
                   <div v-else>
                     <label class="text-sm font-medium">Selecione o Serviço UM*</label>
                     <ul class="mt-2 flex justify-evenly gap-4 flex-wrap">
                       <li
-                        class="w-full"
+                        class="w-full flex"
                         v-for="product in availableProducts"
                         :key="product.id"
                       >
                         <article
-                          class="p-4 flex items-center justify-between gap-4 bg-white rounded-md border border-zinc-900"
+                          class="flex-1 min-w-0 p-4 flex items-center justify-between gap-4 bg-white rounded-md border border-zinc-900"
                         >
-                          <div
-                            class="font-normal uppercase flex items-center justify-start gap-2"
-                          >
-                            <Checkbox
-                              @update:checked="setSelectedProduct(product)"
-                              :checked="selectedProduct?.id === product.id"
-                            />
-                            <div
-                              class="w-[50px] h-[50px] rounded-md bg-zinc-200 bg-contain bg-no-repeat bg-center relative flex items-center justify-center"
-                              :style="{
-                                backgroundImage: `url(${product.image?.url})`,
-                              }"
-                            />
-                            <ProductTag :label="product.name" :type="product.name" />
-                            <div class="flex items-center justify-start gap-4">
+                          <div class="flex items-center justify-start gap-2">
+                            <div class="flex-none w-72 flex items-center gap-2">
+                              <Checkbox
+                                @update:checked="setSelectedProduct(product)"
+                                :checked="selectedProduct?.id === product.id"
+                              />
+                              <img
+                                v-if="product.image?.url"
+                                :src="product.image.url"
+                                alt="Product Image"
+                                class="w-16 h-16 object-contain rounded-md"
+                              />
+                              <ProductTag :label="product.name" :type="product.name" />
+                              <TooltipProvider>
+                                <Tooltip>
+                                  <TooltipTrigger as-child class="hover:cursor-pointer">
+                                    <InfoIcon :size="16" class="text-zinc-500" />
+                                  </TooltipTrigger>
+                                  <TooltipContent class="bg-zinc-700 text-white">
+                                    <p>{{ product.description }}</p>
+                                  </TooltipContent>
+                                </Tooltip>
+                              </TooltipProvider>
                               <div class="flex items-center">
                                 <Users :size="14" />
                                 <small class="ml-1 font-bold">
                                   {{ product?.capacity }}
                                 </small>
                               </div>
-                              <div class="ml-4 flex flex-col items-center">
-                                <small class="text-xs">Base</small>
-                                <small>{{ currencyFormat(product.basePrice) }}</small>
+                            </div>
+                            <div
+                              class="flex-none min-w-0 flex items-center justify-start gap-4"
+                            >
+                              <div
+                                class="flex flex-col items-center border border-zinc-300 rounded-md px-2 py-1"
+                              >
+                                <small class="text-xxs font-bold">Base</small>
+                                <small class="text-xs">{{
+                                  currencyFormat(product.basePrice)
+                                }}</small>
                               </div>
-                              <div class="flex flex-col items-center">
-                                <small class="text-xs">Km</small>
-                                <small>{{ currencyFormat(product.kmPrice) }}</small>
+                              <div
+                                class="flex flex-col items-center border border-zinc-300 rounded-md px-2 py-1"
+                              >
+                                <small class="text-xxs font-bold">Km</small>
+                                <small class="text-xs">{{
+                                  currencyFormat(product.kmPrice)
+                                }}</small>
                               </div>
-                              <div class="flex flex-col items-center">
-                                <small class="text-xs">Min.</small>
-                                <small>{{ currencyFormat(product.minutePrice) }}</small>
+                              <div
+                                class="flex flex-col items-center border border-zinc-300 rounded-md px-2 py-1"
+                              >
+                                <small class="text-xxs font-bold">Min.</small>
+                                <small class="text-xs">{{
+                                  currencyFormat(product.minutePrice)
+                                }}</small>
                               </div>
                               <div
                                 v-if="product.type === 'contract'"
                                 class="flex flex-row items-center gap-3"
                               >
-                                <div class="flex flex-col items-center">
-                                  <small class="text-xs">KM</small>
-                                  <small>{{ product.includedKms }}</small>
+                                <div
+                                  class="flex flex-col items-center border border-zinc-300 rounded-md px-2 py-1"
+                                >
+                                  <small class="text-xxs font-bold">KM</small>
+                                  <small class="text-xs">{{ product.includedKms }}</small>
                                 </div>
-                                <div class="flex flex-col items-center">
-                                  <small class="text-xs">Horas</small>
-                                  <small>{{ product.includedHours }}</small>
+                                <div
+                                  class="flex flex-col items-center border border-zinc-300 rounded-md px-2 py-1"
+                                >
+                                  <small class="text-xxs font-bold">Horas</small>
+                                  <small class="text-xs">
+                                    {{ product.includedHours }}
+                                  </small>
                                 </div>
                               </div>
                             </div>
                           </div>
-                          <TooltipProvider>
-                            <Tooltip>
-                              <TooltipTrigger as-child class="hover:cursor-pointer">
-                                <svg
-                                  xmlns="http://www.w3.org/2000/svg"
-                                  width="24"
-                                  height="24"
-                                  viewBox="0 0 24 24"
-                                  fill="none"
-                                  stroke="currentColor"
-                                  stroke-width="2"
-                                  stroke-linecap="round"
-                                  stroke-linejoin="round"
-                                  class="text-zinc-700 lucide lucide-circle-question-mark-icon lucide-circle-question-mark"
-                                >
-                                  <circle cx="12" cy="12" r="10" />
-                                  <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3" />
-                                  <path d="M12 17h.01" />
-                                </svg>
-                              </TooltipTrigger>
-                              <TooltipContent class="bg-zinc-700 text-white">
-                                <p>{{ product.description }}</p>
-                              </TooltipContent>
-                            </Tooltip>
-                          </TooltipProvider>
                         </article>
                       </li>
                     </ul>

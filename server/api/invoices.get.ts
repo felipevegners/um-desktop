@@ -40,7 +40,8 @@ export default defineEventHandler(async (event) => {
   } catch (error: any) {
     throw createError({
       statusCode: error?.statusCode || error?.response?.status || 500,
-      statusMessage: error?.data?.message || error?.message || 'Erro ao buscar faturas',
+      statusMessage:
+        error?.data?.message || error?.message || 'Erro ao buscar os fechamentos',
       data: error?.data,
     });
   }

@@ -101,7 +101,7 @@ const finalColumns = [
         :data="accounts"
         sortby="username"
         :column-pin="['username']"
-        filterBy="empresa"
+        filterBy="nome de usuário"
       />
     </section>
   </main>

@@ -139,12 +139,9 @@ export const backofficeMenu = {
       isActive: route.path.startsWith('invoices'),
       items: [
         {
-          title: 'Faturas Emitidas',
+          title: 'Fechamentos',
           url: '/admin/finances/invoices/open',
-        },
-        {
-          title: '+ Emitir Fatura',
-          url: '/admin/finances/invoices/new',
+          isNew: true,
         },
         {
           title: 'Pagamento Motoristas',

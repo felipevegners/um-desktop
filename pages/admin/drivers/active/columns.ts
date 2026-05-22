@@ -24,7 +24,7 @@ export const columns = [
   }),
   columnHelper.accessor('email', {
     header: () => h('div', { class: 'text-left' }, 'E-mail'),
-    cell: ({ row }) => h('div', { class: 'lowercase' }, row.getValue('email')),
+    cell: ({ row }) => h('div', { class: 'lowercase truncate' }, row.getValue('email')),
   }),
   columnHelper.accessor('phone', {
     header: () => h('div', { class: 'text-left' }, 'Celular'),
@@ -54,6 +54,9 @@ export const columns = [
     },
   }),
   columnHelper.accessor('scheduleOpen', {
+    meta: {
+      width: '50px',
+    },
     header: () => h('div', { class: 'text-left' }, 'Status'),
     cell: ({ row }) => {
       const status = row.getValue('scheduleOpen');
@@ -69,6 +72,9 @@ export const columns = [
     },
   }),
   columnHelper.accessor('status', {
+    meta: {
+      width: '50px',
+    },
     header: () => h('div', { class: 'text-left' }, 'Cadastro'),
     cell: ({ row }) => {
       const status = row.getValue('status');
@@ -84,12 +90,15 @@ export const columns = [
     },
   }),
   columnHelper.accessor('Produtos Atendidos', {
+    meta: {
+      width: '80px',
+    },
     header: () => h('div', { class: 'text-left' }, 'Produtos Atendidos'),
     cell: ({ row }) => {
       const data = row.original;
       return h(
         'div',
-        { class: 'relative text-left flex gap-4' },
+        { class: 'flex flex-wrap gap-2' },
         data.products && data.products.length > 0
           ? data.products.map((product: any) =>
               h(ProductTag, {

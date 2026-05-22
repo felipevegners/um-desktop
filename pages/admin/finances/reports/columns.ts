@@ -12,6 +12,10 @@ import {
   sanitizePhone,
   sanitizeRideDate,
 } from '~/lib/utils';
+import {
+  resolveDisplayExtraHourPrice,
+  resolveDisplayExtraMinutes,
+} from '~/utils/rides/billingExtras';
 
 const columnHelper = createColumnHelper<any>();
 
@@ -153,12 +157,11 @@ export const columns: any = [
     header: () => h('div', { class: 'text-xs text-left' }, 'Hora Extra'),
     cell: ({ row }) => {
       const data = row.original;
+      const extraMinutes = resolveDisplayExtraMinutes(data);
       return h(
         'div',
         { class: 'text-xs' },
-        data.travel.completedData
-          ? Math.ceil(data.travel.completedData.rideExtraHours * 60) + ' Min'
-          : '0',
+        extraMinutes > 0 ? `${Math.ceil(extraMinutes)} Min` : '-',
       );
     },
   }),
@@ -166,13 +169,11 @@ export const columns: any = [
     header: () => h('div', { class: 'text-xs text-left' }, 'Valor HE'),
     cell: ({ row }) => {
       const data = row.original;
+      const extraHourPrice = resolveDisplayExtraHourPrice(data);
       return h(
         'div',
         { class: 'text-xs font-bold text-amber-600' },
-        data?.travel.completedData &&
-          data?.travel.completedData?.rideExtraHourPrice !== ''
-          ? currencyFormat(data?.travel.completedData?.rideExtraHourPrice || '0')
-          : '-',
+        extraHourPrice > 0 ? currencyFormat(extraHourPrice) : '-',
       );
     },
   }),

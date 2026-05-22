@@ -104,12 +104,14 @@ export const masterManagerMenu = {
       isActive: route.path.includes('finances'),
       items: [
         {
-          title: 'Relatórios Financeiros',
-          url: '/corporative/finances/reports',
+          title: 'Fechamentos',
+          url: '/corporative/finances/invoices',
+          isNew: true,
         },
         {
-          title: 'Faturas',
-          url: '/corporative/finances/invoices',
+          title: 'Relatórios',
+          url: '/corporative/finances/reports',
+          isNew: true,
         },
       ],
     },

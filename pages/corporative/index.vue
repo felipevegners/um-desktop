@@ -1,26 +1,38 @@
 <script setup lang="ts">
 import DashBarChart from '@/components/shared/DashBarChart.vue';
 import RideStatusFlag from '@/components/shared/RideStatusFlag.vue';
+import { getNotificationsService } from '@/server/services/notifications';
 import '@/stores/contracts.store';
+import { useInvoicesStore } from '@/stores/invoices.store';
 import { useRidesStore } from '@/stores/rides.store';
+import type { NotificationHistoryItem } from '@/utils/notifications';
 import {
   CalendarDays,
-  CalendarPlus,
   ChartArea,
   Coins,
   ExternalLink,
   Inbox,
   LoaderCircle,
+  ReceiptText,
 } from 'lucide-vue-next';
 import { currencyFormat, sanitizeRideDate } from '~/lib/utils';
 
 const { data } = useAuth();
-//@ts-ignore
-const contractId = data.value?.user.contract?.contractId;
-//@ts-ignore
-const userBranches = data.value?.user.contract?.branches;
-//@ts-ignore
-const role = data.value?.user?.role;
+const authUser = computed<any>(() => data.value?.user || {});
+const contractId = computed(() => authUser.value?.contract?.contractId);
+const userContractBranchId = computed(() =>
+  String(authUser.value?.contract?.branchId || '').trim(),
+);
+const userBranches = computed<any[]>(() => {
+  const branches = authUser.value?.contract?.branches;
+  return Array.isArray(branches) ? branches : [];
+});
+const role = computed(() => authUser.value?.role);
+const normalizedRole = computed(() =>
+  String(role.value || '')
+    .trim()
+    .toLowerCase(),
+);
 
 const ridesStore = useRidesStore();
 const { getRidesByContractAction } = ridesStore;
@@ -30,29 +42,191 @@ const contractStore = useContractsStore();
 const { getContractByIdAction } = contractStore;
 const { contract, isLoading } = storeToRefs(contractStore);
 
+const invoicesStore = useInvoicesStore();
+const { getInvoicesAction } = invoicesStore;
+const { invoices, isLoading: isInvoicesLoading } = storeToRefs(invoicesStore);
+
 const contractRidesList = ref<any>([]);
 const userAllowedBranches = ref<any>([]);
+const isApprovalAlertsLoading = ref(false);
+const approvalAlerts = ref<any[]>([]);
 
-onMounted(async () => {
-  await getContractByIdAction(contractId);
-  await getRidesByContractAction(contractId);
+const getBranchId = (branch: any) => {
+  return String(
+    branch?.id ||
+      branch?._id ||
+      branch?.branchId ||
+      branch?.branch?.id ||
+      branch?.branch?._id ||
+      branch?.branch?.branchId ||
+      '',
+  ).trim();
+};
 
-  if (role === 'master-manager') {
+const getBranchName = (branch: any) => {
+  const rawName =
+    branch?.branchName ||
+    branch?.fantasyName ||
+    branch?.name ||
+    branch?.companyName ||
+    branch?.corporateName ||
+    branch?.branch?.branchName ||
+    branch?.branch?.fantasyName ||
+    branch?.branch?.name ||
+    branch?.branch?.companyName;
+  const branchName = String(rawName || '').trim();
+  return branchName.length > 0 ? branchName : null;
+};
+
+const normalizeInvoiceStatus = (status: string | undefined | null) => {
+  const raw = String(status || '').toLowerCase();
+  if (raw === 'approved' || raw === 'paid') return 'approved';
+  if (raw === 'rejected' || raw === 'canceled' || raw === 'cancelled') return 'rejected';
+  if (raw === 'in_adjustment') return 'in_adjustment';
+  return 'pending';
+};
+
+const invoiceStatusLabel = (status: string | undefined | null) => {
+  const normalized = normalizeInvoiceStatus(status);
+  if (normalized === 'approved') return 'Aprovado';
+  if (normalized === 'rejected') return 'Recusado';
+  if (normalized === 'in_adjustment') return 'Em ajuste';
+  return 'Pendente';
+};
+
+const invoiceStatusClass = (status: string | undefined | null) => {
+  const normalized = normalizeInvoiceStatus(status);
+  if (normalized === 'approved') return 'bg-green-600';
+  if (normalized === 'rejected') return 'bg-red-600';
+  if (normalized === 'in_adjustment') return 'bg-blue-600';
+  return 'bg-amber-600';
+};
+
+const allowedBranchIds = computed(() => {
+  const ids = userBranches.value
+    .map((branch: any) => getBranchId(branch))
+    .filter((id: string) => id.length > 0);
+
+  if (userContractBranchId.value.length > 0) {
+    return [userContractBranchId.value];
+  }
+
+  return ids;
+});
+
+const canSeeInvoice = (invoice: any) => {
+  if (normalizedRole.value === 'master-manager') return true;
+  if (
+    normalizedRole.value !== 'branch-manager' &&
+    normalizedRole.value !== 'platform-admin' &&
+    normalizedRole.value !== 'platform-corp-user'
+  )
+    return true;
+
+  const branchId = String(invoice?.customer?.branchId || '').trim();
+  if (!branchId) return false;
+  return allowedBranchIds.value.includes(branchId);
+};
+
+const visibleInvoices = computed(() => {
+  return (invoices.value || []).filter((invoice: any) => canSeeInvoice(invoice));
+});
+
+const recentInvoices = computed(() => {
+  return [...visibleInvoices.value]
+    .sort((a: any, b: any) => {
+      const da = new Date(a?.createdAt || 0).getTime();
+      const db = new Date(b?.createdAt || 0).getTime();
+      return db - da;
+    })
+    .slice(0, 6);
+});
+
+const pendingApprovalInvoices = computed(() => {
+  return visibleInvoices.value.filter((invoice: any) => {
+    const status = normalizeInvoiceStatus(invoice?.status);
+    return status === 'pending';
+  });
+});
+
+const buildInvoiceAlert = (invoice: any) => ({
+  id: `invoice-${invoice?.id}`,
+  type: 'invoice_pending_approval',
+  title: `Fechamento #${invoice?.number || invoice?.id || ''} aguardando aprovação`,
+  createdAt: invoice?.createdAt || new Date().toISOString(),
+  body: {
+    invoiceId: invoice?.id,
+    invoiceNumber: invoice?.number,
+    status: invoice?.status,
+  },
+});
+
+let pollingInterval: ReturnType<typeof setInterval> | null = null;
+
+async function fetchDashboardData() {
+  if (!contractId.value) return;
+
+  await Promise.all([
+    getContractByIdAction(contractId.value),
+    getRidesByContractAction(contractId.value),
+    getInvoicesAction({ contractId: contractId.value }),
+  ]);
+
+  try {
+    isApprovalAlertsLoading.value = true;
+    const notifications = (await getNotificationsService({
+      read: false,
+      limit: '50',
+    })) as NotificationHistoryItem[];
+
+    const notificationAlerts = (Array.isArray(notifications) ? notifications : [])
+      .filter((item: NotificationHistoryItem) => {
+        return (
+          item.type === 'invoice_pending_approval' ||
+          item.type === 'invoice_adjustment_requested'
+        );
+      })
+      .map((item: NotificationHistoryItem) => ({
+        ...item,
+        createdAt: item.createdAt || new Date().toISOString(),
+      }));
+
+    const invoiceAlerts = pendingApprovalInvoices.value.map(buildInvoiceAlert);
+
+    approvalAlerts.value = [...invoiceAlerts, ...notificationAlerts]
+      .sort((a: any, b: any) => {
+        const da = new Date(a?.createdAt || 0).getTime();
+        const db = new Date(b?.createdAt || 0).getTime();
+        return db - da;
+      })
+      .slice(0, 5);
+  } catch (error) {
+    approvalAlerts.value = [];
+  } finally {
+    isApprovalAlertsLoading.value = false;
+  }
+
+  if (normalizedRole.value === 'master-manager') {
     contractRidesList.value = rides?.value.filter(
       (ride: any) => ride.status !== 'cancelled',
     );
     userAllowedBranches.value = contract?.value.branches;
   } else {
     contractRidesList.value = rides?.value.filter((ride: any) =>
-      userBranches.some(
+      allowedBranchIds.value.some(
         (filterItem: any) =>
-          filterItem.id === ride.billing.paymentData.branch &&
+          filterItem === String(ride?.billing?.paymentData?.branch || '').trim() &&
           ride.status !== 'cancelled',
       ),
     );
 
-    const filterUserBranches = contract?.value.branches.filter((item: any) =>
-      userBranches.some((filterItem: any) => filterItem.id === item.id),
+    const contractBranches = Array.isArray(contract?.value?.branches)
+      ? contract.value.branches
+      : [];
+    const filterUserBranches = contractBranches.filter((item: any) =>
+      userBranches.value.some(
+        (filterItem: any) => getBranchId(filterItem) === getBranchId(item),
+      ),
     );
     userAllowedBranches.value = filterUserBranches;
   }
@@ -60,6 +234,15 @@ onMounted(async () => {
   if (contractRidesList.value.length >= 4) {
     contractRidesList.value = contractRidesList?.value.slice(-4).reverse();
   }
+}
+
+onMounted(async () => {
+  await fetchDashboardData();
+  pollingInterval = setInterval(fetchDashboardData, 60000); // 60s
+});
+
+onUnmounted(() => {
+  if (pollingInterval) clearInterval(pollingInterval);
 });
 
 const getRideMonthData = computed(() => {
@@ -125,6 +308,80 @@ const userName = computed(() => {
   if (data) return data?.value.user?.name;
 });
 
+const dashboardEntityName = computed(() => {
+  const branchScopedRoles = ['branch-manager', 'platform-admin', 'platform-corp-user'];
+  const fallbackCompanyName = contract?.value?.companyName || 'sua empresa';
+  const masterManagerCustomerName = String(
+    contract?.value?.customerName ||
+      contract?.value?.customer?.name ||
+      contract?.value?.companyName ||
+      '',
+  ).trim();
+
+  if (normalizedRole.value === 'master-manager') {
+    return masterManagerCustomerName || fallbackCompanyName;
+  }
+
+  if (branchScopedRoles.includes(normalizedRole.value)) {
+    const contractBranches = Array.isArray(contract?.value?.branches)
+      ? contract.value.branches
+      : [];
+
+    const branchByUserContractId = contractBranches.find((branch: any) => {
+      const branchId = getBranchId(branch);
+      return (
+        userContractBranchId.value.length > 0 &&
+        branchId.length > 0 &&
+        branchId === userContractBranchId.value
+      );
+    });
+    if (branchByUserContractId && getBranchName(branchByUserContractId)) {
+      return getBranchName(branchByUserContractId) || fallbackCompanyName;
+    }
+
+    const allowedBranchWithName = userAllowedBranches.value.find(
+      (branch: any) => !!getBranchName(branch),
+    );
+    if (allowedBranchWithName) {
+      return getBranchName(allowedBranchWithName) || fallbackCompanyName;
+    }
+
+    const activeBranchFromAuth = userBranches.value.find((branch: any) => {
+      const branchId = getBranchId(branch);
+      if (userContractBranchId.value.length > 0) {
+        return branchId === userContractBranchId.value && !!getBranchName(branch);
+      }
+      return !!getBranchName(branch);
+    });
+    if (activeBranchFromAuth) {
+      return getBranchName(activeBranchFromAuth) || fallbackCompanyName;
+    }
+
+    const matchedContractBranch = contractBranches.find((branch: any) => {
+      const branchId = getBranchId(branch);
+      return branchId.length > 0 && allowedBranchIds.value.includes(branchId);
+    });
+    if (matchedContractBranch && getBranchName(matchedContractBranch)) {
+      return getBranchName(matchedContractBranch) || fallbackCompanyName;
+    }
+
+    if (contractBranches.length === 1 && getBranchName(contractBranches[0])) {
+      return getBranchName(contractBranches[0]) || fallbackCompanyName;
+    }
+
+    const firstNamedBranch = contractBranches.find(
+      (branch: any) => !!getBranchName(branch),
+    );
+    if (firstNamedBranch) {
+      return getBranchName(firstNamedBranch) || fallbackCompanyName;
+    }
+
+    return fallbackCompanyName;
+  }
+
+  return fallbackCompanyName;
+});
+
 // const contractRemainBudget = computed(() => {
 //   if (contract?.value) {
 //     return contract?.value.mainBudget - contract.value.usedBudget;
@@ -135,7 +392,7 @@ const userName = computed(() => {
 
 <template>
   <div class="my-6 mx-3 flex flex-col gap-4 md:p-6 pt-0">
-    <div
+    <!-- <div
       class="p-6 md:p-6 md:h-[240px] flex flex-col md:flex-row items-center justify-between rounded-xl bg-zinc-950 md:bg-[url('/images/dashboard_banner_background.jpg')] bg-no-repeat bg-cover bg-center"
     >
       <div class="flex flex-col gap-6">
@@ -152,9 +409,97 @@ const userName = computed(() => {
         <CalendarPlus :size="18" />
         Solicitar Atendimento
       </Button>
+    </div> -->
+
+    <div class="p-6 w-full rounded-xl border border-zinc-950">
+      <h1 class="font-bold text-lg">Dashboard</h1>
+      Olá, você está no painel de gestão da
+      <strong> {{ dashboardEntityName }}. </strong>
     </div>
 
     <div class="flex flex-col md:grid auto-rows-min gap-4 md:grid-cols-3">
+      <div class="rounded-xl bg-muted/90 p-6">
+        <div class="mb-4 flex items-center justify-between gap-3">
+          <p class="font-bold text-lg">
+            <ReceiptText :size="32" />
+            Fechamentos Operacionais
+          </p>
+          <span
+            class="rounded-full bg-amber-400 px-3 py-1 text-xs font-bold text-zinc-950"
+          >
+            {{ pendingApprovalInvoices.length }} pendente(s)
+          </span>
+        </div>
+
+        <!-- <div v-if="isApprovalAlertsLoading" class="flex items-center justify-center py-8">
+          <LoaderCircle :size="28" class="animate-spin" />
+        </div> -->
+
+        <!-- <div v-else-if="approvalAlerts.length > 0">
+          <p class="my-4 font-bold text-lg flex items-center gap-2">
+            <FileText :size="24" />
+            Pendentes
+          </p>
+          <ul class="mt-4 space-y-2">
+            <li
+              v-for="notification in approvalAlerts"
+              :key="notification.id"
+              class="rounded-lg border border-zinc-300 bg-white p-3"
+            >
+              <p class="font-semibold text-sm">{{ notification.title }}</p>
+              <p class="text-xs text-zinc-600">
+                {{ formatNotificationDate(notification.createdAt) }}
+              </p>
+            </li>
+          </ul>
+        </div>
+
+        <div v-else class="mt-4 rounded-lg border border-zinc-300 bg-white p-4">
+          <p class="text-sm text-zinc-700 flex items-center gap-2">
+            <AlertTriangle :size="16" class="text-amber-600" />
+            Sem alertas no momento.
+          </p>
+        </div> -->
+
+        <div class="my-4 p-0.5 rounded-xl bg-muted/90 overflow-scroll h-[200px]">
+          <div v-if="isInvoicesLoading" class="flex items-center justify-center py-8">
+            <LoaderCircle :size="48" class="animate-spin" />
+          </div>
+
+          <ul v-else-if="recentInvoices.length > 0" class="space-y-2">
+            <li
+              v-for="invoice in recentInvoices"
+              :key="invoice.id"
+              class="rounded-lg border border-zinc-300 bg-white p-3 flex items-start justify-between gap-2"
+            >
+              <div>
+                <p class="text-sm font-semibold">#{{ invoice.number }}</p>
+                <p class="text-xs text-zinc-600">
+                  {{ sanitizeRideDate(invoice.createdAt) }}
+                </p>
+                <p class="text-sm font-bold mt-1">{{ currencyFormat(invoice.value) }}</p>
+              </div>
+              <span
+                :class="`inline-flex rounded-md px-2 py-1 text-xxs text-white uppercase ${invoiceStatusClass(invoice.status)}`"
+              >
+                {{ invoiceStatusLabel(invoice.status) }}
+              </span>
+            </li>
+          </ul>
+
+          <div v-else class="mt-4 rounded-lg border border-zinc-300 bg-white p-4">
+            <p class="text-sm text-zinc-700">Nenhum fechamento encontrado.</p>
+          </div>
+        </div>
+
+        <Button
+          type="button"
+          class="mt-4 w-full md:w-fit"
+          @click="navigateTo('/corporative/finances/invoices')"
+        >
+          Ver Fechamentos
+        </Button>
+      </div>
       <div class="col-span-1 p-6 flex flex-col rounded-xl bg-muted/90 h-full">
         <p class="font-bold text-lg">
           <CalendarDays class="mb-2" :size="32" />
@@ -267,7 +612,7 @@ const userName = computed(() => {
           </div>
         </div>
         <Button
-          v-if="role === 'master-manager'"
+          v-if="normalizedRole === 'master-manager'"
           type="button"
           class="mt-6 p-6 w-full md:w-fit"
           @click="navigateTo({ path: '/corporative/contracts/edit/', hash: '#budget' })"

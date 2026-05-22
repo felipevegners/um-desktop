@@ -18,7 +18,7 @@ export default defineEventHandler(async (event) => {
   } catch (error: any) {
     throw createError({
       statusCode: error?.statusCode || error?.response?.status || 500,
-      statusMessage: error?.data?.message || error?.message || 'Erro ao criar fatura',
+      statusMessage: error?.data?.message || error?.message || 'Erro ao criar fechamento',
       data: error?.data,
     });
   }

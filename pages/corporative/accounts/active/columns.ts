@@ -49,7 +49,8 @@ export const columns = [
     header: () => h('div', { class: 'text-xs leading-none text-left' }, 'Filial'),
     cell: ({ row }: any) => {
       const data = row.original;
-      return h('div', { class: 'text-xs' }, data.contract.branchName || '-');
+      const branchName = data?.contract?.branchName;
+      return h('div', { class: 'text-xs' }, branchName || '-');
     },
   }),
   columnHelper.accessor('area', {
@@ -57,11 +58,8 @@ export const columns = [
     header: () => h('div', { class: 'text-xs leading-none text-left' }, 'CC'),
     cell: ({ row }: any) => {
       const data = row.original;
-      return h(
-        'div',
-        { class: 'text-xs' },
-        data.contract.area === 'all' ? 'Todos' : data.contract.area || '-',
-      );
+      const area = data?.contract?.area;
+      return h('div', { class: 'text-xs' }, area === 'all' ? 'Todos' : area || '-');
     },
   }),
   columnHelper.accessor('role', {
@@ -92,7 +90,7 @@ export const columns = [
       return h(
         'div',
         {
-          class: `mx-auto px-2 flex items-center justify-center h-6 rounded-full text-white text-xs w-fit ${
+          class: `mx-auto px-2 flex items-center justify-center h-6 rounded-md text-white text-xs w-fit ${
             status === 'validated' ? 'bg-green-600' : 'bg-amber-500'
           }`,
         },

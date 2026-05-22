@@ -62,25 +62,36 @@ const initSizingFromColumns = (cols: ColumnDef<TData, TValue>[]) => {
   columnSizing.value = sizing;
 };
 
-// Global filter function that searches across user.name and code
+// Global filter function that searches across common string fields.
+// Expanded to cover most table row shapes (accounts, branches, drivers, products, rides).
 const globalFilterFn = (row: any, columnId: string, filterValue: string): boolean => {
   if (!filterValue) return true;
-  const original = row.original;
+  const original = row.original || {};
   const searchTerm = filterValue.toLowerCase();
-  // For rides table
+
+  // Common fields across different tables
   const userName = original?.user?.name?.toLowerCase() ?? '';
   const rideCode = original?.code?.toLowerCase() ?? '';
-  // For accounts table
   const username = original?.username?.toLowerCase() ?? '';
   const email = original?.email?.toLowerCase() ?? '';
   const contractName = original?.contract?.name?.toLowerCase() ?? '';
-  // Match if any relevant field contains the search term
+  const name = original?.name?.toLowerCase() ?? '';
+  const fantasyName = original?.fantasyName?.toLowerCase() ?? '';
+  const branchCode = (original?.branchCode || original?.contract?.branchCode || '')
+    .toString()
+    .toLowerCase();
+  const managerName = original?.manager?.username?.toLowerCase() ?? '';
+
   return (
     userName.includes(searchTerm) ||
     rideCode.includes(searchTerm) ||
     username.includes(searchTerm) ||
     email.includes(searchTerm) ||
-    contractName.includes(searchTerm)
+    contractName.includes(searchTerm) ||
+    name.includes(searchTerm) ||
+    fantasyName.includes(searchTerm) ||
+    branchCode.includes(searchTerm) ||
+    managerName.includes(searchTerm)
   );
 };
 
@@ -189,8 +200,7 @@ watch(
       v-if="showFilter"
       class="max-w-sm"
       :placeholder="`Filtrar por ${filterBy}`"
-      :model-value="globalFilter"
-      @update:model-value="globalFilter = $event ? String($event) : ''"
+      v-model="globalFilter"
     />
     <DropdownMenu v-if="showColumnSelect">
       <DropdownMenuTrigger as-child>
@@ -320,13 +330,13 @@ watch(
   </div>
 
   <div class="flex items-center justify-end space-x-2 py-4">
-    <div
+    <!-- <div
       v-if="table.getSelectedRowModel().rows.length > 0"
       class="flex-1 text-sm text-muted-foreground"
     >
       {{ table.getSelectedRowModel().rows.length }} de
       {{ table.getFilteredRowModel().rows.length }} resultado(s) selecionados
-    </div>
+    </div> -->
     <div v-if="showPagination" class="space-x-2">
       <Button
         variant="outline"

@@ -7,7 +7,7 @@ definePageMeta({
 });
 
 useHead({
-  title: 'Faturas | Urban Mobi',
+  title: 'Fechamentos | Urban Mobi',
 });
 
 const { data } = useAuth();
@@ -19,10 +19,11 @@ const contractId = computed<string | undefined>(() => {
 
 <template>
   <InvoiceListPage
-    title="Faturas"
+    title="Fechamentos"
     :contract-id="contractId"
     :show-create-button="false"
     :can-edit="false"
+    :allow-review-actions="true"
     preview-logo-src="/images/logo_horizontal_mono.svg"
     page-type="corporative"
   />

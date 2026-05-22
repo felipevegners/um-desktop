@@ -1,13 +1,23 @@
 <script setup lang="ts">
+import InvoicePreviewTable from '@/components/invoices/InvoicePreviewTable.vue';
 import DatePickerRange from '@/components/shared/DatePickerRange.vue';
 import FormSelect from '@/components/shared/FormSelect.vue';
 import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { useToast } from '@/components/ui/toast/use-toast';
-import { LoaderCircle, Receipt } from 'lucide-vue-next';
+import { LoaderCircle, Receipt, Save } from 'lucide-vue-next';
 import { storeToRefs } from 'pinia';
 import DataTable from '~/components/shared/DataTable.vue';
-import { currencyFormat, sanitizeAmount } from '~/lib/utils';
+import {
+  convertSecondsToTime,
+  currencyFormat,
+  sanitizeAmount,
+  sanitizeRideDate,
+} from '~/lib/utils';
+import {
+  resolveDisplayExtraHourPrice,
+  resolveDisplayExtraHours,
+} from '~/utils/rides/billingExtras';
 
 import { columns } from './columns';
 
@@ -17,7 +27,7 @@ definePageMeta({
 });
 
 useHead({
-  title: 'Backoffice - Gerar Nova Fatura | Urban Mobi',
+  title: 'Backoffice - Gerar Novo Fechamento Operacional | Urban Mobi',
 });
 
 interface CalendarDate {
@@ -44,15 +54,15 @@ const { rides } = storeToRefs(ridesStore);
 
 const invoicesStore = useInvoicesStore();
 const { createInvoiceAction } = invoicesStore;
-const { isUpdating } = storeToRefs(invoicesStore);
+const { isUpdating, isLoading } = storeToRefs(invoicesStore);
 
 const invoicePeriods = ref<Array<{ label: string; value: string }>>([]);
 const loadingRides = ref<boolean>(false);
 const invoicesPerPeriod = ref<any>([]);
 const selectedRides = ref<any[]>([]);
 const selectedContractId = ref<string>('');
-const selectedBranchId = ref<string>('all');
-const selectedAreaCode = ref<string>('all');
+const selectedBranchId = ref<string>('');
+const selectedAreaCode = ref<string>('');
 const selectedPeriodMode = ref<string>('monthly');
 const selectedMonthlyPeriod = ref<string>('');
 const selectedRange = ref<DateRange | null>(null);
@@ -101,6 +111,90 @@ const getRideLineTotal = (ride: any) => {
   return Math.max(baseTotal + extraChargesTotal, 0);
 };
 
+const getRideRoute = (ride: any) => {
+  const origin = String(ride?.travel?.originAddress || '')
+    .split('-')
+    .slice(0, 1)
+    .pop()
+    ?.trim();
+  const destination = String(ride?.travel?.destinationAddress || '')
+    .split('-')
+    .slice(0, 1)
+    .pop()
+    ?.trim();
+
+  if (!origin && !destination) return '-';
+  if (!origin) return destination || '-';
+  if (!destination) return origin;
+  return `${origin} -> ${destination}`;
+};
+
+const getRideDateTime = (ride: any) => {
+  const date = ride?.travel?.date ? sanitizeRideDate(ride.travel.date) : '';
+  const departTime = String(ride?.travel?.departTime || '').trim();
+  if (!date && !departTime) return '-';
+  if (!date) return departTime;
+  if (!departTime) return date;
+  return `${date} ${departTime}`;
+};
+
+const normalizeAllocationKey = (value: unknown) => {
+  if (typeof value !== 'string') return '';
+  return value.trim();
+};
+
+const getRideAllocationForArea = (ride: any, targetAreaCode: string) => {
+  const normalizedTargetAreaCode = normalizeAllocationKey(targetAreaCode);
+  if (!normalizedTargetAreaCode) return null;
+
+  const baseTotal = getRideLineTotal(ride);
+  const rideAreaCode = normalizeAllocationKey(ride?.billing?.paymentData?.areaCode);
+  const splitPayments = Array.isArray(ride?.billing?.paymentData?.splitedPayment)
+    ? ride.billing.paymentData.splitedPayment
+    : [];
+
+  const splitAllocation = splitPayments.find((entry: any) => {
+    const entryArea = normalizeAllocationKey(entry?.areaCode || entry?.area);
+    return entryArea === normalizedTargetAreaCode;
+  });
+
+  if (splitAllocation) {
+    // Check if this area is already covered by a previous invoice (partially_invoiced rides)
+    const splitInvoicing = Array.isArray(ride?.billing?.splitInvoicing)
+      ? ride.billing.splitInvoicing
+      : [];
+    const alreadyCovered = splitInvoicing.some(
+      (entry: any) =>
+        normalizeAllocationKey(entry?.areaCode) === normalizedTargetAreaCode &&
+        Boolean(entry?.invoiced),
+    );
+    if (alreadyCovered) return null;
+
+    const percentage = sanitizeAmount(splitAllocation?.percentage);
+    const allocatedTotal = Math.round(baseTotal * (percentage / 100) * 100) / 100;
+
+    return {
+      allocationMode: 'split',
+      allocationAreaCode: normalizedTargetAreaCode,
+      allocationPercentage: percentage,
+      baseTotal,
+      allocatedTotal,
+    };
+  }
+
+  if (rideAreaCode === normalizedTargetAreaCode) {
+    return {
+      allocationMode: 'single',
+      allocationAreaCode: normalizedTargetAreaCode,
+      allocationPercentage: 100,
+      baseTotal,
+      allocatedTotal: baseTotal,
+    };
+  }
+
+  return null;
+};
+
 const periodDescription = computed(() => {
   if (selectedPeriodMode.value === 'monthly') {
     const selected = invoicePeriods.value.find(
@@ -127,22 +221,13 @@ const periodDescription = computed(() => {
 const invoiceHeader = computed(() => {
   const contract = selectedContract.value;
   const branch = selectedBranch.value;
-  const scopeType =
-    selectedAreaCode.value !== 'all' && selectedBranchId.value !== 'all'
-      ? 'contract-branch-area'
-      : selectedBranchId.value !== 'all'
-        ? 'contract-branch'
-        : 'contract';
+  const scopeType = 'contract-branch-area';
 
-  const customerName =
-    selectedBranchId.value !== 'all' && branch
-      ? `${branch?.branchCode || ''} - ${branch?.fantasyName || branch?.name || ''}`.trim()
-      : contract?.customerName || '-';
+  const customerName = branch
+    ? `${branch?.branchCode || ''} - ${branch?.fantasyName || branch?.name || ''}`.trim()
+    : contract?.customerName || '-';
 
-  const document =
-    selectedBranchId.value !== 'all' && branch?.document
-      ? branch.document
-      : contract?.customer?.document || '-';
+  const document = branch?.document || contract?.customer?.document || '-';
 
   const generatedAt = new Date();
   const paymentDueDays = Number(contract?.comercialConditions?.paymentDueDate || 0);
@@ -160,30 +245,80 @@ const invoiceHeader = computed(() => {
 });
 
 const previewItems = computed(() => {
-  return selectedRides.value.map((ride: any) => {
-    const branchName = ride?.billing?.paymentData?.branchName || '-all-';
-    const areaCode = ride?.billing?.paymentData?.areaCode;
-    const areaName = ride?.billing?.paymentData?.areaName;
-    const costCenter =
-      areaCode || areaName ? `${areaCode || '-'} - ${areaName || 'N/A'}` : '-all-';
+  return selectedRides.value.flatMap((ride: any) => {
+    const allocation = getRideAllocationForArea(ride, selectedAreaCode.value);
+    if (!allocation) return [];
+
+    const invoiceBranchName = ride?.billing?.paymentData?.branchName || '-';
+    const rideAreaCode = normalizeAllocationKey(ride?.billing?.paymentData?.areaCode);
+    const rideAreaName = ride?.billing?.paymentData?.areaName;
+    const splitPayment = Array.isArray(ride?.billing?.paymentData?.splitedPayment)
+      ? ride.billing.paymentData.splitedPayment.find((entry: any) => {
+          const entryArea = normalizeAllocationKey(entry?.areaCode || entry?.area);
+          return entryArea === selectedAreaCode.value;
+        })
+      : null;
+
     const requester =
       ride?.reason?.requestedByName ||
       ride?.reason?.requestedBy ||
       ride?.user?.name ||
       '-';
     const finishedAt = rideCompletionDate(ride);
+    const totalTimeStopped = ride?.travel?.totalTimeStopped;
+    const tpValue =
+      totalTimeStopped !== undefined && totalTimeStopped !== null
+        ? convertSecondsToTime(totalTimeStopped)
+        : '-';
+    const rideExtraKms = ride?.travel?.completedData?.rideExtraKms;
+    const kme =
+      typeof rideExtraKms === 'number' && rideExtraKms !== 0
+        ? rideExtraKms.toLocaleString('pt-BR', { maximumFractionDigits: 2 })
+        : '-';
+    const computedExtraHours = resolveDisplayExtraHours(ride);
+    const he = computedExtraHours > 0 ? String(Math.ceil(computedExtraHours)) : '-';
+    const kmePrice =
+      ride?.travel?.completedData?.rideExtraKmPrice !== '' &&
+      ride?.travel?.completedData?.rideExtraKmPrice !== undefined
+        ? currencyFormat(ride?.travel?.completedData?.rideExtraKmPrice)
+        : '-';
+    const computedExtraHourPrice = resolveDisplayExtraHourPrice(ride);
+    const hePrice =
+      computedExtraHourPrice > 0 ? currencyFormat(computedExtraHourPrice) : '-';
+    const extraChargesTotal = Array.isArray(ride?.extraCharges)
+      ? ride.extraCharges.reduce((acc: number, curr: any) => {
+          return acc + sanitizeAmount(curr?.amount);
+        }, 0)
+      : 0;
 
-    return {
-      rideId: ride?.id,
-      code: ride?.code,
-      user: ride?.user?.name || '-',
-      branch: branchName,
-      costCenter,
-      product: ride?.product?.name || '-',
-      requester,
-      finishedAt: finishedAt ? formatDate(finishedAt) : '-',
-      total: getRideLineTotal(ride),
-    };
+    return [
+      {
+        rideId: ride?.id,
+        code: ride?.code,
+        user: ride?.user?.name || '-',
+        branch: invoiceBranchName,
+        costCenter: selectedAreaCode.value || rideAreaCode || rideAreaName || '-',
+        product: ride?.product?.name || '-',
+        requester,
+        finishedAt: finishedAt ? formatDate(finishedAt) : '-',
+        dateTime: getRideDateTime(ride),
+        route: getRideRoute(ride),
+        tp: String(tpValue),
+        kme,
+        kmePrice,
+        he,
+        hePrice,
+        extraCharges: currencyFormat(extraChargesTotal),
+        baseTotal: allocation.baseTotal,
+        allocatedTotal: allocation.allocatedTotal,
+        allocationPercentage: allocation.allocationPercentage,
+        allocationAreaCode: allocation.allocationAreaCode,
+        allocationMode: allocation.allocationMode,
+        splitLabel:
+          splitPayment?.areaName || splitPayment?.area || allocation.allocationAreaCode,
+        total: allocation.allocatedTotal,
+      },
+    ];
   });
 });
 
@@ -205,17 +340,18 @@ const sanitizeContracts = computed(() => {
 
 const contractBranches = computed(() => {
   if (!selectedContract.value?.branches?.length) return [];
-  return [
-    { label: 'Todas as filiais', value: 'all' },
-    ...selectedContract.value.branches.map((branch: any) => ({
-      label:
-        `${branch.branchCode || ''} - ${branch.fantasyName || branch.name || 'Filial'}`.trim(),
-      value: branch.id,
-    })),
-  ];
+  return selectedContract.value.branches.map((branch: any) => ({
+    label:
+      `${branch.branchCode || ''} - ${branch.fantasyName || branch.name || 'Filial'}`.trim(),
+    value: branch.id,
+  }));
 });
 
 const canFilterByPeriod = computed(() => {
+  if (!selectedBranchId.value || !selectedAreaCode.value) {
+    return false;
+  }
+
   if (selectedPeriodMode.value === 'monthly') {
     return Boolean(selectedMonthlyPeriod.value);
   }
@@ -235,7 +371,9 @@ const resetFilterResults = () => {
 
 const generatePeriods = () => {
   const completedRides = (rides?.value || []).filter(
-    (ride: any) => ride?.status === 'completed' && ride?.billing?.status === 'invoice',
+    (ride: any) =>
+      ride?.status === 'completed' &&
+      ['invoice', 'partially_invoiced'].includes(String(ride?.billing?.status || '')),
   );
   const periodsMap = new Map<string, { label: string; value: string; date: Date }>();
 
@@ -268,20 +406,25 @@ const applyFilters = () => {
   }
 
   let filtered = (rides?.value || []).filter(
-    (ride: any) => ride?.status === 'completed' && ride?.billing?.status === 'invoice',
+    (ride: any) =>
+      ride?.status === 'completed' &&
+      ['invoice', 'partially_invoiced'].includes(String(ride?.billing?.status || '')),
   );
 
-  if (selectedBranchId.value && selectedBranchId.value !== 'all') {
-    filtered = filtered.filter(
-      (ride: any) => ride?.billing?.paymentData?.branchId === selectedBranchId.value,
-    );
-  }
+  filtered = filtered.filter((ride: any) => {
+    const rideBranchId = normalizeAllocationKey(ride?.billing?.paymentData?.branchId);
+    return rideBranchId === selectedBranchId.value;
+  });
 
-  if (selectedAreaCode.value && selectedAreaCode.value !== 'all') {
-    filtered = filtered.filter(
-      (ride: any) => ride?.billing?.paymentData?.areaCode === selectedAreaCode.value,
-    );
-  }
+  filtered = filtered
+    .map((ride: any) => {
+      const allocation = getRideAllocationForArea(ride, selectedAreaCode.value);
+      return {
+        ...ride,
+        __allocation: allocation,
+      };
+    })
+    .filter((ride: any) => Boolean(ride?.__allocation));
 
   if (selectedPeriodMode.value === 'monthly') {
     const [year, month] = String(selectedMonthlyPeriod.value || '').split('-');
@@ -340,8 +483,8 @@ const applyFilters = () => {
 
 const onSelectContract = async (contractId: string) => {
   selectedContractId.value = contractId;
-  selectedBranchId.value = 'all';
-  selectedAreaCode.value = 'all';
+  selectedBranchId.value = '';
+  selectedAreaCode.value = '';
   selectedRange.value = null;
   selectedMonthlyPeriod.value = '';
   invoicePeriods.value = [];
@@ -369,14 +512,7 @@ const onSelectContract = async (contractId: string) => {
 
 const onSelectBranch = (branchId: string) => {
   selectedBranchId.value = branchId;
-  selectedAreaCode.value = 'all';
-
-  if (branchId === 'all') {
-    selectedBranch.value = null;
-    branchAreas.value = [];
-    resetFilterResults();
-    return;
-  }
+  selectedAreaCode.value = '';
 
   selectedBranch.value = selectedContract.value?.branches?.find(
     (branch: any) => branch.id === branchId,
@@ -385,15 +521,12 @@ const onSelectBranch = (branchId: string) => {
   const areas = Array.isArray(selectedBranch.value?.areas)
     ? selectedBranch.value.areas
     : [];
-  branchAreas.value = [
-    { label: 'Todos os centros de custo', value: 'all' },
-    ...areas
-      .filter((area: any) => Boolean(area?.areaCode))
-      .map((area: any) => ({
-        label: `${area?.areaCode || '000'} - ${area?.areaName || 'N/A'}`,
-        value: area?.areaCode,
-      })),
-  ];
+  branchAreas.value = areas
+    .filter((area: any) => Boolean(area?.areaCode))
+    .map((area: any) => ({
+      label: `${area?.areaCode || '000'}`,
+      value: area?.areaCode,
+    }));
 
   resetFilterResults();
 };
@@ -421,6 +554,15 @@ const applyFiltersAndShow = () => {
       title: 'Atenção',
       variant: 'destructive',
       description: 'Selecione um contrato para continuar.',
+    });
+    return;
+  }
+
+  if (!selectedBranchId.value || !selectedAreaCode.value) {
+    toast({
+      title: 'Atenção',
+      variant: 'destructive',
+      description: 'Selecione uma filial e um centro de custo para continuar.',
     });
     return;
   }
@@ -459,7 +601,7 @@ const openPreview = () => {
     toast({
       title: 'Atenção',
       variant: 'destructive',
-      description: 'Selecione ao menos um atendimento para gerar a fatura.',
+      description: 'Selecione ao menos um atendimento para gerar o fechamento.',
     });
     return;
   }
@@ -470,13 +612,13 @@ const openPreview = () => {
 
 const generateInvoiceNumber = () => {
   const now = new Date();
-  const y = now.getFullYear();
+  const y = String(now.getFullYear()).slice(-2);
   const m = String(now.getMonth() + 1).padStart(2, '0');
   const d = String(now.getDate()).padStart(2, '0');
   const h = String(now.getHours()).padStart(2, '0');
   const min = String(now.getMinutes()).padStart(2, '0');
   const s = String(now.getSeconds()).padStart(2, '0');
-  return `${y}${m}${d}-${h}${min}${s}`;
+  return `${y}${m}${d}${h}${min}${s}`;
 };
 
 const confirmGenerateInvoice = async () => {
@@ -484,7 +626,7 @@ const confirmGenerateInvoice = async () => {
     toast({
       title: 'Atenção',
       variant: 'destructive',
-      description: 'Selecione ao menos um atendimento para gerar a fatura.',
+      description: 'Selecione ao menos um atendimento para gerar o fechamento.',
     });
     return;
   }
@@ -495,12 +637,12 @@ const confirmGenerateInvoice = async () => {
   const payload = {
     number: invoiceNumber,
     period: periodDescription.value,
-    description: `Fatura gerada via backoffice (${header.scopeType})`,
+    description: `Fechamento gerado via backoffice (${header.scopeType})`,
     customer: {
       scopeType: header.scopeType,
       contractId: selectedContractId.value,
-      branchId: selectedBranchId.value !== 'all' ? selectedBranchId.value : null,
-      areaCode: selectedAreaCode.value !== 'all' ? selectedAreaCode.value : null,
+      branchId: selectedBranchId.value,
+      areaCode: selectedAreaCode.value,
       customerName: header.customerName,
       document: header.document,
       generatedAt: header.generatedAt.toISOString(),
@@ -538,7 +680,7 @@ const confirmGenerateInvoice = async () => {
     value: Number(previewTotal.value).toFixed(2),
     dueDate: header.dueDate.toISOString(),
     observations: '',
-    status: 'open',
+    status: 'pending',
   };
 
   try {
@@ -548,7 +690,7 @@ const confirmGenerateInvoice = async () => {
     toast({
       title: 'Tudo pronto!',
       class: 'bg-green-600 border-0 text-white text-2xl hover:text-white',
-      description: 'Fatura gerada com sucesso e enviada para faturas em aberto.',
+      description: 'Fechamento gerado com sucesso.',
     });
 
     await navigateTo('/admin/finances/invoices/open');
@@ -556,7 +698,7 @@ const confirmGenerateInvoice = async () => {
     toast({
       title: 'Opss!',
       variant: 'destructive',
-      description: 'Não foi possível gerar a fatura. Tente novamente.',
+      description: 'Não foi possível gerar o fechamento. Tente novamente.',
     });
   }
 };
@@ -574,7 +716,7 @@ onBeforeMount(async () => {
     <section class="mb-6 flex items-center gap-6">
       <h1 class="flex items-center gap-2 font-bold text-black text-2xl">
         <Receipt :size="24" />
-        Gerar Fatura
+        Gerar Fechamento Operacional
       </h1>
     </section>
     <section>
@@ -608,7 +750,7 @@ onBeforeMount(async () => {
 
               <div v-if="selectedContractId" class="md:grid md:grid-cols-2 gap-4">
                 <div>
-                  <Label class="mb-2 block">Filial (opcional)</Label>
+                  <Label class="mb-2 block">Filial</Label>
                   <FormSelect
                     :items="contractBranches"
                     :label="'Selecione a filial'"
@@ -616,11 +758,11 @@ onBeforeMount(async () => {
                   />
                 </div>
                 <div>
-                  <Label class="mb-2 block">Centro de Custo (opcional)</Label>
+                  <Label class="mb-2 block">Centro de Custo</Label>
                   <FormSelect
                     :items="branchAreas"
                     :label="'Selecione o centro de custo'"
-                    :disabled="selectedBranchId === 'all'"
+                    :disabled="!selectedBranchId"
                     @on-select="onSelectArea"
                   />
                 </div>
@@ -638,13 +780,13 @@ onBeforeMount(async () => {
                   >
                     2
                   </span>
-                  <h2 class="text-lg font-bold">Selecione o período dos atendimentos</h2>
+                  <h2 class="text-lg font-bold">Selecione o período</h2>
                 </div>
                 <div>
                   <div class="md:grid md:grid-cols-2 gap-4 items-end">
                     <div>
                       <Label class="mb-3 block text-sm font-medium">
-                        Modo de período
+                        Tipo de período
                       </Label>
                       <RadioGroup
                         :value="selectedPeriodMode"
@@ -706,7 +848,7 @@ onBeforeMount(async () => {
                       3
                     </span>
                     <h2 class="text-lg font-bold">
-                      Selecione os atendimentos dessa fatura
+                      Selecione os atendimentos desse fechamento
                     </h2>
                   </div>
 
@@ -757,7 +899,7 @@ onBeforeMount(async () => {
             :disabled="!canOpenPreview"
             @click="openPreview"
           >
-            Preview da fatura
+            Preview do fechamento
           </Button>
         </section>
       </form>
@@ -766,23 +908,21 @@ onBeforeMount(async () => {
     <Dialog :open="showPreviewModal" @update:open="(value) => (showPreviewModal = value)">
       <DialogContent class="max-w-6xl">
         <DialogHeader>
-          <DialogTitle>Preview da Fatura</DialogTitle>
+          <DialogTitle>Preview do Fechamento Operacional</DialogTitle>
           <DialogDescription>
-            Revise os dados e confirme para finalizar a geração da fatura.
+            Revise os dados e confirme para finalizar a geração do fechamento.
           </DialogDescription>
         </DialogHeader>
 
         <section
           class="max-h-[70vh] overflow-auto rounded-md border border-zinc-200 bg-white p-8"
         >
-          <div
-            class="mx-auto w-full max-w-[794px] min-h-[1123px] p-8 border border-zinc-200 bg-white"
-          >
+          <div class="mx-auto w-full min-h-[1123px] p-8 border border-zinc-200 bg-white">
             <header
               class="mb-8 border-b border-zinc-200 pb-4 flex items-start justify-between gap-4"
             >
               <div>
-                <h3 class="text-2xl font-bold">FATURA</h3>
+                <h3 class="text-2xl font-bold">FECHAMENTO OPERACIONAL</h3>
                 <p class="text-sm text-zinc-700">Nº {{ previewInvoiceNumber }}</p>
               </div>
               <img
@@ -796,67 +936,21 @@ onBeforeMount(async () => {
               <div>
                 <p class="font-semibold">Cliente</p>
                 <p>{{ invoiceHeader.customerName }}</p>
-                <p>CNPJ: {{ invoiceHeader.document }}</p>
+                <p><strong>CNPJ:</strong> {{ invoiceHeader.document }}</p>
               </div>
               <div>
                 <p class="font-semibold">Período</p>
                 <p>{{ periodDescription }}</p>
-                <p>Emissão: {{ formatDate(invoiceHeader.generatedAt) }}</p>
-                <p>Vencimento: {{ formatDate(invoiceHeader.dueDate) }}</p>
+                <p>
+                  <strong>Emissão:</strong> {{ formatDate(invoiceHeader.generatedAt) }}
+                </p>
+                <p>
+                  <strong>Vencimento:</strong> {{ formatDate(invoiceHeader.dueDate) }}
+                </p>
               </div>
             </section>
 
-            <section>
-              <div class="overflow-auto border border-zinc-200 rounded-md">
-                <table class="w-full text-xs">
-                  <thead class="bg-zinc-100">
-                    <tr>
-                      <th class="p-2 text-left">Código</th>
-                      <th class="p-2 text-left">Usuário</th>
-                      <th class="p-2 text-left">Filial</th>
-                      <th class="p-2 text-left">Centro de Custo</th>
-                      <th class="p-2 text-left">Produto</th>
-                      <th class="p-2 text-left">Solicitante</th>
-                      <th class="p-2 text-left">Finalização</th>
-                      <th class="p-2 text-right">Valor</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    <tr
-                      v-for="item in previewItems"
-                      :key="item.rideId"
-                      class="border-t border-zinc-200"
-                    >
-                      <td class="p-2">{{ item.code }}</td>
-                      <td class="p-2">{{ item.user }}</td>
-                      <td class="p-2">{{ item.branch }}</td>
-                      <td class="p-2">{{ item.costCenter }}</td>
-                      <td class="p-2">{{ item.product }}</td>
-                      <td class="p-2">{{ item.requester }}</td>
-                      <td class="p-2">{{ item.finishedAt }}</td>
-                      <td class="p-2 text-right font-semibold">
-                        {{ currencyFormat(item.total) }}
-                      </td>
-                    </tr>
-                  </tbody>
-                </table>
-              </div>
-
-              <div class="mt-4 flex justify-end">
-                <div
-                  class="w-full max-w-sm rounded-md border border-zinc-200 bg-zinc-50 p-4"
-                >
-                  <div class="flex items-center justify-between text-sm">
-                    <span>Total de itens:</span>
-                    <span>{{ previewItems.length }}</span>
-                  </div>
-                  <div class="mt-2 flex items-center justify-between text-base font-bold">
-                    <span>Total da fatura:</span>
-                    <span>{{ currencyFormat(previewTotal) }}</span>
-                  </div>
-                </div>
-              </div>
-            </section>
+            <InvoicePreviewTable :items="previewItems" />
           </div>
         </section>
 
@@ -865,7 +959,9 @@ onBeforeMount(async () => {
             Cancelar
           </Button>
           <Button :disabled="isUpdating" @click="confirmGenerateInvoice">
-            Confirmar
+            <LoaderCircle v-if="isUpdating" class="animate-spin text-white" />
+            <Save v-else />
+            Gerar Fechamento
           </Button>
         </DialogFooter>
       </DialogContent>

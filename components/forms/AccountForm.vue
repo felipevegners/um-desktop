@@ -7,7 +7,7 @@ import { rolesList, userRestrictions } from '@/config/roles';
 import { useAccountStore } from '@/stores/account.store';
 import { useContractsStore } from '@/stores/contracts.store';
 import { toTypedSchema } from '@vee-validate/zod';
-import { Eye, EyeOff, LoaderCircle, Trash, UserPen, WandSparkles } from 'lucide-vue-next';
+import { Eye, EyeOff, LoaderCircle, UserPen, WandSparkles } from 'lucide-vue-next';
 import { vMaska } from 'maska/vue';
 import { storeToRefs } from 'pinia';
 import { useForm } from 'vee-validate';
@@ -115,6 +115,20 @@ const handleGeneratePassword = () => {
       newPassword: randomPassword,
     });
   }
+};
+
+const redirectToAccountsList = () => {
+  if (isAdminMode) {
+    navigateTo('/admin/accounts/active');
+    return;
+  }
+
+  if (isCorporativeMode) {
+    navigateTo('/corporative/accounts/active');
+    return;
+  }
+
+  navigateTo('/profile/me');
 };
 
 const handleUserBranches = (checked: boolean, branch: any) => {
@@ -318,6 +332,11 @@ const initialValues: any = {
   status: account.value.status,
 };
 
+if (isAdminMode || isCorporativeMode) {
+  initialValues.emailConfirmed = account.value.emailConfirmed;
+  initialValues.acceptTerms = account.value.acceptTerms;
+}
+
 if (isPersonalMode) {
   initialValues.username = account.value.username;
   initialValues.email = account.value.email;
@@ -430,9 +449,18 @@ const onSubmit = form.handleSubmit(async (values) => {
       },
     };
 
-    if (isAdminMode) {
-      accountData.emailConfirmed = values.emailConfirmed || false;
-      accountData.acceptTerms = values.acceptTerms || false;
+    if (isAdminMode || isCorporativeMode) {
+      if (typeof values.emailConfirmed !== 'undefined') {
+        accountData.emailConfirmed = values.emailConfirmed;
+      } else if (typeof account.value.emailConfirmed !== 'undefined') {
+        accountData.emailConfirmed = account.value.emailConfirmed;
+      }
+
+      if (typeof values.acceptTerms !== 'undefined') {
+        accountData.acceptTerms = values.acceptTerms;
+      } else if (typeof account.value.acceptTerms !== 'undefined') {
+        accountData.acceptTerms = account.value.acceptTerms;
+      }
     }
   }
 
@@ -443,7 +471,7 @@ const onSubmit = form.handleSubmit(async (values) => {
       class: 'bg-green-600 border-0 text-white text-2xl',
       description: `Conta de usuário atualizada com sucesso!`,
     });
-    navigateTo('/profile/me');
+    redirectToAccountsList();
   } catch (error) {
     toast({
       title: 'Oops!',
@@ -829,28 +857,25 @@ const onSubmit = form.handleSubmit(async (values) => {
           </Card>
         </template>
 
-        <div class="mt-6 flex justify-start gap-4">
+        <div class="mt-6 flex justify-start gap-4 w-full">
           <Button type="submit" :disabled="!canEditTargetAccount || isLoadingSend">
             <LoaderCircle v-if="isLoadingSend" class="mr-2 h-5 w-5 animate-spin" />
-            Salvar Alterações
+            Salvar
           </Button>
-          <Button
-            type="button"
-            variant="ghost"
-            @click.prevent="navigateTo('/profile/me')"
-          >
+          <Button type="button" variant="ghost" @click.prevent="redirectToAccountsList">
             Cancelar
           </Button>
-          <Button
+          <!-- <Button
             v-if="isAdminMode && account?.id"
             type="button"
             variant="destructive"
             :disabled="loadingDelete"
             @click="deleteUserAccount"
+            class="self-end"
           >
             <Trash class="mr-2" :size="20" />
             Deletar Usuário
-          </Button>
+          </Button> -->
         </div>
       </form>
     </section>

@@ -10,6 +10,10 @@ import {
   sanitizePhone,
   sanitizeRideDate,
 } from '~/lib/utils';
+import {
+  resolveDisplayExtraHourPrice,
+  resolveDisplayExtraHours,
+} from '~/utils/rides/billingExtras';
 
 const columnHelper = createColumnHelper<any>();
 
@@ -106,7 +110,7 @@ export const columns: any = [
     },
   }),
   columnHelper.accessor('route', {
-    meta: { label: 'Rota', width: '200px' },
+    meta: { label: 'Rota', width: '230px' },
     header: () => h('div', { class: 'text-xs leading-none text-left' }, 'Rota'),
     cell: ({ row }) => {
       const data = row.original;
@@ -115,7 +119,7 @@ export const columns: any = [
         .split('-')
         .slice(0, 1)
         .pop();
-      return h('div', { class: 'capitalize text-xs text-wrap' }, [
+      return h('div', { class: 'capitalize text-xs text-wrap leading-relaxed' }, [
         `${normalizeOrigin} → ${normalizeDestination}`,
         data?.travel.stops?.length > 0
           ? h(
@@ -179,13 +183,8 @@ export const columns: any = [
     header: () => h('div', { class: 'text-xs leading-none text-left' }, 'HE'),
     cell: ({ row }) => {
       const data = row.original;
-      return h(
-        'div',
-        { class: 'text-xs' },
-        data?.travel.completedData && data?.travel.completedData?.rideExtraHours !== 0
-          ? Math.ceil(data?.travel.completedData?.rideExtraHours || 0)
-          : '-',
-      );
+      const extraHours = resolveDisplayExtraHours(data);
+      return h('div', { class: 'text-xs' }, extraHours > 0 ? Math.ceil(extraHours) : '-');
     },
   }),
   columnHelper.accessor('he-price', {
@@ -194,13 +193,11 @@ export const columns: any = [
     header: () => h('div', { class: 'text-xs leading-none text-left' }, 'Valor HE'),
     cell: ({ row }) => {
       const data = row.original;
+      const extraHourPrice = resolveDisplayExtraHourPrice(data);
       return h(
         'div',
         { class: 'text-xs font-bold text-amber-600' },
-        data?.travel.completedData &&
-          data?.travel.completedData?.rideExtraHourPrice !== ''
-          ? currencyFormat(data?.travel.completedData?.rideExtraHourPrice || '0')
-          : '-',
+        extraHourPrice > 0 ? currencyFormat(extraHourPrice) : '-',
       );
     },
   }),

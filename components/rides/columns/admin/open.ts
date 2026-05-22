@@ -219,7 +219,7 @@ export const columns: any = [
         .split('-')
         .slice(0, 1)
         .pop();
-      return h('div', { class: 'capitalize text-xs text-wrap' }, [
+      return h('div', { class: 'capitalize text-xs text-wrap leading-relaxed' }, [
         `${normalizeOrigin} → ${normalizeDestination}`,
         data?.travel.stops?.length > 0
           ? h(

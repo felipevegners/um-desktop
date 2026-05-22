@@ -30,11 +30,23 @@ export default defineEventHandler(async (event) => {
     emailConfirmed,
   } = body;
 
+  // Normalizar e-mail: remover espaços e forçar lowercase
+  const normalizedEmail =
+    typeof email === 'string' && email ? email.trim().toLowerCase() : email;
+
   const userAccount = await prisma.accounts.findUnique({
     where: {
       id: accountId,
     },
   });
+
+  if (!userAccount) {
+    throw createError({
+      statusCode: 404,
+      statusMessage: 'Not Found',
+      message: 'Conta não encontrada.',
+    });
+  }
 
   let hashedPassword;
 
@@ -52,7 +64,7 @@ export default defineEventHandler(async (event) => {
       },
       data: {
         username,
-        email,
+        email: normalizedEmail,
         password: hashedPassword,
         role,
         enabled,
