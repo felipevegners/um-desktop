@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import DashBarChart from '@/components/shared/DashBarChart.vue';
 import RideStatusFlag from '@/components/shared/RideStatusFlag.vue';
+import { useSessionAccess } from '@/composables/auth/useSessionAccess';
 import { getNotificationsService } from '@/server/services/notifications';
 import '@/stores/contracts.store';
 import { useInvoicesStore } from '@/stores/invoices.store';
@@ -17,7 +18,8 @@ import {
 } from 'lucide-vue-next';
 import { currencyFormat, sanitizeRideDate } from '~/lib/utils';
 
-const { data } = useAuth();
+const { data, status } = useAuth();
+const { hasSessionData } = useSessionAccess();
 const authUser = computed<any>(() => data.value?.user || {});
 const contractId = computed(() => authUser.value?.contract?.contractId);
 const userContractBranchId = computed(() =>
@@ -76,6 +78,39 @@ const getBranchName = (branch: any) => {
     branch?.branch?.companyName;
   const branchName = String(rawName || '').trim();
   return branchName.length > 0 ? branchName : null;
+};
+
+const resolveRideBranchId = (ride: any) => {
+  return String(
+    ride?.billing?.paymentData?.branchId ||
+      ride?.billing?.paymentData?.branch ||
+      ride?.billing?.branchId ||
+      ride?.branchId ||
+      ride?.branch?.id ||
+      ride?.branch?._id ||
+      ride?.user?.branchId ||
+      ride?.user?.branch?.id ||
+      '',
+  ).trim();
+};
+
+const isRideCancelled = (ride: any) => {
+  const status = String(ride?.status || '')
+    .trim()
+    .toLowerCase();
+  return status === 'cancelled' || status === 'canceled';
+};
+
+const resolveRideRecentTimestamp = (ride: any) => {
+  const rawTimestamp =
+    ride?.progress?.startedAt ||
+    ride?.updatedAt ||
+    ride?.createdAt ||
+    ride?.travel?.date ||
+    0;
+
+  const timestamp = new Date(rawTimestamp).getTime();
+  return Number.isFinite(timestamp) ? timestamp : 0;
 };
 
 const normalizeInvoiceStatus = (status: string | undefined | null) => {
@@ -162,84 +197,136 @@ const buildInvoiceAlert = (invoice: any) => ({
 });
 
 let pollingInterval: ReturnType<typeof setInterval> | null = null;
+const isFetchingDashboard = ref(false);
+const hasStartedPolling = ref(false);
+
+const startDashboardPolling = () => {
+  if (hasStartedPolling.value) return;
+  hasStartedPolling.value = true;
+  pollingInterval = setInterval(() => {
+    void fetchDashboardData();
+  }, 60000);
+};
 
 async function fetchDashboardData() {
-  if (!contractId.value) return;
+  if (isFetchingDashboard.value) return;
 
-  await Promise.all([
-    getContractByIdAction(contractId.value),
-    getRidesByContractAction(contractId.value),
-    getInvoicesAction({ contractId: contractId.value }),
-  ]);
+  const isReady = hasSessionData({
+    requireUserId: true,
+    requireRole: true,
+    requireContractId: true,
+  });
+
+  if (!isReady) return;
+
+  const scopedContractId = String(contractId.value || '').trim();
+  if (!scopedContractId) return;
+
+  isFetchingDashboard.value = true;
 
   try {
-    isApprovalAlertsLoading.value = true;
-    const notifications = (await getNotificationsService({
-      read: false,
-      limit: '50',
-    })) as NotificationHistoryItem[];
+    const [contractResult, ridesResult, invoicesResult] = await Promise.allSettled([
+      getContractByIdAction(scopedContractId),
+      getRidesByContractAction(scopedContractId),
+      getInvoicesAction({ contractId: scopedContractId }),
+    ]);
 
-    const notificationAlerts = (Array.isArray(notifications) ? notifications : [])
-      .filter((item: NotificationHistoryItem) => {
-        return (
-          item.type === 'invoice_pending_approval' ||
-          item.type === 'invoice_adjustment_requested'
-        );
+    try {
+      isApprovalAlertsLoading.value = true;
+      const notifications = (await getNotificationsService({
+        read: false,
+        limit: '50',
+      })) as NotificationHistoryItem[];
+
+      const notificationAlerts = (Array.isArray(notifications) ? notifications : [])
+        .filter((item: NotificationHistoryItem) => {
+          return (
+            item.type === 'invoice_pending_approval' ||
+            item.type === 'invoice_adjustment_requested'
+          );
+        })
+        .map((item: NotificationHistoryItem) => ({
+          ...item,
+          createdAt: item.createdAt || new Date().toISOString(),
+        }));
+
+      const invoiceAlerts =
+        invoicesResult.status === 'fulfilled'
+          ? pendingApprovalInvoices.value.map(buildInvoiceAlert)
+          : [];
+
+      approvalAlerts.value = [...invoiceAlerts, ...notificationAlerts]
+        .sort((a: any, b: any) => {
+          const da = new Date(a?.createdAt || 0).getTime();
+          const db = new Date(b?.createdAt || 0).getTime();
+          return db - da;
+        })
+        .slice(0, 5);
+    } catch (error) {
+      approvalAlerts.value = [];
+    } finally {
+      isApprovalAlertsLoading.value = false;
+    }
+
+    if (normalizedRole.value === 'master-manager') {
+      contractRidesList.value = (rides?.value || []).filter((ride: any) => {
+        return !isRideCancelled(ride);
+      });
+      userAllowedBranches.value = Array.isArray(contract?.value?.branches)
+        ? contract.value.branches
+        : [];
+    } else {
+      contractRidesList.value = (rides?.value || []).filter((ride: any) => {
+        if (isRideCancelled(ride)) return false;
+        const rideBranchId = resolveRideBranchId(ride);
+        return rideBranchId.length > 0 && allowedBranchIds.value.includes(rideBranchId);
+      });
+
+      const contractBranches = Array.isArray(contract?.value?.branches)
+        ? contract.value.branches
+        : [];
+      const filterUserBranches = contractBranches.filter((item: any) =>
+        userBranches.value.some(
+          (filterItem: any) => getBranchId(filterItem) === getBranchId(item),
+        ),
+      );
+      userAllowedBranches.value = filterUserBranches;
+    }
+
+    if (ridesResult.status === 'rejected') {
+      contractRidesList.value = [];
+    }
+
+    if (contractResult.status === 'rejected') {
+      userAllowedBranches.value = [];
+    }
+
+    contractRidesList.value = [...(contractRidesList.value || [])]
+      .sort((first: any, second: any) => {
+        return resolveRideRecentTimestamp(second) - resolveRideRecentTimestamp(first);
       })
-      .map((item: NotificationHistoryItem) => ({
-        ...item,
-        createdAt: item.createdAt || new Date().toISOString(),
-      }));
-
-    const invoiceAlerts = pendingApprovalInvoices.value.map(buildInvoiceAlert);
-
-    approvalAlerts.value = [...invoiceAlerts, ...notificationAlerts]
-      .sort((a: any, b: any) => {
-        const da = new Date(a?.createdAt || 0).getTime();
-        const db = new Date(b?.createdAt || 0).getTime();
-        return db - da;
-      })
-      .slice(0, 5);
-  } catch (error) {
-    approvalAlerts.value = [];
+      .slice(0, 4);
   } finally {
-    isApprovalAlertsLoading.value = false;
-  }
-
-  if (normalizedRole.value === 'master-manager') {
-    contractRidesList.value = rides?.value.filter(
-      (ride: any) => ride.status !== 'cancelled',
-    );
-    userAllowedBranches.value = contract?.value.branches;
-  } else {
-    contractRidesList.value = rides?.value.filter((ride: any) =>
-      allowedBranchIds.value.some(
-        (filterItem: any) =>
-          filterItem === String(ride?.billing?.paymentData?.branch || '').trim() &&
-          ride.status !== 'cancelled',
-      ),
-    );
-
-    const contractBranches = Array.isArray(contract?.value?.branches)
-      ? contract.value.branches
-      : [];
-    const filterUserBranches = contractBranches.filter((item: any) =>
-      userBranches.value.some(
-        (filterItem: any) => getBranchId(filterItem) === getBranchId(item),
-      ),
-    );
-    userAllowedBranches.value = filterUserBranches;
-  }
-
-  if (contractRidesList.value.length >= 4) {
-    contractRidesList.value = contractRidesList?.value.slice(-4).reverse();
+    isFetchingDashboard.value = false;
   }
 }
 
-onMounted(async () => {
-  await fetchDashboardData();
-  pollingInterval = setInterval(fetchDashboardData, 60000); // 60s
-});
+watch(
+  [status, contractId, normalizedRole],
+  async () => {
+    const isReady = hasSessionData({
+      requireUserId: true,
+      requireRole: true,
+      requireContractId: true,
+    });
+
+    if (!isReady) return;
+
+    await fetchDashboardData();
+    startDashboardPolling();
+  },
+  { immediate: true },
+);
 
 onUnmounted(() => {
   if (pollingInterval) clearInterval(pollingInterval);
@@ -381,87 +468,40 @@ const dashboardEntityName = computed(() => {
 
   return fallbackCompanyName;
 });
-
-// const contractRemainBudget = computed(() => {
-//   if (contract?.value) {
-//     return contract?.value.mainBudget - contract.value.usedBudget;
-//   }
-//   return 0;
-// });
 </script>
 
 <template>
-  <div class="my-6 mx-3 flex flex-col gap-4 md:p-6 pt-0">
-    <!-- <div
-      class="p-6 md:p-6 md:h-[240px] flex flex-col md:flex-row items-center justify-between rounded-xl bg-zinc-950 md:bg-[url('/images/dashboard_banner_background.jpg')] bg-no-repeat bg-cover bg-center"
+  <div
+    class="my-4 mx-2 sm:my-6 sm:mx-3 flex flex-col gap-4 p-3 sm:p-4 md:p-6 pt-0 min-w-0"
+  >
+    <div
+      class="mb-4 sm:mb-6 w-full rounded-xl bg-gradient-to-l from-um-primary to-black p-[1px]"
     >
-      <div class="flex flex-col gap-6">
-        <h2 class="text-white">Olá, {{ userName }}!</h2>
-        <h1 class="font-bold text-white md:text-2xl">
-          Você está no painel de gestão da Urban Mobi
-        </h1>
+      <div class="rounded-[11px] bg-black p-4 sm:p-6">
+        <h1 class="font-bold text-base sm:text-lg text-um-primary">Dashboard</h1>
+        <p class="text-sm sm:text-base text-white">
+          Olá, você está no painel de gestão da empresa
+          <strong> {{ dashboardEntityName }}. </strong>
+        </p>
       </div>
-      <Button
-        type="button"
-        class="p-6 mt-10 md:mt-0 w-full md:w-fit bg-um-primary hover:bg-um-primary/80 text-black uppercase font-bold md:shadow-lg"
-        @click="navigateTo('/rides/form/new')"
-      >
-        <CalendarPlus :size="18" />
-        Solicitar Atendimento
-      </Button>
-    </div> -->
-
-    <div class="p-6 w-full rounded-xl border border-zinc-950">
-      <h1 class="font-bold text-lg">Dashboard</h1>
-      Olá, você está no painel de gestão da
-      <strong> {{ dashboardEntityName }}. </strong>
     </div>
 
-    <div class="flex flex-col md:grid auto-rows-min gap-4 md:grid-cols-3">
-      <div class="rounded-xl bg-muted/90 p-6">
-        <div class="mb-4 flex items-center justify-between gap-3">
-          <p class="font-bold text-lg">
-            <ReceiptText :size="32" />
+    <div class="grid auto-rows-min gap-3 sm:gap-4 sm:grid-cols-2 lg:grid-cols-3 min-w-0">
+      <!-- INVOICES -->
+      <div class="rounded-xl bg-muted/90 p-4 sm:p-6 flex flex-col h-full min-h-0 min-w-0">
+        <div class="mb-4 flex flex-wrap items-center justify-between gap-3">
+          <p class="font-bold text-base sm:text-lg min-w-0 break-words">
+            <ReceiptText :size="28" class="sm:hidden" />
+            <ReceiptText :size="32" class="hidden sm:block" />
             Fechamentos Operacionais
           </p>
           <span
-            class="rounded-full bg-amber-400 px-3 py-1 text-xs font-bold text-zinc-950"
+            class="rounded-full bg-amber-400 px-3 py-1 text-xs font-bold text-zinc-950 shrink-0"
           >
             {{ pendingApprovalInvoices.length }} pendente(s)
           </span>
         </div>
-
-        <!-- <div v-if="isApprovalAlertsLoading" class="flex items-center justify-center py-8">
-          <LoaderCircle :size="28" class="animate-spin" />
-        </div> -->
-
-        <!-- <div v-else-if="approvalAlerts.length > 0">
-          <p class="my-4 font-bold text-lg flex items-center gap-2">
-            <FileText :size="24" />
-            Pendentes
-          </p>
-          <ul class="mt-4 space-y-2">
-            <li
-              v-for="notification in approvalAlerts"
-              :key="notification.id"
-              class="rounded-lg border border-zinc-300 bg-white p-3"
-            >
-              <p class="font-semibold text-sm">{{ notification.title }}</p>
-              <p class="text-xs text-zinc-600">
-                {{ formatNotificationDate(notification.createdAt) }}
-              </p>
-            </li>
-          </ul>
-        </div>
-
-        <div v-else class="mt-4 rounded-lg border border-zinc-300 bg-white p-4">
-          <p class="text-sm text-zinc-700 flex items-center gap-2">
-            <AlertTriangle :size="16" class="text-amber-600" />
-            Sem alertas no momento.
-          </p>
-        </div> -->
-
-        <div class="my-4 p-0.5 rounded-xl bg-muted/90 overflow-scroll h-[200px]">
+        <div class="my-4 rounded-xl bg-muted/90 overflow-y-auto flex-1 min-h-0">
           <div v-if="isInvoicesLoading" class="flex items-center justify-center py-8">
             <LoaderCircle :size="48" class="animate-spin" />
           </div>
@@ -470,17 +510,19 @@ const dashboardEntityName = computed(() => {
             <li
               v-for="invoice in recentInvoices"
               :key="invoice.id"
-              class="rounded-lg border border-zinc-300 bg-white p-3 flex items-start justify-between gap-2"
+              class="rounded-lg border border-zinc-300 bg-white p-3 flex flex-wrap items-start justify-between gap-2"
             >
-              <div>
-                <p class="text-sm font-semibold">#{{ invoice.number }}</p>
-                <p class="text-xs text-zinc-600">
+              <div class="min-w-0 flex-1">
+                <p class="text-sm font-semibold break-all">{{ invoice.number }}</p>
+                <p class="text-xs text-zinc-600 break-words">
                   {{ sanitizeRideDate(invoice.createdAt) }}
                 </p>
-                <p class="text-sm font-bold mt-1">{{ currencyFormat(invoice.value) }}</p>
+                <p class="text-sm font-bold mt-1 break-words">
+                  {{ currencyFormat(invoice.value) }}
+                </p>
               </div>
               <span
-                :class="`inline-flex rounded-md px-2 py-1 text-xxs text-white uppercase ${invoiceStatusClass(invoice.status)}`"
+                :class="`inline-flex rounded-md px-2 py-1 text-xxs text-white uppercase shrink-0 ${invoiceStatusClass(invoice.status)}`"
               >
                 {{ invoiceStatusLabel(invoice.status) }}
               </span>
@@ -500,53 +542,9 @@ const dashboardEntityName = computed(() => {
           Ver Fechamentos
         </Button>
       </div>
-      <div class="col-span-1 p-6 flex flex-col rounded-xl bg-muted/90 h-full">
-        <p class="font-bold text-lg">
-          <CalendarDays class="mb-2" :size="32" />
-          Atendimentos recentes
-        </p>
-        <div v-if="loadingData" class="flex items-center justify-center h-full">
-          <LoaderCircle :size="48" class="animate-spin" />
-        </div>
-        <ul v-else-if="contractRidesList.length > 0" class="mt-6 flex-1">
-          <li
-            v-for="(ride, index) in contractRidesList"
-            :key="index"
-            class="py-4 flex items-center justify-between gap-3 border-b border-zinc-300 last-of-type:border-b-0"
-          >
-            <p class="flex-1 text-sm text-left">
-              <span class="font-bold">{{ ride.code }}</span>
-              <span> | </span>
-              {{ ride?.user.name }} |
-              {{ sanitizeRideDate(ride.travel.date) }}
-            </p>
-            <RideStatusFlag :ride-status="ride.status" />
-
-            <Button
-              type="button"
-              size="icon"
-              variant="link"
-              @click="navigateTo(`/rides/form/edit/${ride.code || ride.id}`)"
-            >
-              <ExternalLink :size="16" />
-            </Button>
-          </li>
-        </ul>
-        <div v-else class="p-10 flex flex-col items-center justify-center h-full">
-          <Inbox class="text-muted-foreground" :size="24" />
-          <p class="my-3 text-muted-foreground text-sm">Nenhum atendimento recente</p>
-        </div>
-        <Button
-          v-if="contractRidesList.length > 0"
-          type="button"
-          class="mt-6 p-6 w-full"
-          @click="navigateTo('/rides/list/open')"
-        >
-          Ver Todos
-        </Button>
-      </div>
-      <div class="p-6 flex flex-col rounded-xl bg-muted/90 h-full min-w-0">
-        <p class="mb-6 font-bold text-lg">
+      <!-- RIDES CHART -->
+      <div class="p-4 sm:p-6 flex flex-col rounded-xl bg-muted/90 h-full min-w-0">
+        <p class="mb-6 font-bold text-base sm:text-lg">
           <ChartArea class="mb-2" :size="32" />
           Atendimentos por mês
         </p>
@@ -556,8 +554,11 @@ const dashboardEntityName = computed(() => {
           <p class="my-3 text-muted-foreground text-sm">Nenhum atendimento no período</p>
         </div>
       </div>
-      <div class="col-span-1 p-6 flex flex-col rounded-xl bg-muted/90 gap-6">
-        <p class="font-bold text-lg">
+      <!-- BUDGET AND BRANCHES -->
+      <div
+        class="col-span-1 row-span-1 lg:row-span-2 p-4 sm:p-6 flex flex-col rounded-xl bg-muted/90 gap-6 min-w-0"
+      >
+        <p class="font-bold text-base sm:text-lg">
           <Coins class="mb-2" :size="32" />
           Budget
         </p>
@@ -567,14 +568,14 @@ const dashboardEntityName = computed(() => {
         <div v-else class="flex flex-col">
           <div>
             <small class="text-muted-foreground">Budget total / mensal</small>
-            <h1 class="text-xl md:text-5xl font-bold">
+            <h1 class="text-lg sm:text-xl md:text-5xl font-bold break-words">
               {{ currencyFormat(contract?.mainBudget) }}
             </h1>
           </div>
           <div>
             <small class="text-muted-foreground">Budget disponível (não alocado)</small>
             <h1
-              class="text-2xl font-bold"
+              class="text-xl sm:text-2xl font-bold break-words"
               :class="contract?.availableBudget > 0 ? 'text-green-600' : 'text-red-600'"
             >
               {{
@@ -586,23 +587,27 @@ const dashboardEntityName = computed(() => {
           </div>
         </div>
         <div v-for="branch in userAllowedBranches" :key="branch.id">
-          <div class="border border-zinc-950 rounded-lg bg-muted/80 p-4 mt-4 pt-1">
-            <small class="mb-6 font-bold"> {{ branch.fantasyName }}</small>
-            <div class="flex flex-col md:flex-row justify-between gap-2">
+          <div
+            class="border border-zinc-950 rounded-lg bg-muted/80 p-4 mt-4 pt-1 min-w-0"
+          >
+            <small class="mb-6 font-bold break-words"> {{ branch.fantasyName }}</small>
+            <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3">
               <div>
                 <small class="text-muted-foreground">Alocado</small>
-                <h1 class="text-xl font-bold">{{ currencyFormat(branch.budget) }}</h1>
+                <h1 class="text-lg sm:text-xl font-bold break-words">
+                  {{ currencyFormat(branch.budget) }}
+                </h1>
               </div>
               <div>
                 <small class="text-muted-foreground">Utilizado</small>
-                <h1 class="text-xl font-bold">
+                <h1 class="text-lg sm:text-xl font-bold break-words">
                   {{ currencyFormat(branch.usedBudget) }}
                 </h1>
               </div>
               <div>
                 <small class="text-muted-foreground">Saldo</small>
                 <h1
-                  class="text-xl font-bold text-amber-600"
+                  class="text-lg sm:text-xl font-bold text-amber-600 break-words"
                   :class="getBranchRemainingBudgetValue(branch) < 0 && 'text-red-600'"
                 >
                   {{ currencyFormat(getBranchRemainingBudgetValue(branch)) }}
@@ -614,10 +619,73 @@ const dashboardEntityName = computed(() => {
         <Button
           v-if="normalizedRole === 'master-manager'"
           type="button"
-          class="mt-6 p-6 w-full md:w-fit"
+          class="mt-6 w-full md:w-fit"
           @click="navigateTo({ path: '/corporative/contracts/edit/', hash: '#budget' })"
         >
           Gerenciar Budget
+        </Button>
+      </div>
+      <!-- RECENT RIDES -->
+      <div
+        class="col-span-1 sm:col-span-2 p-4 sm:p-6 flex flex-col rounded-xl bg-muted/90 h-full min-w-0"
+      >
+        <p class="font-bold text-base sm:text-lg">
+          <CalendarDays class="mb-2" :size="32" />
+          Atendimentos recentes
+        </p>
+        <div v-if="loadingData" class="flex items-center justify-center h-full">
+          <LoaderCircle :size="48" class="animate-spin" />
+        </div>
+        <ul v-else-if="contractRidesList.length > 0" class="mt-6 flex-1">
+          <li
+            v-for="(ride, index) in contractRidesList"
+            :key="index"
+            class="py-4 grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-5 items-start xl:items-center gap-3 border-b border-zinc-300 last-of-type:border-b-0 min-w-0"
+          >
+            <div class="flex items-center gap-1 min-w-0">
+              <p class="text-xs font-bold flex items-center break-all">
+                {{ ride.code }}
+              </p>
+              <Button
+                type="button"
+                size="icon"
+                variant="link"
+                @click="navigateTo(`/rides/form/edit/${ride.code || ride.id}`)"
+              >
+                <ExternalLink :size="16" />
+              </Button>
+            </div>
+            <div
+              class="col-span-1 sm:col-span-2 xl:col-span-2 flex flex-col items-start min-w-0"
+            >
+              <small class="text-xs font-bold">Usuário</small>
+              <p class="text-xs text-left break-words">
+                {{ ride?.user.name }} -
+                {{ sanitizeRideDate(ride.travel.date) }}
+              </p>
+            </div>
+            <div class="flex flex-col items-start min-w-0">
+              <small class="text-xs font-bold">Motorista</small>
+              <small class="text-xs text-left break-words">
+                {{ ride?.driver.name }}</small
+              >
+            </div>
+            <div class="flex items-center justify-start sm:justify-end gap-2 min-w-0">
+              <RideStatusFlag :ride-status="ride.status" />
+            </div>
+          </li>
+        </ul>
+        <div v-else class="p-10 flex flex-col items-center justify-center h-full">
+          <Inbox class="text-muted-foreground" :size="24" />
+          <p class="my-3 text-muted-foreground text-sm">Nenhum atendimento recente</p>
+        </div>
+        <Button
+          v-if="contractRidesList.length > 0"
+          type="button"
+          class="mt-6 w-full md:w-fit"
+          @click="navigateTo('/rides/list/open')"
+        >
+          Ver Todos
         </Button>
       </div>
     </div>

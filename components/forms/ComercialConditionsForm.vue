@@ -9,9 +9,9 @@ definePageMeta({
 <template>
   <section class="px-6">
     <div class="mb-6"></div>
-    <div class="mb-4 flex items-end gap-10">
+    <div class="mb-4 grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3 xl:gap-8">
       <FormField v-slot="{ componentField }" name="mainBudget">
-        <FormItem class="max-w-[350px]">
+        <FormItem class="w-full">
           <div class="flex flex-col">
             <FormLabel> Budget do Contrato </FormLabel>
             <small class="mt-2 flex items-center gap-1 text-muted-foreground">
@@ -26,7 +26,7 @@ definePageMeta({
         </FormItem>
       </FormField>
       <FormField v-slot="{ componentField }" name="paymentTerm">
-        <FormItem>
+        <FormItem class="w-full">
           <div class="flex flex-col">
             <FormLabel>Fechamento</FormLabel>
             <small class="mt-2 flex items-center gap-1 text-muted-foreground">
@@ -41,7 +41,7 @@ definePageMeta({
         </FormItem>
       </FormField>
       <FormField v-slot="{ componentField }" name="paymentDueDate">
-        <FormItem>
+        <FormItem class="w-full">
           <div class="flex flex-col">
             <FormLabel>Faturamento (Dias)</FormLabel>
             <small class="mt-2 flex items-center gap-1 text-muted-foreground">

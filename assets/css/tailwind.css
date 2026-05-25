@@ -126,3 +126,27 @@
     -ms-overflow-style: none; /* IE and Edge */
   }
 }
+
+/* Gradient border on the right edge of the sidebar */
+[data-sidebar='sidebar'] {
+  position: relative;
+}
+
+[data-sidebar='sidebar']::after {
+  content: '';
+  position: absolute;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  background: linear-gradient(
+    to bottom,
+    transparent 0%,
+    rgba(51, 255, 204, 0.25) 20%,
+    rgba(51, 255, 204, 0.6) 50%,
+    rgba(51, 255, 204, 0.25) 80%,
+    transparent 100%
+  );
+  pointer-events: none;
+  z-index: 1;
+}

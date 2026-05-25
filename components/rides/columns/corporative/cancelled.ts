@@ -155,6 +155,7 @@ export const columns: any = [
   columnHelper.display({
     id: 'routeDateTime',
     enableHiding: false,
+    meta: { label: 'Rota', width: '300px' },
     header: () => h('div', { class: 'text-xs leading-none text-left' }, 'Rota'),
     cell: ({ row }) => {
       const data = row.original;

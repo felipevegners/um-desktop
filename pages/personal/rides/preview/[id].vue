@@ -189,7 +189,7 @@ const travelEndTimeCalc = (time1: any, time2: any) => {
 };
 </script>
 <template>
-  <main class="p-6">
+  <main class="p-4 md:p-6">
     <header>
       <SharedBackLink />
     </header>
@@ -203,7 +203,7 @@ const travelEndTimeCalc = (time1: any, time2: any) => {
           @click="toggleCancelationModal"
           type="button"
           variant="destructive"
-          class="p-6"
+          class="p-4 md:p-6"
         >
           <X />
           Cancelar Atendimento

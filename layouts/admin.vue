@@ -302,8 +302,12 @@ const cookiesPoliceFileUrl =
           </SidebarMenu>
         </SidebarGroup>
       </SidebarContent>
-      <SidebarSeparator class="border-b border-zinc-700" />
-      <SidebarGroup class="p-2 flex flex-row items-center gap-2 bg-zinc-950">
+      <SidebarSeparator
+        class="border-b border-zinc-700 group-data-[collapsible=icon]:hidden"
+      />
+      <SidebarGroup
+        class="p-2 flex flex-row items-center gap-2 bg-zinc-950 group-data-[collapsible=icon]:hidden"
+      >
         <Package class="text-muted-foreground" :size="16" />
         <small class="text-muted-foreground"> v{{ $config.public.clientVersion }} </small>
       </SidebarGroup>
@@ -417,7 +421,7 @@ const cookiesPoliceFileUrl =
       </SidebarFooter> -->
       <SidebarRail />
     </Sidebar>
-    <SidebarInset class="md:max-w-[calc(100%-256px)]">
+    <SidebarInset class="min-w-0">
       <Header />
       <slot />
       <!-- Cookie Acceptance Message -->
@@ -454,10 +458,10 @@ const cookiesPoliceFileUrl =
 
 <style scoped>
 .sidebar {
-  @apply md:bg-transparent bg-zinc-950 text-white;
+  @apply lg:bg-transparent bg-zinc-950 text-white;
 }
 
 .sidebar-footer {
-  @apply md:bg-transparent bg-zinc-950 text-white;
+  @apply lg:bg-transparent bg-zinc-950 text-white;
 }
 </style>

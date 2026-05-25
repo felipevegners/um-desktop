@@ -118,16 +118,18 @@ const cancelSplitPayment = () => {
 <template>
   <div class="col-span-2">
     <div class="p-4 rounded-md border border-zinc-950">
-      <h3 class="mb-4 font-bold text-xl">Ratear valor entre centros de custo</h3>
+      <h3 class="mb-4 text-lg font-bold md:text-xl">
+        Ratear valor entre centros de custo
+      </h3>
       <p class="mb-6 text-sm text-muted-foreground">
         Adicione os Centros de Custo que devem entrar no rateio deste atendimento
       </p>
       <div
         v-for="(area, index) in splitPaymentCCAreas"
-        class="mb-10 md:grid md:grid-cols-4 gap-4"
+        class="mb-6 rounded-md border border-zinc-200 bg-white p-3 md:grid md:grid-cols-12 md:gap-4 md:p-4"
       >
         <FormField v-slot="{}" :name="`cc-${index}`">
-          <FormItem class="col-span-2">
+          <FormItem class="md:col-span-6">
             <FormLabel>Centro de Custo*</FormLabel>
             <FormControl>
               <FormSelect
@@ -141,7 +143,7 @@ const cancelSplitPayment = () => {
           </FormItem>
         </FormField>
         <FormField v-slot="{}" :name="`percentage-${index}`">
-          <FormItem class="col-span-1">
+          <FormItem class="mt-4 md:col-span-3 md:mt-0">
             <FormLabel>Porcentagem</FormLabel>
             <FormControl>
               <Input
@@ -154,30 +156,41 @@ const cancelSplitPayment = () => {
             <FormMessage class="absolute text-xs" />
           </FormItem>
         </FormField>
-        <div class="flex flex-col justify-center gap-2">
-          <small class="font-medium text-sm leading-none"> Valor </small>
-          <div class="mt-2 flex items-center gap-2">
-            <p class="font-bold">
+        <div class="mt-4 flex flex-col justify-end gap-2 md:col-span-3 md:mt-0">
+          <small class="font-medium text-sm">Valor</small>
+          <div
+            class="flex items-center gap-2 rounded-md border border-zinc-200 bg-zinc-50 px-2 py-3"
+          >
+            <p class="font-bold text-lg leading-none">
               {{ currencyFormat(area.amount.toString()) }}
             </p>
-            <Button
-              type="button"
-              size="icon"
-              variant="destructive"
-              @click.prevent="removeShareCCRow(index as number)"
-              class="p-2"
-            >
-              <Trash />
-            </Button>
           </div>
+          <Button
+            type="button"
+            size="icon"
+            variant="destructive"
+            @click.prevent="removeShareCCRow(index as number)"
+            class="ml-auto shrink-0 p-0"
+          >
+            <Trash />
+          </Button>
         </div>
       </div>
-      <div class="flex items-center gap-6">
-        <Button v-if="showAddCCToShareBtn" class="w-fit" @click.prevent="addShareCCRow">
+      <div class="flex w-full flex-col gap-3 lg:flex-row lg:items-center lg:gap-6">
+        <Button
+          v-if="showAddCCToShareBtn"
+          class="w-full lg:w-fit"
+          @click.prevent="addShareCCRow"
+        >
           <Plus />
           Adicionar C/C
         </Button>
-        <Button type="button" variant="secondary" @click.prevent="cancelSplitPayment">
+        <Button
+          type="button"
+          variant="secondary"
+          class="w-full lg:w-fit"
+          @click.prevent="cancelSplitPayment"
+        >
           <X />
           Cancelar
         </Button>
@@ -186,21 +199,21 @@ const cancelSplitPayment = () => {
   </div>
   <div
     v-if="splitPaymentCCAreas.length"
-    class="col-span-2 flex items-center justify-end gap-10"
+    class="col-span-2 mt-4 grid w-full grid-cols-1 gap-3 lg:grid-cols-2"
   >
-    <div>
-      <small>Total do atendimento</small>
+    <div class="rounded-md border border-zinc-200 bg-white p-3">
+      <small class="text-muted-foreground">Total do atendimento</small>
       <p
-        class="text-3xl font-bold text-zinc-950"
+        class="text-2xl font-bold text-zinc-950 lg:text-3xl"
         :class="remainingRideAmount !== 0 && 'text-amber-600'"
       >
         {{ currencyFormat(estimates.estimatedTotalPrice) }}
       </p>
     </div>
-    <div>
-      <small>Resta ratear</small>
+    <div class="rounded-md border border-zinc-200 bg-white p-3">
+      <small class="text-muted-foreground">Resta ratear</small>
       <p
-        class="text-3xl font-bold text-red-600"
+        class="text-2xl font-bold text-red-600 lg:text-3xl"
         :class="remainingRideAmount == 0 && 'text-green-600'"
       >
         {{ currencyFormat(remainingRideAmount) }}

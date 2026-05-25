@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { LoaderCircle } from 'lucide-vue-next';
 
-defineProps<{
+const props = defineProps<{
   sbmLabel: string;
   cncLabel: string;
   submit?: string;
@@ -9,14 +9,30 @@ defineProps<{
   loading?: boolean;
   disabled?: boolean;
 }>();
+
+const handleCancel = async () => {
+  if (!props.cancel) return;
+  await navigateTo(props.cancel);
+};
 </script>
 <template>
-  <section class="py-8 space-x-6">
-    <Button type="submit" class="p-6" :disabled="disabled">
-      <LoaderCircle v-if="loading" class="w-10 h-10 animate-spin" />
+  <section
+    class="py-8 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-start sm:gap-4"
+  >
+    <Button
+      type="submit"
+      class="w-full px-5 py-3 sm:w-auto"
+      :disabled="disabled || loading"
+    >
+      <LoaderCircle v-if="loading" class="h-5 w-5 animate-spin" />
       {{ sbmLabel }}
     </Button>
-    <Button variant="ghost" class="p-6" @click.prevent="navigateTo(cancel)">
+    <Button
+      variant="ghost"
+      class="w-full px-5 py-3 sm:w-auto"
+      :disabled="loading"
+      @click.prevent="handleCancel"
+    >
       {{ cncLabel }}
     </Button>
   </section>

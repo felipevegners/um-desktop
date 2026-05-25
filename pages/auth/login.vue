@@ -30,11 +30,21 @@ const form = useForm({
   validationSchema: formSchema,
 });
 
-const { signIn } = useAuth();
+const { data, signIn } = useAuth();
 const route = useRoute();
 const router = useRouter();
 const { toast } = useToast();
 const isLoading = ref<boolean>(false);
+
+const roleDashboardRedirect = {
+  admin: '/admin',
+  'master-manager': '/corporative',
+  'branch-manager': '/corporative',
+  'platform-admin': '/corporative',
+  'platform-corp-user': '/personal',
+  'platform-user': '/personal',
+  'platform-driver': '/driver',
+} as const;
 
 const viewPassword = ref<boolean>(false);
 
@@ -72,6 +82,70 @@ const getAbsoluteCallbackUrl = (path: string): string => {
   return path;
 };
 
+const getDashboardByRole = (role: string | undefined): string => {
+  if (!role) return '/';
+  return roleDashboardRedirect[role as keyof typeof roleDashboardRedirect] || '/';
+};
+
+const isPathAllowedForRole = (path: string, role: string | undefined): boolean => {
+  if (!role) return false;
+  if (path === '/' || path.startsWith('/auth/')) return true;
+
+  if (role === 'admin') {
+    return (
+      path.startsWith('/admin') ||
+      path.startsWith('/rides/') ||
+      path.startsWith('/profile')
+    );
+  }
+
+  if (role === 'master-manager') {
+    return (
+      path.startsWith('/corporative') ||
+      path.startsWith('/rides/') ||
+      path.startsWith('/profile')
+    );
+  }
+
+  if (role === 'branch-manager' || role === 'platform-admin') {
+    if (path.startsWith('/corporative/contracts/edit')) return false;
+
+    return (
+      path.startsWith('/corporative') ||
+      path.startsWith('/rides/') ||
+      path.startsWith('/profile')
+    );
+  }
+
+  if (role === 'platform-user' || role === 'platform-corp-user') {
+    return path.startsWith('/personal') || path.startsWith('/profile');
+  }
+
+  if (role === 'platform-driver') {
+    return path.startsWith('/driver') || path.startsWith('/profile');
+  }
+
+  return false;
+};
+
+const resolveRoleSafeCallbackPath = (
+  callbackPath: string,
+  role: string | undefined,
+): string => {
+  if (!role) return '/';
+  if (isPathAllowedForRole(callbackPath, role)) return callbackPath;
+  return getDashboardByRole(role);
+};
+
+const getLoggedUserRole = async (): Promise<string | undefined> => {
+  try {
+    const session: any = await $fetch('/api/auth/session');
+    return session?.user?.role;
+  } catch {
+    return (data.value as any)?.user?.role;
+  }
+};
+
 const onSubmit = form.handleSubmit(async (values) => {
   try {
     isLoading.value = true;
@@ -89,7 +163,10 @@ const onSubmit = form.handleSubmit(async (values) => {
       });
       return;
     }
-    await router.push(callbackPath);
+
+    const role = await getLoggedUserRole();
+    const safeRedirectPath = resolveRoleSafeCallbackPath(callbackPath, role);
+    await router.push(safeRedirectPath);
   } catch (error) {
     console.error('Erro no login -> ', error);
     toast({

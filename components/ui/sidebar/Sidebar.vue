@@ -1,9 +1,8 @@
 <script setup lang="ts">
-import { Sheet, SheetContent } from '@/components/ui/sheet';
 import { cn } from '@/lib/utils';
 
 import type { SidebarProps } from '.';
-import { SIDEBAR_WIDTH_MOBILE, useSidebar } from './utils';
+import { useSidebar } from './utils';
 
 defineOptions({
   inheritAttrs: false,
@@ -32,30 +31,43 @@ const { isMobile, state, openMobile, setOpenMobile } = useSidebar();
     <slot />
   </div>
 
-  <Sheet
-    v-else-if="isMobile"
-    :open="openMobile"
-    v-bind="$attrs"
-    @update:open="setOpenMobile"
-  >
-    <SheetContent
-      data-sidebar="sidebar"
-      data-mobile="true"
-      :side="side"
-      class="w-[--sidebar-width] bg-sidebar p-0 text-sidebar-foreground [&>button]:hidden"
-      :style="{
-        '--sidebar-width': SIDEBAR_WIDTH_MOBILE,
-      }"
-    >
-      <div class="flex h-full w-full flex-col">
-        <slot />
-      </div>
-    </SheetContent>
-  </Sheet>
+  <template v-else-if="isMobile">
+    <Teleport to="body">
+      <div
+        v-if="openMobile"
+        class="!fixed !inset-0 z-[80] bg-black/75"
+        @click="setOpenMobile(false)"
+      />
+      <aside
+        v-if="openMobile"
+        data-sidebar="sidebar"
+        data-mobile="true"
+        class="!fixed !top-0 !bottom-0 !left-0 !right-auto z-[90] h-[100dvh] w-[min(18rem,88vw)] border-r border-zinc-800 bg-zinc-950 p-0 text-white shadow-2xl"
+      >
+        <div class="relative p-2 flex justify-end">
+          <Button
+            type="button"
+            size="icon"
+            variant="ghost"
+            aria-label="Fechar menu"
+            class="z-[95] bg-zinc-900 text-white rounded-md"
+            @click="setOpenMobile(false)"
+          >
+            X
+          </Button>
+        </div>
+        <div
+          class="flex h-[100dvh] w-full flex-col overflow-y-auto bg-zinc-950 text-white"
+        >
+          <slot />
+        </div>
+      </aside>
+    </Teleport>
+  </template>
 
   <div
     v-else
-    class="group peer hidden md:block"
+    class="group peer hidden lg:block"
     :data-state="state"
     :data-collapsible="state === 'collapsed' ? collapsible : ''"
     :data-variant="variant"
@@ -77,7 +89,7 @@ const { isMobile, state, openMobile, setOpenMobile } = useSidebar();
     <div
       :class="
         cn(
-          'duration-200 fixed inset-y-0 z-10 hidden h-svh w-[--sidebar-width] transition-[left,right,width] ease-linear md:flex',
+          'duration-200 fixed inset-y-0 z-10 hidden h-svh w-[--sidebar-width] transition-[left,right,width] ease-linear lg:flex',
           side === 'left'
             ? 'left-0 group-data-[collapsible=offcanvas]:left-[calc(var(--sidebar-width)*-1)]'
             : 'right-0 group-data-[collapsible=offcanvas]:right-[calc(var(--sidebar-width)*-1)]',

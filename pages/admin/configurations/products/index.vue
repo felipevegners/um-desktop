@@ -2,6 +2,7 @@
 import CurrencyInput from '@/components/shared/CurrencyInput.vue';
 import DataTable from '@/components/shared/DataTable.vue';
 import FormSelect from '@/components/shared/FormSelect.vue';
+import ListPageLoading from '@/components/shared/ListPageLoading.vue';
 import TableActions from '@/components/shared/TableActions.vue';
 import { useToast } from '@/components/ui/toast';
 import { productTypes } from '@/config/products';
@@ -198,7 +199,7 @@ const finalColumns = [
 ];
 </script>
 <template>
-  <main class="p-6">
+  <main class="p-4 md:p-6">
     <section class="mb-6 flex items-center justify-between">
       <h1 class="flex items-center gap-4 text-3xl font-bold">
         <Box :size="32" />
@@ -370,9 +371,7 @@ const finalColumns = [
         </CardContent>
       </Card>
     </section>
-    <section v-if="isLoading" class="p-10 flex items-center justify-center">
-      <LoaderCircle class="w-10 h-10 animate-spin" />
-    </section>
+    <ListPageLoading v-if="isLoading" />
     <section v-else>
       <DataTable
         :columns="finalColumns"

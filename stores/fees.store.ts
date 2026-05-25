@@ -28,10 +28,11 @@ export const useFeeStore = defineStore('fees', {
       try {
         const response = await getFeesService('');
         this.fees = response;
-        this.isLoading = false;
       } catch (error) {
         console.debug(error);
         throw error;
+      } finally {
+        this.isLoading = false;
       }
     },
     async getFeeByTypeAction(feeType: string) {
@@ -39,9 +40,10 @@ export const useFeeStore = defineStore('fees', {
       try {
         const response = await getFeesService(feeType);
         this.fee = response;
-        this.isLoading = false;
       } catch (error) {
         throw error;
+      } finally {
+        this.isLoading = false;
       }
     },
     async createFeeAction(feeData: any) {

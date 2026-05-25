@@ -57,12 +57,21 @@ const classes = computed(() => variantClasses[props.variant]);
 </script>
 
 <template>
-  <div :class="['rounded-lg border p-4', classes.card]">
-    <p :class="['mb-1 text-sm font-semibold', classes.label]">{{ label }}</p>
+  <div :class="['min-w-0 rounded-lg border p-3 sm:p-4', classes.card]">
+    <p :class="['mb-1 text-xs sm:text-sm font-semibold break-words', classes.label]">
+      {{ label }}
+    </p>
     <LoaderCircle v-if="loading" class="animate-spin" />
     <template v-else>
-      <p :class="['text-3xl font-bold', classes.value]">{{ value }}</p>
-      <p v-if="subValue" :class="['mt-1 text-base font-semibold', classes.sub]">
+      <p
+        :class="['text-xl sm:text-2xl lg:text-3xl font-bold break-words', classes.value]"
+      >
+        {{ value }}
+      </p>
+      <p
+        v-if="subValue"
+        :class="['mt-1 text-sm sm:text-base font-semibold break-words', classes.sub]"
+      >
         {{ subValue }}
       </p>
     </template>

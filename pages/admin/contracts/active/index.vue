@@ -1,9 +1,10 @@
 <script setup lang="ts">
 import DataTable from '@/components/shared/DataTable.vue';
+import ListPageLoading from '@/components/shared/ListPageLoading.vue';
 import TableActions from '@/components/shared/TableActions.vue';
 import { useToast } from '@/components/ui/toast';
 import { createColumnHelper } from '@tanstack/vue-table';
-import { FileText, LoaderCircle, Plus } from 'lucide-vue-next';
+import { FileText, Plus } from 'lucide-vue-next';
 import { storeToRefs } from 'pinia';
 import { useContractsStore } from '~/stores/contracts.store';
 
@@ -95,19 +96,21 @@ const finalColumns = [
 ];
 </script>
 <template>
-  <main class="p-6">
-    <section class="mb-6 flex items-center justify-between">
-      <div class="flex items-center gap-4">
-        <FileText :size="32" />
-        <h1 class="font-bold text-black text-3xl">Gerenciar Contratos Ativos</h1>
+  <main class="p-4 md:p-6">
+    <section
+      class="mb-6 flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between"
+    >
+      <div class="flex min-w-0 items-center gap-3 md:gap-4">
+        <FileText :size="30" class="shrink-0" />
+        <h1 class="font-bold text-black text-3xl leading-tight">
+          Gerenciar Contratos Ativos
+        </h1>
       </div>
-      <Button @click="navigateTo('/admin/contracts/new')">
+      <Button class="w-full sm:w-auto" @click="navigateTo('/admin/contracts/new')">
         <Plus class="w-4 h-4" /> Novo Contrato
       </Button>
     </section>
-    <section v-if="isLoading" class="min-h-[300px] flex items-center justify-center">
-      <LoaderCircle class="w-10 h-10 animate-spin" />
-    </section>
+    <ListPageLoading v-if="isLoading" />
     <section v-else>
       <DataTable
         :columns="finalColumns"

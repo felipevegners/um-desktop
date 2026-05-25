@@ -17,6 +17,7 @@ import { useProductsStore } from '@/stores/products.store';
 import { useRidesStore } from '@/stores/rides.store';
 import type { Product } from '@/types/products/types';
 import { toTypedSchema } from '@vee-validate/zod';
+import { useMediaQuery } from '@vueuse/core';
 import {
   CalendarPlus,
   CalendarRange,
@@ -64,6 +65,7 @@ const props = withDefaults(defineProps<Props>(), {
 // Determine if this is admin mode or corporative mode
 const isAdminMode = computed(() => props.userRole === 'admin');
 const isCorporativeMode = computed(() => props.userRole === 'corporative');
+const isMobileViewport = useMediaQuery('(max-width: 767px)');
 
 const API_KEY = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
 const customIconStart = `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="#FFFFFF" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-square-dot-icon lucide-square-dot"><rect width="18" height="18" x="3" y="3" rx="2"/><circle cx="12" cy="12" r="1"/></svg>`;
@@ -1355,7 +1357,7 @@ const onSubmit = form.handleSubmit(async (values: any) => {
 </script>
 
 <template>
-  <main class="p-6">
+  <main class="p-4 md:p-6">
     <header>
       <SharedBackLink />
     </header>
@@ -1410,10 +1412,12 @@ const onSubmit = form.handleSubmit(async (values: any) => {
                         :key="product.id"
                       >
                         <article
-                          class="flex-1 min-w-0 p-4 flex items-center justify-between gap-4 bg-white rounded-md border border-zinc-900"
+                          class="flex-1 min-w-0 p-4 flex flex-col md:flex-row md:items-center md:justify-between gap-4 bg-white rounded-md border border-zinc-900"
                         >
-                          <div class="flex items-center justify-start gap-2">
-                            <div class="flex-none w-72 flex items-center gap-2">
+                          <div class="flex items-center justify-start gap-2 min-w-0">
+                            <div
+                              class="min-w-0 w-full md:w-72 md:flex-none flex items-center gap-2"
+                            >
                               <Checkbox
                                 @update:checked="setSelectedProduct(product)"
                                 :checked="selectedProduct?.id === product.id"
@@ -1435,58 +1439,58 @@ const onSubmit = form.handleSubmit(async (values: any) => {
                                   </TooltipContent>
                                 </Tooltip>
                               </TooltipProvider>
-                              <div class="flex items-center">
+                              <div class="flex items-center shrink-0">
                                 <Users :size="14" />
                                 <small class="ml-1 font-bold">
                                   {{ product?.capacity }}
                                 </small>
                               </div>
                             </div>
+                          </div>
+                          <div
+                            class="w-full md:w-auto min-w-0 flex flex-wrap md:flex-nowrap items-center justify-start gap-2 sm:gap-4"
+                          >
                             <div
-                              class="flex-none min-w-0 flex items-center justify-start gap-4"
+                              class="flex-1 min-w-[5rem] md:flex-none flex flex-col items-center border border-zinc-300 rounded-md px-2 py-1"
+                            >
+                              <small class="text-xxs font-bold">Base</small>
+                              <small class="text-xs">{{
+                                currencyFormat(product.basePrice)
+                              }}</small>
+                            </div>
+                            <div
+                              class="flex-1 min-w-[5rem] md:flex-none flex flex-col items-center border border-zinc-300 rounded-md px-2 py-1"
+                            >
+                              <small class="text-xxs font-bold">Km</small>
+                              <small class="text-xs">{{
+                                currencyFormat(product.kmPrice)
+                              }}</small>
+                            </div>
+                            <div
+                              class="flex-1 min-w-[5rem] md:flex-none flex flex-col items-center border border-zinc-300 rounded-md px-2 py-1"
+                            >
+                              <small class="text-xxs font-bold">Min.</small>
+                              <small class="text-xs">{{
+                                currencyFormat(product.minutePrice)
+                              }}</small>
+                            </div>
+                            <div
+                              v-if="product.type === 'contract'"
+                              class="w-full md:w-auto flex items-center justify-start gap-2 sm:gap-3"
                             >
                               <div
-                                class="flex flex-col items-center border border-zinc-300 rounded-md px-2 py-1"
+                                class="flex-1 min-w-[5rem] md:flex-none flex flex-col items-center border border-zinc-300 rounded-md px-2 py-1"
                               >
-                                <small class="text-xxs font-bold">Base</small>
-                                <small class="text-xs">{{
-                                  currencyFormat(product.basePrice)
-                                }}</small>
+                                <small class="text-xxs font-bold">KM</small>
+                                <small class="text-xs">{{ product.includedKms }}</small>
                               </div>
                               <div
-                                class="flex flex-col items-center border border-zinc-300 rounded-md px-2 py-1"
+                                class="flex-1 min-w-[5rem] md:flex-none flex flex-col items-center border border-zinc-300 rounded-md px-2 py-1"
                               >
-                                <small class="text-xxs font-bold">Km</small>
-                                <small class="text-xs">{{
-                                  currencyFormat(product.kmPrice)
-                                }}</small>
-                              </div>
-                              <div
-                                class="flex flex-col items-center border border-zinc-300 rounded-md px-2 py-1"
-                              >
-                                <small class="text-xxs font-bold">Min.</small>
-                                <small class="text-xs">{{
-                                  currencyFormat(product.minutePrice)
-                                }}</small>
-                              </div>
-                              <div
-                                v-if="product.type === 'contract'"
-                                class="flex flex-row items-center gap-3"
-                              >
-                                <div
-                                  class="flex flex-col items-center border border-zinc-300 rounded-md px-2 py-1"
-                                >
-                                  <small class="text-xxs font-bold">KM</small>
-                                  <small class="text-xs">{{ product.includedKms }}</small>
-                                </div>
-                                <div
-                                  class="flex flex-col items-center border border-zinc-300 rounded-md px-2 py-1"
-                                >
-                                  <small class="text-xxs font-bold">Horas</small>
-                                  <small class="text-xs">
-                                    {{ product.includedHours }}
-                                  </small>
-                                </div>
+                                <small class="text-xxs font-bold">Horas</small>
+                                <small class="text-xs">
+                                  {{ product.includedHours }}
+                                </small>
                               </div>
                             </div>
                           </div>
@@ -1552,13 +1556,15 @@ const onSubmit = form.handleSubmit(async (values: any) => {
                       </div>
                     </div>
                   </div>
-                  <NewDatePicker
-                    :form="form"
-                    :is-recurring-ride="isRecurringRide"
-                    :recurrence-range="recurrenceRange"
-                  />
+                  <div class="col-span-2 md:col-span-1">
+                    <NewDatePicker
+                      :form="form"
+                      :is-recurring-ride="isRecurringRide"
+                      :recurrence-range="recurrenceRange"
+                    />
+                  </div>
                   <FormField v-slot="{ componentField }" name="departTime">
-                    <FormItem>
+                    <FormItem class="col-span-2 md:col-span-1">
                       <FormLabel>Hora da Partida*</FormLabel>
                       <FormControl>
                         <Input type="text" v-bind="componentField" v-maska="'##:##'" />
@@ -1568,22 +1574,27 @@ const onSubmit = form.handleSubmit(async (values: any) => {
                   </FormField>
 
                   <FormField name="passengers">
-                    <FormItem>
+                    <FormItem class="col-span-2 md:col-span-1">
                       <FormLabel>Passageiros*</FormLabel>
                       <FormControl>
-                        <div class="mt-2 flex items-center justify-between gap-3">
+                        <div class="mt-2 flex w-full items-center gap-3 md:max-w-xs">
                           <Button
                             type="button"
                             @click="removePassengers"
                             :disabled="ridePassengers === 1"
+                            class="w-12 px-0"
                           >
                             <Minus :size="20" />
                           </Button>
-                          <Input v-model="ridePassengers" class="text-center font-bold" />
+                          <Input
+                            v-model="ridePassengers"
+                            class="flex-1 text-center font-bold"
+                          />
                           <Button
                             type="button"
                             @click="addPassengers"
                             :disabled="ridePassengers === selectedProduct?.capacity"
+                            class="w-12 px-0"
                           >
                             <Plus :size="20" />
                           </Button>
@@ -1780,33 +1791,39 @@ const onSubmit = form.handleSubmit(async (values: any) => {
                 <LoaderCircle :size="60" class="animate-spin" />
                 <small class="text-muted-foreground uppercase">Calculando rota</small>
               </div>
-              <div v-else class="grid grid-cols-2 gap-10">
-                <div class="space-y-6 flex flex-col items-start">
+              <div v-else class="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-10">
+                <div class="space-y-4 md:space-y-6 flex flex-col items-start w-full">
                   <h3 class="text-lg font-bold">Preview da Rota</h3>
-                  <div class="p-4 bg-white rounded-md w-full">
-                    <GoogleMap
-                      ref="mapRef"
-                      :api-key="API_KEY"
-                      style="width: 100%; height: 700px"
-                      :center="mapCenter"
-                      :zoom="10"
-                      :zoom-control="true"
-                    >
-                      <Marker
-                        v-for="marker in markers"
-                        ref="markerRef"
-                        :key="marker.id"
-                        :options="{
-                          position: {
-                            lat: marker.lat,
-                            lng: marker.lng,
-                          },
-                          icon: marker.icon,
-                        }"
-                        class="w-10 h-10"
-                      />
-                      <Polyline :options="ridePath" />
-                    </GoogleMap>
+                  <div class="p-0 md:p-4 bg-transparent md:bg-white rounded-md w-full">
+                    <div class="w-full h-[420px] sm:h-[500px] md:h-[700px]">
+                      <GoogleMap
+                        class="w-full"
+                        ref="mapRef"
+                        :api-key="API_KEY"
+                        style="width: 100%; height: 100%"
+                        :center="mapCenter"
+                        :zoom="10"
+                        :zoom-control="true"
+                        :map-type-control="!isMobileViewport"
+                        :fullscreen-control="!isMobileViewport"
+                        :street-view-control="!isMobileViewport"
+                      >
+                        <Marker
+                          v-for="marker in markers"
+                          ref="markerRef"
+                          :key="marker.id"
+                          :options="{
+                            position: {
+                              lat: marker.lat,
+                              lng: marker.lng,
+                            },
+                            icon: marker.icon,
+                          }"
+                          class="w-10 h-10"
+                        />
+                        <Polyline :options="ridePath" />
+                      </GoogleMap>
+                    </div>
                   </div>
                 </div>
                 <div class="w-full space-y-6">
@@ -1836,10 +1853,15 @@ const onSubmit = form.handleSubmit(async (values: any) => {
                       <small class="font-bold">Destino</small>
                       <p>{{ destinationLocationDetails.address }}</p>
                     </div>
-                    <div class="flex items-center gap-6">
+                    <div class="space-y-4">
                       <div>
-                        <small class="font-bold">Serviço selecionado</small>
-                        <div v-if="selectedProduct" class="flex items-center gap-4">
+                        <small class="font-bold whitespace-nowrap"
+                          >Serviço selecionado</small
+                        >
+                        <div
+                          v-if="selectedProduct"
+                          class="mt-1 flex items-center gap-3 sm:gap-4"
+                        >
                           <div
                             class="w-[50px] h-[50px] rounded-md bg-zinc-200 bg-cover bg-no-repeat bg-center relative flex items-center justify-center"
                             :style="{
@@ -1852,21 +1874,25 @@ const onSubmit = form.handleSubmit(async (values: any) => {
                           />
                         </div>
                       </div>
-                      <div>
-                        <small class="font-bold">Distância Estimada</small>
-                        <p>
-                          {{
-                            convertMetersToDistance(calculatedEstimates.estimatedDistance)
-                          }}
-                        </p>
-                      </div>
-                      <div>
-                        <small class="font-bold">Duração Estimada</small>
-                        <p>
-                          {{
-                            convertSecondsToTime(calculatedEstimates.estimatedDuration)
-                          }}
-                        </p>
+                      <div class="grid grid-cols-2 gap-4 sm:gap-6">
+                        <div>
+                          <small class="font-bold">Distância Estimada</small>
+                          <p>
+                            {{
+                              convertMetersToDistance(
+                                calculatedEstimates.estimatedDistance,
+                              )
+                            }}
+                          </p>
+                        </div>
+                        <div>
+                          <small class="font-bold">Duração Estimada</small>
+                          <p>
+                            {{
+                              convertSecondsToTime(calculatedEstimates.estimatedDuration)
+                            }}
+                          </p>
+                        </div>
                       </div>
                     </div>
 
@@ -1978,7 +2004,7 @@ const onSubmit = form.handleSubmit(async (values: any) => {
                   <Button
                     v-if="isCorporativeMode"
                     type="button"
-                    class="p-6 text-lg self-center"
+                    class="p-6 w-full md:w-fit uppercase"
                     @click.prevent="goToPaymentSection"
                   >
                     Prosseguir para pagamento
@@ -2008,26 +2034,33 @@ const onSubmit = form.handleSubmit(async (values: any) => {
                     :key="method.id"
                     class="py-4 px-3 bg-white rounded-md shadow-md flex flex-col items-start gap-4 w-full"
                   >
-                    <div class="flex flex-row items-center gap-x-3">
+                    <div
+                      class="flex w-full min-w-0 flex-wrap items-center gap-2 sm:gap-3"
+                    >
                       <Checkbox
                         @update:checked="setPaymentMethod(method.value)"
                         :checked="paymentMethod.includes(method.value)"
                       />
                       <RenderIcon :name="method.icon" :size="24" />
-                      <small>{{ method.label }}</small>
-                      <img
-                        v-for="logo in method.logo"
-                        :src="logo"
-                        alt=""
-                        class="!mt-0 w-8"
-                      />
+                      <small class="min-w-0 flex-1 break-words">{{ method.label }}</small>
+                      <div
+                        v-if="method.logo?.length"
+                        class="ml-auto hidden max-w-full flex-wrap items-center justify-end gap-2 lg:flex"
+                      >
+                        <img
+                          v-for="logo in method.logo"
+                          :src="logo"
+                          alt=""
+                          class="!mt-0 h-6 w-auto shrink-0 max-w-[2rem]"
+                        />
+                      </div>
                     </div>
                     <div
                       v-if="
                         method.value === 'corporative' &&
                         paymentMethod.includes(method.value)
                       "
-                      class="p-4 mb-4 md:grid md:grid-cols-2 gap-6 w-full"
+                      class="p-4 mb-4 grid grid-cols-1 md:grid-cols-2 gap-6 w-full"
                     >
                       <div v-if="branchBudgetOverQuota" class="col-span-2">
                         <p
@@ -2165,9 +2198,12 @@ const onSubmit = form.handleSubmit(async (values: any) => {
                         </p>
                       </div>
                       <div class="col-span-2">
-                        <div v-if="!splitPaymentAreas" class="flex items-end gap-6">
+                        <div
+                          v-if="!splitPaymentAreas"
+                          class="flex w-full flex-col lg:flex-row lg:items-end gap-3 lg:gap-6"
+                        >
                           <FormField v-slot="{ componentField }" name="area">
-                            <FormItem class="min-w-[250px]">
+                            <FormItem class="w-full min-w-0">
                               <FormLabel>Centro de Custo*</FormLabel>
                               <FormControl>
                                 <FormSelect
@@ -2183,6 +2219,7 @@ const onSubmit = form.handleSubmit(async (values: any) => {
                           <Button
                             v-if="contractBranchAreas?.length > 0"
                             type="button"
+                            class="w-full lg:w-auto"
                             @click.prevent="splitPaymentAreas = !splitPaymentAreas"
                           >
                             <Percent />
@@ -2226,26 +2263,33 @@ const onSubmit = form.handleSubmit(async (values: any) => {
                     :key="method.id"
                     class="p-6 bg-white rounded-md shadow-md flex flex-col items-start gap-4 w-full"
                   >
-                    <div class="flex flex-row items-center gap-x-3">
+                    <div
+                      class="flex w-full min-w-0 flex-wrap items-center gap-2 sm:gap-3"
+                    >
                       <Checkbox
                         @update:checked="setPaymentMethod(method.value)"
                         :checked="paymentMethod.includes(method.value)"
                       />
                       <RenderIcon :name="method.icon" :size="24" />
-                      <small>{{ method.label }}</small>
-                      <img
-                        v-for="logo in method.logo"
-                        :src="logo"
-                        alt=""
-                        class="!mt-0 w-8"
-                      />
+                      <small class="min-w-0 flex-1 break-words">{{ method.label }}</small>
+                      <div
+                        v-if="method.logo?.length"
+                        class="ml-auto hidden max-w-full flex-wrap items-center justify-end gap-2 lg:flex"
+                      >
+                        <img
+                          v-for="logo in method.logo"
+                          :src="logo"
+                          alt=""
+                          class="!mt-0 h-6 w-auto shrink-0 max-w-[2rem]"
+                        />
+                      </div>
                     </div>
                     <div
                       v-show="
                         method.value === 'corporative' &&
                         paymentMethod.includes(method.value)
                       "
-                      class="p-4 mb-4 md:grid md:grid-cols-2 gap-6 w-full"
+                      class="p-4 mb-4 grid grid-cols-1 md:grid-cols-2 gap-6 w-full"
                     >
                       <div v-if="branchBudgetOverQuota" class="col-span-2">
                         <p
@@ -2384,9 +2428,12 @@ const onSubmit = form.handleSubmit(async (values: any) => {
                         </p>
                       </div>
                       <div class="col-span-2">
-                        <div v-if="!splitPaymentAreas" class="flex items-end gap-6">
+                        <div
+                          v-if="!splitPaymentAreas"
+                          class="flex w-full flex-col lg:flex-row lg:items-end gap-3 lg:gap-6"
+                        >
                           <FormField v-slot="{ componentField }" name="area">
-                            <FormItem class="min-w-[250px]">
+                            <FormItem class="w-full min-w-0">
                               <FormLabel>Centro de Custo*</FormLabel>
                               <FormControl>
                                 <FormSelect
@@ -2402,6 +2449,7 @@ const onSubmit = form.handleSubmit(async (values: any) => {
                           <Button
                             v-if="contractBranchAreas.length > 0"
                             type="button"
+                            class="w-full lg:w-auto"
                             @click.prevent="splitPaymentAreas = !splitPaymentAreas"
                           >
                             <Percent />
@@ -2428,11 +2476,11 @@ const onSubmit = form.handleSubmit(async (values: any) => {
 
         <div
           v-if="paymentMethod && calculatedEstimates.estimatedPrice"
-          class="my-6 w-full flex gap-6"
+          class="my-6 flex w-full min-w-0 flex-col gap-3 lg:flex-row lg:gap-6"
         >
           <Button
             type="button"
-            class="p-6 px-10 uppercase"
+            class="w-full p-6 px-6 uppercase lg:w-auto lg:px-10"
             @click.prevent="isAdminMode ? showPaymentSection() : showPaymentModal()"
           >
             <LoaderCircle v-if="loadingGenerateRide" class="animate-spin" />
@@ -2446,7 +2494,7 @@ const onSubmit = form.handleSubmit(async (values: any) => {
           <Button
             type="button"
             variant="secondary"
-            class="p-6 uppercase"
+            class="w-full p-6 uppercase lg:w-auto"
             @click.prevent="
               () => {
                 navigateTo(isAdminMode ? '/admin/rides/open' : '/corporative/rides/open');

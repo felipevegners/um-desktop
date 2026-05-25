@@ -82,22 +82,26 @@ const userName = computed(() => {
 </script>
 
 <template>
-  <div class="p-6">
+  <div class="p-4 md:p-6">
     <div class="flex gap-6 items-center"></div>
     <h1 class="text-2xl font-bold">Meu Dashboard</h1>
   </div>
-  <div class="flex flex-1 flex-col gap-4 p-6 pt-0">
+  <div class="flex flex-1 flex-col gap-4 p-4 md:p-6 pt-0 min-w-0">
     <div
-      class="h-[240px] rounded-xl bg-[url('/images/dashboard_banner_background.jpg')] bg-no-repeat bg-cover bg-center"
+      class="min-h-[180px] md:h-[240px] rounded-xl bg-[url('/images/dashboard_banner_background.jpg')] bg-no-repeat bg-cover bg-center"
     >
-      <div class="p-10 flex items-center justify-between h-full">
+      <div
+        class="p-6 md:p-10 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 h-full"
+      >
         <div class="flex flex-col gap-2">
           <h2 class="text-white">Olá, {{ userName }}</h2>
-          <h1 class="font-bold text-white text-2xl">Seja bem vindo a Urban Mobi!</h1>
+          <h1 class="font-bold text-white text-xl md:text-2xl">
+            Seja bem vindo a Urban Mobi!
+          </h1>
         </div>
         <Button
           type="button"
-          class="p-6 bg-um-primary hover:bg-um-primary/80 text-black uppercase font-bold shadow-lg"
+          class="shrink-0 bg-um-primary hover:bg-um-primary/80 text-black uppercase font-bold shadow-lg"
           @click="navigateTo('/personal/rides/new')"
         >
           <CalendarPlus :size="18" />
@@ -105,7 +109,7 @@ const userName = computed(() => {
         </Button>
       </div>
     </div>
-    <div class="grid auto-rows-min gap-4 md:grid-cols-3">
+    <div class="grid auto-rows-min gap-4 sm:grid-cols-2 md:grid-cols-3">
       <div class="p-6 rounded-xl bg-muted/90 h-full">
         <p class="font-bold text-lg min-w-0">
           <CalendarDays class="mb-2" :size="32" />

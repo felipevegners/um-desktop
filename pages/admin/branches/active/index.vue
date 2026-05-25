@@ -1,9 +1,10 @@
 <script setup lang="ts">
 import DataTable from '@/components/shared/DataTable.vue';
+import ListPageLoading from '@/components/shared/ListPageLoading.vue';
 import TableActions from '@/components/shared/TableActions.vue';
 import { useToast } from '@/components/ui/toast';
 import { createColumnHelper } from '@tanstack/vue-table';
-import { Building2, LoaderCircle, Plus } from 'lucide-vue-next';
+import { Building2, Plus } from 'lucide-vue-next';
 import { storeToRefs } from 'pinia';
 import { useBranchesStore } from '~/stores/branches.store';
 
@@ -95,19 +96,21 @@ const finalColumns = [
 ];
 </script>
 <template>
-  <main class="p-6">
-    <section class="mb-6 flex items-center justify-between">
-      <h1 class="flex items-center gap-2 text-2xl font-bold">
-        <Building2 class="w-6 h-6" />
+  <main class="p-4 md:p-6">
+    <section
+      class="mb-6 flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between"
+    >
+      <h1
+        class="flex min-w-0 items-center gap-2 text-2xl font-bold leading-tight md:text-3xl"
+      >
+        <Building2 class="h-7 w-7 shrink-0" />
         Gerenciar Filiais Ativas
       </h1>
-      <Button @click="navigateTo('/admin/branches/new')">
+      <Button class="w-full sm:w-auto" @click="navigateTo('/admin/branches/new')">
         <Plus class="w-4 h-4" /> Nova Filial
       </Button>
     </section>
-    <section v-if="isLoadingData" class="min-h-[300px] flex items-center justify-center">
-      <LoaderCircle class="w-10 h-10 animate-spin" />
-    </section>
+    <ListPageLoading v-if="isLoadingData" />
     <section v-else>
       <DataTable
         :columns="finalColumns"

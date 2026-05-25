@@ -68,12 +68,16 @@ const checkAdded = (id: string) => {
 };
 </script>
 <template>
-  <section class="px-6">
-    <div v-if="editMode" class="my-6 p-6 flex items-center gap-6 bg-white rounded-md">
-      <div class="flex gap-4">
+  <section class="px-4 md:px-6">
+    <div
+      v-if="editMode"
+      class="my-6 rounded-md bg-white p-4 md:p-6 flex flex-col gap-4 lg:flex-row lg:items-center lg:gap-6"
+    >
+      <div class="flex w-full flex-col gap-3 sm:flex-row sm:gap-4 lg:w-auto">
         <Button
           v-if="!showNewProductsList && eligibleProducts.length > 0"
           type="button"
+          class="w-full sm:w-auto"
           @click.prevent="showNewProducts"
         >
           <Plus class="w-6 h-6" />
@@ -82,7 +86,7 @@ const checkAdded = (id: string) => {
         <Button
           v-if="showNewProductsList"
           type="button"
-          class="bg-green-500 hover:bg-green-600"
+          class="w-full bg-green-500 hover:bg-green-600 sm:w-auto"
           @click.prevent="saveNewProducts"
         >
           Salvar
@@ -91,6 +95,7 @@ const checkAdded = (id: string) => {
           v-if="showNewProductsList"
           type="button"
           variant="ghost"
+          class="w-full sm:w-auto"
           @click.prevent="cancelNewProducts"
         >
           Cancelar
@@ -104,7 +109,7 @@ const checkAdded = (id: string) => {
         Não há mais produtos ativos para serem adicionados ao contrato.
       </p>
     </div>
-    <div class="md:grid md:grid-cols-2 gap-4 items-start">
+    <div class="grid grid-cols-1 gap-4 items-start xl:grid-cols-2">
       <div
         v-for="product in editMode ? props.modelValue : enabledProducts"
         :key="product.id"

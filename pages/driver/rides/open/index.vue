@@ -1,10 +1,11 @@
 <script setup lang="ts">
 import { columns } from '@/components/rides/columns/driver/open';
+import { useSessionAccess } from '@/composables/auth/useSessionAccess';
 import { createColumnHelper } from '@tanstack/vue-table';
-import { CalendarClock, LoaderCircle } from 'lucide-vue-next';
+import { CalendarClock } from 'lucide-vue-next';
 import { storeToRefs } from 'pinia';
-import { onMounted } from 'vue';
 import DataTable from '~/components/shared/DataTable.vue';
+import ListPageLoading from '~/components/shared/ListPageLoading.vue';
 import TableActions from '~/components/shared/TableActions.vue';
 import { useRidesStore } from '~/stores/rides.store';
 
@@ -12,8 +13,8 @@ const ridesStore = useRidesStore();
 const { getDriverRidesAction } = ridesStore;
 const { loadingData, rides } = storeToRefs(ridesStore);
 const columnHelper = createColumnHelper<any>();
-
-const { data } = useAuth();
+const hasHydratedRides = ref(false);
+const { status, user, hasSessionData } = useSessionAccess();
 
 definePageMeta({
   layout: 'admin',
@@ -25,14 +26,28 @@ useHead({
 
 const driverOpenList = ref<any>([]);
 
-onMounted(async () => {
-  //@ts-ignore
-  await getDriverRidesAction(data?.value?.user?.id);
+const hydrateRides = async () => {
+  const driverId = String(user.value?.id || '').trim();
+  if (!driverId) return;
+
+  await getDriverRidesAction(driverId);
   driverOpenList.value = rides?.value.filter((ride: any) => {
     const status = String(ride?.status || '').toLowerCase();
     return status === 'accepted' || status === 'pending';
   });
-});
+};
+
+watch(
+  [status, user],
+  async () => {
+    if (hasHydratedRides.value) return;
+    if (!hasSessionData({ requireUserId: true })) return;
+
+    hasHydratedRides.value = true;
+    await hydrateRides();
+  },
+  { immediate: true },
+);
 
 const previewRide = (rideId: string) => {
   navigateTo({
@@ -64,7 +79,7 @@ const finalColumns = [
 ];
 </script>
 <template>
-  <main class="p-6">
+  <main class="p-4 md:p-6">
     <header>
       <SharedBackLink />
     </header>
@@ -74,9 +89,7 @@ const finalColumns = [
         Atendimentos Abertos
       </h1>
     </section>
-    <section v-if="loadingData" class="p-10 flex items-center justify-center">
-      <LoaderCircle class="w-10 h-10 animate-spin" />
-    </section>
+    <ListPageLoading v-if="loadingData" />
     <section v-else>
       <DataTable
         :columns="finalColumns"

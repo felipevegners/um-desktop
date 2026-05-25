@@ -1,9 +1,10 @@
 <script setup lang="ts">
 import DataTable from '@/components/shared/DataTable.vue';
+import ListPageLoading from '@/components/shared/ListPageLoading.vue';
 import TableActions from '@/components/shared/TableActions.vue';
 import { useToast } from '@/components/ui/toast';
 import { createColumnHelper } from '@tanstack/vue-table';
-import { Building2, LoaderCircle } from 'lucide-vue-next';
+import { Building2 } from 'lucide-vue-next';
 import { storeToRefs } from 'pinia';
 import { useBranchesStore } from '~/stores/branches.store';
 
@@ -95,16 +96,14 @@ const finalColumns = [
 ];
 </script>
 <template>
-  <main class="p-6">
+  <main class="p-4 md:p-6">
     <section class="mb-6 flex items-center justify-between">
       <h1 class="flex items-center gap-2 text-2xl font-bold">
         <Building2 class="w-6 h-6" />
         Gerenciar Filiais Inativas
       </h1>
     </section>
-    <section v-if="isLoadingData" class="min-h-[300px] flex items-center justify-center">
-      <LoaderCircle class="w-10 h-10 animate-spin" />
-    </section>
+    <ListPageLoading v-if="isLoadingData" />
     <section v-else>
       <DataTable
         :columns="finalColumns"

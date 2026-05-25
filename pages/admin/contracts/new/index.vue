@@ -172,7 +172,7 @@ function prevStep() {
 }
 </script>
 <template>
-  <main class="p-6">
+  <main class="p-4 md:p-6">
     <header>
       <BackLink />
     </header>

@@ -14,7 +14,7 @@ const props = defineProps<{
 }>();
 </script>
 <template v-if="currentStep === 0">
-  <div class="mb-4 w-full grid grid-cols-3 gap-6">
+  <div class="mb-4 grid w-full grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3 lg:gap-6">
     <FormField v-slot="{ componentField }" name="document">
       <FormItem>
         <FormLabel>CNPJ</FormLabel>
@@ -42,7 +42,7 @@ const props = defineProps<{
   </div>
   <!-- Address Form -->
   <AddressForm :form="props.form" />
-  <div class="mb-4 w-full grid grid-cols-4 gap-6">
+  <div class="mb-4 grid w-full grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4 xl:gap-6">
     <FormField v-slot="{ componentField }" name="phone">
       <FormItem>
         <FormLabel>Telefone</FormLabel>

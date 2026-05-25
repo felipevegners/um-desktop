@@ -35,7 +35,7 @@ await getContractByIdAction(route?.params?.id as string);
 await getUsersAccountsAction();
 </script>
 <template>
-  <main class="p-6">
+  <main class="p-4 md:p-6">
     <header>
       <BackLink />
     </header>

@@ -109,9 +109,9 @@ const targetAccountPath = computed(() => {
         </div>
 
         <!-- Seletor de Gestor -->
-        <div class="grid grid-cols-4 gap-6 w-full">
+        <div class="grid w-full grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4 xl:gap-6">
           <FormField v-slot="{ componentField }" name="managerId">
-            <FormItem class="col-span-1">
+            <FormItem class="w-full">
               <FormLabel class="font-bold">Selecionar Gestor da Filial</FormLabel>
               <FormDescription class="text-xs">
                 *Caso o usuário não esteja listado, adicione um novo.
@@ -125,7 +125,9 @@ const targetAccountPath = computed(() => {
               </FormControl>
             </FormItem>
           </FormField>
-          <div class="flex items-end gap-4">
+          <div
+            class="flex flex-col items-stretch gap-3 md:flex-row md:items-end md:gap-4 md:col-span-2 xl:col-span-3"
+          >
             <Button
               type="button"
               @click.prevent="
@@ -156,7 +158,7 @@ const targetAccountPath = computed(() => {
 
       <div
         v-if="!showNewManagerSelect && managerData !== null"
-        class="mb-4 grid grid-cols-4 gap-6"
+        class="mb-4 grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4 xl:gap-6"
       >
         <FormField v-slot="{ componentField }" name="managerName">
           <FormItem>
@@ -195,12 +197,12 @@ const targetAccountPath = computed(() => {
             </FormControl>
           </FormItem>
         </FormField>
-        <div v-if="!editMode" class="col-span-3">
+        <div v-if="!editMode" class="md:col-span-2 xl:col-span-3">
           <p class="flex gap-1 items-center text-muted-foreground text-sm">
             <Info :size="14" />
             O Gestor da Filial usará os dados abaixo para acessar a plataforma
           </p>
-          <div class="mt-6 grid grid-cols-3 gap-6 items-end">
+          <div class="mt-6 grid grid-cols-1 gap-4 items-end lg:grid-cols-3 lg:gap-6">
             <FormField v-slot="{ componentField }" name="managerEmail">
               <FormItem class="relative">
                 <FormLabel>E-mail de Acesso</FormLabel>
@@ -218,7 +220,7 @@ const targetAccountPath = computed(() => {
               </FormItem>
             </FormField>
             <Button
-              class="mb-1 px-2 max-w-[140px]"
+              class="mb-1 w-full px-2 lg:w-auto lg:max-w-[160px]"
               @click.prevent="handleGeneratePassword"
             >
               <WandSparkles class="w-6 h-6" />

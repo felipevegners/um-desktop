@@ -1,8 +1,8 @@
 <script setup lang="ts">
-import { LoaderCircle } from 'lucide-vue-next';
+import ListPageLoading from '@/components/shared/ListPageLoading.vue';
 
-const { data }: any = useAuth();
-const role = data?.value?.user?.role;
+const { data, status }: any = useAuth();
+const hasRedirected = ref(false);
 
 const roleRedirect = {
   admin: '/admin',
@@ -12,19 +12,24 @@ const roleRedirect = {
   'platform-user': '/personal',
   'platform-driver': '/driver',
 };
-onMounted(() => {
-  setTimeout(() => {
-    //@ts-ignore
-    navigateTo(roleRedirect[role] || '/auth/login');
-  }, 2000);
-});
+
+watch(
+  [status, () => data?.value?.user?.role],
+  async () => {
+    if (hasRedirected.value) return;
+    if (status.value === 'loading') return;
+
+    const role = data?.value?.user?.role;
+    const targetPath = roleRedirect[role as keyof typeof roleRedirect] || '/auth/login';
+    hasRedirected.value = true;
+    await navigateTo(targetPath, { replace: true });
+  },
+  { immediate: true },
+);
 </script>
 <template>
-  <div
-    class="w-full h-screen flex flex-col gap-6 items-center justify-center bg-zinc-950"
-  >
-    <LoaderCircle :size="48" class="text-um-primary animate-spin" />
-    <small class="text-um-primary text-sm">Redirecionando</small>
+  <div class="w-full h-screen bg-zinc-950 text-um-primary">
+    <ListPageLoading />
   </div>
 </template>
 

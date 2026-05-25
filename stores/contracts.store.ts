@@ -38,10 +38,11 @@ export const useContractsStore = defineStore('contracts', {
         this.inactiveContracts = (data as any).filter(
           (contract: any) => contract.enabled === false,
         );
-        this.isLoading = false;
       } catch (error) {
         console.error('Store GET All Error -> ', error);
         throw error;
+      } finally {
+        this.isLoading = false;
       }
     },
     async getContractByIdAction(contractId: string) {
@@ -49,10 +50,11 @@ export const useContractsStore = defineStore('contracts', {
       try {
         const data = await getContractsService(contractId);
         this.contract = { ...(data as any) };
-        this.isLoading = false;
       } catch (error) {
         console.error('Store GET by ID Error -> ', error);
         throw error;
+      } finally {
+        this.isLoading = false;
       }
     },
     async createContractAction(contractData: any) {

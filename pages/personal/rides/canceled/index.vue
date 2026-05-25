@@ -1,18 +1,20 @@
 <script setup lang="ts">
 import { columns } from '@/components/rides/columns/personal/canceled';
 import { Button } from '@/components/ui/button';
-import { CalendarX2, LoaderCircle, Plus } from 'lucide-vue-next';
+import { useSessionAccess } from '@/composables/auth/useSessionAccess';
+import { CalendarX2, Plus } from 'lucide-vue-next';
 import { storeToRefs } from 'pinia';
-import { onMounted } from 'vue';
 import DataTable from '~/components/shared/DataTable.vue';
+import ListPageLoading from '~/components/shared/ListPageLoading.vue';
 import { useRidesStore } from '~/stores/rides.store';
 
 const ridesStore = useRidesStore();
 const { getRidesAction } = ridesStore;
 const { loadingData, rides } = storeToRefs(ridesStore);
 const userRidesList = ref([]);
+const hasHydratedRides = ref(false);
 
-const { data } = useAuth();
+const { status, user, hasSessionData } = useSessionAccess();
 
 definePageMeta({
   layout: 'admin',
@@ -22,18 +24,30 @@ useHead({
   title: 'Atendimentos Cancelados | Urban Mobi',
 });
 
-onMounted(async () => {
+const hydrateRides = async () => {
+  const userId = String(user.value?.id || '').trim();
+  if (!userId) return;
+
   await getRidesAction();
   userRidesList.value = rides?.value
-    .filter(
-      //@ts-ignore
-      (ride: any) => ride.user.id === data.value?.user?.id,
-    )
+    .filter((ride: any) => ride.user.id === userId)
     .filter((ride: any) => ride.status === 'cancelled');
-});
+};
+
+watch(
+  [status, user],
+  async () => {
+    if (hasHydratedRides.value) return;
+    if (!hasSessionData({ requireUserId: true })) return;
+
+    hasHydratedRides.value = true;
+    await hydrateRides();
+  },
+  { immediate: true },
+);
 </script>
 <template>
-  <main class="p-6">
+  <main class="p-4 md:p-6">
     <header>
       <SharedBackLink />
     </header>
@@ -46,9 +60,7 @@ onMounted(async () => {
         <Plus class="w-4 h-4" /> Novo Atendimento
       </Button>
     </section>
-    <section v-if="loadingData" class="p-10 flex items-center justify-center">
-      <LoaderCircle class="w-10 h-10 animate-spin" />
-    </section>
+    <ListPageLoading v-if="loadingData" />
     <section v-else>
       <DataTable
         :columns="columns"

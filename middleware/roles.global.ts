@@ -50,6 +50,11 @@ export default defineNuxtRouteMiddleware(async (to, from) => {
   const testSharedPath = sharedProtectedRoutes.some((el) => to.path.startsWith(el));
   const isProtectedPath = testAdminPath || testCorpPath || testSharedPath;
 
+  // During session hydration, skip role checks to avoid false forbidden redirects.
+  if (status.value === 'loading' && isProtectedPath) {
+    return;
+  }
+
   // Handle unauthenticated users and session expiration
   if (status.value === 'unauthenticated' && isProtectedPath) {
     return navigateTo({
@@ -61,6 +66,10 @@ export default defineNuxtRouteMiddleware(async (to, from) => {
   }
 
   const userRole = (data.value as any)?.user?.role as string | undefined;
+
+  if (status.value !== 'authenticated') {
+    return;
+  }
 
   if (testAdminPath && userRole !== 'admin') {
     return navigateTo('/forbidden');

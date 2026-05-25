@@ -1,15 +1,17 @@
 <script setup lang="ts">
 import { columns } from '@/components/rides/columns/driver/canceled';
-import { CalendarX2, LoaderCircle } from 'lucide-vue-next';
+import { useSessionAccess } from '@/composables/auth/useSessionAccess';
+import { CalendarX2 } from 'lucide-vue-next';
 import { storeToRefs } from 'pinia';
-import { onMounted } from 'vue';
 import DataTable from '~/components/shared/DataTable.vue';
+import ListPageLoading from '~/components/shared/ListPageLoading.vue';
 import { useRidesStore } from '~/stores/rides.store';
 
 const ridesStore = useRidesStore();
 const { getDriverRidesAction } = ridesStore;
 const { loadingData, rides } = storeToRefs(ridesStore);
 const driverCanceledList = ref([]);
+const hasHydratedRides = ref(false);
 
 definePageMeta({
   layout: 'admin',
@@ -19,19 +21,33 @@ useHead({
   title: 'Atendimentos Cancelados | Urban Mobi',
 });
 
-const { data } = useAuth();
+const { status, user, hasSessionData } = useSessionAccess();
 
-onMounted(async () => {
-  //@ts-ignore
-  await getDriverRidesAction(data?.value?.user?.id);
+const hydrateRides = async () => {
+  const driverId = String(user.value?.id || '').trim();
+  if (!driverId) return;
+
+  await getDriverRidesAction(driverId);
   driverCanceledList.value = rides?.value.filter((ride: any) => {
     const status = String(ride?.status || '').toLowerCase();
     return status === 'cancelled' || status === 'canceled';
   });
-});
+};
+
+watch(
+  [status, user],
+  async () => {
+    if (hasHydratedRides.value) return;
+    if (!hasSessionData({ requireUserId: true })) return;
+
+    hasHydratedRides.value = true;
+    await hydrateRides();
+  },
+  { immediate: true },
+);
 </script>
 <template>
-  <main class="p-6">
+  <main class="p-4 md:p-6">
     <header>
       <SharedBackLink />
     </header>
@@ -41,9 +57,7 @@ onMounted(async () => {
         Atendimentos Cancelados
       </h1>
     </section>
-    <section v-if="loadingData" class="p-10 flex items-center justify-center">
-      <LoaderCircle class="w-10 h-10 animate-spin" />
-    </section>
+    <ListPageLoading v-if="loadingData" />
     <section v-else>
       <DataTable
         :columns="columns"

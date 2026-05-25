@@ -1,6 +1,5 @@
 <script setup lang="ts">
-import { LoaderCircle } from 'lucide-vue-next';
-import { onMounted } from 'vue';
+import ListPageLoading from '@/components/shared/ListPageLoading.vue';
 
 definePageMeta({
   layout: 'admin',
@@ -17,18 +16,30 @@ const userRolesRedirect = {
   'platform-driver': '/driver',
 };
 const { data, status } = useAuth();
-const router = useRouter();
+const hasRedirected = ref(false);
 
-onMounted(() => {
-  if (status.value === 'authenticated') {
-    //@ts-ignore
-    router.push({ path: userRolesRedirect[data?.value?.user?.role] });
-  }
-});
+watch(
+  [status, () => (data.value as any)?.user?.role],
+  async () => {
+    if (hasRedirected.value) return;
+
+    if (status.value === 'authenticated') {
+      const role = (data.value as any)?.user?.role;
+      const targetPath = userRolesRedirect[role as keyof typeof userRolesRedirect] || '/';
+      hasRedirected.value = true;
+      await navigateTo(targetPath, { replace: true });
+      return;
+    }
+
+    if (status.value === 'unauthenticated') {
+      hasRedirected.value = true;
+      await navigateTo('/auth/login', { replace: true });
+    }
+  },
+  { immediate: true },
+);
 </script>
 
 <template>
-  <section class="p-6 w-full h-full flex items-center justify-center">
-    <LoaderCircle class="animate-spin text-black" :size="48" />
-  </section>
+  <ListPageLoading />
 </template>

@@ -21,6 +21,7 @@ const selectedItem = ref('');
 const emit = defineEmits(['on-select', 'update:modelValue']);
 
 const selected = (value: any) => {
+  if (value === '__empty__') return;
   emit('on-select', value, props.tableId);
   emit('update:modelValue', value, props.tableId);
 };
@@ -38,27 +39,37 @@ defineExpose({ reset });
     v-model="selectedItem"
     :disabled="props.disabled"
   >
-    <SelectTrigger v-if="loading">
+    <SelectTrigger v-if="loading" class="w-full">
       <LoaderCircle class="animate-spin" />
     </SelectTrigger>
-    <SelectTrigger v-else>
+    <SelectTrigger v-else class="w-full">
       <SelectValue :placeholder="label" />
     </SelectTrigger>
-    <SelectContent>
+    <SelectContent
+      side="bottom"
+      align="start"
+      :side-offset="6"
+      :collision-padding="12"
+      :avoid-collisions="true"
+      class="z-[120] w-[88vw] max-w-[88vw] sm:w-[--radix-select-trigger-width] sm:max-w-[calc(100vw-2rem)]"
+    >
       <SelectGroup class="max-h-[350px] overflow-auto">
         <SelectItem
           v-for="item in items"
           :value="item.value"
           :key="item.value"
           :id="item.value"
-          class="hover:bg-zinc-500"
+          class="max-w-full hover:bg-zinc-500"
           :disabled="item.disabled"
         >
-          <div v-if="decoration" class="flex items-center gap-1">
+          <div v-if="decoration" class="flex min-w-0 items-center gap-1">
             <span :class="`block w-4 h-3 rounded-lg bg-${item.color}`"></span>
-            {{ item.label }}
+            <span class="truncate">{{ item.label }}</span>
           </div>
-          <p v-else>{{ item.label }}</p>
+          <p v-else class="break-words">{{ item.label }}</p>
+        </SelectItem>
+        <SelectItem v-if="!items?.length" value="__empty__" disabled>
+          <p class="text-muted-foreground">Nenhuma opção disponível</p>
         </SelectItem>
       </SelectGroup>
     </SelectContent>

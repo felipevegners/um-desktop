@@ -152,7 +152,7 @@ onUnmounted(() => {
       <DropdownMenuContent
         align="end"
         :side-offset="10"
-        class="w-[38rem] max-w-[calc(100vw-2rem)] min-w-[32rem] overflow-hidden p-0"
+        class="w-[min(38rem,calc(100vw-1rem))] max-w-[calc(100vw-1rem)] min-w-0 overflow-hidden p-0"
       >
         <div
           class="flex items-start justify-between gap-4 border-b border-zinc-200 bg-zinc-50 px-5 py-4"

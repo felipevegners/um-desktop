@@ -1,10 +1,11 @@
 <script setup lang="ts">
 import DataTable from '@/components/shared/DataTable.vue';
+import ListPageLoading from '@/components/shared/ListPageLoading.vue';
 import TableActions from '@/components/shared/TableActions.vue';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/components/ui/toast';
 import { createColumnHelper } from '@tanstack/vue-table';
-import { LoaderCircle, Plus, UserPen } from 'lucide-vue-next';
+import { Plus, UserPen } from 'lucide-vue-next';
 import { useAccountStore } from '~/stores/account.store';
 
 import { columns } from './columns';
@@ -82,19 +83,21 @@ const finalColumns = [
 ];
 </script>
 <template>
-  <main class="p-6">
-    <section class="mb-10 flex items-center justify-between gap-4">
-      <div class="flex items-center gap-4">
-        <UserPen :size="32" />
-        <h1 class="font-bold text-black text-3xl">Usuários Inativos</h1>
+  <main class="p-4 md:p-6">
+    <section
+      class="mb-10 flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between"
+    >
+      <div class="flex min-w-0 items-center gap-3 md:gap-4">
+        <UserPen class="h-8 w-8 shrink-0" />
+        <h1 class="font-bold text-black text-2xl leading-tight md:text-3xl">
+          Usuários Inativos
+        </h1>
       </div>
-      <Button @click="navigateTo('/admin/accounts/new')">
+      <Button class="w-full sm:w-auto" @click="navigateTo('/admin/accounts/new')">
         <Plus class="w-4 h-4" /> Criar Usuário
       </Button>
     </section>
-    <section v-if="isLoading" class="min-h-[300px] flex items-center justify-center">
-      <LoaderCircle class="w-10 h-10 animate-spin" />
-    </section>
+    <ListPageLoading v-if="isLoading" />
     <section v-else>
       <DataTable
         :columns="finalColumns"

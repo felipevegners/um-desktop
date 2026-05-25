@@ -100,6 +100,7 @@ const fetchContractUsersData = async () => {
 await fetchContractUsersData();
 
 const customerLogoImage = reactive({
+  key: contract?.value?.customer?.logo?.key || '',
   name: contract?.value.customer?.logo?.name || '',
   url: contract?.value.customer?.logo?.url || '',
 });
@@ -378,25 +379,31 @@ const onSubmit = form.handleSubmit(async (values) => {
 });
 </script>
 <template>
-  <main class="p-6">
+  <main class="p-4 md:p-6">
     <header>
       <BackLink />
     </header>
-    <section class="mb-10 flex items-center justify-between">
-      <h1 class="flex items-center gap-2 text-2xl font-bold">
-        <Handshake />
+    <section
+      class="mb-8 flex flex-col gap-4 lg:mb-10 lg:flex-row lg:items-center lg:justify-between"
+    >
+      <h1 class="flex items-center gap-2 text-left text-xl font-bold md:text-2xl">
+        <Handshake class="h-6 w-6 shrink-0" />
         Gerenciar Contrato
       </h1>
-      <div class="flex gap-10 items-center">
-        <Button disabled>
-          <Download />
-          Baixar Contrato PDF
-        </Button>
-        <Button disabled>
-          <File />
-          Termos do Contrato
-        </Button>
-        <div>
+      <div
+        class="flex w-full flex-wrap items-center gap-3 lg:w-auto lg:justify-end lg:gap-10"
+      >
+        <div class="flex flex-col md:flex-row items-center gap-3 w-full">
+          <Button disabled class="w-full sm:w-auto">
+            <Download />
+            Baixar Contrato PDF
+          </Button>
+          <Button disabled class="w-full sm:w-auto">
+            <File />
+            Termos do Contrato
+          </Button>
+        </div>
+        <!-- <div>
           <Label class="text-md font-bold"> Desativar Contrato </Label>
           <div class="mt-2 flex items-center gap-3">
             <Label class="text-sm text-zinc-500"> Inativo </Label>
@@ -406,7 +413,7 @@ const onSubmit = form.handleSubmit(async (values) => {
             />
             <Label class="text-sm text-zinc-500"> Ativo </Label>
           </div>
-        </div>
+        </div> -->
       </div>
     </section>
     <section v-if="isLoading" class="min-h-[300px] flex items-center justify-center">
@@ -423,9 +430,11 @@ const onSubmit = form.handleSubmit(async (values) => {
           >
             <AccordionItem value="customer">
               <AccordionTrigger class="px-6 hover:no-underline">
-                <h2 class="flex items-center gap-2 text-2xl font-bold">
-                  <FileText />
-                  Dados da Matriz
+                <h2
+                  class="flex w-full items-start gap-2 text-left text-xl font-bold leading-tight md:text-2xl"
+                >
+                  <FileText class="h-6 w-6 shrink-0" />
+                  <span>Dados da Matriz</span>
                 </h2>
               </AccordionTrigger>
               <AccordionContent>
@@ -453,9 +462,11 @@ const onSubmit = form.handleSubmit(async (values) => {
           >
             <AccordionItem value="master-manager">
               <AccordionTrigger class="px-6 hover:no-underline">
-                <h2 class="flex items-center gap-2 text-2xl font-bold">
-                  <UserCog />
-                  Gestor Master do Contrato
+                <h2
+                  class="flex w-full items-start gap-2 text-left text-xl font-bold leading-tight md:text-2xl"
+                >
+                  <UserCog class="h-6 w-6 shrink-0" />
+                  <span>Gestor Master do Contrato</span>
                 </h2>
               </AccordionTrigger>
               <AccordionContent>
@@ -485,15 +496,17 @@ const onSubmit = form.handleSubmit(async (values) => {
           >
             <AccordionItem value="products">
               <AccordionTrigger class="px-6 hover:no-underline">
-                <h2 class="flex items-center gap-2 text-2xl font-bold">
-                  <Car :size="28" />
-                  Produtos contratados
+                <h2
+                  class="flex w-full items-start gap-2 text-left text-xl font-bold leading-tight md:text-2xl"
+                >
+                  <Car class="h-6 w-6 shrink-0" />
+                  <span>Serviços contratados</span>
                 </h2>
               </AccordionTrigger>
               <AccordionContent>
                 <CardContent>
                   <h5 class="mb-6 text-muted-foreground">
-                    Aqui você gerencia os produtos contratados e a disponibilidade por
+                    Aqui você gerencia os serviços contratados e a disponibilidade por
                     filial.
                   </h5>
                   <ul class="space-y-6">
@@ -519,9 +532,11 @@ const onSubmit = form.handleSubmit(async (values) => {
           >
             <AccordionItem value="budget">
               <AccordionTrigger class="px-6 hover:no-underline">
-                <h2 class="flex items-center gap-2 text-2xl font-bold">
-                  <HandCoins />
-                  Budget
+                <h2
+                  class="flex w-full items-start gap-2 text-left text-xl font-bold leading-tight md:text-2xl"
+                >
+                  <HandCoins class="h-6 w-6 shrink-0" />
+                  <span>Budget</span>
                 </h2>
               </AccordionTrigger>
               <AccordionContent>
@@ -530,9 +545,9 @@ const onSubmit = form.handleSubmit(async (values) => {
                     Aqui você gerencia o budget mensal do contrato e a distribuição por
                     filial.
                   </h5>
-                  <div class="flex gap-4">
+                  <div class="flex flex-col gap-4 lg:flex-row lg:items-end">
                     <FormField v-slot="{ componentField }" name="mainBudget">
-                      <FormItem class="max-w-[250px]">
+                      <FormItem class="w-full lg:max-w-[280px]">
                         <FormControl>
                           <CurrencyInput
                             ref="mainBudgetInput"
@@ -562,13 +577,13 @@ const onSubmit = form.handleSubmit(async (values) => {
                     <li
                       v-for="branch in contract.branches"
                       :key="branch.id"
-                      class="p-4 flex items-center justify-between border border-zinc-950 rounded-md bg-white"
+                      class="p-4 flex flex-col gap-4 border border-zinc-950 rounded-md bg-white xl:flex-row xl:items-center xl:justify-between"
                     >
-                      <p>
+                      <p class="break-words">
                         <span class="font-bold"> {{ branch.branchCode }} - </span>
                         {{ branch.fantasyName }}
                       </p>
-                      <div class="flex items-center gap-3 w-1/2">
+                      <div class="flex w-full items-center gap-3 xl:w-1/2">
                         <div class="flex-1">
                           <template v-if="isClient && editingBranches[branch.id]">
                             <Slider
@@ -586,7 +601,9 @@ const onSubmit = form.handleSubmit(async (values) => {
                           </template>
                         </div>
                       </div>
-                      <div class="flex items-center gap-4">
+                      <div
+                        class="flex w-full flex-wrap items-center gap-3 xl:w-auto xl:justify-end"
+                      >
                         <h1 class="text-2xl font-bold">
                           {{
                             currencyFormat(
@@ -648,9 +665,11 @@ const onSubmit = form.handleSubmit(async (values) => {
           >
             <AccordionItem value="users">
               <AccordionTrigger class="px-6 hover:no-underline">
-                <h2 class="flex items-center gap-2 text-2xl font-bold">
-                  <Users />
-                  Usuários ativos
+                <h2
+                  class="flex w-full items-start gap-2 text-left text-xl font-bold leading-tight md:text-2xl"
+                >
+                  <Users class="h-6 w-6 shrink-0" />
+                  <span>Usuários ativos</span>
                 </h2>
               </AccordionTrigger>
               <AccordionContent>
@@ -661,7 +680,7 @@ const onSubmit = form.handleSubmit(async (values) => {
                   </h5>
                   <ul
                     v-if="accounts && accounts.length > 0"
-                    class="md:grid md:grid-cols-3 flex flex-wrap gap-6"
+                    class="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3 xl:gap-6"
                   >
                     <ContractUserCard
                       v-for="account in accounts"

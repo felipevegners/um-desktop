@@ -1,7 +1,8 @@
 <script setup lang="ts">
 import { createColumnHelper } from '@tanstack/vue-table';
-import { LoaderCircle, Receipt } from 'lucide-vue-next';
+import { Receipt } from 'lucide-vue-next';
 import DataTable from '~/components/shared/DataTable.vue';
+import ListPageLoading from '~/components/shared/ListPageLoading.vue';
 import TableActions from '~/components/shared/TableActions.vue';
 
 import { columns } from './columns';
@@ -46,16 +47,14 @@ const finalColumns = [
 ];
 </script>
 <template>
-  <main class="p-6">
+  <main class="p-4 md:p-6">
     <section class="mb-6 flex items-center gap-6">
       <h1 class="flex items-center gap-2 text-2xl font-bold">
         <Receipt :size="24" />
         Meus Recibos
       </h1>
     </section>
-    <section v-if="false" class="p-10 flex items-center justify-center">
-      <LoaderCircle class="w-10 h-10 animate-spin" />
-    </section>
+    <ListPageLoading v-if="false" />
     <section v-else>
       <DataTable
         :columns="finalColumns"

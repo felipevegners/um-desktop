@@ -195,16 +195,19 @@ watch(
 </script>
 
 <template>
-  <div v-if="showFilter && showColumnSelect" class="flex gap-2 items-center py-4">
+  <div
+    v-if="showFilter && showColumnSelect"
+    class="flex flex-col sm:flex-row gap-2 sm:items-center py-4"
+  >
     <Input
       v-if="showFilter"
-      class="max-w-sm"
+      class="w-full sm:max-w-sm"
       :placeholder="`Filtrar por ${filterBy}`"
       v-model="globalFilter"
     />
     <DropdownMenu v-if="showColumnSelect">
       <DropdownMenuTrigger as-child>
-        <Button variant="outline" class="ml-auto">
+        <Button variant="outline" class="w-full sm:w-auto sm:ml-auto">
           <Settings2 />
           Colunas <ChevronDown class="ml-2 h-4 w-4" />
         </Button>
@@ -226,8 +229,8 @@ watch(
       </DropdownMenuContent>
     </DropdownMenu>
   </div>
-  <div class="rounded-md border overflow-x-auto">
-    <Table class="w-full table-fixed">
+  <div class="w-full overflow-x-auto rounded-md border">
+    <Table class="w-full min-w-full table-fixed">
       <TableHeader>
         <TableRow v-for="headerGroup in table.getHeaderGroups()" :key="headerGroup.id">
           <TableHead
@@ -329,7 +332,7 @@ watch(
     </Table>
   </div>
 
-  <div class="flex items-center justify-end space-x-2 py-4">
+  <div class="flex flex-wrap items-center justify-end gap-2 py-4">
     <!-- <div
       v-if="table.getSelectedRowModel().rows.length > 0"
       class="flex-1 text-sm text-muted-foreground"
@@ -337,7 +340,7 @@ watch(
       {{ table.getSelectedRowModel().rows.length }} de
       {{ table.getFilteredRowModel().rows.length }} resultado(s) selecionados
     </div> -->
-    <div v-if="showPagination" class="space-x-2">
+    <div v-if="showPagination" class="flex flex-wrap items-center gap-2">
       <Button
         variant="outline"
         size="sm"

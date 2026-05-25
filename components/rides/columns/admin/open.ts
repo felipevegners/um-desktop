@@ -210,7 +210,7 @@ export const columns: any = [
     },
   }),
   columnHelper.accessor('route', {
-    meta: { label: 'Rota', width: '250px' },
+    meta: { label: 'Rota', width: '300px' },
     header: () => h('div', { class: 'text-xs leading-none text-left' }, 'Rota'),
     cell: ({ row }) => {
       const data = row.original;

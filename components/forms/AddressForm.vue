@@ -80,22 +80,24 @@ const findAddress = async (code: string) => {
 </script>
 
 <template>
-  <div class="mb-4 w-full grid grid-cols-4 gap-6">
+  <div class="mb-4 grid w-full grid-cols-1 gap-4 md:grid-cols-4 md:gap-6">
     <FormField v-slot="{ componentField, value }" name="zipcode">
-      <FormItem class="col-span-1">
+      <FormItem class="md:col-span-1">
         <FormLabel>CEP</FormLabel>
         <FormControl>
-          <div class="flex gap-2">
+          <div class="flex items-center gap-2">
             <Input
               type="text"
               v-bind="componentField"
               maxlength="9"
               v-maska="'#####-###'"
+              class="min-w-0"
             />
             <Button
               @click.prevent="findAddress(value)"
               :disabled="value?.length !== 9"
               type="button"
+              class="shrink-0"
             >
               <Search v-if="!isLoadingAddress" class="w-10 h-10" />
               <LoaderCircle v-if="isLoadingAddress" class="w-10 h-10 animate-spin" />
@@ -105,7 +107,7 @@ const findAddress = async (code: string) => {
       </FormItem>
     </FormField>
     <FormField v-slot="{ componentField }" name="streetName">
-      <FormItem class="col-span-2">
+      <FormItem class="md:col-span-2">
         <FormLabel>Endereço</FormLabel>
         <FormControl>
           <Input type="text" v-bind="componentField" />
@@ -113,7 +115,7 @@ const findAddress = async (code: string) => {
       </FormItem>
     </FormField>
     <FormField v-slot="{ componentField }" name="streetNumber">
-      <FormItem class="col-span-1">
+      <FormItem class="md:col-span-1">
         <FormLabel>Número</FormLabel>
         <FormControl>
           <Input type="text" v-bind="componentField" />
@@ -121,7 +123,7 @@ const findAddress = async (code: string) => {
       </FormItem>
     </FormField>
     <FormField v-slot="{ componentField }" name="complement">
-      <FormItem class="col-span-1">
+      <FormItem class="md:col-span-1">
         <FormLabel>Complemento</FormLabel>
         <FormControl>
           <Input type="text" v-bind="componentField" />
@@ -129,7 +131,7 @@ const findAddress = async (code: string) => {
       </FormItem>
     </FormField>
     <FormField v-slot="{ componentField }" name="neighborhood">
-      <FormItem class="col-span-1">
+      <FormItem class="md:col-span-1">
         <FormLabel>Bairro</FormLabel>
         <FormControl>
           <Input type="text" v-bind="componentField" />
@@ -137,7 +139,7 @@ const findAddress = async (code: string) => {
       </FormItem>
     </FormField>
     <FormField v-slot="{ componentField }" name="city">
-      <FormItem class="col-span-1">
+      <FormItem class="md:col-span-1">
         <FormLabel>Cidade</FormLabel>
         <FormControl>
           <Input type="text" v-bind="componentField" />
@@ -145,7 +147,7 @@ const findAddress = async (code: string) => {
       </FormItem>
     </FormField>
     <FormField v-slot="{ componentField }" name="state">
-      <FormItem class="col-span-1">
+      <FormItem class="md:col-span-1">
         <FormLabel>Estado</FormLabel>
         <FormControl>
           <Input type="text" v-bind="componentField" />

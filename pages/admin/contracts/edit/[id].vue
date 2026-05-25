@@ -58,6 +58,7 @@ contractSituation.value = contract?.value.enabled;
 selectedProducts.value = contract?.value.products;
 
 const customerLogoImage = reactive({
+  key: contract?.value?.customer?.logo?.key || '',
   name: contract?.value.customer?.logo?.name || '',
   url: contract?.value.customer?.logo?.url || '',
 });
@@ -224,16 +225,20 @@ const onSubmit = form.handleSubmit(async (values) => {
 });
 </script>
 <template>
-  <main class="p-6">
+  <main class="p-4 md:p-6">
     <header>
       <BackLink />
     </header>
-    <section class="mb-10 flex items-center justify-between">
+    <section
+      class="mb-8 flex flex-col gap-4 lg:mb-10 lg:flex-row lg:items-center lg:justify-between"
+    >
       <h1 class="flex items-center gap-2 text-2xl font-bold">
         <FileText class="w-6 h-6" />
         Editar Contrato
       </h1>
-      <div class="flex gap-10 items-center">
+      <div
+        class="flex w-full flex-wrap items-center gap-4 lg:w-auto lg:justify-end lg:gap-10"
+      >
         <div>
           <Label class="text-md font-bold"> Desativar Contrato </Label>
           <div class="mt-2 flex items-center gap-3">
@@ -245,7 +250,7 @@ const onSubmit = form.handleSubmit(async (values) => {
             <Label class="text-sm text-zinc-500"> Ativo </Label>
           </div>
         </div>
-        <Button variant="destructive" @click="">
+        <Button variant="destructive" class="w-full sm:w-auto" @click="">
           <Trash class="w-4 h-4" /> Excluir Contrato
         </Button>
       </div>
@@ -256,7 +261,9 @@ const onSubmit = form.handleSubmit(async (values) => {
       </section>
       <section v-else>
         <form @submit="onSubmit">
-          <div class="mb-10 px-6 flex justify-between items-start gap-4">
+          <div
+            class="mb-10 px-4 md:px-6 flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between"
+          >
             <div class="flex flex-col gap-4">
               <p class="font-bold">Logo</p>
               <AvatarEdit
@@ -266,7 +273,9 @@ const onSubmit = form.handleSubmit(async (values) => {
               />
             </div>
             <FormField v-slot="{ componentField }" name="status">
-              <FormItem class="grid grid-cols-2 items-center gap-4">
+              <FormItem
+                class="grid grid-cols-1 gap-2 md:grid-cols-2 md:items-center md:gap-4"
+              >
                 <FormLabel class="font-bold">Status do Contrato</FormLabel>
                 <FormControl>
                   <FormSelect
@@ -293,16 +302,21 @@ const onSubmit = form.handleSubmit(async (values) => {
           </div>
           <div class="mb-10">
             <h2 class="px-6 mb-4 text-2xl font-bold">2. Gestor Master</h2>
-            <div v-if="contract?.manager === null" class="px-6 flex flex-col items-start">
+            <div
+              v-if="contract?.manager === null"
+              class="px-4 md:px-6 flex flex-col items-start"
+            >
               <div class="my-4 px-4 bg-red-200">
                 <small class="text-red-500">
                   *Contrato ainda não possui um Gestor Master atribuído. Selecione um
                   usuário com perfil Gestor Master na lista abaixo.
                 </small>
               </div>
-              <div class="grid grid-cols-4 gap-6 w-full">
+              <div
+                class="grid w-full grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4 xl:gap-6"
+              >
                 <FormField v-slot="{ componentField }" name="managerId">
-                  <FormItem class="col-span-1">
+                  <FormItem class="w-full">
                     <FormLabel class="font-bold">Selecionar Gestor Master</FormLabel>
                     <FormControl>
                       <FormSelect
@@ -333,14 +347,15 @@ const onSubmit = form.handleSubmit(async (values) => {
             <h2 class="px-6 mb-4 text-2xl font-bold">5. Informações Adicionais</h2>
             <AdditionalInfoForm />
           </div>
-          <div class="px-6 flex gap-6">
-            <Button type="submit">
+          <div class="px-4 md:px-6 flex flex-col gap-3 sm:flex-row sm:gap-6">
+            <Button type="submit" class="w-full sm:w-auto">
               <LoaderCircle v-if="isLoadingSend" class="w-5 h-5 animate-spin" />
               Atualizar Contrato
             </Button>
             <Button
               type="button"
               variant="ghost"
+              class="w-full sm:w-auto"
               @click.prevent="navigateTo('../active/')"
             >
               Cancelar

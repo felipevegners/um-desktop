@@ -1,8 +1,9 @@
 <script setup lang="ts">
 import DataTable from '@/components/shared/DataTable.vue';
+import ListPageLoading from '@/components/shared/ListPageLoading.vue';
 import TableActions from '@/components/shared/TableActions.vue';
 import { createColumnHelper } from '@tanstack/vue-table';
-import { FileText, LoaderCircle } from 'lucide-vue-next';
+import { FileText } from 'lucide-vue-next';
 import { storeToRefs } from 'pinia';
 import { useContractsStore } from '~/stores/contracts.store';
 
@@ -84,16 +85,16 @@ const finalColumns = [
 ];
 </script>
 <template>
-  <main class="p-6">
-    <section class="mb-6 flex items-center justify-between">
-      <h1 class="flex items-center gap-2 text-2xl font-bold">
-        <FileText class="w-6 h-6" />
+  <main class="p-4 md:p-6">
+    <section
+      class="mb-6 flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between"
+    >
+      <h1 class="flex items-center gap-2 text-2xl font-bold leading-tight">
+        <FileText class="w-6 h-6 shrink-0" />
         Contratos Inativos
       </h1>
     </section>
-    <section v-if="isLoading" class="min-h-[300px] flex items-center justify-center">
-      <LoaderCircle class="w-10 h-10 animate-spin" />
-    </section>
+    <ListPageLoading v-if="isLoading" />
     <section v-else>
       <DataTable
         :columns="finalColumns"

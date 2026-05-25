@@ -1,11 +1,12 @@
 <script setup lang="ts">
 import DataTable from '@/components/shared/DataTable.vue';
+import ListPageLoading from '@/components/shared/ListPageLoading.vue';
 import TableActions from '@/components/shared/TableActions.vue';
 import { Button } from '@/components/ui/button';
 import { createColumnHelper } from '@tanstack/vue-table';
-import { Car, LoaderCircle, Plus } from 'lucide-vue-next';
+import { Car, Plus } from 'lucide-vue-next';
 import { storeToRefs } from 'pinia';
-import { onMounted, ref } from 'vue';
+import { onMounted } from 'vue';
 import { useDriverStore } from '~/stores/drivers.store';
 
 import { columns } from './columns';
@@ -73,7 +74,7 @@ const finalColumns = [
 ];
 </script>
 <template>
-  <main class="p-6">
+  <main class="p-4 md:p-6">
     <section class="mb-6 flex items-center justify-between gap-6">
       <h1 class="flex items-center gap-2 font-bold text-2xl">
         <Car />
@@ -85,12 +86,7 @@ const finalColumns = [
         </Button>
       </div>
     </section>
-    <section
-      v-if="loadingData"
-      class="p-10 flex items-center justify-center min-h-[300px]"
-    >
-      <LoaderCircle class="w-10 h-10 animate-spin" />
-    </section>
+    <ListPageLoading v-if="loadingData" />
     <section v-else>
       <DataTable
         :columns="finalColumns"

@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import DataTable from '@/components/shared/DataTable.vue';
+import ListPageLoading from '@/components/shared/ListPageLoading.vue';
 import Button from '@/components/ui/button/Button.vue';
 import { useToast } from '@/components/ui/toast/use-toast';
 import { useCommissionsStore } from '@/stores/commissions.store';
@@ -260,7 +261,7 @@ const finalColumns = computed(() => {
 </script>
 
 <template>
-  <main class="p-6">
+  <main class="p-4 md:p-6">
     <!-- Header -->
     <section class="mb-6 flex items-center justify-between">
       <h1 class="flex items-center gap-4 text-3xl font-bold">
@@ -337,9 +338,7 @@ const finalColumns = computed(() => {
     </section>
 
     <!-- Table -->
-    <section v-if="isLoading" class="p-6 flex items-center justify-center h-full">
-      <LoaderCircle class="animate-spin" :size="32" />
-    </section>
+    <ListPageLoading v-if="isLoading" />
     <section v-else>
       <DataTable
         :columns="finalColumns"

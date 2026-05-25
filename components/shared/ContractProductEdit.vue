@@ -12,22 +12,22 @@ defineProps<{
 </script>
 <template>
   <li class="flex-1 p-4 rounded-md border border-zinc-950 bg-white">
-    <div class="flex items-center justify-between">
-      <div class="flex items-center gap-4">
+    <div class="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+      <div class="flex min-w-0 items-center gap-3 md:gap-4">
         <div
-          class="w-[80px] h-[80px] rounded-md bg-zinc-200 bg-contain bg-no-repeat bg-center relative flex items-center justify-center"
+          class="h-[72px] w-[72px] shrink-0 rounded-md bg-zinc-200 bg-contain bg-center bg-no-repeat md:h-[80px] md:w-[80px]"
           :style="{ backgroundImage: `url(${product.image?.url})` }"
         />
-        <div class="flex items-center justify-between gap-2">
-          <span class="uppercase font-bold"> {{ product.code }}</span>
+        <div class="flex min-w-0 flex-wrap items-center gap-2">
+          <span class="uppercase font-bold">{{ product.code }}</span>
           <SharedProductTag :label="product.name" :type="product.name" />
         </div>
       </div>
-      <div>
+      <div class="w-full lg:w-auto">
         <Label class="text-sm font-bold">
           {{ product.enabled ? 'Desativar' : 'Ativar' }} Produto
         </Label>
-        <div class="mt-2 flex items-center gap-3">
+        <div class="mt-2 flex items-center gap-2 md:gap-3">
           <Label class="text-sm text-zinc-500"> Inativo </Label>
           <Switch
             v-model:checked="product.enabled"
@@ -39,38 +39,38 @@ defineProps<{
     </div>
     <div class="my-3 px-4 py-2 border border-zinc-950 rounded-md">
       <h3 class="my-2 font-bold">Valores negociados no contrato</h3>
-      <section class="flex flex-row gap-6">
+      <section class="grid grid-cols-2 gap-4 md:grid-cols-3 xl:grid-cols-6">
         <div v-if="product.type === 'contract'">
-          <small class="text-center text-muted-foreground">Km Incluso</small>
-          <p class="font-bold text-center">{{ product.includedKms }}</p>
+          <small class="text-muted-foreground">Km Incluso</small>
+          <p class="font-bold">{{ product.includedKms }}</p>
         </div>
         <div v-if="product.type === 'contract'">
-          <small class="text-center text-muted-foreground">Horas Inclusas</small>
-          <p class="font-bold text-center">
+          <small class="text-muted-foreground">Horas Inclusas</small>
+          <p class="font-bold">
             {{ product.includedHours }}
           </p>
         </div>
         <div>
-          <small class="text-center text-muted-foreground">Valor base</small>
-          <p class="font-bold text-center">
+          <small class="text-muted-foreground">Valor base</small>
+          <p class="font-bold">
             {{ currencyFormat(product.basePrice) }}
           </p>
         </div>
         <div>
-          <small class="text-center text-muted-foreground">Valor Km</small>
-          <p class="font-bold text-center">
+          <small class="text-muted-foreground">Valor Km</small>
+          <p class="font-bold">
             {{ currencyFormat(product.kmPrice) }}
           </p>
         </div>
         <div>
-          <small class="text-center text-muted-foreground">Valor Minuto</small>
-          <p class="font-bold text-center">
+          <small class="text-muted-foreground">Valor Minuto</small>
+          <p class="font-bold">
             {{ currencyFormat(product.minutePrice) }}
           </p>
         </div>
         <div>
-          <small class="text-center text-muted-foreground">Capacidade</small>
-          <p class="font-bold text-center">{{ product.capacity }}</p>
+          <small class="text-muted-foreground">Capacidade</small>
+          <p class="font-bold">{{ product.capacity }}</p>
         </div>
       </section>
     </div>
@@ -79,18 +79,18 @@ defineProps<{
       <h5 class="text-muted-foreground">
         Selecione quais filiais poderão solicitar atendimento utilizando este produto.
       </h5>
-      <section class="flex flex-row gap-6">
+      <section>
         <ul class="my-6 space-y-4">
-          <li v-for="branch in contract?.branches" class="flex items-center gap-3">
+          <li v-for="branch in contract?.branches" class="flex items-start gap-3">
             <Checkbox
               @update:checked="handleAllowProduct({ branch, product })"
               :checked="
                 !!branch?.allowedProducts?.find((item: any) => item.id === product.id)
               "
-              class="data-[state=checked]:border-zinc-950 data-[state=checked]:bg-zinc-950 data-[state=checked]:text-white dark:data-[state=checked]:border-blue-700 dark:data-[state=checked]:bg-blue-700 w-6 h-6"
+              class="mt-0.5 h-6 w-6 shrink-0 data-[state=checked]:border-zinc-950 data-[state=checked]:bg-zinc-950 data-[state=checked]:text-white dark:data-[state=checked]:border-blue-700 dark:data-[state=checked]:bg-blue-700"
             />
-            <p>
-              <span class="font-bold"> {{ branch.branchCode }} - </span>
+            <p class="break-words">
+              <span class="font-bold">{{ branch.branchCode }} - </span>
               {{ branch.fantasyName }}
             </p>
           </li>

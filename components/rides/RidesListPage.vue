@@ -1,12 +1,13 @@
 <script setup lang="ts">
 import BackLink from '@/components/shared/BackLink.vue';
 import DataTable from '@/components/shared/DataTable.vue';
+import ListPageLoading from '@/components/shared/ListPageLoading.vue';
 import RidesTotalsDash from '@/components/shared/RidesTotalsDash.vue';
 import { Button } from '@/components/ui/button';
 import { useRidesPage } from '@/composables/useRidesPage';
 import { buildRideColumns } from '@/utils/rides/buildRideColumns';
 import { createColumnHelper } from '@tanstack/vue-table';
-import { LoaderCircle, Plus } from 'lucide-vue-next';
+import { Plus } from 'lucide-vue-next';
 
 const props = withDefaults(
   defineProps<{
@@ -100,25 +101,28 @@ const finalColumns = computed(() =>
 </script>
 
 <template>
-  <main class="p-6">
+  <main class="p-4 md:p-6">
     <header v-if="showBackLink">
       <BackLink />
     </header>
-    <section class="mb-6 flex items-center justify-between gap-6">
-      <h1 class="flex items-center gap-2 text-2xl font-bold">
-        <component :is="icon" :size="24" />
+    <section
+      class="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between"
+    >
+      <h1
+        class="flex min-w-0 items-start gap-2 text-xl sm:text-2xl font-bold leading-tight"
+      >
+        <component :is="icon" :size="24" class="mt-0.5 shrink-0" />
         {{ title }}
       </h1>
       <Button
         v-if="view === 'open' && createPath && capabilities?.canCreateRide !== false"
+        class="w-full sm:w-auto"
         @click="navigateTo(createPath)"
       >
         <Plus class="w-4 h-4" /> {{ createLabel }}
       </Button>
     </section>
-    <section v-if="loadingData" class="flex items-center justify-center p-10">
-      <LoaderCircle class="w-10 h-10 animate-spin" />
-    </section>
+    <ListPageLoading v-if="loadingData" />
     <section v-else>
       <RidesTotalsDash :rides="filteredRides" />
       <DataTable

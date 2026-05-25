@@ -367,7 +367,7 @@ const handleAddToCalendar = () => {
 };
 </script>
 <template>
-  <main class="p-6">
+  <main class="p-4 md:p-6">
     <header>
       <SharedBackLink />
     </header>
@@ -456,7 +456,7 @@ const handleAddToCalendar = () => {
               >
                 <div class="space-y-4 col-span-2">
                   <p>*Você ainda não selecionou o veículo para este atendimento.</p>
-                  <Button type="button" class="p-6" @click="showSelectCar = true">
+                  <Button type="button" class="p-4 md:p-6" @click="showSelectCar = true">
                     <Car />
                     Selecionar veículo
                   </Button>
@@ -564,7 +564,7 @@ const handleAddToCalendar = () => {
           <Button
             type="button"
             variant="destructive"
-            class="p-6"
+            class="p-4 md:p-6"
             @click="toggleCancelationModal"
           >
             <Hand />

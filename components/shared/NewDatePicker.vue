@@ -95,7 +95,7 @@ watch(
               :disabled="props.isRecurringRide"
               :class="
                 cn(
-                  'w-[240px] mt-2 py-3 ps-3 text-start font-normal h-10',
+                  'w-full md:w-[240px] mt-2 py-3 ps-3 text-start font-normal h-10',
                   !value && 'text-muted-foreground',
                   props.isRecurringRide && 'opacity-50 cursor-not-allowed',
                 )

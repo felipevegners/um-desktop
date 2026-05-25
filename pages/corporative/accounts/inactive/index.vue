@@ -1,22 +1,18 @@
 <script setup lang="ts">
 import DataTable from '@/components/shared/DataTable.vue';
+import ListPageLoading from '@/components/shared/ListPageLoading.vue';
 import TableActions from '@/components/shared/TableActions.vue';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/components/ui/toast';
+import { useSessionAccess } from '@/composables/auth/useSessionAccess';
 import { createColumnHelper } from '@tanstack/vue-table';
-import { LoaderCircle, Plus, UserPen } from 'lucide-vue-next';
+import { Plus, UserPen } from 'lucide-vue-next';
 import { useAccountStore } from '~/stores/account.store';
 
 import { columns } from './columns';
 
 const { toast } = useToast();
-const { data } = useAuth();
-//@ts-expect-error
-const { contractId } = data?.value?.user?.contract;
-//@ts-ignore
-const role = data?.value?.user.role;
-//@ts-ignore
-const userBranches = data.value?.user?.contract?.branches;
+const { status, contractId, role, userBranches, hasSessionData } = useSessionAccess();
 
 const columnHelper = createColumnHelper<any>();
 
@@ -25,6 +21,7 @@ const { getUsersAccountsByContractIdAction, deleteUserAccountAction } = accountS
 const { isLoading, inactiveAccounts } = storeToRefs(accountStore);
 
 const userAllowedAccounts = ref<any>([]);
+const hasHydratedAccounts = ref(false);
 
 const resolveAccountBranchIds = (targetAccount: any): string[] => {
   const branchIdsFromArray = Array.isArray(targetAccount?.contract?.branches)
@@ -50,13 +47,14 @@ useHead({
   title: 'Contas de Usuário Inativas | Urban Mobi',
 });
 
-onMounted(async () => {
-  await getUsersAccountsByContractIdAction(contractId);
-  if (role === 'master-manager') {
+const normalizeAllowedAccounts = () => {
+  if (role.value === 'master-manager') {
     userAllowedAccounts.value = inactiveAccounts.value;
+    return;
   }
-  if (role === 'branch-manager') {
-    const managerBranchIds = (userBranches || [])
+
+  if (role.value === 'branch-manager') {
+    const managerBranchIds = (userBranches.value || [])
       .map((branch: any) => branch?.id)
       .filter((id: unknown): id is string => typeof id === 'string' && id.length > 0);
 
@@ -65,8 +63,38 @@ onMounted(async () => {
       return accountBranchIds.some((id) => managerBranchIds.includes(id));
     });
     userAllowedAccounts.value = filterBranchAccounts;
+    return;
   }
-});
+
+  userAllowedAccounts.value = inactiveAccounts.value;
+};
+
+const hydrateAccounts = async () => {
+  const scopedContractId = String(contractId.value || '').trim();
+  if (!scopedContractId) return;
+
+  await getUsersAccountsByContractIdAction(scopedContractId);
+  normalizeAllowedAccounts();
+};
+
+watch(
+  [status, contractId, role, userBranches],
+  async () => {
+    if (hasHydratedAccounts.value) return;
+
+    const isReady = hasSessionData({
+      requireUserId: true,
+      requireRole: true,
+      requireContractId: true,
+    });
+
+    if (!isReady) return;
+
+    hasHydratedAccounts.value = true;
+    await hydrateAccounts();
+  },
+  { immediate: true },
+);
 
 const loadingDelete = ref<boolean>(false);
 
@@ -88,7 +116,7 @@ const deleteUserAccount = async (accountId: string) => {
       class: 'bg-green-600 border-0 text-white text-2xl',
       description: `Conta de Usuário removida com sucesso!`,
     });
-    await getUsersAccountsByContractIdAction(contractId);
+    await hydrateAccounts();
   }
 };
 
@@ -121,19 +149,21 @@ const finalColumns = [
 ];
 </script>
 <template>
-  <main class="p-6">
-    <section class="mb-10 flex items-center justify-between gap-4">
-      <div class="flex items-center gap-4">
-        <UserPen :size="32" />
-        <h1 class="font-bold text-black text-3xl">Usuários Inativos</h1>
+  <main class="p-4 md:p-6">
+    <section
+      class="mb-10 flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between"
+    >
+      <div class="flex min-w-0 items-center gap-3 md:gap-4">
+        <UserPen class="h-8 w-8 shrink-0" />
+        <h1 class="font-bold text-black text-2xl leading-tight md:text-3xl">
+          Usuários Inativos
+        </h1>
       </div>
-      <Button @click="navigateTo('/admin/accounts/new')">
+      <Button class="w-full sm:w-auto" @click="navigateTo('/admin/accounts/new')">
         <Plus class="w-4 h-4" /> Criar Usuário
       </Button>
     </section>
-    <section v-if="isLoading" class="min-h-[300px] flex items-center justify-center">
-      <LoaderCircle class="w-10 h-10 animate-spin" />
-    </section>
+    <ListPageLoading v-if="isLoading" />
     <section v-else>
       <DataTable
         :columns="finalColumns"

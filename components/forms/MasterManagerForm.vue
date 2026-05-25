@@ -29,7 +29,7 @@ const handleGeneratePassword = () => {
 </script>
 <template v-if="currentStep === 1">
   <section class="px-6">
-    <div class="mb-4 grid grid-cols-4 gap-6">
+    <div class="mb-4 grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4 xl:gap-6">
       <FormField v-slot="{ componentField }" name="managerName">
         <FormItem>
           <FormLabel>Nome</FormLabel>
@@ -75,7 +75,7 @@ const handleGeneratePassword = () => {
           </FormControl>
         </FormItem>
       </FormField>
-      <div class="col-span-4 p-6 border border-zinc-900 rounded-md">
+      <div class="mt-2 md:col-span-2 xl:col-span-4 p-6 border border-zinc-900 rounded-md">
         <p class="font-bold">Dados de Acesso</p>
         <div v-if="editMode">
           <p class="text-muted-foreground text-sm">
@@ -96,7 +96,7 @@ const handleGeneratePassword = () => {
             <Info :size="14" />
             O Gestor Master usará os dados abaixo para acessar a plataforma
           </p>
-          <div class="mt-6 grid grid-cols-3 gap-6 items-end">
+          <div class="mt-6 grid grid-cols-1 gap-4 items-end lg:grid-cols-3 lg:gap-6">
             <FormField v-slot="{ componentField }" name="managerEmail">
               <FormItem class="relative">
                 <FormLabel>E-mail de Acesso</FormLabel>
@@ -118,7 +118,7 @@ const handleGeneratePassword = () => {
               </FormItem>
             </FormField>
             <Button
-              class="mb-1 px-2 max-w-[140px]"
+              class="mb-1 w-full px-2 lg:w-auto lg:max-w-[160px]"
               @click.prevent="handleGeneratePassword"
             >
               <WandSparkles class="w-6 h-6" />
