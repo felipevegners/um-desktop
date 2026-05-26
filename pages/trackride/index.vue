@@ -21,10 +21,9 @@ definePageMeta({
 });
 
 const route = useRoute();
-// The driver app syncs location to the backend profile every 3 minutes.
-// Polling faster than that only burns requests for no new data.
-const DRIVER_LOCATION_SYNC_INTERVAL_MS = 3 * 60_000;
-const TRACK_POLL_INTERVAL_MS = DRIVER_LOCATION_SYNC_INTERVAL_MS;
+// The API now updates ride.progress.liveLocation on every location batch (~10s).
+// Polling at 15s gives ≤1 batch lag for the public tracking marker.
+const TRACK_POLL_INTERVAL_MS = 15_000;
 // 1s tick so both relative-location label and stop stopwatch stay precise
 const RELATIVE_TIME_TICK_MS = 1_000;
 const MARKER_MOVE_TRANSITION_MS = 1400;
@@ -49,6 +48,7 @@ const ridePath = ref<any>({
   strokeWeight: 4,
 });
 const canonicalCoords = ref<any[]>([]);
+const livePathCoords = ref<{ lat: number; lng: number }[]>([]);
 const finishedLL = ref<any | null>(null);
 const checkIconData =
   'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent(customIconEnd);
@@ -217,12 +217,82 @@ function updateCanonicalFromRide() {
   }
 }
 
+// Fetch driver profile once (name + photo). Called at mount and after driver changes.
+const fetchDriverInfo = async () => {
+  if (!rideDriverId.value) return;
+  try {
+    await getDriverByIdAction(rideDriverId.value, { publicTrack: true });
+    if (driver.value?.name) {
+      driverName.value = getFirstAndLastNameString(driver.value.name);
+    }
+  } catch {
+    // Non-critical — name/photo may remain empty on first load failure
+  }
+};
+
+// Update live path coords from ride.progress.livePath (rolling array of points)
+const updateLivePathFromRide = () => {
+  try {
+    const rawPath = (ride?.value?.progress as any)?.livePath;
+    if (Array.isArray(rawPath) && rawPath.length >= 2) {
+      livePathCoords.value = rawPath
+        .map((p: any) => {
+          const lat =
+            typeof p.lat === 'number'
+              ? p.lat
+              : typeof p.latitude === 'number'
+                ? p.latitude
+                : parseFloat(p.lat ?? p.latitude);
+          const lng =
+            typeof p.lng === 'number'
+              ? p.lng
+              : typeof p.longitude === 'number'
+                ? p.longitude
+                : parseFloat(p.lng ?? p.longitude);
+          if (!isFinite(lat) || !isFinite(lng)) return null;
+          return { lat, lng };
+        })
+        .filter(Boolean) as { lat: number; lng: number }[];
+    } else {
+      livePathCoords.value = [];
+    }
+  } catch {
+    livePathCoords.value = [];
+  }
+};
+
+// Read driver position from ride.progress.liveLocation (updated by API on each batch ~10s).
+// Falls back to the legacy drivers.location field if liveLocation is not yet present.
 const fetchDriverLocation = async () => {
   if (!rideDriverId.value || isRideTerminal.value) {
     loadingDriverLocation.value = false;
     return;
   }
 
+  // Primary: ride.progress.liveLocation — no extra HTTP request needed
+  const liveLocation = (ride?.value?.progress as any)?.liveLocation;
+  if (liveLocation) {
+    const lat = Number(liveLocation.latitude);
+    const lng = Number(liveLocation.longitude);
+
+    driverLocation.value = {
+      timestampMs: parseLocationTimestampMs(
+        liveLocation.timestamp ?? liveLocation.updatedAt,
+      ),
+      speed: normalizeDriverSpeedKmh(liveLocation.speed),
+      lat,
+      lng,
+    };
+
+    if (Number.isFinite(lat) && Number.isFinite(lng)) {
+      animateDriverPosition({ lat, lng });
+      center.value = { lat, lng };
+    }
+    loadingDriverLocation.value = false;
+    return;
+  }
+
+  // Fallback: legacy drivers.location field (3-minute sync)
   loadingDriverLocation.value = true;
   try {
     await getDriverByIdAction(rideDriverId.value, { publicTrack: true });
@@ -240,9 +310,8 @@ const fetchDriverLocation = async () => {
     };
 
     if (Number.isFinite(lat) && Number.isFinite(lng)) {
-      const target = { lat, lng };
-      animateDriverPosition(target);
-      center.value = target;
+      animateDriverPosition({ lat, lng });
+      center.value = { lat, lng };
     }
   } finally {
     loadingDriverLocation.value = false;
@@ -262,8 +331,11 @@ onMounted(() => {
     ride?.value?.travel?.polyline ||
     '';
   updateCanonicalFromRide();
+  updateLivePathFromRide();
 
   if (!isRideTerminal.value) {
+    // Fetch driver info (name/photo) once — location comes from ride.progress.liveLocation
+    void fetchDriverInfo();
     fetchDriverLocation();
     pollProgressKey.value++;
   }
@@ -276,6 +348,7 @@ onMounted(() => {
     await getRideByIdAction(route?.query.rideId as string, { publicTrack: true });
     rideDriverId.value = ride?.value?.driver?.id || '';
     updateCanonicalFromRide();
+    updateLivePathFromRide();
 
     if (isRideTerminal.value) {
       if (intervalId.value) {
@@ -505,7 +578,19 @@ const decodePolyline = (polyline: string) => {
             />
           </div>
         </CustomMarker>
-        <!-- Prefer server-side canonicalPath when available -->
+        <!-- Live path: blue trail accumulated from GPS batches during active ride -->
+        <Polyline
+          v-if="!isRideTerminal && livePathCoords.length >= 2"
+          :options="{
+            path: livePathCoords,
+            geodesic: true,
+            strokeColor: '#3B82F6',
+            strokeOpacity: 0.9,
+            strokeWeight: 4,
+            zIndex: 9,
+          }"
+        />
+        <!-- Prefer server-side canonicalPath when available (post-ride final path) -->
         <Polyline
           v-if="canonicalCoords.length >= 2"
           :options="{
