@@ -17,6 +17,7 @@ const paymentStatusTranslate = {
   voided: 'Cancelado',
   invoice: 'Faturar',
   invoiced: 'Faturado',
+  partially_invoiced: 'Parcial',
   unpaid: 'Aberto',
   NotFinalized: 'Não finalizado',
   authorized: 'Autorizado',
@@ -59,7 +60,9 @@ const showUrlButton = computed(() => {
               ? 'bg-red-600'
               : paymentStatus === 'invoice'
                 ? 'bg-zinc-900'
-                : 'bg-blue-600'
+                : paymentStatus === 'partially_invoiced'
+                  ? 'bg-purple-600'
+                  : 'bg-blue-600'
       }`"
     >
       {{ renderPaymentStatus }}

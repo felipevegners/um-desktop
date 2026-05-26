@@ -212,16 +212,32 @@ const parseAdditionalInfoValue = (value: unknown): RideAdditionalInfoValue => {
 
   if (typeof value === 'string') {
     try {
-      const parsed = JSON.parse(value) as Partial<RideAdditionalInfoValue>;
-      const attachments = Array.isArray(parsed?.attachments)
-        ? parsed.attachments
-            .map((item) => normalizeAdditionalInfoAttachment(item))
-            .filter((item): item is RideAdditionalInfoAttachment => Boolean(item))
-        : [];
+      const parsed = JSON.parse(value);
+
+      if (typeof parsed === 'string') {
+        return {
+          text: parsed,
+          attachments: [],
+        };
+      }
+
+      if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
+        const parsedValue = parsed as Partial<RideAdditionalInfoValue>;
+        const attachments = Array.isArray(parsedValue?.attachments)
+          ? parsedValue.attachments
+              .map((item) => normalizeAdditionalInfoAttachment(item))
+              .filter((item): item is RideAdditionalInfoAttachment => Boolean(item))
+          : [];
+
+        return {
+          text: String(parsedValue?.text || '').trim(),
+          attachments,
+        };
+      }
 
       return {
-        text: String(parsed?.text || '').trim() || value,
-        attachments,
+        text: value,
+        attachments: [],
       };
     } catch {
       return {
@@ -751,7 +767,6 @@ const onSubmit = form.handleSubmit(async (values) => {
     status: ride?.value.status,
     driver: {},
     observations: values.observations,
-    additionalInfo: parseAdditionalInfoValue(ride?.value?.additionalInfo),
   };
   try {
     await updateRideAction(ridePayload);
@@ -851,6 +866,35 @@ const shouldShowSplitEstimatedAmount = computed(() => {
     splitPaymentFinalBaseAmount.value !== toNumber(ride?.value?.billing?.ammount)
   );
 });
+
+const isPartiallyInvoicedBilling = computed(
+  () => String(ride?.value?.billing?.status || '') === 'partially_invoiced',
+);
+
+const splitInvoicingEntries = computed(() => {
+  const entries = ride?.value?.billing?.splitInvoicing;
+  return Array.isArray(entries) ? entries : [];
+});
+
+const resolveSplitInvoicingStatus = (splited: any, index: number) => {
+  const targetCode = String(splited?.areaCode || splited?.area || '')
+    .trim()
+    .toLowerCase();
+
+  const matchedByCode = splitInvoicingEntries.value.find((entry: any) => {
+    const entryCode = String(
+      entry?.areaCode || entry?.area || entry?.costCenterCode || '',
+    )
+      .trim()
+      .toLowerCase();
+    return !!targetCode && targetCode === entryCode;
+  });
+
+  const fallbackByIndex = splitInvoicingEntries.value[index];
+  const resolvedEntry = matchedByCode || fallbackByIndex;
+
+  return Boolean(resolvedEntry?.invoiced);
+};
 
 const showRideControls = computed(() => {
   return ride?.value.status !== 'completed' && ride?.value.status !== 'cancelled';
@@ -1520,9 +1564,9 @@ const handleAcceptBudgetOverQuota = () => {
                   </div>
                   <div
                     v-if="ride?.billing.paymentData.splitedPayment.length"
-                    class="p-4 border border-amber-500 bg-amber-100 rounded-md w-full space-y-4"
+                    class="p-4 border border-zinc-950 rounded-md w-full space-y-4"
                   >
-                    <p class="font-bold">Pagamento rateado entre filiais</p>
+                    <p class="font-bold">Faturamento rateado entre filiais</p>
                     <ul class="space-y-4">
                       <li
                         v-for="(splited, index) in ride?.billing.paymentData
@@ -1563,6 +1607,21 @@ const handleAcceptBudgetOverQuota = () => {
                               )
                             }}
                           </p>
+                          <span
+                            v-if="isPartiallyInvoicedBilling"
+                            class="mt-2 inline-flex rounded-full px-2 py-0.5 text-xs font-semibold"
+                            :class="
+                              resolveSplitInvoicingStatus(splited, Number(index))
+                                ? 'bg-green-100 text-green-700'
+                                : 'bg-amber-100 text-amber-700'
+                            "
+                          >
+                            {{
+                              resolveSplitInvoicingStatus(splited, Number(index))
+                                ? 'Faturado'
+                                : 'Não Faturado'
+                            }}
+                          </span>
                         </div>
                       </li>
                     </ul>
