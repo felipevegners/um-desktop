@@ -3,6 +3,7 @@ import { cn } from '@/lib/utils';
 import 'add-to-calendar-button';
 import { Car, LoaderCircle, Map } from 'lucide-vue-next';
 import { CustomMarker, GoogleMap, Marker, Polyline } from 'vue3-google-map';
+import ProductTag from '~/components/shared/ProductTag.vue';
 import RideStatusFlag from '~/components/shared/RideStatusFlag.vue';
 import { getFirstAndLastNameString, polyLineCodec } from '~/lib/utils';
 
@@ -23,7 +24,7 @@ definePageMeta({
 const route = useRoute();
 // The API now updates ride.progress.liveLocation on every location batch (~10s).
 // Polling at 15s gives ≤1 batch lag for the public tracking marker.
-const TRACK_POLL_INTERVAL_MS = 15_000;
+const TRACK_POLL_INTERVAL_MS = 30_000;
 // 1s tick so both relative-location label and stop stopwatch stay precise
 const RELATIVE_TIME_TICK_MS = 1_000;
 const MARKER_MOVE_TRANSITION_MS = 1400;
@@ -96,19 +97,19 @@ const parseLocationTimestampMs = (rawTimestamp: unknown): number | null => {
 };
 
 const formatRelativeLocationTime = (timestampMs: number | null): string => {
-  if (!timestampMs) return 'Atualizado há --';
+  if (!timestampMs) return 'há --';
 
   const elapsedMs = Math.max(0, nowMs.value - timestampMs);
   const elapsedSec = Math.floor(elapsedMs / 1000);
 
-  if (elapsedSec < 5) return 'Atualizado agora';
-  if (elapsedSec < 60) return `Atualizado há ${elapsedSec}s`;
+  if (elapsedSec < 5) return 'agora';
+  if (elapsedSec < 60) return `há ${elapsedSec}s`;
 
   const elapsedMin = Math.floor(elapsedSec / 60);
-  if (elapsedMin < 60) return `Atualizado há ${elapsedMin}min`;
+  if (elapsedMin < 60) return `há ${elapsedMin}min`;
 
   const elapsedHours = Math.floor(elapsedMin / 60);
-  return `Atualizado há ${elapsedHours}h`;
+  return `há ${elapsedHours}h`;
 };
 
 const animateDriverPosition = (target: { lat: number; lng: number }) => {
@@ -155,6 +156,21 @@ const activeStop = computed(() => {
   const last = stops[stops.length - 1] as any;
   if (!last?.stopStart || last?.stopEnd) return null;
   return last;
+});
+
+const displayedDriverSpeedKmh = computed(() => {
+  // During a stop window, keep speed at 0 to avoid showing stale pre-stop speed.
+  if (activeStop.value) return 0;
+  return driverSpeedKmh.value;
+});
+
+const markerToneClasses = computed(() => {
+  const isStopped = displayedDriverSpeedKmh.value <= 5;
+  return {
+    labelBg: isStopped ? 'bg-amber-600' : 'bg-zinc-900',
+    avatarBorder: isStopped ? 'border-amber-600' : 'border-zinc-900',
+    arrowBorderTop: isStopped ? 'border-t-amber-600' : 'border-t-zinc-900',
+  };
 });
 
 const stopElapsedFormatted = computed(() => {
@@ -373,10 +389,6 @@ onUnmounted(() => {
   }
 });
 
-const driverSpeedConverted = computed(() => {
-  return driverSpeedKmh.value;
-});
-
 // watch(
 //   () => mapRef.value?.ready,
 //   (ready) => {
@@ -476,13 +488,20 @@ const decodePolyline = (polyline: string) => {
       <div class="h-12 w-12">
         <img src="/images/um_symbol_negative.svg" alt="Logotipo UM" />
       </div>
-      <div class="flex flex-col items-start">
-        <small class="text-muted-foreground text-center uppercase text-xs">
-          Atendimento
-        </small>
-        <h1 class="text-xl font-bold text-white">
-          {{ ride?.code }}
-        </h1>
+      <div class="flex items-center gap-4">
+        <div class="flex flex-col items-start">
+          <small class="text-muted-foreground text-center uppercase text-xs">
+            Atendimento
+          </small>
+          <h1 class="text-xl font-bold text-white">
+            {{ ride?.code }}
+          </h1>
+        </div>
+        <ProductTag
+          v-if="ride?.product"
+          :label="ride?.product.name"
+          :type="ride?.product.name"
+        />
       </div>
     </div>
     <RideStatusFlag :rideStatus="ride?.status" />
@@ -548,22 +567,29 @@ const decodePolyline = (polyline: string) => {
           class="top-[-10px]"
         >
           <div class="relative flex flex-col items-center">
-            <p
-              class="px-2 py-1 text-white rounded-md flex flex-row items-center gap-2 transition-all duration-300"
-              :class="driverSpeedKmh <= 5 ? 'bg-amber-600' : 'bg-zinc-900'"
+            <div
+              class="px-2 py-1 text-white rounded-md transition-all duration-300 min-w-[180px]"
+              :class="markerToneClasses.labelBg"
             >
-              {{ driverName }} - {{ driverLocationFreshness }} - {{ driverSpeedKmh }} Km/h
-              <span
-                v-if="loadingDriverLocation"
-                class="inline-block h-2 w-2 rounded-full bg-white/80 animate-pulse"
-              />
-            </p>
+              <p class="text-xs font-semibold text-center leading-tight">
+                {{ driverName }}
+              </p>
+              <p
+                class="text-[11px] text-white/90 flex items-center justify-center gap-2 leading-tight"
+              >
+                Atualização {{ driverLocationFreshness }}
+                <span
+                  v-if="loadingDriverLocation"
+                  class="inline-block h-2 w-2 rounded-full bg-white/80 animate-pulse"
+                />
+              </p>
+            </div>
             <img
               :src="driver?.driverFiles?.picture?.url || '/images/no-avatar.png'"
               :class="
                 cn(
-                  'w-14 h-14 object-cover border-4 border-zinc-900 rounded-full relative',
-                  driverSpeedConverted === 0 && 'border-amber-600',
+                  'w-14 h-14 object-cover border-4 rounded-full relative',
+                  markerToneClasses.avatarBorder,
                 )
               "
             />
@@ -571,8 +597,7 @@ const decodePolyline = (polyline: string) => {
               :class="
                 cn(
                   'absolute bottom-[-6px] left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-8 border-r-8 border-t-8 border-l-transparent border-r-transparent',
-                  driver?.location && driverSpeedConverted > 5 && 'border-t-zinc-900',
-                  driverSpeedConverted === 0 && 'border-t-amber-600',
+                  markerToneClasses.arrowBorderTop,
                 )
               "
             />

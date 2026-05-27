@@ -2134,7 +2134,7 @@ const handleAcceptBudgetOverQuota = () => {
                     <CarFront />
                     <h3 class="text-xl font-bold">Dados do Motorista</h3>
                   </div>
-                  <div class="md:grid md:grid-cols-2">
+                  <div class="flex">
                     <div class="flex flex-col gap-6">
                       <div>
                         <small>Nome</small>
@@ -2161,8 +2161,9 @@ const handleAcceptBudgetOverQuota = () => {
                         >
                           <div class="flex items-center gap-2">
                             <MessageSquareWarning />
-                            <span class="font-semibold"
-                              >O motorista recusou este atendimento.</span
+                            <span class="font-semibold">
+                              O motorista recusou este atendimento.
+                            </span>
                             >
                           </div>
                           <div class="ml-6 p-2">
@@ -2193,10 +2194,10 @@ const handleAcceptBudgetOverQuota = () => {
                         "
                         class="flex gap-6"
                       >
-                        <div v-if="editDriver" class="flex-1 flex flex-col gap-3">
+                        <div v-if="editDriver" class="flex-1 flex flex-col gap-3 w-full">
                           <div class="flex flex-col gap-3 xl:flex-row xl:items-center">
                             <FormField v-slot="{ componentField, value }" name="driver">
-                              <FormItem class="w-full xl:flex-1">
+                              <FormItem class="min-w-[250px] w-full xl:flex-1">
                                 <FormControl>
                                   <FormSelect
                                     v-bind="componentField"
