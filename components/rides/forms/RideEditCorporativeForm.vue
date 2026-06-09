@@ -762,6 +762,12 @@ const onSubmit = form.handleSubmit(async (values) => {
   };
   try {
     await updateRideAction(ridePayload);
+    toast({
+      title: 'Tudo pronto!',
+      class: 'bg-green-600 border-0 text-white text-2xl hover:text-white',
+      description: `Atendimento alterado com sucesso!`,
+    });
+    await navigateTo(resolvePostEditRedirectPath());
   } catch (error) {
     toast({
       title: 'Oops!',
@@ -770,12 +776,6 @@ const onSubmit = form.handleSubmit(async (values) => {
     });
   } finally {
     loadingSend.value = false;
-    toast({
-      title: 'Tudo pronto!',
-      class: 'bg-green-600 border-0 text-white text-2xl hover:text-white',
-      description: `Atendimento alterado com sucesso!`,
-    });
-    navigateTo('/admin/rides/open');
   }
 });
 
@@ -892,6 +892,11 @@ const showRideControls = computed(() => {
   return ride?.value.status !== 'completed' && ride?.value.status !== 'cancelled';
 });
 
+const resolvePostEditRedirectPath = () => {
+  const currentStatus = String(ride?.value?.status || '').toLowerCase();
+  return currentStatus === 'completed' ? '/rides/list/completed' : '/rides/list/open';
+};
+
 const canCancelRideInCorporative = computed(() => {
   const status = ride?.value?.status;
   return (
@@ -947,10 +952,10 @@ const handleAcceptBudgetOverQuota = () => {
           <Button
             v-if="ride.status === 'in-progress'"
             @click="handleCopyTrackLink"
-            class="bg-violet-600 hover:bg-violet-700"
+            class="bg-blue-600 hover:bg-blue-700"
           >
             <Link />
-            Copiar Link de Rastreio
+            Copiar Link Rastreio
           </Button>
           <Button
             v-if="canCancelRideInCorporative"

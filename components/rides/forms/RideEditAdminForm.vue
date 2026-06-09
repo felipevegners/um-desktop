@@ -1271,7 +1271,7 @@ const onSubmit = form.handleSubmit(async (values) => {
       class: 'bg-green-600 border-0 text-white text-2xl hover:text-white',
       description: `Atendimento alterado com sucesso!`,
     });
-    await navigateTo('/admin/rides/open');
+    await navigateTo(resolvePostEditRedirectPath());
   } catch (error) {
     toast({
       title: 'Oops!',
@@ -1303,6 +1303,11 @@ const handleCopyTrackLink = async () => {
 const showRideControls = computed(() => {
   return ride?.value.status !== 'completed' && ride?.value.status !== 'cancelled';
 });
+
+const resolvePostEditRedirectPath = () => {
+  const currentStatus = String(ride?.value?.status || '').toLowerCase();
+  return currentStatus === 'completed' ? '/rides/list/completed' : '/rides/list/open';
+};
 
 const handleAcceptBudgetOverQuota = () => {
   const payload = {
