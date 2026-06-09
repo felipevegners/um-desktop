@@ -4,6 +4,7 @@ import ListPageLoading from '@/components/shared/ListPageLoading.vue';
 import TableActions from '@/components/shared/TableActions.vue';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/components/ui/toast';
+import { useSessionAccess } from '@/composables/auth/useSessionAccess';
 import { createColumnHelper } from '@tanstack/vue-table';
 import { Plus, UserPen } from 'lucide-vue-next';
 import { useAccountStore } from '~/stores/account.store';
@@ -17,6 +18,8 @@ const columnHelper = createColumnHelper<any>();
 const accountStore = useAccountStore();
 const { getUsersAccountsAction, deleteUserAccountAction } = accountStore;
 const { isLoading, inactiveAccounts } = storeToRefs(accountStore);
+const { waitForSessionData } = useSessionAccess();
+const hasHydratedAccounts = ref(false);
 
 definePageMeta({
   layout: 'admin',
@@ -26,7 +29,17 @@ useHead({
   title: 'Backoffice - Contas de Usuário | Urban Mobi',
 });
 
-onBeforeMount(async () => {
+onMounted(async () => {
+  if (hasHydratedAccounts.value) return;
+
+  const ready = await waitForSessionData({
+    requireUserId: true,
+    requireRole: true,
+  });
+
+  if (!ready) return;
+
+  hasHydratedAccounts.value = true;
   await getUsersAccountsAction();
 });
 

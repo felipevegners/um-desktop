@@ -115,18 +115,13 @@ const productsStore = useProductsStore();
 const { getProductsAction } = productsStore;
 const { products } = storeToRefs(productsStore);
 
-if (routeRideId.value !== 'current' && isCodeRoute.value) {
-  await getRideByCodeAction(routeRideId.value);
-} else if (routeRideId.value !== 'current') {
-  await getRideByIdAction(routeRideId.value);
-} else if (!ride?.value?.id) {
-  navigateTo('/rides/form/new');
-}
-
 await getProductsAction();
 
 const branchesStore = useBranchesStore();
-const { getBranchByIdAction, updateBranchAction } = branchesStore;
+const {
+  getBranchByIdAction,
+  // updateBranchAction,
+} = branchesStore;
 const { branch } = storeToRefs(branchesStore);
 
 const editDriver = ref<boolean>(false);
@@ -1178,54 +1173,59 @@ const onSubmit = form.handleSubmit(async (values) => {
     return sum + (isNaN(amount) ? 0 : amount);
   }, 0);
 
-  // Calculate sum of removed charges
-  const removedChargesSum = (removedCharges.value || []).reduce((sum: any, item: any) => {
-    const amount =
-      typeof item.amount === 'string'
-        ? parseFloat(item.amount.replace(',', '.'))
-        : Number(item.amount);
-    return sum + (isNaN(amount) ? 0 : amount);
-  }, 0);
-
   // Use ride.billing.ammount as original price
   let originalPrice = ride?.value.billing?.ammount
     ? Number(ride.value.billing.ammount)
     : 0;
 
-  // Calculate ammountWithExtras based on current extra charges
-  let ammountWithExtras = originalPrice + extraChargesSum;
+  /*
+   * Budget adjustment flow kept here only as historical reference.
+   * Extra ride charges must not change the user's branch usedBudget.
+   * If this behavior returns in the future, revalidate the auth/permission flow
+   * and the pricing rules before re-enabling it.
+   *
+   * const removedChargesSum = (removedCharges.value || []).reduce(
+   *   (sum: any, item: any) => {
+   *     const amount =
+   *       typeof item.amount === 'string'
+   *         ? parseFloat(item.amount.replace(',', '.'))
+   *         : Number(item.amount);
+   *     return sum + (isNaN(amount) ? 0 : amount);
+   *   },
+   *   0,
+   * );
+   *
+   * let currentUsedBudget = branch?.value.usedBudget
+   *   ? parseFloat(String(branch.value.usedBudget).replace(',', '.'))
+   *   : 0;
+   * const safeExtraChargesSum = isNaN(extraChargesSum)
+   *   ? 0
+   *   : parseFloat(String(extraChargesSum).toString().replace(',', '.'));
+   * const safeRemovedChargesSum = isNaN(removedChargesSum)
+   *   ? 0
+   *   : parseFloat(String(removedChargesSum).toString().replace(',', '.'));
+   *
+   * if (safeExtraChargesSum > 0) {
+   *   currentUsedBudget += safeExtraChargesSum;
+   * }
+   * if (safeRemovedChargesSum > 0) {
+   *   currentUsedBudget -= safeRemovedChargesSum;
+   *   if (currentUsedBudget < 0) currentUsedBudget = 0;
+   * }
+   *
+   * if (safeExtraChargesSum > 0 || safeRemovedChargesSum > 0) {
+   *   const { id, ...restBranchData } = branch?.value || {};
+   *   await updateBranchAction({
+   *     ...restBranchData,
+   *     branchId: id as string,
+   *     contract: restBranchData.contractId,
+   *     usedBudget: String(currentUsedBudget),
+   *   });
+   * }
+   */
 
-  // Update branch budget logic: always use branch.value.usedBudget
-  let currentUsedBudget = branch?.value.usedBudget
-    ? parseFloat(String(branch.value.usedBudget).replace(',', '.'))
-    : 0;
-  const safeExtraChargesSum = isNaN(extraChargesSum)
-    ? 0
-    : parseFloat(String(extraChargesSum).toString().replace(',', '.'));
-  const safeRemovedChargesSum = isNaN(removedChargesSum)
-    ? 0
-    : parseFloat(String(removedChargesSum).toString().replace(',', '.'));
-
-  // Only update branch budget if extra charges or removed charges changed
-  if (safeExtraChargesSum > 0) {
-    currentUsedBudget += safeExtraChargesSum;
-  }
-  if (safeRemovedChargesSum > 0) {
-    currentUsedBudget -= safeRemovedChargesSum;
-    if (currentUsedBudget < 0) currentUsedBudget = 0;
-    ammountWithExtras -= safeRemovedChargesSum;
-    if (ammountWithExtras < originalPrice) ammountWithExtras = originalPrice;
-  }
-
-  if (safeExtraChargesSum > 0 || safeRemovedChargesSum > 0) {
-    const { id, ...restBranchData } = branch?.value || {};
-    await updateBranchAction({
-      ...restBranchData,
-      branchId: id as string,
-      contract: restBranchData.contractId,
-      usedBudget: String(currentUsedBudget),
-    });
-  }
+  // Extra charges only affect the ride total, never the branch budget.
+  const ammountWithExtras = Math.max(originalPrice + extraChargesSum, originalPrice);
 
   // Calculate rideFinalPrice for completed rides
   let rideFinalPrice = ride?.value.rideFinalPrice

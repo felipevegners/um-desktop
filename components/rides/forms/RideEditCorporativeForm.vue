@@ -94,14 +94,6 @@ const productsStore = useProductsStore();
 const { getProductsAction } = productsStore;
 const { products } = storeToRefs(productsStore);
 
-if (routeRideId.value !== 'current' && isCodeRoute.value) {
-  await getRideByCodeAction(routeRideId.value);
-} else if (routeRideId.value !== 'current') {
-  await getRideByIdAction(routeRideId.value);
-} else if (!ride?.value?.id) {
-  navigateTo('/rides/form/new');
-}
-
 await getProductsAction();
 
 useHead({

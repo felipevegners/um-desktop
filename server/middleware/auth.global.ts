@@ -2,22 +2,19 @@ import { getServerSession } from '#auth';
 import {
   createError,
   defineEventHandler,
-  getCookie,
-  getHeader,
   getQuery,
   getRequestURL,
 } from 'h3';
-import jwt from 'jsonwebtoken';
 
-// Helper to detect mobile requests (for test purposes)
-function isMobileRequest(event: any): boolean {
-  const userAgent = getHeader(event, 'user-agent') || '';
-  const mobileHeader = getHeader(event, 'x-mobile-app');
-  // You can adjust the detection logic as needed
-  return (
-    typeof mobileHeader !== 'undefined' ||
-    /Mobile|Android|iPhone|iPad|iPod/i.test(userAgent)
-  );
+function isPublicApiPath(pathname: string): boolean {
+  if (pathname.startsWith('/api/auth')) return true;
+  if (pathname.startsWith('/api/public')) return true;
+  if (pathname.startsWith('/api/uploadthing')) return true;
+  if (pathname.startsWith('/api/files')) return true;
+  if (pathname.startsWith('/api/products')) return true;
+  if (pathname.startsWith('/api/travels/routes')) return true;
+
+  return false;
 }
 
 export default defineEventHandler(async (event) => {
@@ -46,41 +43,15 @@ export default defineEventHandler(async (event) => {
     return;
   }
 
-  // Allow all requests from mobile devices for testing purposes
-  if (isMobileRequest(event)) {
-    console.debug(
-      '[Auth Middleware] Mobile request detected, skipping auth for:',
-      pathname,
-    );
-    return;
-  }
-
   if (
     pathname === '/' ||
-    pathname.startsWith('/api/auth') ||
-    pathname.startsWith('/api/uploadthing') ||
-    pathname.startsWith('/api/products') ||
-    pathname.startsWith('/api/travels/routes') ||
     pathname.startsWith('/_nuxt') ||
-    pathname.startsWith('/api/public') ||
-    pathname.startsWith('/api/files') ||
-    pathname.startsWith('/api/auth/mobile-push-token') ||
+    isPublicApiPath(pathname) ||
     (event.node.req && (event.node.req as any).method === 'OPTIONS')
   ) {
     return;
   }
 
-  const authHeader = getHeader(event, 'authorization') || '';
-  const cookieToken = getCookie(event, 'access_token') as string | undefined;
-  const nextAuthToken = (getCookie(event, 'next-auth.session-token') ||
-    getCookie(event, '__Secure-next-auth.session-token')) as string | undefined;
-
-  const token =
-    authHeader && authHeader.toString().startsWith('Bearer ')
-      ? authHeader.toString().slice(7)
-      : cookieToken || nextAuthToken;
-
-  // First try NextAuth server-side session (works with @sidebase/nuxt-auth)
   try {
     const session = await getServerSession(event as any);
     if (session && session.user) {
@@ -88,28 +59,12 @@ export default defineEventHandler(async (event) => {
       (event as any).context.user = session.user;
       return;
     }
-  } catch (e) {
-    // ignore and fallback to JWT verification
+  } catch {
+    // Fallthrough to standardized 401 below.
   }
 
-  if (!token) {
-    throw createError({ statusCode: 401, statusMessage: 'Não autorizado' });
-  }
-
-  try {
-    const jwtSecret = process.env.JWT_ACCESS_SECRET || process.env.AUTH_SECRET;
-
-    if (!jwtSecret) {
-      throw createError({
-        statusCode: 500,
-        statusMessage: 'JWT secret não configurado (JWT_ACCESS_SECRET/AUTH_SECRET).',
-      });
-    }
-
-    const payload = jwt.verify(token, jwtSecret);
-    (event as any).context = (event as any).context || {};
-    (event as any).context.user = payload;
-  } catch (err) {
-    throw createError({ statusCode: 401, statusMessage: 'Não autorizado' });
-  }
+  throw createError({
+    statusCode: 401,
+    statusMessage: 'Sessão inválida ou expirada. Faça login novamente.',
+  });
 });

@@ -79,7 +79,6 @@ export const useContractsStore = defineStore('contracts', {
       this.isLoading = true;
       try {
         await deleteContractService(contractId);
-        this.isLoading = false;
         return { success: true };
       } catch (error: any) {
         const message = error?.data?.message || error?.message || 'Erro desconhecido';
@@ -88,6 +87,8 @@ export const useContractsStore = defineStore('contracts', {
           error: message,
           statusCode: error?.statusCode || 500,
         };
+      } finally {
+        this.isLoading = false;
       }
     },
   },

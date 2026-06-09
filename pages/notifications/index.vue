@@ -2,6 +2,7 @@
 import ProductTag from '@/components/shared/ProductTag.vue';
 import RideStatusFlag from '@/components/shared/RideStatusFlag.vue';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { useSessionAccess } from '@/composables/auth/useSessionAccess';
 import {
   Eye,
   Filter,
@@ -44,6 +45,7 @@ const searchTerm = ref('');
 const typeFilter = ref('all');
 const readFilter = ref<'all' | 'unread' | 'read'>('all');
 const markingId = ref<string | null>(null);
+const { waitForSessionData } = useSessionAccess();
 
 const loadNotifications = async () => {
   isLoading.value = true;
@@ -122,7 +124,16 @@ const rideStatus = (notification: NotificationHistoryItem) =>
   getNotificationRideStatus(notification);
 
 onMounted(() => {
-  loadNotifications();
+  void (async () => {
+    const ready = await waitForSessionData({
+      requireUserId: true,
+      requireRole: true,
+    });
+
+    if (!ready) return;
+
+    await loadNotifications();
+  })();
 });
 </script>
 

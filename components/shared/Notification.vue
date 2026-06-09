@@ -10,6 +10,7 @@ import {
   getNotificationsService,
   markNotificationAsReadService,
 } from '~/server/services/notifications';
+import { useSessionAccess } from '~/composables/auth/useSessionAccess';
 import {
   type NotificationHistoryItem,
   formatNotificationDate,
@@ -23,8 +24,11 @@ const POLL_INTERVAL_MS = 60_000;
 const notifications = ref<NotificationHistoryItem[]>([]);
 const isLoading = ref(false);
 const markingId = ref<string | null>(null);
+const hasBootstrappedNotifications = ref(false);
 
 let pollingTimer: ReturnType<typeof setInterval> | null = null;
+
+const { waitForSessionData } = useSessionAccess();
 
 const accountStore = useAccountStore();
 const currentAccount = computed(() => accountStore.account || {});
@@ -90,6 +94,16 @@ const unreadCount = computed(
 );
 
 const loadNotifications = async () => {
+  const isSessionReady = await waitForSessionData({
+    requireUserId: true,
+    requireRole: true,
+    timeoutMs: 10000,
+  });
+
+  if (!isSessionReady) {
+    return;
+  }
+
   isLoading.value = true;
 
   try {
@@ -127,7 +141,10 @@ const openNotificationsList = async () => {
 };
 
 onMounted(() => {
-  loadNotifications();
+  if (!hasBootstrappedNotifications.value) {
+    hasBootstrappedNotifications.value = true;
+    void loadNotifications();
+  }
   pollingTimer = setInterval(loadNotifications, POLL_INTERVAL_MS);
 });
 

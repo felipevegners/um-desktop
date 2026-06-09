@@ -4,6 +4,7 @@ import ListPageLoading from '@/components/shared/ListPageLoading.vue';
 import TableActions from '@/components/shared/TableActions.vue';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/components/ui/toast';
+import { useSessionAccess } from '@/composables/auth/useSessionAccess';
 import { useDriverStore } from '@/stores/drivers.store';
 import { createColumnHelper } from '@tanstack/vue-table';
 import { Car, Map, Plus } from 'lucide-vue-next';
@@ -19,6 +20,7 @@ const columnHelper = createColumnHelper<any>();
 const driverStore = useDriverStore();
 const { getDriversAction, deleteDriverAction, loadingSend } = driverStore;
 const { loadingData, drivers } = storeToRefs(driverStore);
+const { waitForSessionData } = useSessionAccess();
 
 definePageMeta({
   layout: 'admin',
@@ -29,8 +31,19 @@ useHead({
 });
 
 const showDriversLocationsMap = ref<boolean>(false);
+const hasHydratedDrivers = ref(false);
 
 onMounted(async () => {
+  if (hasHydratedDrivers.value) return;
+
+  const ready = await waitForSessionData({
+    requireUserId: true,
+    requireRole: true,
+  });
+
+  if (!ready) return;
+
+  hasHydratedDrivers.value = true;
   await getDriversAction();
 });
 

@@ -4,6 +4,7 @@ import DataTable from '@/components/shared/DataTable.vue';
 import ListPageLoading from '@/components/shared/ListPageLoading.vue';
 import RidesTotalsDash from '@/components/shared/RidesTotalsDash.vue';
 import { Button } from '@/components/ui/button';
+import { useSessionAccess } from '@/composables/auth/useSessionAccess';
 import { useRidesPage } from '@/composables/useRidesPage';
 import { buildRideColumns } from '@/utils/rides/buildRideColumns';
 import { createColumnHelper } from '@tanstack/vue-table';
@@ -42,6 +43,7 @@ const props = withDefaults(
 );
 
 const columnHelper = createColumnHelper<any>();
+const { waitForSessionData } = useSessionAccess();
 const { loadingData, capabilities, filteredRides, loadRides } = useRidesPage({
   scope: props.scope,
   view: props.view,
@@ -64,6 +66,16 @@ watch(
   ],
   async () => {
     try {
+      const sessionReady = await waitForSessionData({
+        requireUserId: true,
+        requireRole: true,
+        ...(props.scope === 'contract' ? { requireContractId: true } : {}),
+      });
+
+      if (!sessionReady) {
+        return;
+      }
+
       await loadRides();
     } catch (error) {
       console.error('Failed to hydrate rides list:', error);

@@ -3,6 +3,7 @@ import DataTable from '@/components/shared/DataTable.vue';
 import ListPageLoading from '@/components/shared/ListPageLoading.vue';
 import TableActions from '@/components/shared/TableActions.vue';
 import { Button } from '@/components/ui/button';
+import { useSessionAccess } from '@/composables/auth/useSessionAccess';
 import { createColumnHelper } from '@tanstack/vue-table';
 import { Car, Plus } from 'lucide-vue-next';
 import { storeToRefs } from 'pinia';
@@ -16,6 +17,8 @@ const columnHelper = createColumnHelper<any>();
 const driverStore = useDriverStore();
 const { loadingData, inactiveDrivers } = storeToRefs(driverStore);
 const { getDriversAction, deleteDriverAction } = driverStore;
+const { waitForSessionData } = useSessionAccess();
+const hasHydratedDrivers = ref(false);
 definePageMeta({
   layout: 'admin',
 });
@@ -25,6 +28,16 @@ useHead({
 });
 
 onMounted(async () => {
+  if (hasHydratedDrivers.value) return;
+
+  const ready = await waitForSessionData({
+    requireUserId: true,
+    requireRole: true,
+  });
+
+  if (!ready) return;
+
+  hasHydratedDrivers.value = true;
   await getDriversAction();
 });
 

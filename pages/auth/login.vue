@@ -87,6 +87,27 @@ const getDashboardByRole = (role: string | undefined): string => {
   return roleDashboardRedirect[role as keyof typeof roleDashboardRedirect] || '/';
 };
 
+const waitForAuthenticatedSession = async () => {
+  const timeoutAt = Date.now() + 10000;
+
+  while (Date.now() < timeoutAt) {
+    try {
+      const session: any = await $fetch('/api/auth/session');
+      const sessionUser = session?.user;
+
+      if (sessionUser?.id && sessionUser?.role && sessionUser?.umApiToken) {
+        return sessionUser;
+      }
+    } catch {
+      // Session cookie/JWT may still be settling right after sign-in.
+    }
+
+    await new Promise((resolve) => setTimeout(resolve, 250));
+  }
+
+  return (data.value as any)?.user ?? null;
+};
+
 const isPathAllowedForRole = (path: string, role: string | undefined): boolean => {
   if (!role) return false;
   if (path === '/' || path.startsWith('/auth/')) return true;
@@ -137,15 +158,6 @@ const resolveRoleSafeCallbackPath = (
   return getDashboardByRole(role);
 };
 
-const getLoggedUserRole = async (): Promise<string | undefined> => {
-  try {
-    const session: any = await $fetch('/api/auth/session');
-    return session?.user?.role;
-  } catch {
-    return (data.value as any)?.user?.role;
-  }
-};
-
 const onSubmit = form.handleSubmit(async (values) => {
   try {
     isLoading.value = true;
@@ -164,7 +176,8 @@ const onSubmit = form.handleSubmit(async (values) => {
       return;
     }
 
-    const role = await getLoggedUserRole();
+    const sessionUser = await waitForAuthenticatedSession();
+    const role = sessionUser?.role as string | undefined;
     const safeRedirectPath = resolveRoleSafeCallbackPath(callbackPath, role);
     await router.push(safeRedirectPath);
   } catch (error) {

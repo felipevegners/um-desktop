@@ -2,6 +2,7 @@
 import Header from '@/components/shared/Header.vue';
 import { useToast } from '@/components/ui/toast';
 import { useRemoteSessionCheck } from '@/composables/auth/useRemoteSessionCheck';
+import { useSessionAccess } from '@/composables/auth/useSessionAccess';
 import { generateMenu } from '@/config/menu/generateMenu';
 import {
   ChevronRight,
@@ -19,9 +20,18 @@ useRemoteSessionCheck();
 const { toast } = useToast();
 
 const { data, signOut } = useAuth();
-//@ts-ignore
-const { user } = data.value;
-const menuData = generateMenu(user.role);
+const { waitForSessionData } = useSessionAccess();
+const isLayoutReady = ref(false);
+const currentUser = computed<any>(() => data.value?.user ?? null);
+const menuData = computed(() => generateMenu(currentUser.value?.role || 'platform-user'));
+
+onBeforeMount(async () => {
+  isLayoutReady.value = await waitForSessionData({
+    requireUserId: true,
+    requireRole: true,
+    timeoutMs: 10000,
+  });
+});
 
 const accountStore = useAccountStore();
 const { updateUserAccountAction } = accountStore;
@@ -33,23 +43,25 @@ const showTermsMessage = ref(accept_terms.value === 'false' || !accept_terms.val
 const showContinueBtn = ref(false);
 
 const acceptTerms = async () => {
+  if (!currentUser.value) return;
+
   try {
     const accountData = {
-      accountId: user.id,
-      username: user.username,
-      email: user.email,
-      role: user.role,
-      enabled: user.enabled,
-      status: user.status,
-      avatar: user.avatar,
-      contract: user.contract,
-      phone: user.phone,
-      position: user.position,
-      department: user.department,
-      document: user.document,
-      birthDate: user.birthDate,
-      address: user.address,
-      emailConfirmed: user.emailConfirmed,
+      accountId: currentUser.value.id,
+      username: currentUser.value.username,
+      email: currentUser.value.email,
+      role: currentUser.value.role,
+      enabled: currentUser.value.enabled,
+      status: currentUser.value.status,
+      avatar: currentUser.value.avatar,
+      contract: currentUser.value.contract,
+      phone: currentUser.value.phone,
+      position: currentUser.value.position,
+      department: currentUser.value.department,
+      document: currentUser.value.document,
+      birthDate: currentUser.value.birthDate,
+      address: currentUser.value.address,
+      emailConfirmed: currentUser.value.emailConfirmed,
       acceptTerms: true,
     };
     await updateUserAccountAction(accountData);
@@ -89,7 +101,13 @@ const cookiesPoliceFileUrl =
 
 <template>
   <div
-    v-if="showTermsMessage"
+    v-if="!isLayoutReady"
+    class="flex min-h-screen items-center justify-center bg-zinc-950 text-white"
+  >
+    <LoaderCircle :size="48" class="animate-spin" />
+  </div>
+  <div
+    v-else-if="showTermsMessage"
     class="fixed flex items-center justify-center bg-zinc-950/90 z-50 w-full h-full"
   >
     <div
@@ -130,7 +148,7 @@ const cookiesPoliceFileUrl =
       </Button>
     </div>
   </div>
-  <SidebarProvider>
+  <SidebarProvider v-if="isLayoutReady">
     <Sidebar collapsible="icon" class="text-white bg-zinc-950 border-none">
       <SidebarHeader class="sidebar">
         <SidebarMenu>
