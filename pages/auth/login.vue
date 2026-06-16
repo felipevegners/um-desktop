@@ -30,7 +30,7 @@ const form = useForm({
   validationSchema: formSchema,
 });
 
-const { data, signIn } = useAuth();
+const { signIn } = useAuth();
 const route = useRoute();
 const router = useRouter();
 const { toast } = useToast();
@@ -87,77 +87,6 @@ const getDashboardByRole = (role: string | undefined): string => {
   return roleDashboardRedirect[role as keyof typeof roleDashboardRedirect] || '/';
 };
 
-const waitForAuthenticatedSession = async () => {
-  const timeoutAt = Date.now() + 10000;
-
-  while (Date.now() < timeoutAt) {
-    try {
-      const session: any = await $fetch('/api/auth/session');
-      const sessionUser = session?.user;
-
-      if (sessionUser?.id && sessionUser?.role && sessionUser?.umApiToken) {
-        return sessionUser;
-      }
-    } catch {
-      // Session cookie/JWT may still be settling right after sign-in.
-    }
-
-    await new Promise((resolve) => setTimeout(resolve, 250));
-  }
-
-  return (data.value as any)?.user ?? null;
-};
-
-const isPathAllowedForRole = (path: string, role: string | undefined): boolean => {
-  if (!role) return false;
-  if (path === '/' || path.startsWith('/auth/')) return true;
-
-  if (role === 'admin') {
-    return (
-      path.startsWith('/admin') ||
-      path.startsWith('/rides/') ||
-      path.startsWith('/profile')
-    );
-  }
-
-  if (role === 'master-manager') {
-    return (
-      path.startsWith('/corporative') ||
-      path.startsWith('/rides/') ||
-      path.startsWith('/profile')
-    );
-  }
-
-  if (role === 'branch-manager' || role === 'platform-admin') {
-    if (path.startsWith('/corporative/contracts/edit')) return false;
-
-    return (
-      path.startsWith('/corporative') ||
-      path.startsWith('/rides/') ||
-      path.startsWith('/profile')
-    );
-  }
-
-  if (role === 'platform-user' || role === 'platform-corp-user') {
-    return path.startsWith('/personal') || path.startsWith('/profile');
-  }
-
-  if (role === 'platform-driver') {
-    return path.startsWith('/driver') || path.startsWith('/profile');
-  }
-
-  return false;
-};
-
-const resolveRoleSafeCallbackPath = (
-  callbackPath: string,
-  role: string | undefined,
-): string => {
-  if (!role) return '/';
-  if (isPathAllowedForRole(callbackPath, role)) return callbackPath;
-  return getDashboardByRole(role);
-};
-
 const onSubmit = form.handleSubmit(async (values) => {
   try {
     isLoading.value = true;
@@ -176,10 +105,8 @@ const onSubmit = form.handleSubmit(async (values) => {
       return;
     }
 
-    const sessionUser = await waitForAuthenticatedSession();
-    const role = sessionUser?.role as string | undefined;
-    const safeRedirectPath = resolveRoleSafeCallbackPath(callbackPath, role);
-    await router.push(safeRedirectPath);
+    const authHandoffPath = `/auth/boot?callbackUrl=${encodeURIComponent(callbackPath)}`;
+    await router.replace(authHandoffPath);
   } catch (error) {
     console.error('Erro no login -> ', error);
     toast({
