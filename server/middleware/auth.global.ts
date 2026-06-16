@@ -1,10 +1,5 @@
 import { getServerSession } from '#auth';
-import {
-  createError,
-  defineEventHandler,
-  getQuery,
-  getRequestURL,
-} from 'h3';
+import { createError, defineEventHandler, getQuery, getRequestURL } from 'h3';
 
 function isPublicApiPath(pathname: string): boolean {
   if (pathname.startsWith('/api/auth')) return true;
@@ -52,15 +47,27 @@ export default defineEventHandler(async (event) => {
     return;
   }
 
+  let session: any = null;
+
   try {
-    const session = await getServerSession(event as any);
-    if (session && session.user) {
-      (event as any).context = (event as any).context || {};
-      (event as any).context.user = session.user;
-      return;
-    }
+    session = await getServerSession(event as any);
   } catch {
-    // Fallthrough to standardized 401 below.
+    session = null;
+  }
+
+  // In some post-login races the first read can miss a freshly-set session.
+  if (!session?.user) {
+    try {
+      session = await getServerSession(event as any);
+    } catch {
+      session = null;
+    }
+  }
+
+  if (session?.user) {
+    (event as any).context = (event as any).context || {};
+    (event as any).context.user = session.user;
+    return;
   }
 
   throw createError({

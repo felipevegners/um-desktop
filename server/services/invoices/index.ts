@@ -1,5 +1,29 @@
 const REQUEST_TIMEOUT_MS = 20000;
 
+const isSession401 = (error: any) => {
+  const statusCode = error?.statusCode || error?.response?.status;
+  const statusMessage = String(error?.statusMessage || error?.data?.message || '');
+  return statusCode === 401 && statusMessage.includes('Sessão inválida ou expirada');
+};
+
+const fetchWithSessionRetry = async <T>(request: () => Promise<T>): Promise<T> => {
+  try {
+    return await request();
+  } catch (error: any) {
+    if (!isSession401(error)) {
+      throw error;
+    }
+
+    try {
+      await $fetch('/api/auth/session', { timeout: REQUEST_TIMEOUT_MS });
+    } catch {
+      // Ignore and retry original request once.
+    }
+
+    return await request();
+  }
+};
+
 export const getInvoicesService = async (
   invoiceId?: string,
   query?: Record<string, string | number | boolean | undefined>,
@@ -19,9 +43,11 @@ export const getInvoicesService = async (
     }
 
     const queryString = params.toString();
-    return await $fetch(queryString ? `/api/invoices?${queryString}` : '/api/invoices', {
-      timeout: REQUEST_TIMEOUT_MS,
-    });
+    return await fetchWithSessionRetry(() =>
+      $fetch(queryString ? `/api/invoices?${queryString}` : '/api/invoices', {
+        timeout: REQUEST_TIMEOUT_MS,
+      }),
+    );
   } catch (error) {
     console.debug('Error during invoices service GET -> ', error);
     throw error;

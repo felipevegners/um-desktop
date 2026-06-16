@@ -1,5 +1,29 @@
 const REQUEST_TIMEOUT_MS = 20000;
 
+const isSession401 = (error: any) => {
+  const statusCode = error?.statusCode || error?.response?.status;
+  const statusMessage = String(error?.statusMessage || error?.data?.message || '');
+  return statusCode === 401 && statusMessage.includes('Sessão inválida ou expirada');
+};
+
+const fetchWithSessionRetry = async <T>(request: () => Promise<T>): Promise<T> => {
+  try {
+    return await request();
+  } catch (error: any) {
+    if (!isSession401(error)) {
+      throw error;
+    }
+
+    try {
+      await $fetch('/api/auth/session', { timeout: REQUEST_TIMEOUT_MS });
+    } catch {
+      // Ignore and retry original request once.
+    }
+
+    return await request();
+  }
+};
+
 export const getRideRoutesService = async (rideData: any) => {
   try {
     const response = await $fetch('/api/travels/routes', {
@@ -50,9 +74,11 @@ export const getRidesService = async (
         params.set('publicTrack', '1');
       }
 
-      return await $fetch(`/api/rides?${params.toString()}`, {
-        timeout: REQUEST_TIMEOUT_MS,
-      });
+      return await fetchWithSessionRetry(() =>
+        $fetch(`/api/rides?${params.toString()}`, {
+          timeout: REQUEST_TIMEOUT_MS,
+        }),
+      );
     }
 
     if (query && Object.keys(query).length > 0) {
@@ -63,14 +89,18 @@ export const getRidesService = async (
       }
 
       const queryString = params.toString();
-      return await $fetch(queryString ? `/api/rides?${queryString}` : '/api/rides', {
-        timeout: REQUEST_TIMEOUT_MS,
-      });
+      return await fetchWithSessionRetry(() =>
+        $fetch(queryString ? `/api/rides?${queryString}` : '/api/rides', {
+          timeout: REQUEST_TIMEOUT_MS,
+        }),
+      );
     }
 
-    return await $fetch('/api/rides', {
-      timeout: REQUEST_TIMEOUT_MS,
-    });
+    return await fetchWithSessionRetry(() =>
+      $fetch('/api/rides', {
+        timeout: REQUEST_TIMEOUT_MS,
+      }),
+    );
   } catch (error) {
     console.debug('Error during service GET -> ', error);
     throw error;
@@ -79,9 +109,11 @@ export const getRidesService = async (
 
 export const getRideByCodeService = async (code: string) => {
   try {
-    return await $fetch(`/api/rides?code=${encodeURIComponent(code)}`, {
-      timeout: REQUEST_TIMEOUT_MS,
-    });
+    return await fetchWithSessionRetry(() =>
+      $fetch(`/api/rides?code=${encodeURIComponent(code)}`, {
+        timeout: REQUEST_TIMEOUT_MS,
+      }),
+    );
   } catch (error) {
     console.debug('Error during service GET by code -> ', error);
     throw error;
@@ -90,9 +122,11 @@ export const getRideByCodeService = async (code: string) => {
 
 export const getContractRidesService = async (contractId: string) => {
   try {
-    return await $fetch(`/api/rides?contractId=${contractId}`, {
-      timeout: REQUEST_TIMEOUT_MS,
-    });
+    return await fetchWithSessionRetry(() =>
+      $fetch(`/api/rides?contractId=${contractId}`, {
+        timeout: REQUEST_TIMEOUT_MS,
+      }),
+    );
   } catch (error) {
     console.debug('Error during rides by contract ID service GET -> ', error);
     throw error;
@@ -101,9 +135,11 @@ export const getContractRidesService = async (contractId: string) => {
 
 export const getRidesByDateRangeService = async (startDate: string, endDate: string) => {
   try {
-    return await $fetch(`/api/rides?startDate=${startDate}&endDate=${endDate}`, {
-      timeout: REQUEST_TIMEOUT_MS,
-    });
+    return await fetchWithSessionRetry(() =>
+      $fetch(`/api/rides?startDate=${startDate}&endDate=${endDate}`, {
+        timeout: REQUEST_TIMEOUT_MS,
+      }),
+    );
   } catch (error) {
     console.debug('Error during rides by date range service GET -> ', error);
     throw error;
@@ -116,11 +152,13 @@ export const getRidesByDateRangeAndContractIdService = async (
   contractId: string,
 ) => {
   try {
-    return await $fetch(
-      `/api/rides?startDate=${startDate}&endDate=${endDate}&contractId=${contractId}`,
-      {
-        timeout: REQUEST_TIMEOUT_MS,
-      },
+    return await fetchWithSessionRetry(() =>
+      $fetch(
+        `/api/rides?startDate=${startDate}&endDate=${endDate}&contractId=${contractId}`,
+        {
+          timeout: REQUEST_TIMEOUT_MS,
+        },
+      ),
     );
   } catch (error) {
     console.debug('Error during rides by date range service GET -> ', error);
