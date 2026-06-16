@@ -3,6 +3,7 @@ import AddressForm from '@/components/forms/AddressForm.vue';
 import BranchForm from '@/components/forms/BranchForm.vue';
 import BackLink from '@/components/shared/BackLink.vue';
 import { useToast } from '@/components/ui/toast/use-toast';
+import { useSessionAccess } from '@/composables/auth/useSessionAccess';
 import { useBranchesStore } from '@/stores/branches.store';
 import { toTypedSchema } from '@vee-validate/zod';
 import { Building2, LoaderCircle } from 'lucide-vue-next';
@@ -16,15 +17,23 @@ const { isLoadingData } = storeToRefs(store);
 
 definePageMeta({
   layout: 'admin',
+  middleware: 'sidebase-auth',
 });
 useHead({
   title: 'Cadastrar Nova Filial | Urban Mobi',
 });
 
 const { toast } = useToast();
-const { data } = useAuth();
-//@ts-ignore
-const contractId = data.value?.user?.contract.contractId;
+const { contractId, waitForSessionData } = useSessionAccess();
+
+await waitForSessionData({
+  requireUserId: true,
+  requireRole: true,
+  requireContractId: true,
+  timeoutMs: 10000,
+});
+
+const scopedContractId = computed(() => String(contractId.value || '').trim());
 
 const isLoadingAddress = ref<boolean>(false);
 const ccAreas = reactive([{ areaCode: '', areaName: '' }]);
@@ -62,7 +71,7 @@ const formSchema = toTypedSchema(
 const form = useForm({
   validationSchema: formSchema,
   initialValues: {
-    contract: contractId,
+    contract: scopedContractId.value,
     branchBudget: [0],
   },
 });
@@ -118,7 +127,7 @@ const onSubmit = form.handleSubmit(async (values) => {
           <BranchForm
             :editMode="true"
             :internalUsage="true"
-            :contractId="contractId"
+            :contractId="scopedContractId"
             :loading="isLoadingAddress"
             v-model="ccAreas"
             :disabledFields="!!form.values.contract"

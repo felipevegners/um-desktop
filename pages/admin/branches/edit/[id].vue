@@ -2,6 +2,7 @@
 import BranchForm from '@/components/forms/BranchForm.vue';
 import BackLink from '@/components/shared/BackLink.vue';
 import { useToast } from '@/components/ui/toast';
+import { useSessionAccess } from '@/composables/auth/useSessionAccess';
 import { toTypedSchema } from '@vee-validate/zod';
 import { FileText, LoaderCircle, Trash } from 'lucide-vue-next';
 import { storeToRefs } from 'pinia';
@@ -13,6 +14,7 @@ import { useContractsStore } from '~/stores/contracts.store';
 
 definePageMeta({
   layout: 'admin',
+  middleware: 'sidebase-auth',
 });
 useHead({
   title: 'Backoffice - Editar Filial | Urban Mobi',
@@ -28,6 +30,17 @@ const { getContractByIdAction } = contractStore;
 const { contract } = storeToRefs(contractStore);
 
 const route = useRoute();
+const { waitForSessionData } = useSessionAccess();
+const sessionReady = await waitForSessionData({
+  requireUserId: true,
+  requireRole: true,
+  timeoutMs: 10000,
+});
+
+if (!sessionReady) {
+  await navigateTo('/auth/login');
+}
+
 await getBranchByIdAction(route?.params?.id as string);
 if (branch.value?.contractId) {
   await getContractByIdAction(branch.value.contractId as string);

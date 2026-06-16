@@ -6,6 +6,7 @@ import NewDatePicker from '@/components/shared/NewDatePicker.vue';
 import ProductTag from '@/components/shared/ProductTag.vue';
 import RenderIcon from '@/components/shared/RenderIcon.vue';
 import { useToast } from '@/components/ui/toast/use-toast';
+import { useSessionAccess } from '@/composables/auth/useSessionAccess';
 import { paymentMethods } from '@/config/paymentMethods';
 import { getRideDistanceService } from '@/server/services/rides';
 import { useContractsStore } from '@/stores/contracts.store';
@@ -65,6 +66,7 @@ const customIconEnd = `<svg xmlns="http://www.w3.org/2000/svg" width="24" height
 
 const { toast } = useToast();
 const { data } = useAuth();
+const { waitForSessionData } = useSessionAccess();
 
 const df = new DateFormatter('pt-BR', {
   dateStyle: 'short',
@@ -89,6 +91,14 @@ const availableProducts = ref<any>([]);
 const showContractProductAlert = ref<boolean>(false);
 
 onBeforeMount(async () => {
+  const sessionReady = await waitForSessionData({
+    requireUserId: true,
+    requireRole: true,
+    timeoutMs: 10000,
+  });
+
+  if (!sessionReady) return;
+
   await getProductsAction();
   availableProducts.value = products.value.sort(
     (a: Product, b: Product) =>
@@ -114,6 +124,14 @@ const isCorpAccount = computed(() => {
 });
 
 onMounted(async () => {
+  const sessionReady = await waitForSessionData({
+    requireUserId: true,
+    requireRole: true,
+    timeoutMs: 10000,
+  });
+
+  if (!sessionReady) return;
+
   //@ts-ignore
 
   if (isCorpAccount.value) {

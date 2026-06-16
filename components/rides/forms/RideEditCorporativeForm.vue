@@ -691,6 +691,8 @@ const handleDeleteRide = async () => {
   try {
     loadingCancelAndDelete.value = true;
     await deleteRideService(ride?.value.id);
+    showDeleteConfirmationModal.value = false;
+    await navigateTo('/corporative/rides/open');
   } catch (error) {
     toast({
       title: 'Oops!',
@@ -698,11 +700,7 @@ const handleDeleteRide = async () => {
       variant: 'destructive',
     });
   } finally {
-    setTimeout(() => {
-      loadingCancelAndDelete.value = false;
-      showCancelationModal.value = false;
-      navigateTo('/admin/rides/open');
-    }, 1500);
+    loadingCancelAndDelete.value = false;
   }
 };
 

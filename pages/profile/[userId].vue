@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import AccountForm from '@/components/forms/AccountForm.vue';
 import DriverProfileForm from '@/components/forms/DriverProfileForm.vue';
+import { useSessionAccess } from '@/composables/auth/useSessionAccess';
 
 definePageMeta({
   layout: 'admin',
@@ -13,6 +14,7 @@ useHead({
 
 const route = useRoute();
 const { data } = useAuth();
+const { waitForSessionData } = useSessionAccess();
 
 const currentUserId = computed(() => String((data.value as any)?.user?.id || ''));
 const currentUserRole = computed(() => String((data.value as any)?.user?.role || ''));
@@ -54,7 +56,18 @@ const formMode = computed(() => {
 
 const isDriverProfile = computed(() => currentUserRole.value === 'platform-driver');
 
-onBeforeMount(() => {
+onBeforeMount(async () => {
+  const sessionReady = await waitForSessionData({
+    requireUserId: true,
+    requireRole: true,
+    timeoutMs: 10000,
+  });
+
+  if (!sessionReady) {
+    navigateTo('/auth/login');
+    return;
+  }
+
   if (!targetUserId.value || !hasPermission.value) {
     navigateTo('/forbidden');
   }

@@ -5,6 +5,7 @@ import DownloadCsvTemplate from '@/components/shared/DownloadCsvTemplate.vue';
 import FormSelect from '@/components/shared/FormSelect.vue';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/components/ui/toast/use-toast';
+import { useSessionAccess } from '@/composables/auth/useSessionAccess';
 import { rolesList } from '@/config/roles';
 import { useAccountStore } from '@/stores/account.store';
 import { useContractsStore } from '@/stores/contracts.store';
@@ -28,6 +29,7 @@ import { columns } from './columns';
 
 definePageMeta({
   layout: 'admin',
+  middleware: 'sidebase-auth',
 });
 
 useHead({
@@ -36,13 +38,19 @@ useHead({
 
 const { toast } = useToast();
 const router = useRouter();
-const { data } = useAuth();
-//@ts-expect-error
-const { contractId } = data?.value?.user?.contract;
-//@ts-ignore
-const role = data?.value?.user?.role;
-//@ts-ignore
-const userBranches = data.value?.user?.contract?.branches;
+const { contractId, role, userBranches, waitForSessionData } = useSessionAccess();
+const sessionReady = await waitForSessionData({
+  requireUserId: true,
+  requireRole: true,
+  requireContractId: true,
+  timeoutMs: 10000,
+});
+
+if (!sessionReady) {
+  await navigateTo('/auth/login');
+}
+
+const scopedContractId = computed(() => String(contractId.value || '').trim());
 
 const accountStore = useAccountStore();
 const { registerUserAccountAction } = accountStore;
@@ -52,7 +60,7 @@ const contractsStore = useContractsStore();
 const { getContractByIdAction } = contractsStore;
 const { isLoading, contract } = storeToRefs(contractsStore);
 
-await getContractByIdAction(contractId);
+await getContractByIdAction(scopedContractId.value);
 
 const viewPassword = ref<boolean>(true);
 const contractName = ref('');
@@ -107,9 +115,9 @@ const getContractData = () => {
   contractName.value = contract?.value.customerName;
   selectedBranches.value = contract?.value.branches;
 
-  if (role === 'master-manager') {
+  if (role.value === 'master-manager') {
     const filteredBranches = contract?.value.branches.filter(
-      (branch: any) => branch.contractId === contractId,
+      (branch: any) => branch.contractId === scopedContractId.value,
     );
     contractBranches.value = filteredBranches?.map((branch: any) => {
       return {
@@ -118,9 +126,9 @@ const getContractData = () => {
       };
     });
   }
-  if (role === 'branch-manager') {
+  if (role.value === 'branch-manager') {
     const filteredBranches = contract?.value.branches.filter((item: any) =>
-      userBranches.some((filterItem: any) => filterItem.id === item.id),
+      (userBranches.value || []).some((filterItem: any) => filterItem.id === item.id),
     );
     contractBranches.value = filteredBranches?.map((branch: any) => {
       return {
@@ -136,7 +144,7 @@ const getContractData = () => {
 
 onMounted(async () => {
   getContractData();
-  if (role === 'master-manager') {
+  if (role.value === 'master-manager') {
     rolesSelectList.value = rolesList.filter(
       (role) =>
         role.value !== 'admin' &&
@@ -144,7 +152,7 @@ onMounted(async () => {
         role.value !== 'platform-driver',
     );
   }
-  if (role === 'branch-manager') {
+  if (role.value === 'branch-manager') {
     rolesSelectList.value = rolesList.filter(
       (role) =>
         role.value !== 'admin' &&
@@ -276,7 +284,7 @@ const onSubmit = form.handleSubmit(async (values) => {
         position: csvUser.cargo,
         department: csvUser.departamento,
         contract: {
-          contractId: contractId,
+          contractId: scopedContractId.value,
           name: contractName.value || null,
           branchId: values.branch || null,
           branchName: newUserBranchName.value || null,
@@ -349,7 +357,7 @@ const onSubmit = form.handleSubmit(async (values) => {
       position: values.position,
       department: values.department,
       contract: {
-        contractId: contractId,
+        contractId: scopedContractId.value,
         name: contractName.value || null,
         branchId: values.branch || null,
         branchName: newUserBranchName.value || null,

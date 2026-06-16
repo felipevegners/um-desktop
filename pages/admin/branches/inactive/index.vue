@@ -3,6 +3,7 @@ import DataTable from '@/components/shared/DataTable.vue';
 import ListPageLoading from '@/components/shared/ListPageLoading.vue';
 import TableActions from '@/components/shared/TableActions.vue';
 import { useToast } from '@/components/ui/toast';
+import { useSessionAccess } from '@/composables/auth/useSessionAccess';
 import { createColumnHelper } from '@tanstack/vue-table';
 import { Building2 } from 'lucide-vue-next';
 import { storeToRefs } from 'pinia';
@@ -16,6 +17,8 @@ const { toast } = useToast();
 const store = useBranchesStore();
 const { getBranchesAction, deleteBranchAction } = store;
 const { inactiveBranches, isLoadingData } = storeToRefs(store);
+const { waitForSessionData } = useSessionAccess();
+const hasHydratedBranches = ref(false);
 
 const loadingDelete = ref<boolean>(false);
 
@@ -29,6 +32,16 @@ useHead({
 });
 
 onMounted(async () => {
+  if (hasHydratedBranches.value) return;
+
+  const ready = await waitForSessionData({
+    requireUserId: true,
+    requireRole: true,
+  });
+
+  if (!ready) return;
+
+  hasHydratedBranches.value = true;
   await getBranchesAction();
 });
 

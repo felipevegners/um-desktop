@@ -6,6 +6,7 @@ import FormSelect from '@/components/shared/FormSelect.vue';
 import { Button } from '@/components/ui/button';
 import Input from '@/components/ui/input/Input.vue';
 import { useToast } from '@/components/ui/toast/use-toast';
+import { useSessionAccess } from '@/composables/auth/useSessionAccess';
 import { rolesList } from '@/config/roles';
 import { useAccountStore } from '@/stores/account.store';
 import { useContractsStore } from '@/stores/contracts.store';
@@ -29,6 +30,7 @@ import { columns } from './columns';
 
 definePageMeta({
   layout: 'admin',
+  middleware: 'sidebase-auth',
 });
 
 useHead({
@@ -45,8 +47,17 @@ const { isLoadingSend } = storeToRefs(accountStore);
 const contractsStore = useContractsStore();
 const { getContractsAction } = contractsStore;
 const { isLoading } = storeToRefs(contractsStore);
+const { waitForSessionData } = useSessionAccess();
 
-await getContractsAction();
+const sessionReady = await waitForSessionData({
+  requireUserId: true,
+  requireRole: true,
+  timeoutMs: 10000,
+});
+
+if (sessionReady) {
+  await getContractsAction();
+}
 
 const viewPassword = ref<boolean>(true);
 const contractName = ref('');

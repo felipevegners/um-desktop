@@ -2,6 +2,7 @@
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/components/ui/toast/use-toast';
+import { useSessionAccess } from '@/composables/auth/useSessionAccess';
 import {
   CheckCircle2,
   ChevronDown,
@@ -34,6 +35,7 @@ useHead({
 
 const route = useRoute();
 const { toast } = useToast();
+const { waitForSessionData } = useSessionAccess();
 const isCorporateRoute = computed(() =>
   String(route.path || '').startsWith('/corporative'),
 );
@@ -621,6 +623,17 @@ const saveInvoice = async () => {
 };
 
 onBeforeMount(async () => {
+  const sessionReady = await waitForSessionData({
+    requireUserId: true,
+    requireRole: true,
+    timeoutMs: 10000,
+  });
+
+  if (!sessionReady) {
+    await navigateTo('/auth/login');
+    return;
+  }
+
   try {
     await resolveInvoiceByParam();
   } catch (error) {

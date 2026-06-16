@@ -23,6 +23,7 @@ const hasHydratedAccounts = ref(false);
 
 definePageMeta({
   layout: 'admin',
+  middleware: 'sidebase-auth',
 });
 
 useHead({

@@ -5,6 +5,7 @@ import FormSelect from '@/components/shared/FormSelect.vue';
 import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { useToast } from '@/components/ui/toast/use-toast';
+import { useSessionAccess } from '@/composables/auth/useSessionAccess';
 import { LoaderCircle, Receipt, Save } from 'lucide-vue-next';
 import { storeToRefs } from 'pinia';
 import DataTable from '~/components/shared/DataTable.vue';
@@ -43,6 +44,7 @@ interface DateRange {
 }
 
 const { toast } = useToast();
+const { waitForSessionData } = useSessionAccess();
 
 const contractStore = useContractsStore();
 const { getContractsAction } = contractStore;
@@ -704,6 +706,14 @@ const confirmGenerateInvoice = async () => {
 };
 
 onBeforeMount(async () => {
+  const sessionReady = await waitForSessionData({
+    requireUserId: true,
+    requireRole: true,
+    timeoutMs: 10000,
+  });
+
+  if (!sessionReady) return;
+
   await getContractsAction();
 });
 </script>

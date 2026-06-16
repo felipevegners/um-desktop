@@ -41,6 +41,7 @@ const resolveAccountBranchIds = (targetAccount: any): string[] => {
 
 definePageMeta({
   layout: 'admin',
+  middleware: 'sidebase-auth',
 });
 
 useHead({

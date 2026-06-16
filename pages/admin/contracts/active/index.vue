@@ -3,6 +3,7 @@ import DataTable from '@/components/shared/DataTable.vue';
 import ListPageLoading from '@/components/shared/ListPageLoading.vue';
 import TableActions from '@/components/shared/TableActions.vue';
 import { useToast } from '@/components/ui/toast';
+import { useSessionAccess } from '@/composables/auth/useSessionAccess';
 import { createColumnHelper } from '@tanstack/vue-table';
 import { FileText, Plus } from 'lucide-vue-next';
 import { storeToRefs } from 'pinia';
@@ -11,6 +12,7 @@ import { useContractsStore } from '~/stores/contracts.store';
 import { columns } from './columns';
 
 const { toast } = useToast();
+const { waitForSessionData } = useSessionAccess();
 
 const columnHelper = createColumnHelper<any>();
 const store = useContractsStore();
@@ -29,6 +31,14 @@ useHead({
 });
 
 onMounted(async () => {
+  const sessionReady = await waitForSessionData({
+    requireUserId: true,
+    requireRole: true,
+    timeoutMs: 10000,
+  });
+
+  if (!sessionReady) return;
+
   await getContractsAction();
 });
 

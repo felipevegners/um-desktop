@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import BackLink from '@/components/shared/BackLink.vue';
+import { useSessionAccess } from '@/composables/auth/useSessionAccess';
 import { WPP_API } from '@/config/paths';
 import {
   Car,
@@ -27,8 +28,19 @@ useHead({
 const driverStore = useDriverStore();
 const { getDriverByIdAction } = driverStore;
 const { loadingData, driver } = storeToRefs(driverStore);
+const { waitForSessionData } = useSessionAccess();
 
 const route = useRoute();
+const sessionReady = await waitForSessionData({
+  requireUserId: true,
+  requireRole: true,
+  timeoutMs: 10000,
+});
+
+if (!sessionReady) {
+  await navigateTo('/auth/login');
+}
+
 await getDriverByIdAction(route.params.id as string);
 </script>
 <template>

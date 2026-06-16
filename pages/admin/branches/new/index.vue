@@ -3,6 +3,7 @@ import AddressForm from '@/components/forms/AddressForm.vue';
 import BranchForm from '@/components/forms/BranchForm.vue';
 import BackLink from '@/components/shared/BackLink.vue';
 import { useToast } from '@/components/ui/toast/use-toast';
+import { useSessionAccess } from '@/composables/auth/useSessionAccess';
 import { useBranchesStore } from '@/stores/branches.store';
 import { toTypedSchema } from '@vee-validate/zod';
 import { Building2, LoaderCircle } from 'lucide-vue-next';
@@ -16,14 +17,24 @@ const { isLoadingData } = storeToRefs(store);
 
 definePageMeta({
   layout: 'admin',
+  middleware: 'sidebase-auth',
 });
 useHead({
   title: 'Backoffice - Adicionar Nova Filial | Urban Mobi',
 });
 
 const { toast } = useToast();
+const { waitForSessionData } = useSessionAccess();
 const isLoadingAddress = ref<boolean>(false);
 const ccAreas = reactive([{ areaCode: '', areaName: '' }]);
+
+onBeforeMount(async () => {
+  await waitForSessionData({
+    requireUserId: true,
+    requireRole: true,
+    timeoutMs: 10000,
+  });
+});
 
 const formSchema = toTypedSchema(
   z.object({

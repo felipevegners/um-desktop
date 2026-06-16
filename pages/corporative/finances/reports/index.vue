@@ -5,6 +5,7 @@ import RidesPerPeriod from './components/RidesPerPeriod.vue';
 
 definePageMeta({
   layout: 'admin',
+  middleware: 'sidebase-auth',
   title: 'Relatórios Financeiros - Urban Mobi',
 });
 

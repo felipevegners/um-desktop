@@ -5,6 +5,7 @@ import FormSelect from '@/components/shared/FormSelect.vue';
 import ListPageLoading from '@/components/shared/ListPageLoading.vue';
 import TableActions from '@/components/shared/TableActions.vue';
 import { useToast } from '@/components/ui/toast';
+import { useSessionAccess } from '@/composables/auth/useSessionAccess';
 import { productTypes } from '@/config/products';
 import {
   createProductService,
@@ -40,6 +41,7 @@ const showAddForm = ref<boolean>(false);
 const productsList = ref<any>([]);
 const productType = ref<string | null>(null);
 const columnHelper = createColumnHelper<any>();
+const { waitForSessionData } = useSessionAccess();
 
 const fetchData = async (productId: string) => {
   try {
@@ -60,7 +62,17 @@ const fetchData = async (productId: string) => {
   }
 };
 
-productsList.value = await fetchData('');
+onMounted(async () => {
+  const sessionReady = await waitForSessionData({
+    requireUserId: true,
+    requireRole: true,
+    timeoutMs: 10000,
+  });
+
+  if (!sessionReady) return;
+
+  productsList.value = await fetchData('');
+});
 
 const dynamicSchema = computed(() => {
   let baseSchema = z.object({

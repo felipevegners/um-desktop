@@ -2,6 +2,7 @@
 import { SharedBackLink } from '#components';
 import RideStatusFlag from '@/components/shared/RideStatusFlag.vue';
 import { useToast } from '@/components/ui/toast/use-toast';
+import { useSessionAccess } from '@/composables/auth/useSessionAccess';
 import {
   ArrowLeftRight,
   CalendarDays,
@@ -27,6 +28,7 @@ useHead({
 const { toast } = useToast();
 const route = useRoute();
 const { data } = useAuth();
+const { waitForSessionData } = useSessionAccess();
 
 const ridesStore = useRidesStore();
 const { getRideByIdAction } = ridesStore;
@@ -137,6 +139,17 @@ const handleRefuseRide = async () => {
 };
 
 onBeforeMount(async () => {
+  const sessionReady = await waitForSessionData({
+    requireUserId: true,
+    requireRole: true,
+    timeoutMs: 10000,
+  });
+
+  if (!sessionReady) {
+    await navigateTo('/auth/login');
+    return;
+  }
+
   await getRideByIdAction(route.params.id as string);
   //@ts-ignore
   await getDriverByIdAction(data?.value?.user?.id as string);

@@ -24,6 +24,7 @@ const { waitForSessionData } = useSessionAccess();
 
 definePageMeta({
   layout: 'admin',
+  middleware: 'sidebase-auth',
 });
 
 useHead({

@@ -13,6 +13,7 @@ import {
 } from '@/components/ui/accordion';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/components/ui/toast/use-toast';
+import { useSessionAccess } from '@/composables/auth/useSessionAccess';
 import { useContractsStore } from '@/stores/contracts.store';
 import { useProductsStore } from '@/stores/products.store';
 import { toTypedSchema } from '@vee-validate/zod';
@@ -25,6 +26,7 @@ const { createContractAction } = useContractsStore();
 
 definePageMeta({
   layout: 'admin',
+  middleware: 'sidebase-auth',
 });
 useHead({
   title: 'Backoffice - Adicionar Novo Contrato | Urban Mobi',
@@ -39,8 +41,17 @@ const { toast } = useToast();
 const store = useProductsStore();
 const { getProductsAction } = store;
 const { enabledProducts, isLoading } = storeToRefs(store);
+const { waitForSessionData } = useSessionAccess();
 
 onBeforeMount(async () => {
+  const sessionReady = await waitForSessionData({
+    requireUserId: true,
+    requireRole: true,
+    timeoutMs: 10000,
+  });
+
+  if (!sessionReady) return;
+
   await getProductsAction();
 });
 

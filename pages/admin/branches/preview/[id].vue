@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import BackLink from '@/components/shared/BackLink.vue';
+import { useSessionAccess } from '@/composables/auth/useSessionAccess';
 import { Edit, FileText, LoaderCircle } from 'lucide-vue-next';
 import { storeToRefs } from 'pinia';
 import { currencyFormat, dateFormat } from '~/lib/utils';
@@ -7,13 +8,25 @@ import { useBranchesStore } from '~/stores/branches.store';
 
 definePageMeta({
   layout: 'admin',
+  middleware: 'sidebase-auth',
 });
 
 const store = useBranchesStore();
 const { getBranchByIdAction, deleteBranchAction } = store;
 const { branch, isLoadingData } = storeToRefs(store);
+const { waitForSessionData } = useSessionAccess();
 
 const route = useRoute();
+const sessionReady = await waitForSessionData({
+  requireUserId: true,
+  requireRole: true,
+  timeoutMs: 10000,
+});
+
+if (!sessionReady) {
+  await navigateTo('/auth/login');
+}
+
 await getBranchByIdAction(route?.params?.id as string);
 </script>
 <template>

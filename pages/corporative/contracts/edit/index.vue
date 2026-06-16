@@ -9,6 +9,7 @@ import type { Account } from '@/components/shared/ContractUserCard.vue';
 import ContractUserCard from '@/components/shared/ContractUserCard.vue';
 import CurrencyInput from '@/components/shared/CurrencyInput.vue';
 import { useToast } from '@/components/ui/toast';
+import { useSessionAccess } from '@/composables/auth/useSessionAccess';
 import { toTypedSchema } from '@vee-validate/zod';
 import {
   Car,
@@ -33,9 +34,19 @@ definePageMeta({
   middleware: 'sidebase-auth',
 });
 
-const { data } = useAuth();
-//@ts-expect-error
-const { contractId } = data?.value?.user?.contract;
+const { contractId, waitForSessionData } = useSessionAccess();
+const sessionReady = await waitForSessionData({
+  requireUserId: true,
+  requireRole: true,
+  requireContractId: true,
+  timeoutMs: 10000,
+});
+
+if (!sessionReady) {
+  await navigateTo('/auth/login');
+}
+
+const scopedContractId = String(contractId.value || '').trim();
 const { toast } = useToast();
 const route = useRoute();
 
@@ -68,7 +79,7 @@ onMounted(() => {
 });
 
 const fetchContractData = async () => {
-  await getContractByIdAction(contractId);
+  await getContractByIdAction(scopedContractId);
   contractProducts.value = contract?.value.products;
 };
 
@@ -93,7 +104,7 @@ const initBranchBudgets = () => {
 initBranchBudgets();
 
 const fetchContractUsersData = async () => {
-  await getUsersAccountsByContractIdAction(contractId);
+  await getUsersAccountsByContractIdAction(scopedContractId);
   accounts.value.push(...(inactiveAccounts.value || []));
 };
 

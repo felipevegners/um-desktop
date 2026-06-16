@@ -4,6 +4,7 @@ import FormSelect from '@/components/shared/FormSelect.vue';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { useToast } from '@/components/ui/toast';
+import { useSessionAccess } from '@/composables/auth/useSessionAccess';
 import { rolesList, userRestrictions } from '@/config/roles';
 import { useAccountStore } from '@/stores/account.store';
 import { useContractsStore } from '@/stores/contracts.store';
@@ -25,6 +26,7 @@ import { generatePassword } from '~/lib/utils';
 
 definePageMeta({
   layout: 'admin',
+  middleware: 'sidebase-auth',
 });
 
 defineOptions({
@@ -33,6 +35,7 @@ defineOptions({
 
 const route = useRoute();
 const { toast } = useToast();
+const { waitForSessionData } = useSessionAccess();
 
 const accountSituation = ref<boolean>(false);
 const loadingDelete = ref<boolean>(false);
@@ -54,7 +57,15 @@ const {
 } = accountStore;
 const { isLoadingSend, account } = storeToRefs(accountStore);
 
-await getUsersAccountsByIdAction(route?.params?.id as string);
+const sessionReady = await waitForSessionData({
+  requireUserId: true,
+  requireRole: true,
+  timeoutMs: 10000,
+});
+
+if (sessionReady) {
+  await getUsersAccountsByIdAction(route?.params?.id as string);
+}
 accountSituation.value = account?.value?.enabled;
 
 const contractRoles = [

@@ -4,6 +4,7 @@ import DatePickerRange from '@/components/shared/DatePickerRange.vue';
 import FormSelect from '@/components/shared/FormSelect.vue';
 import RidesTotalsDash from '@/components/shared/RidesTotalsDash.vue';
 import { useToast } from '@/components/ui/toast/use-toast';
+import { useSessionAccess } from '@/composables/auth/useSessionAccess';
 import { paymentStatusOptions, rideStatusOptions } from '@/config/status';
 import { Filter, LoaderCircle } from 'lucide-vue-next';
 import { storeToRefs } from 'pinia';
@@ -18,6 +19,7 @@ interface CalendarDate {
 }
 
 const { toast } = useToast();
+const { waitForSessionData } = useSessionAccess();
 
 const selectedRange = ref<{ start: CalendarDate; end: CalendarDate } | null>(null);
 const filteredRides = ref([]);
@@ -61,6 +63,14 @@ const { getProductsAction } = productsStore;
 const { products } = storeToRefs(productsStore);
 
 onMounted(async () => {
+  const sessionReady = await waitForSessionData({
+    requireUserId: true,
+    requireRole: true,
+    timeoutMs: 10000,
+  });
+
+  if (!sessionReady) return;
+
   await getContractsAction();
   await getDriversAction();
   await getProductsAction();

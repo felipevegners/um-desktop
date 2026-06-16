@@ -2,6 +2,7 @@
 import { SharedBackLink } from '#components';
 import RideStatusFlag from '@/components/shared/RideStatusFlag.vue';
 import { useToast } from '@/components/ui/toast/use-toast';
+import { useSessionAccess } from '@/composables/auth/useSessionAccess';
 import { useRidesStore } from '@/stores/rides.store';
 import 'add-to-calendar-button';
 import {
@@ -39,6 +40,7 @@ useHead({
 
 const { toast } = useToast();
 const route = useRoute();
+const { waitForSessionData } = useSessionAccess();
 const ridesStore = useRidesStore();
 const { getRideByIdAction, updateRideAction } = ridesStore;
 const { ride, loadingData } = storeToRefs(ridesStore);
@@ -107,7 +109,15 @@ const decodePolyline = (polyline: string) => {
     },
   ];
 };
-await getRideByIdAction(route?.params.id as string);
+const sessionReady = await waitForSessionData({
+  requireUserId: true,
+  requireRole: true,
+  timeoutMs: 10000,
+});
+
+if (sessionReady) {
+  await getRideByIdAction(route?.params.id as string);
+}
 origin.value = ride?.value?.travel.origin;
 destination.value = ride?.value?.travel.destination;
 

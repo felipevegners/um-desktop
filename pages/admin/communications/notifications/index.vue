@@ -4,6 +4,7 @@ defineOptions({
 });
 definePageMeta({
   layout: 'admin',
+  middleware: 'sidebase-auth',
 });
 </script>
 <template>

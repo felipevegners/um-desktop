@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { useSessionAccess } from '@/composables/auth/useSessionAccess';
 import { useDriverStore } from '@/stores/drivers.store';
 import { CalendarClock, Info, LayoutDashboard } from 'lucide-vue-next';
 
@@ -8,12 +9,21 @@ definePageMeta({
 });
 
 const { data } = useAuth();
+const { waitForSessionData } = useSessionAccess();
 
 const driverStore = useDriverStore();
 const { getDriverByIdAction } = driverStore;
 const { driver } = storeToRefs(driverStore);
 
 onBeforeMount(async () => {
+  const sessionReady = await waitForSessionData({
+    requireUserId: true,
+    requireRole: true,
+    timeoutMs: 10000,
+  });
+
+  if (!sessionReady) return;
+
   // @ts-ignore
   await getDriverByIdAction(data?.value?.user.id);
 });

@@ -31,6 +31,7 @@ const { loadingData } = storeToRefs(driverStore);
 
 definePageMeta({
   layout: 'admin',
+  middleware: 'sidebase-auth',
 });
 
 useHead({

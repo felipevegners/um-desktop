@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import DashBarChart from '@/components/shared/DashBarChart.vue';
 import RideStatusFlag from '@/components/shared/RideStatusFlag.vue';
+import { useSessionAccess } from '@/composables/auth/useSessionAccess';
 import { useRidesStore } from '@/stores/rides.store';
 import {
   CalendarDays,
@@ -17,27 +18,50 @@ const { getUserRidesAction } = ridesStore;
 const { rides } = storeToRefs(ridesStore);
 
 const { data } = useAuth();
+const { hasSessionData, status } = useSessionAccess();
 
 const userRides = ref<any>([]);
+const hasHydratedDashboard = ref(false);
 
 definePageMeta({
   layout: 'admin',
   middleware: 'sidebase-auth',
 });
 
-onMounted(async () => {
-  //@ts-expect-error
-  await getUserRidesAction(data?.value?.user?.id as string);
-  if (rides?.value.length >= 3) {
-    userRides.value = rides?.value.slice(-3).reverse();
-  }
-});
+watch(
+  [status, () => (data.value as any)?.user?.id, () => (data.value as any)?.user?.role],
+  async () => {
+    if (hasHydratedDashboard.value) return;
+
+    const sessionReady = hasSessionData({
+      requireUserId: true,
+      requireRole: true,
+    });
+
+    if (!sessionReady) return;
+
+    hasHydratedDashboard.value = true;
+    //@ts-expect-error
+    await getUserRidesAction(data?.value?.user?.id as string);
+    if (rides?.value.length >= 3) {
+      userRides.value = rides?.value.slice(-3).reverse();
+    }
+  },
+  { immediate: true },
+);
 
 const getRideMonthData = computed(() => {
   // Agrupa por mês/ano e status usando chave numérica para ordenar corretamente
   const monthMap: Record<
     string,
-    { key: number; name: string; open: number; finished: number; cancelled: number }
+    {
+      key: number;
+      name: string;
+      date: Date;
+      open: number;
+      finished: number;
+      cancelled: number;
+    }
   > = {};
   (rides?.value || []).forEach((ride: any) => {
     const d = new Date(ride.travel.date);

@@ -2,6 +2,7 @@
 import DataTable from '@/components/shared/DataTable.vue';
 import ListPageLoading from '@/components/shared/ListPageLoading.vue';
 import TableActions from '@/components/shared/TableActions.vue';
+import { useSessionAccess } from '@/composables/auth/useSessionAccess';
 import { createColumnHelper } from '@tanstack/vue-table';
 import { FileText } from 'lucide-vue-next';
 import { storeToRefs } from 'pinia';
@@ -10,6 +11,7 @@ import { useContractsStore } from '~/stores/contracts.store';
 import { columns } from './columns';
 
 const store = useContractsStore();
+const { waitForSessionData } = useSessionAccess();
 
 const { getContractsAction, deleteContractAction } = store;
 const { inactiveContracts, isLoading } = storeToRefs(store);
@@ -22,6 +24,14 @@ definePageMeta({
 });
 
 onMounted(async () => {
+  const sessionReady = await waitForSessionData({
+    requireUserId: true,
+    requireRole: true,
+    timeoutMs: 10000,
+  });
+
+  if (!sessionReady) return;
+
   await getContractsAction();
 });
 

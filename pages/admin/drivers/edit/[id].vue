@@ -44,7 +44,7 @@ useHead({
 });
 
 const { toast } = useToast();
-const { isAdmin } = useSessionAccess();
+const { isAdmin, waitForSessionData } = useSessionAccess();
 
 const driverStore = useDriverStore();
 const { getDriverByIdAction, updateDriverAction } = driverStore;
@@ -55,6 +55,16 @@ const { getDriverRidesAction } = ridesStore;
 const { rides } = storeToRefs(ridesStore);
 
 const route = useRoute();
+const sessionReady = await waitForSessionData({
+  requireUserId: true,
+  requireRole: true,
+  timeoutMs: 10000,
+});
+
+if (!sessionReady) {
+  await navigateTo('/auth/login');
+}
+
 await getDriverByIdAction(route.params.id as string);
 
 const availableProducts = ref<any[]>([]);

@@ -9,6 +9,7 @@ import BackLink from '@/components/shared/BackLink.vue';
 import FormSelect from '@/components/shared/FormSelect.vue';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/components/ui/toast/use-toast';
+import { useSessionAccess } from '@/composables/auth/useSessionAccess';
 import { useContractsStore } from '@/stores/contracts.store';
 import { useFilesStore } from '@/stores/files.store';
 import { toTypedSchema } from '@vee-validate/zod';
@@ -38,6 +39,17 @@ const { getUsersAccountsAction } = accountsStore;
 const { accounts } = storeToRefs(accountsStore);
 
 const route = useRoute();
+const { waitForSessionData } = useSessionAccess();
+const sessionReady = await waitForSessionData({
+  requireUserId: true,
+  requireRole: true,
+  timeoutMs: 10000,
+});
+
+if (!sessionReady) {
+  await navigateTo('/auth/login');
+}
+
 await getContractByIdAction(route?.params?.id as string);
 
 const { toast } = useToast();

@@ -2,7 +2,9 @@ import { NuxtAuthHandler } from '#auth';
 import { getCookie, setCookie } from 'h3';
 import CredentialsProvider from 'next-auth/providers/credentials';
 import { $fetch } from 'ofetch';
-import { prisma } from '~/utils/prisma';
+
+const DESKTOP_SESSION_MAX_AGE_SECONDS = 60 * 60 * 12;
+const UM_API_TOKEN_REFRESH_WINDOW_MS = 2 * 60 * 1000;
 
 function resolveUmApiBaseUrl(): string {
   return (
@@ -10,6 +12,68 @@ function resolveUmApiBaseUrl(): string {
     process.env.EXPO_PUBLIC_UM_API_URL ||
     'https://um-api-pu0t.onrender.com'
   );
+}
+
+function toTimestamp(dateLike: unknown): number {
+  if (typeof dateLike !== 'string' || !dateLike.trim()) return 0;
+  const timestamp = new Date(dateLike).getTime();
+  return Number.isFinite(timestamp) ? timestamp : 0;
+}
+
+function shouldRefreshUmApiToken(token: any): boolean {
+  const accessToken = token?.umApiToken;
+  const refreshToken = token?.umApiRefreshToken;
+  const expiresAt = toTimestamp(token?.umApiAccessTokenExpiresAt);
+
+  if (!accessToken || !refreshToken || !expiresAt) {
+    return false;
+  }
+
+  return Date.now() >= expiresAt - UM_API_TOKEN_REFRESH_WINDOW_MS;
+}
+
+async function rotateUmApiSessionToken(token: any): Promise<any> {
+  if (!token?.umApiRefreshToken) {
+    return token;
+  }
+
+  try {
+    const apiBaseUrl = resolveUmApiBaseUrl();
+    const refreshUrl = new URL('/auth/refresh', apiBaseUrl);
+    const refreshedSession = await $fetch<any>(refreshUrl.toString(), {
+      method: 'POST',
+      body: {
+        refreshToken: token.umApiRefreshToken,
+      },
+    });
+
+    if (!refreshedSession?.accessToken) {
+      throw new Error('um-api refresh did not return access token');
+    }
+
+    return {
+      ...token,
+      umApiToken: refreshedSession.accessToken,
+      umApiRefreshToken: refreshedSession.refreshToken ?? token.umApiRefreshToken,
+      umApiAccessTokenExpiresAt:
+        refreshedSession.accessTokenExpiresAt ?? token.umApiAccessTokenExpiresAt,
+      umApiSession: refreshedSession.session ?? token.umApiSession ?? null,
+      permissions: Array.isArray(refreshedSession.permissions)
+        ? refreshedSession.permissions
+        : (token.permissions ?? []),
+      accessScope: refreshedSession.accessScope ?? token.accessScope ?? null,
+      authError: null,
+    };
+  } catch (error) {
+    console.error('[auth] Failed to rotate um-api token:', error);
+    return {
+      ...token,
+      umApiToken: null,
+      umApiRefreshToken: null,
+      umApiAccessTokenExpiresAt: null,
+      authError: 'um_api_refresh_failed',
+    };
+  }
 }
 
 export default NuxtAuthHandler({
@@ -42,10 +106,15 @@ export default NuxtAuthHandler({
               email: credentials.email,
               password: credentials.password,
               clientType: 'web',
+              includeRefreshToken: true,
             },
           });
 
-          if (!loginResult?.accessToken || !loginResult?.user) {
+          if (
+            !loginResult?.accessToken ||
+            !loginResult?.refreshToken ||
+            !loginResult?.user
+          ) {
             throw createError({
               statusCode: 401,
               message: 'Falha ao validar sessão no um-api.',
@@ -57,6 +126,9 @@ export default NuxtAuthHandler({
             id: loginResult.user.id,
             name: loginResult.user.username || loginResult.user.name,
             umApiToken: loginResult.accessToken,
+            umApiRefreshToken: loginResult.refreshToken,
+            umApiAccessTokenExpiresAt: loginResult.accessTokenExpiresAt || null,
+            umApiSession: loginResult.session || null,
             permissions: Array.isArray(loginResult.permissions)
               ? loginResult.permissions
               : [],
@@ -75,7 +147,8 @@ export default NuxtAuthHandler({
   ],
   session: {
     strategy: 'jwt',
-    maxAge: 1800,
+    maxAge: DESKTOP_SESSION_MAX_AGE_SECONDS,
+    updateAge: 5 * 60,
   },
 
   callbacks: {
@@ -103,18 +176,6 @@ export default NuxtAuthHandler({
       } catch (error) {
         console.error('Error setting cookies:', error);
       }
-      // Update DB to mark user as logged in and set token expiry for refresh logic
-      try {
-        const refreshExpiry = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
-        if (user?.id) {
-          await prisma.accounts.update({
-            where: { id: user.id },
-            data: { tokenExpiresAt: refreshExpiry, isLoggedIn: true },
-          });
-        }
-      } catch (err) {
-        console.error('Error updating login state in DB:', err);
-      }
       return true;
     },
     async jwt({ token, user }) {
@@ -126,8 +187,20 @@ export default NuxtAuthHandler({
           name: user?.username,
           //@ts-ignore
           umApiToken: user?.umApiToken ?? null,
+          //@ts-ignore
+          umApiRefreshToken: user?.umApiRefreshToken ?? null,
+          //@ts-ignore
+          umApiAccessTokenExpiresAt: user?.umApiAccessTokenExpiresAt ?? null,
+          //@ts-ignore
+          umApiSession: user?.umApiSession ?? null,
+          authError: null,
         };
       }
+
+      if (shouldRefreshUmApiToken(token)) {
+        token = await rotateUmApiSessionToken(token);
+      }
+
       return token;
     },
     async session({ session, token }) {
@@ -145,29 +218,8 @@ export default NuxtAuthHandler({
     },
   },
   events: {
-    async signOut(message: any) {
-      try {
-        // Try to retrieve user id from token or session
-        const userId = message?.token?.id || message?.session?.user?.id || undefined;
-
-        // If we don't have an id but have email, resolve the account
-        let idToUse = userId;
-        if (!idToUse && message?.session?.user?.email) {
-          const acc = await prisma.accounts.findUnique({
-            where: { email: message.session.user.email },
-          });
-          idToUse = acc?.id;
-        }
-
-        if (idToUse) {
-          await prisma.accounts.update({
-            where: { id: idToUse },
-            data: { isLoggedIn: false, tokenExpiresAt: null },
-          });
-        }
-      } catch (err) {
-        console.error('Error in signOut event updating DB:', err);
-      }
+    async signOut() {
+      // Desktop auth lifecycle is managed by um-api tokens; no local DB write required.
     },
   },
 });

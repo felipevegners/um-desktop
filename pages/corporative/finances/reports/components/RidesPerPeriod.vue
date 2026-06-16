@@ -4,15 +4,14 @@ import DatePickerRange from '@/components/shared/DatePickerRange.vue';
 import FormSelect from '@/components/shared/FormSelect.vue';
 import RidesTotalsDash from '@/components/shared/RidesTotalsDash.vue';
 import { useToast } from '@/components/ui/toast/use-toast';
+import { useSessionAccess } from '@/composables/auth/useSessionAccess';
 import { paymentStatusOptions, rideStatusOptions } from '@/config/status';
 import { Filter, LoaderCircle } from 'lucide-vue-next';
 import { storeToRefs } from 'pinia';
 
 import { columns } from '../columns';
 
-const { data } = useAuth();
-//@ts-ignore
-const contractId = data.value?.user.contract?.contractId;
+const { contractId, waitForSessionData } = useSessionAccess();
 
 interface CalendarDate {
   era: string;
@@ -60,8 +59,20 @@ const { getContractByIdAction } = contractsStore;
 const { contract } = storeToRefs(contractsStore);
 
 onMounted(async () => {
+  const sessionReady = await waitForSessionData({
+    requireUserId: true,
+    requireRole: true,
+    requireContractId: true,
+    timeoutMs: 10000,
+  });
+
+  if (!sessionReady) return;
+
+  const scopedContractId = String(contractId.value || '').trim();
+  if (!scopedContractId) return;
+
   await getDriversAction();
-  await getContractByIdAction(contractId);
+  await getContractByIdAction(scopedContractId);
 
   filteredRides.value = rides?.value;
   filterRidesUsers();
@@ -76,7 +87,7 @@ onMounted(async () => {
     };
   });
   ridesUsersList.value = ridesUsersList.value.filter(
-    (user: any) => user.contractId === contractId,
+    (user: any) => user.contractId === scopedContractId,
   );
 
   availableProducts.value = contract?.value.products.map((product: any) => ({
@@ -105,6 +116,9 @@ const filterRidesUsers = () => {
 };
 
 const generateReport = async () => {
+  const scopedContractId = String(contractId.value || '').trim();
+  if (!scopedContractId) return;
+
   if (!selectedRange.value) {
     toast({
       title: 'Opss!',
@@ -114,7 +128,7 @@ const generateReport = async () => {
     return;
   }
   try {
-    await getRidesByDateRangeAndContractIdAction(selectedRange.value, contractId);
+    await getRidesByDateRangeAndContractIdAction(selectedRange.value, scopedContractId);
   } catch (error) {
     console.error('Error fetching rides:', error);
   } finally {

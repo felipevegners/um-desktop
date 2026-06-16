@@ -3,6 +3,7 @@ import DataTable from '@/components/shared/DataTable.vue';
 import ListPageLoading from '@/components/shared/ListPageLoading.vue';
 import Button from '@/components/ui/button/Button.vue';
 import { useToast } from '@/components/ui/toast';
+import { useSessionAccess } from '@/composables/auth/useSessionAccess';
 import { useFeeStore } from '@/stores/fees.store';
 import { createColumnHelper } from '@tanstack/vue-table';
 import { LoaderCircle, Pen, Plus, Save, SquarePercent, Trash, X } from 'lucide-vue-next';
@@ -28,8 +29,17 @@ const { getFeesAction, updateFeeAction, deleteFeeAction } = feeStore;
 const { fees, isLoading, isUpdating } = storeToRefs(feeStore);
 
 const { toast } = useToast();
+const { waitForSessionData } = useSessionAccess();
 
 onMounted(async () => {
+  const sessionReady = await waitForSessionData({
+    requireUserId: true,
+    requireRole: true,
+    timeoutMs: 10000,
+  });
+
+  if (!sessionReady) return;
+
   await getFeesAction();
   const addEditMode = fees.value.map((item: any) => {
     return {

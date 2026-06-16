@@ -5,6 +5,7 @@ import AddressForm from '@/components/forms/AddressForm.vue';
 import FormButtons from '@/components/forms/FormButtons.vue';
 import AvatarEdit from '@/components/shared/AvatarEdit.vue';
 import { useToast } from '@/components/ui/toast/use-toast';
+import { useSessionAccess } from '@/composables/auth/useSessionAccess';
 import { driverOffersList } from '@/config/drivers';
 import { toTypedSchema } from '@vee-validate/zod';
 import {
@@ -44,8 +45,17 @@ const { loadingData, loadingSend, driver } = storeToRefs(driverStore);
 
 const route = useRoute();
 const { data } = useAuth();
+const { waitForSessionData } = useSessionAccess();
 //@ts-ignore
-await getDriverByIdAction(data?.value?.user?.id as string);
+const sessionReady = await waitForSessionData({
+  requireUserId: true,
+  requireRole: true,
+  timeoutMs: 10000,
+});
+
+if (sessionReady) {
+  await getDriverByIdAction(data?.value?.user?.id as string);
+}
 
 onMounted(() => {
   const cnhCopyName = driver.value?.driverFiles?.cnhCopy?.name ?? '';

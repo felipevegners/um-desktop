@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import BackLink from '@/components/shared/BackLink.vue';
+import { useSessionAccess } from '@/composables/auth/useSessionAccess';
 import { Edit, FileText, LoaderCircle, User } from 'lucide-vue-next';
 import { storeToRefs } from 'pinia';
 import { rolesTypes } from '~/config/roles';
@@ -23,6 +24,7 @@ const { contract, isLoading } = storeToRefs(contractStore);
 const accountsStore = useAccountStore();
 const { getUsersAccountsAction } = accountsStore;
 const { accounts } = storeToRefs(accountsStore);
+const { waitForSessionData } = useSessionAccess();
 
 const contractAccounts = computed((): any => {
   return accounts?.value.filter(
@@ -31,6 +33,16 @@ const contractAccounts = computed((): any => {
 });
 
 const route = useRoute();
+const sessionReady = await waitForSessionData({
+  requireUserId: true,
+  requireRole: true,
+  timeoutMs: 10000,
+});
+
+if (!sessionReady) {
+  await navigateTo('/auth/login');
+}
+
 await getContractByIdAction(route?.params?.id as string);
 await getUsersAccountsAction();
 </script>

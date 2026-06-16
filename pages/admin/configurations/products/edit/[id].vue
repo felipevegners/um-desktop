@@ -3,6 +3,7 @@ import BackLink from '@/components/shared/BackLink.vue';
 import CurrencyInput from '@/components/shared/CurrencyInput.vue';
 import FormSelect from '@/components/shared/FormSelect.vue';
 import { useToast } from '@/components/ui/toast';
+import { useSessionAccess } from '@/composables/auth/useSessionAccess';
 import { productTypes } from '@/config/products';
 import { getProductsService, updtateProductService } from '@/server/services/products';
 import { useFilesStore } from '@/stores/files.store';
@@ -38,6 +39,7 @@ const product = ref<any>();
 const productImage = ref<any>();
 
 const route = useRoute();
+const { waitForSessionData } = useSessionAccess();
 
 const fetchData = async () => {
   try {
@@ -55,7 +57,15 @@ const fetchData = async () => {
   }
 };
 
-product.value = await fetchData();
+const sessionReady = await waitForSessionData({
+  requireUserId: true,
+  requireRole: true,
+  timeoutMs: 10000,
+});
+
+if (sessionReady) {
+  product.value = await fetchData();
+}
 productType.value = product?.value.type;
 productSituation.value = product?.value.enabled;
 productImage.value = product.value.image;

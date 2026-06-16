@@ -2,8 +2,9 @@
 import { SharedBackLink } from '#components';
 import AddressForm from '@/components/forms/AddressForm.vue';
 import FormButtons from '@/components/forms/FormButtons.vue';
-// import AvatarEdit from '@/components/shared/AvatarEdit.vue';
 import { useToast } from '@/components/ui/toast/use-toast';
+// import AvatarEdit from '@/components/shared/AvatarEdit.vue';
+import { useSessionAccess } from '@/composables/auth/useSessionAccess';
 import { useAccountStore } from '@/stores/account.store';
 import { toTypedSchema } from '@vee-validate/zod';
 import {
@@ -33,6 +34,7 @@ useHead({
 
 const { toast } = useToast();
 const { data } = useAuth();
+const { waitForSessionData } = useSessionAccess();
 //@ts-ignore
 
 const accountsStore = useAccountStore();
@@ -47,7 +49,15 @@ const revealPassword = () => {
   viewPassword.value = !viewPassword.value;
 };
 //@ts-ignore
-await getUsersAccountsByIdAction(data?.value?.user?.id as string);
+const sessionReady = await waitForSessionData({
+  requireUserId: true,
+  requireRole: true,
+  timeoutMs: 10000,
+});
+
+if (sessionReady) {
+  await getUsersAccountsByIdAction(data?.value?.user?.id as string);
+}
 
 const userAccountSchema = toTypedSchema(
   z.object({

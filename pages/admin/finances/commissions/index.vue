@@ -3,6 +3,7 @@ import DataTable from '@/components/shared/DataTable.vue';
 import ListPageLoading from '@/components/shared/ListPageLoading.vue';
 import Button from '@/components/ui/button/Button.vue';
 import { useToast } from '@/components/ui/toast/use-toast';
+import { useSessionAccess } from '@/composables/auth/useSessionAccess';
 import { useCommissionsStore } from '@/stores/commissions.store';
 import { useDriverStore } from '@/stores/drivers.store';
 import { createColumnHelper } from '@tanstack/vue-table';
@@ -20,6 +21,7 @@ import { currencyFormat } from '~/lib/utils';
 import { columns } from './columns';
 
 const { toast } = useToast();
+const { waitForSessionData } = useSessionAccess();
 
 definePageMeta({
   layout: 'admin',
@@ -114,6 +116,14 @@ const fetchData = async () => {
 };
 
 onMounted(async () => {
+  const sessionReady = await waitForSessionData({
+    requireUserId: true,
+    requireRole: true,
+    timeoutMs: 10000,
+  });
+
+  if (!sessionReady) return;
+
   await Promise.all([fetchData(), getDriversAction()]);
 });
 

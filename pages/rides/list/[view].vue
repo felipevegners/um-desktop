@@ -7,7 +7,7 @@ import { columns as corporativeCancelledColumns } from '@/components/rides/colum
 import { columns as corporativeCompletedColumns } from '@/components/rides/columns/corporative/completed';
 import { columns as corporativeOpenColumns } from '@/components/rides/columns/corporative/open';
 import { useSessionAccess } from '@/composables/auth/useSessionAccess';
-import { CalendarCheck2, CalendarClock, CalendarX2 } from 'lucide-vue-next';
+import { CalendarCheck2, CalendarClock, CalendarX2, LoaderCircle } from 'lucide-vue-next';
 
 definePageMeta({
   layout: 'admin',
@@ -17,7 +17,24 @@ definePageMeta({
 type RideListView = 'open' | 'completed' | 'cancelled';
 
 const route = useRoute();
-const { contractId, isAdmin, role, userBranches } = useSessionAccess();
+const { contractId, isAdmin, role, userBranches, waitForSessionData } =
+  useSessionAccess();
+const isPageReady = ref(false);
+
+onBeforeMount(async () => {
+  const sessionReady = await waitForSessionData({
+    requireUserId: true,
+    requireRole: true,
+    timeoutMs: 10000,
+  });
+
+  if (!sessionReady) {
+    await navigateTo('/auth/login');
+    return;
+  }
+
+  isPageReady.value = true;
+});
 
 const normalizedView = computed<RideListView | null>(() => {
   const rawView = String(route.params.view || '').toLowerCase();
@@ -101,7 +118,11 @@ useHead(() => ({
 </script>
 
 <template>
+  <div v-if="!isPageReady" class="flex min-h-[300px] items-center justify-center p-6">
+    <LoaderCircle :size="42" class="animate-spin" />
+  </div>
   <RidesListPage
+    v-else
     :title="pageConfig.title"
     :icon="pageConfig.icon"
     :base-columns="pageConfig.baseColumns"

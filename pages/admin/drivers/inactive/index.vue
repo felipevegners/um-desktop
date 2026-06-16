@@ -21,6 +21,7 @@ const { waitForSessionData } = useSessionAccess();
 const hasHydratedDrivers = ref(false);
 definePageMeta({
   layout: 'admin',
+  middleware: 'sidebase-auth',
 });
 
 useHead({
