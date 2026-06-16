@@ -11,7 +11,9 @@ useHead({
 });
 
 const route = useRoute();
-const { role, waitForSessionData } = useSessionAccess();
+const { role, status, hasSessionData, waitForSessionData } = useSessionAccess();
+const isRetryingBootstrap = ref(false);
+const bootstrapStatusText = ref('Validando seu acesso');
 
 const roleDashboardRedirect = {
   admin: '/admin',
@@ -100,12 +102,53 @@ const resolveRoleSafeCallbackPath = (
   return getDashboardByRole(currentRole);
 };
 
+type BootstrapResponse = {
+  ready?: boolean;
+  reason?: string;
+};
+
+const fetchBootstrapState = async (): Promise<BootstrapResponse> => {
+  return await $fetch<BootstrapResponse>('/api/auth/bootstrap', {
+    method: 'GET',
+  });
+};
+
+const applyBootstrapStatusText = (reason?: string) => {
+  if (reason === 'um_api_token_not_ready') {
+    bootstrapStatusText.value = 'Sincronizando token de acesso';
+    return;
+  }
+
+  if (reason === 'auth_upstream_unavailable') {
+    bootstrapStatusText.value = 'Conectando ao servidor de autenticação';
+    return;
+  }
+
+  bootstrapStatusText.value = 'Validando sua sessão';
+};
+
 onMounted(async () => {
   const callbackPath = getSafeCallbackUrl(route.query.callbackUrl);
+  const safeRedirectPath = resolveRoleSafeCallbackPath(callbackPath, role.value);
+
+  if (status.value === 'unauthenticated') {
+    await navigateTo(
+      {
+        path: '/auth/login',
+        query: { callbackUrl: callbackPath },
+      },
+      { replace: true },
+    );
+    return;
+  }
+
+  bootstrapStatusText.value = 'Validando sua sessão';
+
+  // Wait only for identity fields. Token readiness is validated by bootstrap checks.
   const ready = await waitForSessionData({
     requireUserId: true,
     requireRole: true,
-    timeoutMs: 15000,
+    timeoutMs: 0,
   });
 
   if (!ready) {
@@ -119,7 +162,31 @@ onMounted(async () => {
     return;
   }
 
-  const safeRedirectPath = resolveRoleSafeCallbackPath(callbackPath, role.value);
+  let bootstrapResult = await fetchBootstrapState();
+
+  if (
+    !bootstrapResult?.ready &&
+    hasSessionData({ requireUserId: true, requireRole: true })
+  ) {
+    isRetryingBootstrap.value = true;
+    applyBootstrapStatusText(bootstrapResult?.reason);
+
+    // One immediate re-check after touching session endpoint to reduce stale state.
+    try {
+      await $fetch('/api/auth/session');
+    } catch {
+      // Ignore: bootstrap second check will decide next step.
+    }
+
+    bootstrapResult = await fetchBootstrapState();
+  }
+
+  if (!bootstrapResult?.ready) {
+    // Do not lock user on boot screen. Let protected pages/self-healing guards continue.
+    await navigateTo(safeRedirectPath, { replace: true });
+    return;
+  }
+
   await navigateTo(safeRedirectPath, { replace: true });
 });
 </script>
@@ -128,7 +195,7 @@ onMounted(async () => {
   <main class="min-h-screen bg-black flex items-center justify-center p-6">
     <section class="flex flex-col items-center gap-5 text-center">
       <LoaderCircle class="my-4 w-12 h-12 text-emerald-400 animate-spin" />
-      <h1 class="text-white text-sm uppercase">Validadon seu acesso</h1>
+      <p class="text-white text-sm uppercase">{{ bootstrapStatusText }}</p>
     </section>
   </main>
 </template>
