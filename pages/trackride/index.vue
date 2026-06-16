@@ -70,6 +70,8 @@ const isRideTerminal = computed(() => {
   return status === 'completed' || status === 'cancelled';
 });
 
+const frozenLivePath = ref<{ lat: number; lng: number }[] | null>(null);
+
 const normalizeDriverSpeedKmh = (rawSpeed: unknown): number => {
   const raw = typeof rawSpeed === 'number' ? rawSpeed : Number(rawSpeed);
   if (!Number.isFinite(raw) || raw <= 0) return 0;
@@ -247,11 +249,41 @@ const fetchDriverInfo = async () => {
 };
 
 // Update live path coords from ride.progress.livePath (rolling array of points)
+// const updateLivePathFromRide = () => {
+//   try {
+//     const rawPath = (ride?.value?.progress as any)?.livePath;
+//     if (Array.isArray(rawPath) && rawPath.length >= 2) {
+//       livePathCoords.value = rawPath
+//         .map((p: any) => {
+//           const lat =
+//             typeof p.lat === 'number'
+//               ? p.lat
+//               : typeof p.latitude === 'number'
+//                 ? p.latitude
+//                 : parseFloat(p.lat ?? p.latitude);
+//           const lng =
+//             typeof p.lng === 'number'
+//               ? p.lng
+//               : typeof p.longitude === 'number'
+//                 ? p.longitude
+//                 : parseFloat(p.lng ?? p.longitude);
+//           if (!isFinite(lat) || !isFinite(lng)) return null;
+//           return { lat, lng };
+//         })
+//         .filter(Boolean) as { lat: number; lng: number }[];
+//     } else {
+//       livePathCoords.value = [];
+//     }
+//   } catch {
+//     livePathCoords.value = [];
+//   }
+// };
+
 const updateLivePathFromRide = () => {
   try {
     const rawPath = (ride?.value?.progress as any)?.livePath;
     if (Array.isArray(rawPath) && rawPath.length >= 2) {
-      livePathCoords.value = rawPath
+      const coords = rawPath
         .map((p: any) => {
           const lat =
             typeof p.lat === 'number'
@@ -269,11 +301,27 @@ const updateLivePathFromRide = () => {
           return { lat, lng };
         })
         .filter(Boolean) as { lat: number; lng: number }[];
+
+      // Se estamos em parada, congelar a trilha atual (apenas a primeira vez)
+      if (activeStop.value) {
+        if (!frozenLivePath.value || frozenLivePath.value.length === 0) {
+          frozenLivePath.value = [...coords];
+        }
+        // Ainda atualizamos livePathCoords por consistência interna, mas o mapa
+        // vai preferir mostrar frozenLivePath enquanto estivermos em parada.
+        livePathCoords.value = coords;
+      } else {
+        // Fora da parada, limpar snapshot e usar path ao vivo
+        frozenLivePath.value = null;
+        livePathCoords.value = coords;
+      }
     } else {
       livePathCoords.value = [];
+      if (!activeStop.value) frozenLivePath.value = null;
     }
   } catch {
     livePathCoords.value = [];
+    if (!activeStop.value) frozenLivePath.value = null;
   }
 };
 
@@ -604,7 +652,7 @@ const decodePolyline = (polyline: string) => {
           </div>
         </CustomMarker>
         <!-- Live path: blue trail accumulated from GPS batches during active ride -->
-        <Polyline
+        <!-- <Polyline
           v-if="!isRideTerminal && livePathCoords.length >= 2"
           :options="{
             path: livePathCoords,
@@ -614,7 +662,32 @@ const decodePolyline = (polyline: string) => {
             strokeWeight: 4,
             zIndex: 9,
           }"
+        /> -->
+
+        <!-- Live path: blue trail accumulated from GPS batches during active ride -->
+        <Polyline
+          v-if="frozenLivePath && frozenLivePath.length >= 2"
+          :options="{
+            path: frozenLivePath,
+            geodesic: true,
+            strokeColor: '#3B82F6',
+            strokeOpacity: 0.9,
+            strokeWeight: 4,
+            zIndex: 9,
+          }"
         />
+        <Polyline
+          v-else-if="!isRideTerminal && livePathCoords.length >= 2"
+          :options="{
+            path: livePathCoords,
+            geodesic: true,
+            strokeColor: '#3B82F6',
+            strokeOpacity: 0.9,
+            strokeWeight: 4,
+            zIndex: 9,
+          }"
+        />
+
         <!-- Prefer server-side canonicalPath when available (post-ride final path) -->
         <Polyline
           v-if="canonicalCoords.length >= 2"
