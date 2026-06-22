@@ -131,6 +131,11 @@ const loadingSetDriver = ref<boolean>(false);
 const sendPushOnDriverAssign = ref<boolean>(false);
 const selectedDriverHasValidPushToken = ref<boolean>(false);
 const loadingDriverPushStatus = ref<boolean>(false);
+const editVehicle = ref<boolean>(false);
+const selectedVehiclePlate = ref<string>(
+  String(ride?.value?.driver?.selectedCar?.plate || ''),
+);
+const loadingSetVehicle = ref<boolean>(false);
 const selectedUser = ref<any>();
 const loadingSend = ref<boolean>(false);
 const availableUsers = ref();
@@ -795,6 +800,7 @@ onBeforeMount(async () => {
   travelDate.value = resolveRideTravelCalendarDate(ride?.value?.travel?.date);
 
   await getDriversAction();
+  syncSelectedVehiclePlate();
 });
 
 const translatePaymentMethod = computed(() => {
@@ -921,6 +927,47 @@ const sanitizeDrivers = computed(() => {
   });
 });
 
+const availableVehicles = computed(() => {
+  if (!ride?.value?.driver?.id) return [];
+  const currentDriver = drivers.value.find(
+    (driver: any) => driver.id === ride.value.driver.id,
+  );
+  const rideDriverCars = Array.isArray(ride?.value?.driver?.driverCars)
+    ? ride.value.driver.driverCars
+    : [];
+  const driverCars = Array.isArray(currentDriver?.driverCars)
+    ? currentDriver.driverCars
+    : [];
+  const cars = driverCars.length ? driverCars : rideDriverCars;
+
+  return cars.map((car: any) => ({
+    id: `${car.carPlate}`,
+    label: `${car.carModel} - ${car.carColor} (${car.carPlate})`,
+    model: car.carModel,
+    color: car.carColor,
+    plate: car.carPlate,
+  }));
+});
+
+const canEditSelectedVehicle = computed(() => {
+  const status = String(ride?.value?.status || '');
+  return (
+    (status === 'pending' || status === 'accepted') &&
+    Boolean(ride?.value?.driver?.id) &&
+    availableVehicles.value.length > 0
+  );
+});
+
+const syncSelectedVehiclePlate = () => {
+  const currentPlate = String(ride?.value?.driver?.selectedCar?.plate || '');
+  if (currentPlate) {
+    selectedVehiclePlate.value = currentPlate;
+    return;
+  }
+
+  selectedVehiclePlate.value = String(availableVehicles.value[0]?.plate || '');
+};
+
 const displayExtraHours = computed(() => resolveDisplayExtraHours(ride?.value));
 const displayExtraHourPrice = computed(() => resolveDisplayExtraHourPrice(ride?.value));
 
@@ -973,6 +1020,7 @@ const setRideDriver = async () => {
     }
     editDriver.value = false;
     selectedDriver.value = ride?.value.driver;
+    syncSelectedVehiclePlate();
     form.setFieldValue('driver', ride?.value?.driver?.id || '');
     selectedDriverHasValidPushToken.value = false;
     sendPushOnDriverAssign.value = false;
@@ -1036,6 +1084,74 @@ const handleRemoveDriver = async () => {
       await getRideByIdAction(routeRideId.value);
     }
     clearDriverSelection();
+  }
+};
+
+const saveVehicleChange = async () => {
+  if (!ride?.value) return;
+
+  const nextVehicle = availableVehicles.value.find(
+    (vehicle: any) => vehicle.plate === selectedVehiclePlate.value,
+  );
+
+  if (!nextVehicle) {
+    toast({
+      title: 'Selecione um veiculo',
+      description: 'Escolha um veiculo valido para salvar a alteracao.',
+      variant: 'destructive',
+    });
+    return;
+  }
+
+  const currentVehicle = ride.value.driver?.selectedCar;
+  if (
+    currentVehicle?.plate === nextVehicle.plate &&
+    currentVehicle?.model === nextVehicle.model &&
+    currentVehicle?.color === nextVehicle.color
+  ) {
+    editVehicle.value = false;
+    return;
+  }
+
+  try {
+    loadingSetVehicle.value = true;
+    const payload = {
+      ...ride.value,
+      driver: {
+        ...ride.value.driver,
+        hasCarSelected: true,
+        selectedCar: {
+          model: nextVehicle.model,
+          color: nextVehicle.color,
+          plate: nextVehicle.plate,
+        },
+      },
+    };
+
+    await updateRideAction(payload);
+
+    if (isCodeRoute.value) {
+      await getRideByCodeAction(routeRideId.value);
+    } else {
+      await getRideByIdAction(routeRideId.value);
+    }
+
+    editVehicle.value = false;
+    syncSelectedVehiclePlate();
+
+    toast({
+      title: 'Sucesso!',
+      description: 'Veículo alterado com sucesso.',
+      class: 'bg-green-500 border-0 text-white',
+    });
+  } catch (error) {
+    toast({
+      title: 'Oops!',
+      description: 'Ocorreu um erro ao alterar o veículo. Tente novamente.',
+      variant: 'destructive',
+    });
+  } finally {
+    loadingSetVehicle.value = false;
   }
 };
 
@@ -1137,6 +1253,8 @@ onMounted(async () => {
   if (branchId) {
     await getBranchByIdAction(branchId);
   }
+
+  syncSelectedVehiclePlate();
 });
 
 const onSubmit = form.handleSubmit(async (values) => {
@@ -1246,12 +1364,13 @@ const onSubmit = form.handleSubmit(async (values) => {
     status: ride?.value.status,
     accepted: ride?.value.accepted,
     driver: {
-      id: selectedDriver.value.id,
-      name: selectedDriver.value.name,
-      phone: selectedDriver.value.phone,
-      email: selectedDriver.value.email,
-      hasCarSelected: false,
-      selectedCar: {},
+      ...ride?.value?.driver,
+      id: selectedDriver.value?.id || ride?.value?.driver?.id,
+      name: selectedDriver.value?.name || ride?.value?.driver?.name,
+      phone: selectedDriver.value?.phone || ride?.value?.driver?.phone,
+      email: selectedDriver.value?.email || ride?.value?.driver?.email,
+      hasCarSelected: Boolean(ride?.value?.driver?.selectedCar?.plate),
+      selectedCar: ride?.value?.driver?.selectedCar || {},
     },
     observations: values.observations,
     additionalInfo: serializeAdditionalInfoValue(additionalInfoDraft),
@@ -2144,7 +2263,7 @@ const handleAcceptBudgetOverQuota = () => {
                         <h2 class="font-bold text-lg">
                           {{ ride?.driver.name || 'Sem motorista' }}
                         </h2>
-                        <div v-if="ride?.driver.hasCarSelected">
+                        <div v-if="ride?.driver?.selectedCar?.plate">
                           <small>Veículo</small>
                           <p class="font-bold uppercase">
                             {{ ride?.driver.selectedCar.model }} -
@@ -2155,6 +2274,84 @@ const handleAcceptBudgetOverQuota = () => {
                           >
                             {{ ride?.driver.selectedCar.plate }}
                           </span>
+                        </div>
+                        <div v-else>
+                          <small>Veiculo</small>
+                          <p class="text-sm text-zinc-500">
+                            Nenhum veiculo selecionado pelo motorista.
+                          </p>
+                        </div>
+                        <!-- CHANGE VEHICLE CONTROLS -->
+                        <div v-if="canEditSelectedVehicle" class="mt-4 flex gap-2">
+                          <Button
+                            v-if="!editVehicle"
+                            type="button"
+                            size="sm"
+                            variant="outline"
+                            @click.prevent="
+                              () => {
+                                syncSelectedVehiclePlate();
+                                editVehicle = true;
+                              }
+                            "
+                          >
+                            <Edit :size="14" />
+                            {{
+                              ride?.driver?.selectedCar?.plate
+                                ? 'Alterar Veiculo'
+                                : 'Selecionar Veiculo'
+                            }}
+                          </Button>
+                          <div v-else class="flex flex-col gap-3 w-full">
+                            <select
+                              :value="selectedVehiclePlate"
+                              class="h-9 w-full rounded-md border border-input bg-white px-3 text-sm"
+                              @change="
+                                (e: any) => {
+                                  selectedVehiclePlate = String(e.target.value || '');
+                                }
+                              "
+                            >
+                              <option
+                                v-for="vehicle in availableVehicles"
+                                :key="vehicle.plate"
+                                :value="vehicle.plate"
+                              >
+                                {{ vehicle.label }}
+                              </option>
+                            </select>
+                            <div class="flex gap-2">
+                              <Button
+                                type="button"
+                                size="sm"
+                                class="bg-green-600 hover:bg-green-700"
+                                :disabled="loadingSetVehicle"
+                                @click.prevent="saveVehicleChange"
+                              >
+                                <LoaderCircle
+                                  v-if="loadingSetVehicle"
+                                  class="animate-spin"
+                                  :size="14"
+                                />
+                                <Check v-else :size="14" />
+                                Salvar
+                              </Button>
+                              <Button
+                                type="button"
+                                size="sm"
+                                variant="ghost"
+                                :disabled="loadingSetVehicle"
+                                @click.prevent="
+                                  () => {
+                                    syncSelectedVehiclePlate();
+                                    editVehicle = false;
+                                  }
+                                "
+                              >
+                                Cancelar
+                              </Button>
+                            </div>
+                          </div>
                         </div>
                         <div
                           v-if="
