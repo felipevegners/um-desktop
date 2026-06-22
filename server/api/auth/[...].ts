@@ -2,6 +2,7 @@ import { NuxtAuthHandler } from '#auth';
 import { getCookie, setCookie } from 'h3';
 import CredentialsProvider from 'next-auth/providers/credentials';
 import { $fetch } from 'ofetch';
+import { prisma } from '~/utils/prisma';
 
 const DESKTOP_SESSION_MAX_AGE_SECONDS = 60 * 60 * 12;
 const UM_API_TOKEN_REFRESH_WINDOW_MS = 2 * 60 * 1000;
@@ -153,6 +154,15 @@ export default NuxtAuthHandler({
 
   callbacks: {
     async signIn({ user }: any) {
+      // Fire-and-forget: keep local isLoggedIn flag in sync without blocking auth.
+      if ((user as any)?.id) {
+        prisma.accounts
+          .update({ where: { id: (user as any).id }, data: { isLoggedIn: true } })
+          .catch((err: any) =>
+            console.error('[auth] Failed to set isLoggedIn=true:', err),
+          );
+      }
+
       // Set cookies when user is authenticated
       try {
         const event = useEvent();
@@ -218,8 +228,16 @@ export default NuxtAuthHandler({
     },
   },
   events: {
-    async signOut() {
-      // Desktop auth lifecycle is managed by um-api tokens; no local DB write required.
+    async signOut({ token }: any) {
+      // Fire-and-forget: clear isLoggedIn flag without blocking signOut.
+      const accountId = token?.id || token?.sub;
+      if (accountId) {
+        prisma.accounts
+          .update({ where: { id: accountId }, data: { isLoggedIn: false } })
+          .catch((err: any) =>
+            console.error('[auth] Failed to set isLoggedIn=false:', err),
+          );
+      }
     },
   },
 });
