@@ -89,6 +89,16 @@ const isRideCancelled = (ride: any) => {
   return status === 'cancelled' || status === 'canceled';
 };
 
+const resolveRideBillingAmount = (ride: any) => {
+  const amountWithExtras = ride?.billing?.ammountWithExtras;
+  const baseAmount = ride?.billing?.ammount;
+  const valueToUse =
+    amountWithExtras !== null && amountWithExtras !== '' ? amountWithExtras : baseAmount;
+
+  const parsedAmount = parseFloat(String(valueToUse || 0));
+  return Number.isFinite(parsedAmount) ? parsedAmount : 0;
+};
+
 const resolveRideRecentTimestamp = (ride: any) => {
   const rawTimestamp =
     ride?.progress?.startedAt ||
@@ -198,8 +208,7 @@ const getRideMonthData = computed(() => {
 const calculateAllRidesPrices = computed(() => {
   const filteredRides = rides?.value.filter((ride: any) => ride.status !== 'cancelled');
   const total = filteredRides.reduce((acc: any, curr: any) => {
-    const ammount = curr.billing.ammount !== 'NaN' ? parseFloat(curr.billing.ammount) : 0;
-    return acc + ammount;
+    return acc + resolveRideBillingAmount(curr);
   }, 0);
 
   return total.toString();
@@ -210,8 +219,7 @@ const calculateOpenRidePrices = computed(() => {
     (ride: any) => ride.status !== 'completed' && ride.status !== 'cancelled',
   );
   const total = filteredRides.reduce((acc: any, curr: any) => {
-    const ammount = curr.billing.ammount !== 'NaN' ? parseFloat(curr.billing.ammount) : 0;
-    return acc + ammount;
+    return acc + resolveRideBillingAmount(curr);
   }, 0);
 
   return total.toString();
@@ -219,8 +227,7 @@ const calculateOpenRidePrices = computed(() => {
 const calculateFinishedRideAmmount = computed(() => {
   const filteredRides = rides?.value.filter((ride: any) => ride.status === 'completed');
   const total = filteredRides?.reduce((acc: any, curr: any) => {
-    const ammount = curr.billing.ammount !== 'NaN' ? parseFloat(curr.billing.ammount) : 0;
-    return acc + ammount;
+    return acc + resolveRideBillingAmount(curr);
   }, 0);
 
   const totalCommissions = (total * Number(fee.value.value)) / 100;
@@ -233,8 +240,7 @@ const calculateFinishedRideAmmount = computed(() => {
 const calculateCancelledRideAmmount = computed(() => {
   const filteredRides = rides?.value.filter((ride: any) => ride.status === 'cancelled');
   const total = filteredRides?.reduce((acc: any, curr: any) => {
-    const ammount = curr.billing.ammount !== 'NaN' ? parseFloat(curr.billing.ammount) : 0;
-    return acc + ammount;
+    return acc + resolveRideBillingAmount(curr);
   }, 0);
 
   return total.toString();
