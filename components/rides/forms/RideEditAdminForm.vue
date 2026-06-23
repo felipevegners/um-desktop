@@ -1643,10 +1643,15 @@ const handleAcceptBudgetOverQuota = () => {
                     </span>
                     <h3 class="text-lg font-bold">
                       {{
-                        new Date(ride?.progress.boardedAt).toLocaleTimeString('pt-BR', {
-                          hour: '2-digit',
-                          minute: '2-digit',
-                        })
+                        ride?.progress.boardedAt
+                          ? new Date(ride?.progress.boardedAt).toLocaleTimeString(
+                              'pt-BR',
+                              {
+                                hour: '2-digit',
+                                minute: '2-digit',
+                              },
+                            )
+                          : '-'
                       }}
                     </h3>
                   </div>
@@ -1829,7 +1834,7 @@ const handleAcceptBudgetOverQuota = () => {
                       {{ item.code }} - {{ item.name }}
                     </option>
                   </select>
-                  <div v-if="ride?.billing.addons?.length">
+                  <div v-if="ride?.billing.addons?.length > 0">
                     <span class="text-muted-foreground text-sm">Adicionais</span>
                     <p v-for="item in ride?.billing.addons" class="text-sm">
                       <span class="font-bold">{{ item.code }}</span> - {{ item.name }}
@@ -2507,21 +2512,20 @@ const handleAcceptBudgetOverQuota = () => {
                         motorista.
                       </p>
                     </div>
-
-                    <div class="flex flex-col items-end">
-                      <div
-                        v-if="ride?.status === 'completed'"
-                        class="p-4 rounded-md bg-amber-50"
-                      >
-                        <h4 class="text-lg">Comissão por este atendimento</h4>
-                        <h1 class="text-2xl font-bold">
-                          {{
-                            currencyFormat(
-                              ride?.travel.completedData?.driverCommission || '0',
-                            )
-                          }}
-                        </h1>
-                      </div>
+                  </div>
+                  <div class="flex flex-col">
+                    <div
+                      v-if="ride?.status === 'completed'"
+                      class="p-4 rounded-md bg-amber-50"
+                    >
+                      <p class="text-xs">Comissão por este atendimento</p>
+                      <h1 class="text-2xl font-bold">
+                        {{
+                          currencyFormat(
+                            ride?.travel.completedData?.driverCommission || '0',
+                          )
+                        }}
+                      </h1>
                     </div>
                   </div>
                   <div class="p-4 rounded-md border border-zinc-400">
