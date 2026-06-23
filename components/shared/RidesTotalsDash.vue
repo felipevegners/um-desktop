@@ -11,10 +11,16 @@ const props = withDefaults(defineProps<{ rides: any[]; theme?: 'light' | 'dark' 
 });
 
 const calculateRidesPrice = computed(() => {
-  return props.rides?.reduce(
-    (total: any, ride: any) => total + parseFloat(ride.billing.ammount),
-    0,
-  );
+  return props.rides?.reduce((total: any, ride: any) => {
+    const amountWithExtras = ride?.billing?.ammountWithExtras;
+    const baseAmount = ride?.billing?.ammount;
+    const valueToUse =
+      amountWithExtras !== null && amountWithExtras !== ''
+        ? amountWithExtras
+        : baseAmount;
+
+    return total + parseFloat(String(valueToUse || 0));
+  }, 0);
 });
 
 const getInProgressRides = computed(() => {
