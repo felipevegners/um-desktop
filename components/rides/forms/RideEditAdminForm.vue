@@ -1643,7 +1643,7 @@ const handleAcceptBudgetOverQuota = () => {
                     </span>
                     <h3 class="text-lg font-bold">
                       {{
-                        new Date(ride?.progress.startedAt).toLocaleTimeString('pt-BR', {
+                        new Date(ride?.progress.boardedAt).toLocaleTimeString('pt-BR', {
                           hour: '2-digit',
                           minute: '2-digit',
                         })
