@@ -110,8 +110,24 @@ const getIndicatorClasses = (step: any) => {
       >
         {{ step.label }}
       </small>
-      <small v-if="step.status !== 'future'" class="mt-1 text-black/80 text-[11px]">
-        {{ step.timestamp ? new Date(step.timestamp).toLocaleTimeString('pt-BR') : '' }}
+      <small
+        v-if="step.status !== 'future' && step.type !== 'in-route'"
+        class="mt-1 text-black/80 text-[11px]"
+      >
+        {{
+          step.timestamp
+            ? new Date(step.timestamp).toLocaleTimeString('pt-BR', {
+                hour: '2-digit',
+                minute: '2-digit',
+              })
+            : ''
+        }}
+      </small>
+      <small
+        v-if="step.type === 'in-route' && step.status === 'past'"
+        class="mt-1 text-black/80 text-[11px]"
+      >
+        {{ step.timestamp }}
       </small>
       <div
         v-if="Number(index) < sanitizedSteps.length - 1"
