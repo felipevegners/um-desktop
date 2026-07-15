@@ -3,6 +3,24 @@ import { ArrowRight, LoaderCircle, UserCheck } from 'lucide-vue-next';
 import useVerifyEmail from '~/composables/auth/useVerifyEmail';
 
 const { verifyEmail, error, status } = useVerifyEmail();
+const DRIVER_APP_LOGIN_URL = 'umdriver://';
+
+const isMobileBrowser = computed(() => {
+  if (!import.meta.client) return false;
+
+  return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(
+    window.navigator.userAgent,
+  );
+});
+
+const openLoginDestination = async () => {
+  if (isMobileBrowser.value && import.meta.client) {
+    window.location.assign(DRIVER_APP_LOGIN_URL);
+    return;
+  }
+
+  await navigateTo('/auth/login');
+};
 
 definePageMeta({
   layout: 'login',
@@ -52,13 +70,14 @@ onMounted(async () => {
               Validamos seus dados e agora você pode acessar a plataforma UM.
             </p>
           </div>
-          <NuxtLink
-            to="/auth/login"
+          <button
+            type="button"
+            @click="openLoginDestination"
             class="py-1.5 px-2.5 flex items-start gap-4 text-um-primary text-sm border border-um-primary rounded-md uppercase"
           >
             Login
             <ArrowRight :size="16" />
-          </NuxtLink>
+          </button>
         </div>
         <div
           v-else-if="status === 'loading' || status === 'idle'"
@@ -79,13 +98,14 @@ onMounted(async () => {
               Tudo certo por aqui, faça seu login agora mesmo.
             </p>
           </div>
-          <NuxtLink
-            to="/auth/login"
+          <button
+            type="button"
+            @click="openLoginDestination"
             class="py-1.5 px-2.5 flex items-start gap-4 text-um-primary text-sm border border-um-primary rounded-md uppercase"
           >
             Login
             <ArrowRight :size="16" />
-          </NuxtLink>
+          </button>
         </div>
         <p class="grow-0 text-xs mt-4 relative text-muted-foreground">
           Precisa de ajuda?
