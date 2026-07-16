@@ -3,16 +3,27 @@ import { Prisma, prisma } from '~/utils/prisma';
 export default defineEventHandler(async (event) => {
   const payload = await readBody(event);
   const { id } = payload;
-  try {
-    await prisma.accounts.delete({
-      where: { id: id },
-    });
 
-    await prisma.drivers.delete({
-      where: {
-        id: id,
-      },
-    });
+  try {
+    const [deletedDrivers, deletedAccounts] = await prisma.$transaction([
+      prisma.drivers.deleteMany({
+        where: {
+          id: id,
+        },
+      }),
+      prisma.accounts.deleteMany({
+        where: { id: id },
+      }),
+    ]);
+
+    if (deletedDrivers.count === 0 && deletedAccounts.count === 0) {
+      throw createError({
+        statusCode: 404,
+        statusMessage: 'Not Found',
+        message: 'Registro não encontrado.',
+      });
+    }
+
     return {
       statusCode: 200,
       message: 'Motorista e Conta de usuário deletados com sucesso!',

@@ -5,20 +5,34 @@ export default defineEventHandler(async (event) => {
   const { id } = body;
 
   try {
-    const account: any = prisma.accounts.findUnique({
+    const account = await prisma.accounts.findUnique({
       where: {
         id: id,
       },
+      select: {
+        id: true,
+        role: true,
+      },
     });
 
+    if (!account) {
+      throw createError({
+        statusCode: 404,
+        statusMessage: 'Not Found',
+        message: 'Registro não encontrado.',
+      });
+    }
+
     if (account && account?.role === 'platform-driver') {
-      await prisma.drivers.delete({
+      await prisma.drivers.deleteMany({
         where: { id: id },
       });
     }
+
     await prisma.accounts.delete({
       where: { id: id },
     });
+
     return {
       statusCode: 200,
       message: 'Conta de usuário deletada com sucesso!',
