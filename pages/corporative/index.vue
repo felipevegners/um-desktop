@@ -682,12 +682,11 @@ const sanitizeInvoiceDate = (s: string | undefined | null) => {
           </div>
         </div>
         <div v-else class="flex flex-col gap-6 flex-1">
-          <div>
+          <div v-if="!isLoading">
             <small class="text-muted-foreground">
               Budget disponível para a filial (Alocado)
             </small>
             <h1
-              v-if="!isLoading"
               class="text-regular lg:text-3xl font-bold break-words"
               :class="
                 getBranchManagerBudgetSummary?.allocated > 0
@@ -704,9 +703,9 @@ const sanitizeInvoiceDate = (s: string | undefined | null) => {
               }}
             </h1>
           </div>
-          <div>
+          <div v-if="!isLoading">
             <small class="text-muted-foreground">Utilizado</small>
-            <h1 v-if="!isLoading" class="text-regular lg:text-3xl font-bold break-words">
+            <h1 class="text-regular lg:text-3xl font-bold break-words">
               {{
                 currencyFormat(
                   getBranchManagerBudgetSummary?.used !== null
