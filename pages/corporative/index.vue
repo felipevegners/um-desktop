@@ -474,6 +474,7 @@ const dashboardEntityName = computed(() => {
 });
 
 const getBranchManagerBudgetSummary = computed(() => {
+  isLoading.value = true;
   if (normalizedRole.value !== 'branch-manager') return null;
   const contractBranches = Array.isArray(contract?.value?.branches)
     ? contract.value.branches
@@ -487,6 +488,8 @@ const getBranchManagerBudgetSummary = computed(() => {
     );
   });
   if (!branchByUserContractId) return null;
+
+  isLoading.value = false;
 
   return {
     allocated: branchByUserContractId.budget || 0,
@@ -680,10 +683,11 @@ const sanitizeInvoiceDate = (s: string | undefined | null) => {
         </div>
         <div v-else class="flex flex-col gap-6 flex-1">
           <div>
-            <small class="text-muted-foreground"
-              >Budget disponível para a filial (Alocado)</small
-            >
+            <small class="text-muted-foreground">
+              Budget disponível para a filial (Alocado)
+            </small>
             <h1
+              v-if="!isLoading"
               class="text-regular lg:text-3xl font-bold break-words"
               :class="
                 getBranchManagerBudgetSummary?.allocated > 0
@@ -702,7 +706,7 @@ const sanitizeInvoiceDate = (s: string | undefined | null) => {
           </div>
           <div>
             <small class="text-muted-foreground">Utilizado</small>
-            <h1 class="text-regular lg:text-3xl font-bold break-words">
+            <h1 v-if="!isLoading" class="text-regular lg:text-3xl font-bold break-words">
               {{
                 currencyFormat(
                   getBranchManagerBudgetSummary?.used !== null
