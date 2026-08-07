@@ -44,7 +44,7 @@ onMounted(async () => {
 
 const viewBranch = (value: string) => {
   navigateTo({
-    name: 'admin-branches-preview-id',
+    name: 'corporative-branches-preview-id',
     params: {
       id: value,
     },
@@ -52,7 +52,7 @@ const viewBranch = (value: string) => {
 };
 const editBranch = (value: string) => {
   navigateTo({
-    name: 'admin-branches-edit-id',
+    name: 'corporative-branches-edit-id',
     params: {
       id: value,
     },

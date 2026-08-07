@@ -67,6 +67,7 @@ async function rotateUmApiSessionToken(token: any): Promise<any> {
     };
   } catch (error) {
     console.error('[auth] Failed to rotate um-api token:', error);
+
     return {
       ...token,
       umApiToken: null,
@@ -135,6 +136,7 @@ export default NuxtAuthHandler({
               : [],
             accessScope: loginResult.accessScope || null,
             session: loginResult.session || null,
+            authError: null,
           };
         } catch (err) {
           console.error('[auth] Failed login via um-api:', err);

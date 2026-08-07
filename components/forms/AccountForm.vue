@@ -61,6 +61,21 @@ const contractRoles = [
   'admin',
 ];
 
+const primaryBranchRoles = [
+  'branch-manager',
+  'platform-admin',
+  'platform-corp-user',
+  'platform-user',
+];
+
+const multiBranchRoles = ['branch-manager'];
+
+const toManagedBranchPayload = (branch: any) => ({
+  id: branch.id,
+  branchCode: branch.branchCode,
+  fantasyName: branch.fantasyName,
+});
+
 onMounted(async () => {
   if (contractRoles?.includes(account.value?.role || '')) {
     const contractId = account.value?.contract?.contractId;
@@ -73,11 +88,20 @@ onMounted(async () => {
       account.value.contract?.branches &&
       Array.isArray(account.value.contract.branches)
     ) {
-      userManagerBranches.value = account.value.contract.branches.map((branch: any) => ({
-        id: branch.id,
-        branchCode: branch.branchCode,
-        fantasyName: branch.fantasyName,
-      }));
+      userManagerBranches.value = account.value.contract.branches.map((branch: any) =>
+        toManagedBranchPayload(branch),
+      );
+    } else if (
+      account.value.contract?.branchId &&
+      Array.isArray(contract?.value?.branches)
+    ) {
+      const currentBranch = contract.value.branches.find(
+        (branch: any) => branch.id === account.value.contract.branchId,
+      );
+
+      if (currentBranch) {
+        userManagerBranches.value = [toManagedBranchPayload(currentBranch)];
+      }
     }
   }
 });
@@ -135,21 +159,80 @@ const handleUserBranches = (checked: boolean, branch: any) => {
   if (checked) {
     const branchExists = userManagerBranches.value.some((b: any) => b.id === branch.id);
     if (!branchExists) {
-      userManagerBranches.value.push({
-        id: branch.id,
-        branchCode: branch.branchCode,
-        fantasyName: branch.fantasyName,
-      });
+      userManagerBranches.value.push(toManagedBranchPayload(branch));
+    }
+
+    if (!form.values.branch) {
+      form.setFieldValue('branch', branch.id);
     }
   } else {
     userManagerBranches.value = userManagerBranches.value.filter(
       (b: any) => b.id !== branch.id,
     );
+
+    if (form.values.branch === branch.id) {
+      const fallbackBranchId = userManagerBranches.value[0]?.id || '';
+      form.setFieldValue('branch', fallbackBranchId);
+      form.setFieldValue('area', 'all');
+    }
   }
 };
 
 const isBranchSelected = (branchId: string) => {
   return userManagerBranches.value.some((b: any) => b.id === branchId);
+};
+
+const availablePrimaryBranchItems = computed(() => {
+  const contractBranches = Array.isArray(contract?.value?.branches)
+    ? contract?.value.branches
+    : [];
+  const currentBranchId = String(account.value?.contract?.branchId || '');
+  const activeBranches = contractBranches.filter(
+    (branch: any) => branch?.enabled !== false,
+  );
+  const items = activeBranches.map((branch: any) => ({
+    label: `${branch.branchCode} - ${branch.fantasyName}`,
+    value: branch.id,
+  }));
+
+  if (currentBranchId && !items.some((item: any) => item.value === currentBranchId)) {
+    const currentBranch = contractBranches.find(
+      (branch: any) => branch.id === currentBranchId,
+    );
+
+    if (currentBranch) {
+      items.unshift({
+        label: `${currentBranch.branchCode} - ${currentBranch.fantasyName} (inativa)`,
+        value: currentBranch.id,
+      });
+    }
+  }
+
+  return items;
+});
+
+const handlePrimaryBranchChange = (branchId: string) => {
+  form.setFieldValue('branch', branchId);
+
+  if (!branchId) {
+    return;
+  }
+
+  const selectedBranch = Array.isArray(contract?.value?.branches)
+    ? contract?.value.branches.find((branch: any) => branch.id === branchId)
+    : null;
+
+  if (
+    account.value?.role === 'branch-manager' &&
+    selectedBranch &&
+    !userManagerBranches.value.some((branch: any) => branch.id === branchId)
+  ) {
+    userManagerBranches.value.push(toManagedBranchPayload(selectedBranch));
+  }
+
+  if (account.value?.contract?.branchId !== branchId) {
+    form.setFieldValue('area', 'all');
+  }
 };
 
 const toggleRestriction = (restrictionId: string) => {
@@ -247,10 +330,23 @@ const canChangeTargetRole = computed(() => {
   return ['master-manager'].includes(currentUserRole.value);
 });
 
+const canManagePrimaryBranchAssignment = computed(() => {
+  const targetRole = account.value?.role || '';
+  const editorRole = currentUserRole.value;
+  const canSeeByTargetRole = primaryBranchRoles.includes(targetRole);
+  const canManageByEditorRole = ['admin', 'master-manager'].includes(editorRole);
+
+  return (
+    !!availablePrimaryBranchItems.value.length &&
+    canSeeByTargetRole &&
+    canManageByEditorRole
+  );
+});
+
 const canManageBranchAssignments = computed(() => {
   const targetRole = account.value?.role || '';
   const editorRole = currentUserRole.value;
-  const canSeeByTargetRole = ['branch-manager', 'platform-admin'].includes(targetRole);
+  const canSeeByTargetRole = multiBranchRoles.includes(targetRole);
   const canManageByEditorRole = ['admin', 'master-manager'].includes(editorRole);
 
   return (
@@ -427,6 +523,9 @@ const onSubmit = form.handleSubmit(async (values) => {
     }
   } else {
     // Admin e Corporative mode
+    const primaryBranchId = typeof values.branch === 'string' ? values.branch : '';
+    const branchChanged =
+      primaryBranchId !== String(account.value?.contract?.branchId || '');
     accountData = {
       ...accountData,
       username: values.userName,
@@ -442,8 +541,8 @@ const onSubmit = form.handleSubmit(async (values) => {
         ...account.value.contract,
         contractId: values.contract,
         name: contractName.value,
-        branchId: values.branch,
-        area: values.area,
+        branchId: primaryBranchId,
+        area: branchChanged ? 'all' : values.area,
         branches: userManagerBranches.value,
         restrictions: account.value?.contract?.restrictions || [],
       },
@@ -707,6 +806,28 @@ const onSubmit = form.handleSubmit(async (values) => {
                 >
                   <p>Contrato</p>
                   <h3 class="text-lg font-bold">{{ contractName }}</h3>
+                </div>
+
+                <div
+                  v-if="canManagePrimaryBranchAssignment"
+                  class="mt-4 p-4 mb-6 w-full bg-white rounded-md"
+                >
+                  <h3 class="mb-4 text-lg font-bold">Alterar filial do usuário</h3>
+                  <FormField v-slot="{ componentField }" name="branch">
+                    <FormItem class="md:max-w-[420px]">
+                      <FormControl>
+                        <FormSelect
+                          v-bind="componentField"
+                          :items="availablePrimaryBranchItems"
+                          :label="'Selecione a filial'"
+                          @update:model-value="
+                            (value) => handlePrimaryBranchChange(String(value || ''))
+                          "
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  </FormField>
                 </div>
 
                 <h3 class="mb-4 text-lg font-bold">Dados do usuário</h3>

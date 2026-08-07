@@ -55,10 +55,10 @@ export const useBranchesStore = defineStore('braches', {
     async getBranchByContractIdAction(contractId: string) {
       this.isLoadingData = true;
       try {
-        const response = await getBranchesByContractIdService(contractId);
-        this.branches = response as any;
+        const response: any = await getBranchesByContractIdService(contractId);
+        this.branches = response.filter((branch: any) => branch.enabled === true);
       } catch (error) {
-        console.error('Error from GET by ID store --> ', error);
+        console.error('Error from GET Branches by contractId store --> ', error);
         throw error;
       } finally {
         this.isLoadingData = false;

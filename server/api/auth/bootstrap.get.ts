@@ -26,7 +26,7 @@ async function verifyUmApiSession(
   } catch (error: any) {
     const statusCode = error?.statusCode || error?.response?.status || 500;
 
-    if (statusCode === 401) {
+    if (statusCode === 401 || statusCode === 403) {
       return {
         ok: false,
         reason: 'unauthorized',
@@ -46,8 +46,9 @@ export default defineEventHandler(async (event) => {
   const session = await getServerSession(event as any);
   const user = (session?.user as any) ?? null;
   const token = typeof user?.umApiToken === 'string' ? user.umApiToken : '';
+  const authError = typeof user?.authError === 'string' ? user.authError : '';
 
-  if (!user?.id || !user?.role || !token || user?.authError) {
+  if (!user?.id || !user?.role || !token || authError) {
     return {
       ready: false,
       reason: 'session_not_ready',
@@ -85,8 +86,16 @@ export default defineEventHandler(async (event) => {
     };
   }
 
+  if (lastResult?.reason === 'unauthorized') {
+    return {
+      ready: false,
+      reason: 'unauthorized',
+      statusCode: lastResult.statusCode,
+    };
+  }
+
   return {
     ready: false,
-    reason: 'um_api_token_not_ready',
+    reason: 'session_not_ready',
   };
 });

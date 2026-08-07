@@ -11,9 +11,11 @@ useHead({
 });
 
 const route = useRoute();
-const { role, status, hasSessionData, waitForSessionData } = useSessionAccess();
-const isRetryingBootstrap = ref(false);
+const { signOut } = useAuth();
+const { role, status, waitForSessionData } = useSessionAccess();
 const bootstrapStatusText = ref('Validando seu acesso');
+const isBranchAccessBlocked = ref(false);
+const isSigningOutBlockedUser = ref(false);
 
 const roleDashboardRedirect = {
   admin: '/admin',
@@ -54,7 +56,7 @@ const getDashboardByRole = (currentRole: string | undefined): string => {
 
 const isPathAllowedForRole = (path: string, currentRole: string | undefined): boolean => {
   if (!currentRole) return false;
-  if (path === '/' || path.startsWith('/auth/')) return true;
+  if (path === '/') return true;
 
   if (currentRole === 'admin') {
     return (
@@ -98,38 +100,32 @@ const resolveRoleSafeCallbackPath = (
   currentRole: string | undefined,
 ): string => {
   if (!currentRole) return '/';
+  if (callbackPath.startsWith('/auth/')) return getDashboardByRole(currentRole);
   if (isPathAllowedForRole(callbackPath, currentRole)) return callbackPath;
   return getDashboardByRole(currentRole);
 };
 
-type BootstrapResponse = {
-  ready?: boolean;
-  reason?: string;
+type BranchAccessResponse = {
+  blocked?: boolean;
 };
 
-const fetchBootstrapState = async (): Promise<BootstrapResponse> => {
-  return await $fetch<BootstrapResponse>('/api/auth/bootstrap', {
+const fetchBranchAccessState = async (): Promise<BranchAccessResponse> => {
+  return await $fetch<BranchAccessResponse>('/api/auth/branch-access', {
     method: 'GET',
   });
 };
 
-const applyBootstrapStatusText = (reason?: string) => {
-  if (reason === 'um_api_token_not_ready') {
-    bootstrapStatusText.value = 'Sincronizando token de acesso';
+const handleBlockedAccessSignOut = async () => {
+  if (isSigningOutBlockedUser.value) {
     return;
   }
 
-  if (reason === 'auth_upstream_unavailable') {
-    bootstrapStatusText.value = 'Conectando ao servidor de autenticação';
-    return;
-  }
-
-  bootstrapStatusText.value = 'Validando sua sessão';
+  isSigningOutBlockedUser.value = true;
+  await signOut();
 };
 
 onMounted(async () => {
   const callbackPath = getSafeCallbackUrl(route.query.callbackUrl);
-  const safeRedirectPath = resolveRoleSafeCallbackPath(callbackPath, role.value);
 
   if (status.value === 'unauthenticated') {
     await navigateTo(
@@ -144,11 +140,11 @@ onMounted(async () => {
 
   bootstrapStatusText.value = 'Validando sua sessão';
 
-  // Wait only for identity fields. Token readiness is validated by bootstrap checks.
+  // Wait for identity fields before role-safe redirect and branch checks.
   const ready = await waitForSessionData({
     requireUserId: true,
     requireRole: true,
-    timeoutMs: 0,
+    timeoutMs: 20000,
   });
 
   if (!ready) {
@@ -162,28 +158,14 @@ onMounted(async () => {
     return;
   }
 
-  let bootstrapResult = await fetchBootstrapState();
+  const safeRedirectPath = resolveRoleSafeCallbackPath(callbackPath, role.value);
 
-  if (
-    !bootstrapResult?.ready &&
-    hasSessionData({ requireUserId: true, requireRole: true })
-  ) {
-    isRetryingBootstrap.value = true;
-    applyBootstrapStatusText(bootstrapResult?.reason);
+  const branchAccessState = await fetchBranchAccessState().catch(() => ({
+    blocked: false,
+  }));
 
-    // One immediate re-check after touching session endpoint to reduce stale state.
-    try {
-      await $fetch('/api/auth/session');
-    } catch {
-      // Ignore: bootstrap second check will decide next step.
-    }
-
-    bootstrapResult = await fetchBootstrapState();
-  }
-
-  if (!bootstrapResult?.ready) {
-    // Do not lock user on boot screen. Let protected pages/self-healing guards continue.
-    await navigateTo(safeRedirectPath, { replace: true });
+  if (branchAccessState?.blocked) {
+    isBranchAccessBlocked.value = true;
     return;
   }
 
@@ -193,7 +175,27 @@ onMounted(async () => {
 
 <template>
   <main class="min-h-screen bg-black flex items-center justify-center p-6">
-    <section class="flex flex-col items-center gap-5 text-center">
+    <section
+      v-if="isBranchAccessBlocked"
+      class="w-full max-w-lg rounded-xl border border-zinc-700 bg-zinc-950 p-8 text-white"
+    >
+      <h1 class="text-2xl font-bold">Acesso Inativo</h1>
+      <p class="mt-4 text-sm text-zinc-200 leading-6">
+        A filial ao qual você está vinculado foi desativada. Contate o Gestor Master para
+        mais detalhes.
+      </p>
+      <div class="mt-8 flex justify-end">
+        <button
+          type="button"
+          class="rounded-md bg-um-primary px-5 py-2 text-sm font-semibold text-black transition hover:bg-um-primary-dark disabled:cursor-not-allowed disabled:opacity-60"
+          :disabled="isSigningOutBlockedUser"
+          @click="handleBlockedAccessSignOut"
+        >
+          Sair
+        </button>
+      </div>
+    </section>
+    <section v-else class="flex flex-col items-center gap-5 text-center">
       <LoaderCircle class="my-4 w-12 h-12 text-emerald-400 animate-spin" />
       <p class="text-white text-sm uppercase">{{ bootstrapStatusText }}</p>
     </section>

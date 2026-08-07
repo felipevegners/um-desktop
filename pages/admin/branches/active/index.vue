@@ -59,28 +59,6 @@ const editBranch = (value: string) => {
   });
 };
 
-const deleteBranch = async (contractId: string) => {
-  loadingDelete.value = true;
-  try {
-    await deleteBranchAction(contractId);
-  } catch (error) {
-    toast({
-      title: 'Opss!',
-      class: 'bg-red-500 border-0 text-white text-2xl',
-      description: `Ocorreu um erro ao deletar a filial. Tente novamente.`,
-    });
-    throw error;
-  } finally {
-    loadingDelete.value = true;
-    toast({
-      title: 'Tudo pronto!',
-      class: 'bg-green-600 border-0 text-white text-2xl',
-      description: `Filial deletada com sucesso!`,
-    });
-    await getBranchesAction();
-  }
-};
-
 const finalColumns = [
   ...columns,
   columnHelper.display({
@@ -94,11 +72,10 @@ const finalColumns = [
         { class: 'relative text-left' },
         h(TableActions, {
           dataId: id,
-          options: ['preview', 'edit', 'delete'],
+          options: ['preview', 'edit'],
           loading: loadingDelete.value,
           onView: viewBranch,
           onEdit: editBranch,
-          onDelete: deleteBranch,
         }),
       );
     },

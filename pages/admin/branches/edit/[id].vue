@@ -4,7 +4,7 @@ import BackLink from '@/components/shared/BackLink.vue';
 import { useToast } from '@/components/ui/toast';
 import { useSessionAccess } from '@/composables/auth/useSessionAccess';
 import { toTypedSchema } from '@vee-validate/zod';
-import { FileText, LoaderCircle, Trash } from 'lucide-vue-next';
+import { FileText, LoaderCircle } from 'lucide-vue-next';
 import { storeToRefs } from 'pinia';
 import { useForm } from 'vee-validate';
 import * as z from 'zod';
@@ -158,9 +158,6 @@ const onSubmit = form.handleSubmit(async (values) => {
             <Label class="text-sm text-zinc-500"> Ativa </Label>
           </div>
         </div>
-        <Button variant="destructive" @click="">
-          <Trash class="w-4 h-4" /> Excluir Filial
-        </Button>
       </div>
     </section>
     <section v-if="isLoadingData" class="min-h-[300px] flex items-center justify-center">

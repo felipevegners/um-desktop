@@ -385,6 +385,10 @@ const getBranchRemainingBudgetValue = (branch: any) => {
   return branch.budget - branch.usedBudget;
 };
 
+const canViewContractBudgetSummary = computed(() => {
+  return normalizedRole.value === 'master-manager';
+});
+
 definePageMeta({
   layout: 'admin',
   middleware: 'sidebase-auth',
@@ -468,6 +472,36 @@ const dashboardEntityName = computed(() => {
 
   return fallbackCompanyName;
 });
+
+const getBranchManagerBudgetSummary = computed(() => {
+  if (normalizedRole.value !== 'branch-manager') return null;
+  const contractBranches = Array.isArray(contract?.value?.branches)
+    ? contract.value.branches
+    : [];
+  const branchByUserContractId = contractBranches.find((branch: any) => {
+    const branchId = getBranchId(branch);
+    return (
+      userContractBranchId.value.length > 0 &&
+      branchId.length > 0 &&
+      branchId === userContractBranchId.value
+    );
+  });
+  if (!branchByUserContractId) return null;
+
+  return {
+    allocated: branchByUserContractId.budget || 0,
+    used: branchByUserContractId.usedBudget || 0,
+    remaining:
+      (branchByUserContractId.budget || 0) - (branchByUserContractId.usedBudget || 0),
+  };
+});
+
+const sanitizeInvoiceDate = (s: string | undefined | null) => {
+  if (!s) return '';
+  const d = new Date(s);
+  if (Number.isNaN(d.getTime())) return '';
+  return d.toLocaleDateString('pt-BR');
+};
 </script>
 
 <template>
@@ -515,7 +549,7 @@ const dashboardEntityName = computed(() => {
               <div class="min-w-0 flex-1">
                 <p class="text-sm font-semibold break-all">{{ invoice.number }}</p>
                 <p class="text-xs text-zinc-600 break-words">
-                  {{ sanitizeRideDate(invoice.createdAt) }}
+                  {{ sanitizeInvoiceDate(invoice.createdAt) }}
                 </p>
                 <p class="text-sm font-bold mt-1 break-words">
                   {{ currencyFormat(invoice.value) }}
@@ -556,7 +590,8 @@ const dashboardEntityName = computed(() => {
       </div>
       <!-- BUDGET AND BRANCHES -->
       <div
-        class="col-span-1 row-span-1 lg:row-span-2 p-4 sm:p-6 flex flex-col rounded-xl bg-muted/90 gap-6 min-w-0"
+        class="col-span-1 row-span-1 p-4 sm:p-6 flex flex-col rounded-xl bg-muted/90 gap-6 min-w-0"
+        :class="canViewContractBudgetSummary && 'lg:row-span-2'"
       >
         <p class="font-bold text-base sm:text-lg">
           <Coins class="mb-2" :size="32" />
@@ -565,7 +600,7 @@ const dashboardEntityName = computed(() => {
         <div v-if="isLoading" class="flex items-center justify-center flex-1">
           <LoaderCircle class="text-zinc-950 animate-spin" :size="48" />
         </div>
-        <div v-else class="flex flex-col">
+        <div v-if="canViewContractBudgetSummary" class="flex flex-col">
           <div>
             <small class="text-muted-foreground">Budget total / mensal</small>
             <h1 class="text-lg sm:text-xl md:text-5xl font-bold break-words">
@@ -585,35 +620,97 @@ const dashboardEntityName = computed(() => {
               }}
             </h1>
           </div>
-        </div>
-        <div v-for="branch in userAllowedBranches" :key="branch.id">
           <div
-            class="border border-zinc-950 rounded-lg bg-muted/80 p-4 mt-4 pt-1 min-w-0"
+            v-if="isFetchingDashboard && !userAllowedBranches.length"
+            class="mt-4 flex items-center justify-center bg-muted/80 p-6"
           >
-            <small class="mb-6 font-bold break-words"> {{ branch.fantasyName }}</small>
-            <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3">
-              <div>
-                <small class="text-muted-foreground">Alocado</small>
-                <h1 class="text-lg sm:text-xl font-bold break-words">
-                  {{ currencyFormat(branch.budget) }}
-                </h1>
-              </div>
-              <div>
-                <small class="text-muted-foreground">Utilizado</small>
-                <h1 class="text-lg sm:text-xl font-bold break-words">
-                  {{ currencyFormat(branch.usedBudget) }}
-                </h1>
-              </div>
-              <div>
-                <small class="text-muted-foreground">Saldo</small>
-                <h1
-                  class="text-lg sm:text-xl font-bold text-amber-600 break-words"
-                  :class="getBranchRemainingBudgetValue(branch) < 0 && 'text-red-600'"
+            <LoaderCircle class="text-zinc-950 animate-spin" :size="32" />
+          </div>
+          <div
+            v-else-if="!userAllowedBranches.length"
+            class="mt-4 rounded-lg border border-zinc-950 bg-muted/80 p-4"
+          >
+            <p class="text-sm text-zinc-700">Nenhuma filial para exibir.</p>
+          </div>
+          <div v-for="branch in userAllowedBranches" :key="branch.id">
+            <div
+              class="border border-zinc-950 rounded-lg bg-muted/80 p-4 mt-4 pt-1 min-w-0"
+            >
+              <small class="mb-6 font-bold break-words">
+                {{ branch.fantasyName }}
+                <span
+                  class="ml-1 inline-flex items-center text-xxs text-white uppercase rounded-md px-1 py-0.5"
+                  :class="branch.enabled ? 'bg-green-500' : 'bg-red-500'"
                 >
-                  {{ currencyFormat(getBranchRemainingBudgetValue(branch)) }}
-                </h1>
+                  {{ branch.enabled ? 'Ativa' : 'Inativa' }}
+                </span>
+              </small>
+              <div
+                class="mt-3 grid gap-3"
+                :class="
+                  canViewContractBudgetSummary
+                    ? 'grid-cols-1 sm:grid-cols-2 xl:grid-cols-3'
+                    : 'grid-cols-1 sm:grid-cols-2'
+                "
+              >
+                <div v-if="canViewContractBudgetSummary">
+                  <small class="text-muted-foreground">Alocado</small>
+                  <h1 class="text-regular font-bold break-words">
+                    {{ currencyFormat(branch.budget) }}
+                  </h1>
+                </div>
+                <div>
+                  <small class="text-muted-foreground">Utilizado</small>
+                  <h1 class="text-regular font-bold break-words">
+                    {{ currencyFormat(branch.usedBudget) }}
+                  </h1>
+                </div>
+                <div>
+                  <small class="text-muted-foreground">Saldo</small>
+                  <h1
+                    class="text-regular font-bold text-amber-600 break-words"
+                    :class="getBranchRemainingBudgetValue(branch) < 0 && 'text-red-600'"
+                  >
+                    {{ currencyFormat(getBranchRemainingBudgetValue(branch)) }}
+                  </h1>
+                </div>
               </div>
             </div>
+          </div>
+        </div>
+        <div v-else class="flex flex-col gap-6 flex-1">
+          <div>
+            <small class="text-muted-foreground"
+              >Budget disponível para a filial (Alocado)</small
+            >
+            <h1
+              class="text-regular lg:text-3xl font-bold break-words"
+              :class="
+                getBranchManagerBudgetSummary?.allocated > 0
+                  ? 'text-green-600'
+                  : 'text-red-600'
+              "
+            >
+              {{
+                currencyFormat(
+                  getBranchManagerBudgetSummary?.allocated !== null
+                    ? getBranchManagerBudgetSummary?.allocated
+                    : 0,
+                )
+              }}
+            </h1>
+          </div>
+          <div>
+            <small class="text-muted-foreground">Utilizado</small>
+            <h1 class="text-regular lg:text-3xl font-bold break-words">
+              {{
+                currencyFormat(
+                  getBranchManagerBudgetSummary?.used !== null
+                    ? getBranchManagerBudgetSummary?.used
+                    : 0,
+                )
+              }}
+            </h1>
           </div>
         </div>
         <Button
