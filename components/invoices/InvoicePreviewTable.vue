@@ -196,7 +196,7 @@ const splitItemsCount = (items: InvoicePreviewItem[]) => {
                   {{ item.user }}
                 </div>
                 <span
-                  class="block w-fit px-1.5 py-1 bg-zinc-950 rounded-md text-white text-xxs uppercase"
+                  class="block w-fit px-1 py-0.5 bg-zinc-950 rounded-md text-white text-[8px] uppercase"
                 >
                   visitante
                 </span>

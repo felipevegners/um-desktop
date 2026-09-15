@@ -81,7 +81,7 @@ export const columns: any = [
             'span',
             {
               class:
-                'block mt-1 w-fit px-1.5 py-1 bg-zinc-950 rounded-md text-white text-xxs uppercase',
+                'block mt-1 w-fit px-1 py-0.5 bg-zinc-950 rounded-md text-white text-[8px] uppercase',
             },
             'visitante',
           ),
