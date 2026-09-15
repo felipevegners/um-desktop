@@ -220,3 +220,21 @@ export const adjustRideCommissionService = async (
     throw error;
   }
 };
+
+export const applyRideDiscountService = async (
+  rideId: string,
+  description: string,
+  amount: number,
+) => {
+  try {
+    const response = await $fetch(`/api/rides/${rideId}/discounts`, {
+      method: 'POST',
+      timeout: REQUEST_TIMEOUT_MS,
+      body: { description, amount },
+    });
+    return response;
+  } catch (error) {
+    console.debug('Error during discount application -> ', error);
+    throw error;
+  }
+};

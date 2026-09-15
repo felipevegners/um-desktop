@@ -12,6 +12,7 @@ import { WPP_API } from '@/config/paths';
 import { paymentMethods } from '@/config/paymentMethods';
 import {
   adjustRideCommissionService,
+  applyRideDiscountService,
   deleteRideService,
   getRideRoutesService,
 } from '@/server/services/rides';
@@ -236,6 +237,12 @@ const additionalInfoDraft = reactive<RideAdditionalInfoValue>({
 const isEditingCommission = ref<boolean>(false);
 const draftCommissionAmount = ref<string>('');
 const loadingCommissionSave = ref<boolean>(false);
+
+// Discount state
+const isEditingDiscount = ref<boolean>(false);
+const draftDiscountDescription = ref<string>('');
+const draftDiscountAmount = ref<string>('');
+const loadingDiscountSave = ref<boolean>(false);
 
 const normalizeAdditionalInfoAttachment = (
   attachment: Partial<RideAdditionalInfoAttachment> | null | undefined,
@@ -1291,6 +1298,57 @@ const handleSaveCommission = async () => {
     });
   } finally {
     loadingCommissionSave.value = false;
+  }
+};
+
+const handleSaveDiscount = async () => {
+  try {
+    const discountAmount = parseFloat(draftDiscountAmount.value);
+    const description = draftDiscountDescription.value.trim();
+
+    if (!description) {
+      toast({
+        title: 'Descrição obrigatória',
+        description: 'Digite uma descrição para o desconto.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    if (isNaN(discountAmount) || discountAmount <= 0) {
+      toast({
+        title: 'Valor inválido',
+        description: 'Digite um valor de desconto válido e positivo.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    loadingDiscountSave.value = true;
+    await applyRideDiscountService(ride?.value.id, description, discountAmount);
+
+    toast({
+      title: 'Desconto aplicado!',
+      class: 'bg-green-600 border-0 text-white text-2xl hover:text-white',
+      description: 'O desconto foi aplicado com sucesso e a comissão foi recalculada.',
+    });
+
+    // Atualizar o ride no store
+    await getRideByIdAction(ride?.value.id);
+
+    isEditingDiscount.value = false;
+    draftDiscountDescription.value = '';
+    draftDiscountAmount.value = '';
+  } catch (error: any) {
+    console.error('Error applying discount:', error);
+    toast({
+      title: 'Erro ao aplicar desconto',
+      description:
+        error?.message || 'Ocorreu um erro ao aplicar o desconto. Tente novamente.',
+      variant: 'destructive',
+    });
+  } finally {
+    loadingDiscountSave.value = false;
   }
 };
 
@@ -2658,6 +2716,192 @@ const handleAcceptBudgetOverQuota = () => {
             </div>
           </CardContent>
         </Card>
+
+        <!-- DISCOUNTS SECTION -->
+        <Card v-if="ride?.status === 'completed'" class="p-0 bg-zinc-200">
+          <CardHeader>
+            <CardTitle class="text-xl flex flex-col gap-6">
+              <Banknote />
+              Lançar Descontos e Ajustes
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <!-- List of applied discounts -->
+            <ul class="mb-4 space-y-6">
+              <li
+                v-for="(discount, idx) in (ride?.billing?.discounts as Array<any>) || []"
+                :key="idx"
+                class="md:grid md:grid-cols-4 gap-4 items-end"
+              >
+                <div class="flex flex-col items-start gap-2">
+                  <small>Descrição</small>
+                  <div
+                    class="w-full px-3 py-2 border border-zinc-300 rounded-md bg-zinc-100 text-zinc-700 text-sm"
+                  >
+                    {{ discount.description }}
+                  </div>
+                </div>
+
+                <div class="flex items-end gap-1">
+                  <div class="relative flex flex-col items-start gap-2 flex-1">
+                    <small>Valor</small>
+                    <div
+                      class="w-full px-3 py-2 border border-zinc-300 rounded-md bg-zinc-100 text-zinc-700 text-sm relative pl-9"
+                    >
+                      {{ currencyFormat(discount.amount) }}
+                      <span
+                        class="absolute start-0 top-[10px] flex items-center justify-center px-3 text-sm"
+                      >
+                        R$
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="flex flex-col items-start gap-2">
+                  <small>Aplicado em</small>
+                  <div
+                    class="w-full px-3 py-2 border border-zinc-300 rounded-md bg-zinc-100 text-zinc-700 text-sm"
+                  >
+                    {{
+                      new Date(discount.appliedAt).toLocaleString('pt-BR', {
+                        year: 'numeric',
+                        month: '2-digit',
+                        day: '2-digit',
+                        hour: '2-digit',
+                        minute: '2-digit',
+                      })
+                    }}
+                  </div>
+                </div>
+
+                <div class="flex items-center justify-end">
+                  <small class="text-xs text-zinc-500 text-center">
+                    (somente leitura)
+                  </small>
+                </div>
+              </li>
+            </ul>
+
+            <!-- Add new discount form -->
+            <div v-if="!isEditingDiscount" class="flex gap-2 mb-4">
+              <Button
+                @click.prevent="isEditingDiscount = true"
+                class="flex items-center gap-2"
+              >
+                <Plus :size="18" />
+                Adicionar Desconto
+              </Button>
+            </div>
+
+            <!-- New discount form -->
+            <ul v-else class="mb-4 space-y-6">
+              <li
+                class="md:grid md:grid-cols-4 gap-4 items-end p-4 bg-red-50 border border-red-200 rounded-md"
+              >
+                <div class="flex flex-col items-start gap-2">
+                  <small>Descrição</small>
+                  <Input
+                    v-model="draftDiscountDescription"
+                    type="text"
+                    placeholder="Descreva o motivo do desconto"
+                  />
+                </div>
+
+                <div class="flex items-end gap-1">
+                  <div class="relative flex flex-col items-start gap-2 flex-1">
+                    <small>Valor</small>
+                    <Input
+                      v-model="draftDiscountAmount"
+                      type="number"
+                      step="0.01"
+                      min="0"
+                      class="relative pl-9"
+                      placeholder="0,00"
+                    />
+                    <span
+                      class="absolute start-0 top-[36px] flex items-center justify-center px-3 text-sm"
+                    >
+                      R$
+                    </span>
+                  </div>
+                </div>
+
+                <div class="flex flex-col items-start gap-2">
+                  <small>Novo valor final</small>
+                  <div
+                    class="w-full px-3 py-2 border border-red-300 rounded-md bg-white text-sm font-medium text-zinc-900"
+                  >
+                    {{
+                      currencyFormat(
+                        Math.max(
+                          0,
+                          (parseFloat(ride?.rideFinalPrice as string) || 0) -
+                            parseFloat(draftDiscountAmount || '0'),
+                        ),
+                      )
+                    }}
+                  </div>
+                </div>
+
+                <div class="flex items-center gap-2">
+                  <Button
+                    type="button"
+                    size="icon"
+                    variant="ghost"
+                    @click.prevent="
+                      () => {
+                        isEditingDiscount = false;
+                        draftDiscountDescription = '';
+                        draftDiscountAmount = '';
+                      }
+                    "
+                  >
+                    <Trash />
+                  </Button>
+                  <Button
+                    type="button"
+                    :disabled="loadingDiscountSave"
+                    @click.prevent="handleSaveDiscount"
+                  >
+                    <span v-if="loadingDiscountSave" class="animate-spin mr-2">
+                      <LoaderCircle class="w-4 h-4" />
+                    </span>
+                    <Save />
+                    Salvar
+                  </Button>
+                </div>
+              </li>
+            </ul>
+
+            <!-- Commission preview info -->
+            <div
+              v-if="isEditingDiscount && draftDiscountAmount"
+              class="p-3 bg-blue-50 border border-blue-200 rounded-md text-xs space-y-2"
+            >
+              <p class="text-zinc-700">
+                <span class="font-medium">Taxa de comissão:</span>
+                {{ toNumber((ride?.billing?.commission as any)?.ratePercent, 0) }}%
+              </p>
+              <p class="text-zinc-700">
+                <span class="font-medium">Comissão recalculada:</span>
+                {{
+                  currencyFormat(
+                    (Math.max(
+                      0,
+                      (parseFloat(ride?.rideFinalPrice as string) || 0) -
+                        parseFloat(draftDiscountAmount || '0'),
+                    ) *
+                      (toNumber((ride?.billing?.commission as any)?.ratePercent, 0) ||
+                        0)) /
+                      100,
+                  )
+                }}
+              </p>
+            </div>
+          </CardContent>
+        </Card>
+
         <!-- ADDITIONAL EXTRA FARES -->
         <Card v-if="ride?.status === 'completed'" class="p-0 bg-zinc-200">
           <CardHeader>
