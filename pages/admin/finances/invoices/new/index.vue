@@ -261,11 +261,7 @@ const previewItems = computed(() => {
         })
       : null;
 
-    const requester =
-      ride?.reason?.requestedByName ||
-      ride?.reason?.requestedBy ||
-      ride?.user?.name ||
-      '-';
+    const requester = ride?.dispatcher?.user || '-';
     const finishedAt = rideCompletionDate(ride);
     const totalTimeStopped = ride?.travel?.totalTimeStopped;
     const tpValue =
@@ -297,7 +293,7 @@ const previewItems = computed(() => {
       {
         rideId: ride?.id,
         code: ride?.code,
-        user: ride?.user?.name || '-',
+        user: ride?.isVisitor ? ride?.visitorData?.name || '-' : ride?.user?.name || '-',
         branch: invoiceBranchName,
         costCenter: selectedAreaCode.value || rideAreaCode || rideAreaName || '-',
         product: ride?.product?.name || '-',

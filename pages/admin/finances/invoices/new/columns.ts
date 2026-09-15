@@ -146,9 +146,8 @@ export const columns: any = [
     header: () => h('div', { class: 'text-xs text-left' }, 'Solicitante'),
     cell: ({ row }) => {
       const ride = row.original;
-      const requesterName =
-        ride?.reason?.requestedByName || ride?.reason?.requestedBy || ride?.user?.name;
-      return h('div', { class: 'text-xs text-wrap' }, requesterName || '-');
+      const requesterName = ride?.dispatcher?.user || '-';
+      return h('div', { class: 'text-xs text-wrap' }, requesterName);
     },
   }),
   columnHelper.display({
