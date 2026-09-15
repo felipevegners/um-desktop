@@ -74,6 +74,19 @@ export const columns: any = [
     header: () => h('div', { class: 'text-xs text-left' }, 'Usuário'),
     cell: ({ row }) => {
       const ride = row.original;
+      if (ride?.user?.isVisitor) {
+        return h('div', { class: 'text-xs' }, [
+          ride?.user?.visitorData?.name || '-',
+          h(
+            'span',
+            {
+              class:
+                'block mt-1 w-fit px-1.5 py-1 bg-zinc-950 rounded-md text-white text-xxs uppercase',
+            },
+            'visitante',
+          ),
+        ]);
+      }
       return h('div', { class: 'capitalize text-xs' }, ride?.user?.name || '-');
     },
   }),
@@ -147,7 +160,7 @@ export const columns: any = [
     cell: ({ row }) => {
       const ride = row.original;
       const requesterName = ride?.dispatcher?.user || '-';
-      return h('div', { class: 'text-xs text-wrap' }, requesterName);
+      return h('div', { class: 'text-xs' }, requesterName);
     },
   }),
   columnHelper.display({

@@ -10,7 +10,11 @@ import { useSessionAccess } from '@/composables/auth/useSessionAccess';
 import { extraChargesTypes } from '@/config/extraCharges';
 import { WPP_API } from '@/config/paths';
 import { paymentMethods } from '@/config/paymentMethods';
-import { deleteRideService, getRideRoutesService } from '@/server/services/rides';
+import {
+  adjustRideCommissionService,
+  deleteRideService,
+  getRideRoutesService,
+} from '@/server/services/rides';
 import { useAccountStore } from '@/stores/account.store';
 import { useBranchesStore } from '@/stores/branches.store';
 import { useContractsStore } from '@/stores/contracts.store';
@@ -227,6 +231,11 @@ const additionalInfoDraft = reactive<RideAdditionalInfoValue>({
   text: '',
   attachments: [],
 });
+
+// Commission adjustment state
+const isEditingCommission = ref<boolean>(false);
+const draftCommissionAmount = ref<string>('');
+const loadingCommissionSave = ref<boolean>(false);
 
 const normalizeAdditionalInfoAttachment = (
   attachment: Partial<RideAdditionalInfoAttachment> | null | undefined,
@@ -1243,6 +1252,47 @@ const form = useForm({
 const initialAdditionalInfo = parseAdditionalInfoValue(ride?.value.additionalInfo);
 additionalInfoDraft.text = initialAdditionalInfo.text;
 additionalInfoDraft.attachments = [...initialAdditionalInfo.attachments];
+
+const handleSaveCommission = async () => {
+  try {
+    const commissionAmount = parseFloat(draftCommissionAmount.value);
+
+    if (isNaN(commissionAmount) || commissionAmount < 0) {
+      toast({
+        title: 'Valor inválido',
+        description: 'Digite um valor de comissão válido e não-negativo.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    loadingCommissionSave.value = true;
+    await adjustRideCommissionService(ride?.value.id, commissionAmount);
+
+    toast({
+      title: 'Comissão ajustada!',
+      class: 'bg-green-600 border-0 text-white text-2xl hover:text-white',
+      description: 'O valor da comissão foi atualizado com sucesso.',
+    });
+
+    // Atualizar o ride no store
+    await getRideByIdAction(ride?.value.id);
+
+    isEditingCommission.value = false;
+    draftCommissionAmount.value = '';
+  } catch (error: any) {
+    console.error('Error saving commission:', error);
+    toast({
+      title: 'Erro ao ajustar comissão',
+      description:
+        error?.message ||
+        'Ocorreu um erro ao ajustar o valor da comissão. Tente novamente.',
+      variant: 'destructive',
+    });
+  } finally {
+    loadingCommissionSave.value = false;
+  }
+};
 
 onMounted(async () => {
   if (selectedDriver.value?.id) {
@@ -2518,14 +2568,74 @@ const handleAcceptBudgetOverQuota = () => {
                       v-if="ride?.status === 'completed'"
                       class="p-4 rounded-md bg-amber-50"
                     >
-                      <p class="text-xs">Comissão por este atendimento</p>
-                      <h1 class="text-2xl font-bold">
-                        {{
-                          currencyFormat(
-                            ride?.travel.completedData?.driverCommission || '0',
-                          )
-                        }}
-                      </h1>
+                      <div class="flex items-center justify-between mb-2">
+                        <p class="text-xs">Comissão por este atendimento</p>
+                        <button
+                          v-if="!isEditingCommission"
+                          type="button"
+                          class="text-xs px-2 py-1 bg-amber-100 hover:bg-amber-200 rounded text-amber-900 font-medium transition"
+                          @click="
+                            () => {
+                              isEditingCommission = true;
+                              draftCommissionAmount = String(
+                                ride?.travel.completedData?.driverCommission || '0',
+                              );
+                            }
+                          "
+                        >
+                          <Edit class="w-3 h-3 inline mr-1" />
+                          Ajustar valor
+                        </button>
+                      </div>
+
+                      <div v-if="!isEditingCommission" class="flex items-center gap-2">
+                        <h1 class="text-2xl font-bold">
+                          {{
+                            currencyFormat(
+                              ride?.travel.completedData?.driverCommission || '0',
+                            )
+                          }}
+                        </h1>
+                      </div>
+
+                      <div v-else class="space-y-3">
+                        <input
+                          v-model="draftCommissionAmount"
+                          type="number"
+                          step="0.01"
+                          min="0"
+                          class="w-full px-3 py-2 border border-amber-300 rounded-md bg-white focus:outline-none focus:ring-2 focus:ring-amber-500"
+                          placeholder="0.00"
+                        />
+                        <div class="flex gap-2">
+                          <button
+                            type="button"
+                            :disabled="loadingCommissionSave"
+                            class="flex-1 px-3 py-2 bg-amber-500 hover:bg-amber-600 disabled:bg-amber-300 text-white rounded-md font-medium transition flex items-center justify-center gap-2"
+                            @click="handleSaveCommission"
+                          >
+                            <span v-if="loadingCommissionSave" class="animate-spin">
+                              <LoaderCircle class="w-4 h-4" />
+                            </span>
+                            <Save class="w-4 h-4" />
+                            Salvar
+                          </button>
+                          <button
+                            type="button"
+                            :disabled="loadingCommissionSave"
+                            class="flex-1 px-3 py-2 bg-zinc-300 hover:bg-zinc-400 disabled:bg-zinc-200 text-zinc-900 rounded-md font-medium transition"
+                            @click="
+                              () => {
+                                isEditingCommission = false;
+                                draftCommissionAmount = '';
+                              }
+                            "
+                          >
+                            <X class="w-4 h-4 inline mr-1" />
+                            Cancelar
+                          </button>
+                        </div>
+                      </div>
                     </div>
                   </div>
                   <div class="p-4 rounded-md border border-zinc-400">

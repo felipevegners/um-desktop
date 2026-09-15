@@ -203,3 +203,20 @@ export const deleteRideService = async (id: string) => {
     throw error;
   }
 };
+
+export const adjustRideCommissionService = async (
+  rideId: string,
+  newCommissionAmount: number,
+) => {
+  try {
+    const response = await $fetch(`/api/rides/${rideId}/commission`, {
+      method: 'POST',
+      timeout: REQUEST_TIMEOUT_MS,
+      body: { newCommissionAmount },
+    });
+    return response;
+  } catch (error) {
+    console.debug('Error during commission adjustment -> ', error);
+    throw error;
+  }
+};

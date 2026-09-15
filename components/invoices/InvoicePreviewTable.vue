@@ -22,6 +22,7 @@ type InvoicePreviewItem = {
   allocatedTotal?: string | number;
   allocationPercentage?: string | number;
   total?: string | number;
+  isVisitor?: boolean;
 };
 
 const props = defineProps<{
@@ -189,8 +190,20 @@ const splitItemsCount = (items: InvoicePreviewItem[]) => {
             <td class="px-1.5 py-1 whitespace-nowrap overflow-hidden text-ellipsis">
               {{ item.code }}
             </td>
-            <td class="px-1.5 py-1 whitespace-nowrap overflow-hidden text-ellipsis">
-              {{ item.user }}
+            <td class="px-1.5 py-1">
+              <div v-if="item.isVisitor" class="text-xs space-y-1">
+                <div class="whitespace-nowrap overflow-hidden text-ellipsis">
+                  {{ item.user }}
+                </div>
+                <span
+                  class="block w-fit px-1.5 py-1 bg-zinc-950 rounded-md text-white text-xxs uppercase"
+                >
+                  visitante
+                </span>
+              </div>
+              <div v-else class="text-xs whitespace-nowrap overflow-hidden text-ellipsis">
+                {{ item.user }}
+              </div>
             </td>
             <td class="px-1.5 py-1 whitespace-nowrap overflow-hidden text-ellipsis">
               {{ item.branch }}

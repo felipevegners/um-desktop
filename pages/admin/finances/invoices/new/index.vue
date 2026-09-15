@@ -293,7 +293,9 @@ const previewItems = computed(() => {
       {
         rideId: ride?.id,
         code: ride?.code,
-        user: ride?.isVisitor ? ride?.visitorData?.name || '-' : ride?.user?.name || '-',
+        user: ride?.user?.isVisitor
+          ? ride?.user?.visitorData?.name || '-'
+          : ride?.user?.name || '-',
         branch: invoiceBranchName,
         costCenter: selectedAreaCode.value || rideAreaCode || rideAreaName || '-',
         product: ride?.product?.name || '-',
@@ -315,6 +317,7 @@ const previewItems = computed(() => {
         splitLabel:
           splitPayment?.areaName || splitPayment?.area || allocation.allocationAreaCode,
         total: allocation.allocatedTotal,
+        isVisitor: ride?.user?.isVisitor || false,
       },
     ];
   });
