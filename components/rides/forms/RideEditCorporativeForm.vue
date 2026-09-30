@@ -1636,12 +1636,14 @@ const handleAcceptBudgetOverQuota = () => {
                   v-if="ride.user.isVisitor && ride.user.isVisitor === true"
                   class="space-y-2"
                 >
-                  <span
-                    class="block w-fit my-3 px-2 py-1.5 bg-green-600 text-xs text-white rounded-md uppercase"
-                  >
-                    visitante
-                  </span>
-                  <h2 class="font-bold text-lg">{{ ride?.user.visitorData.name }}</h2>
+                  <h2 class="flex items-center gap-2 font-bold text-lg">
+                    {{ ride?.user.visitorData.name }}
+                    <span
+                      class="w-fit h-fit px-1 bg-um-primary/60 border border-green-500 text-xxs text-black font-normal rounded-md uppercase"
+                    >
+                      visitante
+                    </span>
+                  </h2>
                   <p class="flex items-center gap-2 text-sm">
                     <Phone :size="16" />
                     <a

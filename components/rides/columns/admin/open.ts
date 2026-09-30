@@ -122,22 +122,24 @@ export const columns: any = [
   }),
   columnHelper.accessor((row) => row.user?.name ?? '', {
     id: 'user',
-    size: 200,
+    size: 240,
     meta: { label: 'Usuário' },
     header: () => h('div', { class: 'text-xs leading-none text-left' }, 'Usuário'),
     cell: ({ row }: any) => {
       const data = row.original;
       if (data.user.isVisitor) {
         return h('div', { class: 'text-xs' }, [
-          data.user.visitorData.name,
-          h(
-            'span',
-            {
-              class:
-                'block my-1 w-fit px-1.5 py-1 bg-zinc-950 rounded-md text-white text-xxs uppercase',
-            },
-            'visitante',
-          ),
+          h('div', { class: 'flex flex-row items-center gap-1' }, [
+            data.user.visitorData.name,
+            h(
+              'span',
+              {
+                class:
+                  'block my-1 w-fit px-1 bg-um-primary/60 border border-green-500 rounded-md text-black text-xxs uppercase',
+              },
+              'visitante',
+            ),
+          ]),
           h(
             'a',
             {

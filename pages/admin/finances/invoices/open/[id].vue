@@ -7,6 +7,7 @@ import {
   CheckCircle2,
   ChevronDown,
   Edit,
+  FileSpreadsheet,
   LoaderCircle,
   Paperclip,
   Save,
@@ -391,6 +392,55 @@ const toggleRideSelection = (rideId: string, checked: boolean) => {
 const toggleEditMode = () => {
   if (isInvoiceLocked.value) return;
   editMode.value = !editMode.value;
+};
+
+const csvColumns: Array<{ key: string; label: string }> = [
+  { key: 'code', label: 'Código' },
+  { key: 'user', label: 'Usuário' },
+  { key: 'branch', label: 'Filial' },
+  { key: 'costCenter', label: 'CC' },
+  { key: 'product', label: 'Produto' },
+  { key: 'requester', label: 'Solicitante' },
+  { key: 'finishedAt', label: 'Finalizado' },
+  { key: 'dateTime', label: 'Data e Hora' },
+  { key: 'route', label: 'Rota' },
+  { key: 'tp', label: 'TP' },
+  { key: 'kme', label: 'KME' },
+  { key: 'kmePrice', label: 'Valor KME' },
+  { key: 'he', label: 'HE' },
+  { key: 'hePrice', label: 'Valor HE' },
+  { key: 'baseTotal', label: 'Valor Total' },
+  { key: 'allocatedTotal', label: 'Valor Rateado' },
+];
+
+const escapeCsvValue = (value: unknown) => {
+  const stringValue = value === null || value === undefined ? '' : String(value);
+  if (/[";\n]/.test(stringValue)) {
+    return `"${stringValue.replace(/"/g, '""')}"`;
+  }
+  return stringValue;
+};
+
+const exportCsv = () => {
+  const rows = candidateItems.value.map((item: any) => ({
+    ...item,
+    baseTotal: currencyFormat(item.baseTotal ?? item.total),
+    allocatedTotal: currencyFormat(item.allocatedTotal ?? item.total),
+  }));
+
+  const header = csvColumns.map((column) => escapeCsvValue(column.label)).join(';');
+  const lines = rows.map((row) =>
+    csvColumns.map((column) => escapeCsvValue(row[column.key])).join(';'),
+  );
+  const csvContent = [header, ...lines].join('\n');
+
+  const blob = new Blob(['\uFEFF', csvContent], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = `fechamento-UM-${invoice.value?.number || invoiceId.value || 'atendimentos'}.csv`;
+  link.click();
+  URL.revokeObjectURL(url);
 };
 
 const availableRides = computed(() => {
@@ -840,7 +890,7 @@ onBeforeMount(async () => {
               </div>
             </div>
 
-            <div class="mt-3 flex justify-start">
+            <div class="mt-3 flex justify-start gap-2">
               <Button
                 type="button"
                 class="min-w-28"
@@ -850,6 +900,15 @@ onBeforeMount(async () => {
                 <Edit v-if="!editMode" />
                 <Save v-else />
                 {{ editMode ? 'Salvar' : 'Editar' }}
+              </Button>
+              <Button
+                type="button"
+                class="bg-green-600 hover:bg-green-700 text-white"
+                :disabled="isLoadingRides || candidateItems.length === 0"
+                @click="exportCsv"
+              >
+                <FileSpreadsheet class="mr-2 h-4 w-4" />
+                Exportar csv
               </Button>
             </div>
 

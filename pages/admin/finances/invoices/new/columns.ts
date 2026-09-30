@@ -69,22 +69,24 @@ export const columns: any = [
   }),
   columnHelper.display({
     id: 'user',
-    meta: { label: 'Usuário' },
+    meta: { label: 'Usuário', width: '240px' },
     enableHiding: false,
     header: () => h('div', { class: 'text-xs text-left' }, 'Usuário'),
     cell: ({ row }) => {
       const ride = row.original;
       if (ride?.user?.isVisitor) {
         return h('div', { class: 'text-xs' }, [
-          ride?.user?.visitorData?.name || '-',
-          h(
-            'span',
-            {
-              class:
-                'block mt-1 w-fit px-1 py-0.5 bg-zinc-950 rounded-md text-white text-[8px] uppercase',
-            },
-            'visitante',
-          ),
+          h('div', { class: 'flex flex-row items-center gap-1' }, [
+            data.user.visitorData.name,
+            h(
+              'span',
+              {
+                class:
+                  'block my-1 w-fit px-1 bg-um-primary/60 border border-green-500 rounded-md text-black text-xxs uppercase',
+              },
+              'visitante',
+            ),
+          ]),
         ]);
       }
       return h('div', { class: 'capitalize text-xs' }, ride?.user?.name || '-');
