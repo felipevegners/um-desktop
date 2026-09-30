@@ -49,12 +49,13 @@ const columnSizingInfo = ref<{ isResizingColumn: string | false }>({
 // Build an initializer function to populate `columnSizing` from the passed
 // column definitions. We don't call it until `props` exists (below).
 const initSizingFromColumns = (cols: ColumnDef<TData, TValue>[]) => {
-  const sizing: Record<string, number> = {};
+  const sizing: Record<string, number> = { ...columnSizing.value };
   (cols || []).forEach((col: any) => {
     const id = col.id ?? col.accessorKey ?? (col.accessor && (col.accessor as any).name);
     const metaWidth =
       (col.meta && (col.meta.width ?? col.meta.size)) ?? col.size ?? col.width;
-    if (id && metaWidth != null) {
+    // Skip columns already sized (e.g. resized by the user) so we don't reset them.
+    if (id && metaWidth != null && sizing[id] == null) {
       const parsed = typeof metaWidth === 'string' ? parseInt(metaWidth, 10) : metaWidth;
       if (!Number.isNaN(parsed)) sizing[id] = parsed;
     }
@@ -118,8 +119,9 @@ const props = withDefaults(defineProps<TableProps>(), {
   showPagination: true,
 });
 
-// Initialize sizing from the provided column definitions (if any)
-initSizingFromColumns(props.columns as ColumnDef<TData, TValue>[]);
+// Re-run whenever the columns array changes (e.g. batch-mode toggling columns in/out)
+// so newly added columns pick up their `meta.width` instead of the table default.
+watch(() => props.columns, initSizingFromColumns, { immediate: true });
 
 const table = useVueTable({
   defaultColumn: {

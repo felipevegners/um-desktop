@@ -211,8 +211,10 @@ const columnHelper = createColumnHelper<any>();
 
 const batchSelectColumn = columnHelper.display({
   id: 'batch-select',
-  enableHiding: false,
-  header: () => h('div', { class: 'text-left' }, 'Selecionar'),
+  meta: {
+    width: 30,
+  },
+  header: () => h('div', { class: 'text-center' }, ''),
   cell: ({ row }) => {
     const data = row.original;
     const isSelected = selectedIds.value.has(data.id);
@@ -222,7 +224,7 @@ const batchSelectColumn = columnHelper.display({
     return h('input', {
       type: 'checkbox',
       checked: isSelected,
-      class: 'w-4 h-4 cursor-pointer',
+      class: 'w-4 h-4 cursor-pointer self-center',
       onChange: () => toggleSelectCommission(data.id),
     });
   },
@@ -235,7 +237,7 @@ const actionsColumn = columnHelper.display({
   cell: ({ row }) => {
     const data = row.original;
     const disableEdit = data.status === 'paid';
-    return h('div', { class: 'space-x-2' }, [
+    return h('div', { class: 'space-x-1' }, [
       h(
         Button,
         {
@@ -264,7 +266,7 @@ const actionsColumn = columnHelper.display({
 
 const finalColumns = computed(() => {
   if (isBatchMode.value) {
-    return [batchSelectColumn, ...columns, actionsColumn];
+    return [batchSelectColumn, ...columns];
   }
   return [...columns, actionsColumn];
 });
@@ -279,7 +281,7 @@ const finalColumns = computed(() => {
         Pagamentos Motoristas
       </h1>
       <div class="flex gap-2">
-        <Button v-if="!isSingleEditMode" variant="outline" @click="toggleBatchMode">
+        <Button v-if="!isSingleEditMode" variant="secondary" @click="toggleBatchMode">
           <CheckSquare class="w-4 h-4" />
           {{ isBatchMode ? 'Cancelar Seleção' : 'Pagamento em Lote' }}
         </Button>

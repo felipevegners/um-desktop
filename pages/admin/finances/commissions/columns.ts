@@ -2,7 +2,7 @@ import CommissionStatusFlag from '@/components/shared/CommissionStatusFlag.vue';
 import Input from '@/components/ui/input/Input.vue';
 import { createColumnHelper } from '@tanstack/vue-table';
 import { ExternalLink } from 'lucide-vue-next';
-import { commissionType, discountType } from '~/config/commissions';
+import { commissionType } from '~/config/commissions';
 import { currencyFormat, dateFormat } from '~/lib/utils';
 
 const columnHelper = createColumnHelper<any>();
@@ -35,6 +35,19 @@ export const columns = [
     header: () => h('div', { class: 'text-xs text-left' }, 'Motorista'),
     cell: ({ row }: any) => {
       return h('div', { class: 'text-xs text-left' }, row.getValue('driver')?.name);
+    },
+  }),
+  columnHelper.accessor('invoiceNumber', {
+    meta: {
+      width: 120,
+    },
+    header: () => h('div', { class: 'text-xs text-left' }, 'Fechamento'),
+    cell: ({ row }: any) => {
+      return h(
+        'div',
+        { class: 'text-xs text-left' },
+        row.getValue('invoiceNumber') || ' - ',
+      );
     },
   }),
   columnHelper.accessor('ride', {
@@ -84,18 +97,19 @@ export const columns = [
       );
     },
   }),
-  columnHelper.accessor('discountType', {
-    header: () => h('div', { class: 'text-xs text-left' }, 'Tipo Desconto'),
-    cell: ({ row }) => {
-      const data = row.original;
-      return h(
-        'div',
-        { class: 'text-xs text-left' },
-        data.discountType !== '-' ? discountType[data.discountType] : '-',
-      );
-    },
-  }),
+  // columnHelper.accessor('discountType', {
+  //   header: () => h('div', { class: 'text-xs text-left' }, 'Tipo Desconto'),
+  //   cell: ({ row }) => {
+  //     const data = row.original;
+  //     return h(
+  //       'div',
+  //       { class: 'text-xs text-left' },
+  //       data.discountType !== '-' ? discountType[data.discountType] : '-',
+  //     );
+  //   },
+  // }),
   columnHelper.accessor('ammount', {
+    id: 'ammountTotal',
     header: () => h('div', { class: 'text-xs text-left' }, 'Valor Total'),
     cell: ({ row }) => {
       const data = row.original;
@@ -115,12 +129,18 @@ export const columns = [
     },
   }),
   columnHelper.accessor('availableAt', {
-    header: () => h('div', { class: 'text-xs text-left' }, 'Prazo'),
+    meta: {
+      width: 40,
+    },
+    header: () => h('div', { class: 'text-xs text-center' }, 'Prazo'),
     cell: ({ row }) => {
-      return h('div', { class: 'text-xs text-left' }, row.getValue('availableAt'));
+      return h('div', { class: 'text-xs text-center' }, row.getValue('availableAt'));
     },
   }),
   columnHelper.accessor('status', {
+    meta: {
+      width: 90,
+    },
     header: () => h('div', { class: 'text-xs text-left' }, 'Status'),
     cell: ({ row }) => {
       return h(CommissionStatusFlag, { status: row.getValue('status') as string });
