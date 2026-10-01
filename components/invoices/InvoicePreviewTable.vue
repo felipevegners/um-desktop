@@ -1,16 +1,24 @@
 <script setup lang="ts">
-import { currencyFormat, sanitizeAmount } from '~/lib/utils';
+import {
+  currencyFormat,
+  formatDateTimePtBR,
+  formatInvoiceUser,
+  sanitizeAmount,
+} from '~/lib/utils';
 
 type InvoicePreviewItem = {
   rideId?: string;
   code?: string;
   user?: string;
+  driver?: string;
   branch?: string;
   costCenter?: string;
   product?: string;
   requester?: string;
-  finishedAt?: string;
-  dateTime?: string;
+  openedAt?: string | Date | null;
+  finalizedAt?: string | Date | null;
+  origin?: string;
+  destination?: string;
   route?: string;
   tp?: string | number;
   kme?: string;
@@ -49,6 +57,13 @@ const splitItemsCount = (items: InvoicePreviewItem[]) => {
     return percentage !== 100 || baseTotal !== allocatedTotal;
   }).length;
 };
+
+const getRoutePart = (item: InvoicePreviewItem, part: 'origin' | 'destination') => {
+  const [origin = '', ...destinationParts] = String(item.route || '').split(' -> ');
+  return part === 'origin'
+    ? item.origin || origin || '-'
+    : item.destination || destinationParts.join(' -> ') || '-';
+};
 </script>
 
 <template>
@@ -76,17 +91,19 @@ const splitItemsCount = (items: InvoicePreviewItem[]) => {
     </div>
 
     <div class="overflow-auto rounded-md border border-zinc-200">
-      <table class="preview-table min-w-[1580px] table-fixed text-[10px] leading-tight">
+      <table class="preview-table min-w-[1764px] table-fixed text-[10px] leading-tight">
         <colgroup>
           <col style="width: 62px" />
-          <col style="width: 92px" />
+          <col style="width: 130px" />
           <col style="width: 98px" />
           <col style="width: 54px" />
           <col style="width: 84px" />
           <col style="width: 92px" />
-          <col style="width: 82px" />
-          <col style="width: 92px" />
-          <col style="width: 200px" />
+          <col style="width: 130px" />
+          <col style="width: 130px" />
+          <col style="width: 180px" />
+          <col style="width: 180px" />
+          <col style="width: 100px" />
           <col style="width: 36px" />
           <col style="width: 50px" />
           <col style="width: 70px" />
@@ -131,17 +148,27 @@ const splitItemsCount = (items: InvoicePreviewItem[]) => {
             <th
               class="px-1.5 py-1.5 text-left whitespace-nowrap overflow-hidden text-ellipsis"
             >
+              Aberto em
+            </th>
+            <th
+              class="px-1.5 py-1.5 text-left whitespace-nowrap overflow-hidden text-ellipsis"
+            >
               Finalizado
             </th>
             <th
               class="px-1.5 py-1.5 text-left whitespace-nowrap overflow-hidden text-ellipsis"
             >
-              Data e Hora
+              Origem
             </th>
             <th
               class="px-1.5 py-1.5 text-left whitespace-nowrap overflow-hidden text-ellipsis"
             >
-              Rota
+              Destino
+            </th>
+            <th
+              class="px-1.5 py-1.5 text-left whitespace-nowrap overflow-hidden text-ellipsis"
+            >
+              Motorista
             </th>
             <th
               class="px-1.5 py-1.5 text-center whitespace-nowrap overflow-hidden text-ellipsis"
@@ -190,20 +217,8 @@ const splitItemsCount = (items: InvoicePreviewItem[]) => {
             <td class="px-1.5 py-1 whitespace-nowrap overflow-hidden text-ellipsis">
               {{ item.code }}
             </td>
-            <td class="px-1.5 py-1">
-              <div v-if="item.isVisitor" class="text-xs space-y-1">
-                <div class="whitespace-nowrap overflow-hidden text-ellipsis">
-                  {{ item.user }}
-                </div>
-                <span
-                  class="block w-fit px-1 py-0.5 bg-zinc-950 rounded-md text-white text-[8px] uppercase"
-                >
-                  visitante
-                </span>
-              </div>
-              <div v-else class="text-xs whitespace-nowrap overflow-hidden text-ellipsis">
-                {{ item.user }}
-              </div>
+            <td class="px-1.5 py-1 whitespace-nowrap overflow-hidden text-ellipsis">
+              {{ formatInvoiceUser(item.user, Boolean(item.isVisitor)) }}
             </td>
             <td class="px-1.5 py-1 whitespace-nowrap overflow-hidden text-ellipsis">
               {{ item.branch }}
@@ -218,13 +233,19 @@ const splitItemsCount = (items: InvoicePreviewItem[]) => {
               {{ item.requester }}
             </td>
             <td class="px-1.5 py-1 whitespace-nowrap overflow-hidden text-ellipsis">
-              {{ item.finishedAt }}
+              {{ formatDateTimePtBR(item.openedAt) }}
             </td>
             <td class="px-1.5 py-1 whitespace-nowrap overflow-hidden text-ellipsis">
-              {{ item.dateTime }}
+              {{ formatDateTimePtBR(item.finalizedAt) }}
             </td>
             <td class="px-1.5 py-1 whitespace-nowrap overflow-hidden text-ellipsis">
-              {{ item.route }}
+              {{ getRoutePart(item, 'origin') }}
+            </td>
+            <td class="px-1.5 py-1 whitespace-nowrap overflow-hidden text-ellipsis">
+              {{ getRoutePart(item, 'destination') }}
+            </td>
+            <td class="px-1.5 py-1 whitespace-nowrap overflow-hidden text-ellipsis">
+              {{ item.driver || '-' }}
             </td>
             <td
               class="px-1.5 py-1 text-center whitespace-nowrap overflow-hidden text-ellipsis"

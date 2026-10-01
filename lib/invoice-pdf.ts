@@ -1,16 +1,24 @@
 import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
+import { formatDateTimePtBR, formatInvoiceUser } from '~/lib/utils';
 
 type InvoiceItem = {
   rideId?: string;
   code?: string;
   user?: string;
+  isVisitor?: boolean;
+  driver?: string;
   branch?: string;
   costCenter?: string;
   product?: string;
   requester?: string;
+  openedAt?: string | Date | null;
+  finalizedAt?: string | Date | null;
   finishedAt?: string;
+  finishedTime?: string;
   dateTime?: string;
+  origin?: string;
+  destination?: string;
   route?: string;
   tp?: string;
   kme?: string;
@@ -162,22 +170,24 @@ export async function downloadInvoicePdf(invoice: InvoiceLike): Promise<void> {
 
   const columnWidths = [
     72, // Codigo
-    126, // Usuario
-    132, // Filial
-    70, // CC
-    95, // Produto
-    120, // Solicitante
-    82, // Finalizado
-    108, // Data e Hora
-    270, // Rota
-    42, // TP
-    54, // KME
-    82, // Valor KME
-    46, // HE
-    82, // Valor HE
-    88, // Adicionais
-    100, // Valor Total
-    108, // Valor Rateado
+    112, // Usuario
+    100, // Filial
+    52, // CC
+    82, // Produto
+    100, // Solicitante
+    112, // Aberto em
+    112, // Finalizado
+    140, // Origem
+    140, // Destino
+    100, // Motorista
+    38, // TP
+    50, // KME
+    75, // Valor KME
+    38, // HE
+    75, // Valor HE
+    78, // Adicionais
+    88, // Valor Total
+    88, // Valor Rateado
   ];
 
   const tableWidth = columnWidths.reduce((sum, width) => sum + width, 0);
@@ -284,25 +294,37 @@ export async function downloadInvoicePdf(invoice: InvoiceLike): Promise<void> {
   doc.setFont('helvetica', 'normal');
   doc.text(String(dueDate), rightCardX + 74, topCardY + 66);
 
-  const tableRows = items.map((item) => [
-    item.code || '-',
-    item.user || '-',
-    item.branch || '-',
-    item.costCenter || '-',
-    item.product || '-',
-    item.requester || '-',
-    item.finishedAt || '-',
-    item.dateTime || '-',
-    item.route || '-',
-    item.tp || '-',
-    item.kme || '-',
-    item.kmePrice || '-',
-    item.he || '-',
-    item.hePrice || '-',
-    item.extraCharges || '-',
-    formatCurrency(item.baseTotal ?? item.total),
-    formatCurrency(item.allocatedTotal ?? item.total),
-  ]);
+  const tableRows = items.map((item) => {
+    const [routeOrigin = '', ...routeDestinationParts] = String(item.route || '').split(
+      ' -> ',
+    );
+    return [
+      item.code || '-',
+      formatInvoiceUser(item.user, Boolean(item.isVisitor)),
+      item.branch || '-',
+      item.costCenter || '-',
+      item.product || '-',
+      item.requester || '-',
+      formatDateTimePtBR(item.openedAt),
+      formatDateTimePtBR(
+        item.finalizedAt ||
+          (item.finishedAt && item.finishedTime
+            ? `${item.finishedAt} - ${item.finishedTime}`
+            : item.finishedAt),
+      ),
+      item.origin || routeOrigin || '-',
+      item.destination || routeDestinationParts.join(' -> ') || '-',
+      item.driver || '-',
+      item.tp || '-',
+      item.kme || '-',
+      item.kmePrice || '-',
+      item.he || '-',
+      item.hePrice || '-',
+      item.extraCharges || '-',
+      formatCurrency(item.baseTotal ?? item.total),
+      formatCurrency(item.allocatedTotal ?? item.total),
+    ];
+  });
 
   const computedTotal =
     items.length > 0
@@ -327,9 +349,11 @@ export async function downloadInvoicePdf(invoice: InvoiceLike): Promise<void> {
         'CC',
         'Produto',
         'Solicitante',
+        'Aberto em',
         'Finalizado',
-        'Data e Hora',
-        'Rota',
+        'Origem',
+        'Destino',
+        'Motorista',
         'TP',
         'KME',
         'Valor KME',
@@ -345,21 +369,7 @@ export async function downloadInvoicePdf(invoice: InvoiceLike): Promise<void> {
         ? tableRows
         : [
             [
-              '-',
-              '-',
-              '-',
-              '-',
-              '-',
-              '-',
-              '-',
-              '-',
-              '-',
-              '-',
-              '-',
-              '-',
-              '-',
-              '-',
-              '-',
+              ...Array.from({ length: 17 }, () => '-'),
               formatCurrency(invoice.value),
               formatCurrency(invoice.value),
             ],
@@ -393,14 +403,16 @@ export async function downloadInvoicePdf(invoice: InvoiceLike): Promise<void> {
       6: { cellWidth: columnWidths[6], halign: 'center' },
       7: { cellWidth: columnWidths[7], halign: 'center' },
       8: { cellWidth: columnWidths[8], overflow: 'linebreak' },
-      9: { cellWidth: columnWidths[9], halign: 'center' },
-      10: { cellWidth: columnWidths[10], halign: 'center' },
-      11: { cellWidth: columnWidths[11], halign: 'right' },
+      9: { cellWidth: columnWidths[9], overflow: 'linebreak' },
+      10: { cellWidth: columnWidths[10] },
+      11: { cellWidth: columnWidths[11], halign: 'center' },
       12: { cellWidth: columnWidths[12], halign: 'center' },
       13: { cellWidth: columnWidths[13], halign: 'right' },
       14: { cellWidth: columnWidths[14], halign: 'center' },
       15: { cellWidth: columnWidths[15], halign: 'right' },
-      16: { cellWidth: columnWidths[16], halign: 'right' },
+      16: { cellWidth: columnWidths[16], halign: 'center' },
+      17: { cellWidth: columnWidths[17], halign: 'right' },
+      18: { cellWidth: columnWidths[18], halign: 'right' },
     },
     tableWidth,
     pageBreak: 'avoid',

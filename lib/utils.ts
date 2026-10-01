@@ -29,6 +29,41 @@ export const dateFormat = (date: any) => {
   });
 };
 
+export const formatDateTimePtBR = (value: string | Date | null | undefined) => {
+  if (!value || value === '-') return '-';
+
+  if (typeof value === 'string') {
+    const formatted = value
+      .trim()
+      .match(/^(\d{2}\/\d{2}\/\d{4})(?:\s*-\s*(\d{2}:\d{2}))?$/);
+    if (formatted) return `${formatted[1]} - ${formatted[2] || '-'}`;
+  }
+
+  const parsed = value instanceof Date ? value : new Date(value);
+  if (Number.isNaN(parsed.getTime())) return '-';
+
+  const date = parsed.toLocaleDateString('pt-BR');
+  const time = parsed.toLocaleTimeString('pt-BR', {
+    hour: '2-digit',
+    minute: '2-digit',
+    hourCycle: 'h23',
+  });
+  return `${date} - ${time}`;
+};
+
+export const formatInvoiceUser = (name: unknown, isVisitor: boolean) => {
+  const userName = String(name || '-');
+  if (
+    !isVisitor ||
+    userName === '-' ||
+    userName.toLowerCase().startsWith('(visitante)') ||
+    userName.toLowerCase().endsWith('(visitante)')
+  ) {
+    return userName;
+  }
+  return `${userName} (visitante)`;
+};
+
 export const currencyFormat = (value: string | number) => {
   return new Intl.NumberFormat('pt-BR', {
     style: 'currency',

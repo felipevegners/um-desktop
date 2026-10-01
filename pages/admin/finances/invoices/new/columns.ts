@@ -167,9 +167,9 @@ export const columns: any = [
   }),
   columnHelper.display({
     id: 'finishedAt',
-    meta: { label: 'Finalizado em' },
+    meta: { label: 'Finalizado' },
     enableHiding: false,
-    header: () => h('div', { class: 'text-xs text-left' }, 'Finalizado em'),
+    header: () => h('div', { class: 'text-xs text-left' }, 'Finalizado'),
     cell: ({ row }) => {
       const ride = row.original;
       const finishedAt = ride?.progress?.finishedAt || ride?.updatedAt || ride?.createdAt;

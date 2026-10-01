@@ -53,6 +53,8 @@ const previewInvoice = ref<any>(null);
 const showPreviewModal = ref(false);
 const previewActionMode = ref<'view' | 'adjust'>('view');
 const adjustmentComment = ref('');
+const previewLoadSequence = ref(0);
+const isLoadingPreviewData = ref(false);
 
 const normalizeInvoiceStatus = (status: string | undefined | null) => {
   const raw = String(status || '').toLowerCase();
@@ -82,14 +84,130 @@ const getApprovalDeadlineText = (invoice: any) => {
   return `Expira em ${hours}h ${minutes}min`;
 };
 
-const openPreview = (invoice: any) => {
+const getRideAddressPart = (address: unknown) =>
+  String(address || '')
+    .split('-')
+    .slice(0, 1)
+    .pop()
+    ?.trim() || '-';
+
+const hasRideSnapshotFields = (invoice: any) => {
+  const requiredFields = ['openedAt', 'finalizedAt', 'driver', 'origin', 'destination'];
+  return (
+    Array.isArray(invoice?.items) &&
+    invoice.items.every((item: any) =>
+      requiredFields.every((field) => {
+        const value = item?.[field];
+        return (
+          value !== null &&
+          value !== undefined &&
+          String(value).trim() !== '' &&
+          value !== '-'
+        );
+      }),
+    )
+  );
+};
+
+const needsRideEnrichment = (invoice: any) =>
+  Boolean(String(invoice?.customer?.contractId || '').trim()) &&
+  Array.isArray(invoice?.items) &&
+  invoice.items.length > 0 &&
+  !hasRideSnapshotFields(invoice);
+
+const loadInvoiceRides = async (invoice: any) => {
+  const contractId = String(invoice?.customer?.contractId || '').trim();
+  if (!contractId) return [];
+
+  const ridesStore = useRidesStore();
+  try {
+    await ridesStore.getRidesByContractAction(contractId);
+    return ridesStore.rides || [];
+  } catch {
+    return [];
+  }
+};
+
+const enrichInvoiceWithRides = (invoice: any, contractRides: any[]) => {
+  const ridesById = new Map<string, any>();
+  contractRides.forEach((ride: any) => {
+    const rideId = String(ride?.id || '').trim();
+    const rideCode = String(ride?.code || '').trim();
+    if (rideId) ridesById.set(rideId, ride);
+    if (rideCode) ridesById.set(rideCode, ride);
+  });
+
+  return {
+    ...invoice,
+    items: (invoice?.items || []).map((item: any) => {
+      const rideId = String(item?.rideId || item?.id || '').trim();
+      const ride =
+        ridesById.get(rideId) || ridesById.get(String(item?.code || '').trim());
+      const [routeOrigin = '', ...routeDestinationParts] = String(
+        item?.route || '',
+      ).split(' -> ');
+      const isVisitor = ride?.user?.isVisitor ?? Boolean(item?.isVisitor);
+
+      return {
+        ...item,
+        user: ride?.user?.isVisitor
+          ? ride?.user?.visitorData?.name || item?.user || '-'
+          : ride?.user?.name || ride?.user?.fullName || item?.user || '-',
+        isVisitor,
+        driver:
+          ride?.driver?.name ||
+          ride?.driver?.fullName ||
+          ride?.driverName ||
+          item?.driver ||
+          '-',
+        openedAt: ride?.createdAt || item?.openedAt || null,
+        finalizedAt:
+          ride?.progress?.finishedAt ||
+          ride?.finishedAt ||
+          item?.finalizedAt ||
+          (item?.finishedAt && item?.finishedTime
+            ? `${item.finishedAt} - ${item.finishedTime}`
+            : item?.finishedAt),
+        origin:
+          (ride?.travel?.originAddress &&
+            getRideAddressPart(ride.travel.originAddress)) ||
+          item?.origin ||
+          routeOrigin ||
+          '-',
+        destination:
+          (ride?.travel?.destinationAddress &&
+            getRideAddressPart(ride.travel.destinationAddress)) ||
+          item?.destination ||
+          routeDestinationParts.join(' -> ') ||
+          '-',
+      };
+    }),
+  };
+};
+
+const openPreview = async (invoice: any) => {
+  const requestSequence = ++previewLoadSequence.value;
   previewInvoice.value = invoice;
   previewActionMode.value = 'view';
   adjustmentComment.value = '';
   showPreviewModal.value = true;
+
+  if (!needsRideEnrichment(invoice)) {
+    isLoadingPreviewData.value = false;
+    return;
+  }
+
+  isLoadingPreviewData.value = true;
+  const contractRides = await loadInvoiceRides(invoice);
+  if (requestSequence === previewLoadSequence.value) {
+    previewInvoice.value = enrichInvoiceWithRides(invoice, contractRides);
+    isLoadingPreviewData.value = false;
+  }
 };
 
 const closePreview = () => {
+  previewLoadSequence.value += 1;
+  isLoadingPreviewData.value = false;
   showPreviewModal.value = false;
   previewActionMode.value = 'view';
   adjustmentComment.value = '';
@@ -185,7 +303,10 @@ const columns = computed(() =>
       : undefined,
     onDownload: async (invoice: any) => {
       try {
-        await downloadInvoicePdf(invoice);
+        const invoiceForPdf = needsRideEnrichment(invoice)
+          ? enrichInvoiceWithRides(invoice, await loadInvoiceRides(invoice))
+          : invoice;
+        await downloadInvoicePdf(invoiceForPdf);
       } catch (error) {
         toast({
           title: 'Opss!',
@@ -447,7 +568,16 @@ function resolveInvoiceCostCenterCode(invoice: any): string {
               </div>
             </section>
 
-            <InvoicePreviewTable :items="previewInvoice.items || []" />
+            <div
+              v-if="isLoadingPreviewData"
+              class="flex min-h-56 items-center justify-center gap-3 text-sm text-zinc-600"
+              role="status"
+              aria-live="polite"
+            >
+              <LoaderCircle class="h-5 w-5 animate-spin" />
+              Carregando dados do fechamento...
+            </div>
+            <InvoicePreviewTable v-else :items="previewInvoice.items || []" />
 
             <section
               v-if="props.allowReviewActions && previewActionMode === 'adjust'"
@@ -471,7 +601,7 @@ function resolveInvoiceCostCenterCode(invoice: any): string {
           <Button
             v-if="props.allowReviewActions && previewActionMode === 'view'"
             type="button"
-            :disabled="isUpdating || !previewIsPending"
+            :disabled="isUpdating || isLoadingPreviewData || !previewIsPending"
             class="text-white bg-amber-600 hover:bg-amber-700 hover:text-white"
             @click="openAdjustmentMode"
           >
@@ -490,7 +620,7 @@ function resolveInvoiceCostCenterCode(invoice: any): string {
           <Button
             v-if="props.allowReviewActions && previewActionMode === 'adjust'"
             type="button"
-            :disabled="isUpdating || !previewIsPending"
+            :disabled="isUpdating || isLoadingPreviewData || !previewIsPending"
             @click="handleRequestAdjustment"
           >
             <LoaderCircle v-if="isUpdating" class="animate-spin" />

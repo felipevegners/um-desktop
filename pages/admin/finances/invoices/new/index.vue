@@ -86,7 +86,7 @@ const buildMonthKey = (date: Date) => {
 };
 
 const rideCompletionDate = (ride: any) => {
-  const candidate = ride?.progress?.finishedAt || ride?.updatedAt || ride?.createdAt;
+  const candidate = ride?.progress?.finishedAt || ride?.finishedAt;
   const parsed = new Date(candidate);
   return Number.isNaN(parsed.getTime()) ? null : parsed;
 };
@@ -130,6 +130,13 @@ const getRideRoute = (ride: any) => {
   if (!destination) return origin;
   return `${origin} -> ${destination}`;
 };
+
+const getRideAddressPart = (address: unknown) =>
+  String(address || '')
+    .split('-')
+    .slice(0, 1)
+    .pop()
+    ?.trim() || '-';
 
 const getRideDateTime = (ride: any) => {
   const date = ride?.travel?.date ? sanitizeRideDate(ride.travel.date) : '';
@@ -296,11 +303,16 @@ const previewItems = computed(() => {
         user: ride?.user?.isVisitor
           ? ride?.user?.visitorData?.name || '-'
           : ride?.user?.name || '-',
+        isVisitor: Boolean(ride?.user?.isVisitor),
+        driver: ride?.driver?.name || ride?.driver?.fullName || ride?.driverName || '-',
+        origin: getRideAddressPart(ride?.travel?.originAddress),
+        destination: getRideAddressPart(ride?.travel?.destinationAddress),
         branch: invoiceBranchName,
         costCenter: selectedAreaCode.value || rideAreaCode || rideAreaName || '-',
         product: ride?.product?.name || '-',
         requester,
-        finishedAt: finishedAt ? formatDate(finishedAt) : '-',
+        openedAt: ride?.createdAt || null,
+        finalizedAt: finishedAt,
         dateTime: getRideDateTime(ride),
         route: getRideRoute(ride),
         tp: String(tpValue),

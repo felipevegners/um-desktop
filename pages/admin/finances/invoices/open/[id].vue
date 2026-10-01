@@ -17,8 +17,9 @@ import { storeToRefs } from 'pinia';
 import {
   convertSecondsToTime,
   currencyFormat,
+  formatDateTimePtBR,
+  formatInvoiceUser,
   sanitizeAmount,
-  sanitizeRideDate,
 } from '~/lib/utils';
 import {
   resolveDisplayExtraHourPrice,
@@ -180,7 +181,7 @@ const invoiceCostCenterCode = computed(() => {
 });
 
 const rideCompletionDate = (ride: any) => {
-  const candidate = ride?.progress?.finishedAt || ride?.updatedAt || ride?.createdAt;
+  const candidate = ride?.progress?.finishedAt || ride?.finishedAt;
   const parsed = new Date(candidate);
   return Number.isNaN(parsed.getTime()) ? null : parsed;
 };
@@ -207,32 +208,12 @@ const getRideLineTotal = (ride: any) => {
   return Math.max(baseTotal + extraChargesTotal, 0);
 };
 
-const getRideRoute = (ride: any) => {
-  const origin = String(ride?.travel?.originAddress || '')
+const getRideAddressPart = (address: unknown) =>
+  String(address || '')
     .split('-')
     .slice(0, 1)
     .pop()
-    ?.trim();
-  const destination = String(ride?.travel?.destinationAddress || '')
-    .split('-')
-    .slice(0, 1)
-    .pop()
-    ?.trim();
-
-  if (!origin && !destination) return '-';
-  if (!origin) return destination || '-';
-  if (!destination) return origin;
-  return `${origin} -> ${destination}`;
-};
-
-const getRideDateTime = (ride: any) => {
-  const date = ride?.travel?.date ? sanitizeRideDate(ride.travel.date) : '';
-  const departTime = String(ride?.travel?.departTime || '').trim();
-  if (!date && !departTime) return '-';
-  if (!date) return departTime;
-  if (!departTime) return date;
-  return `${date} ${departTime}`;
-};
+    ?.trim() || '-';
 
 const buildCostCenterLabel = (ride: any) => {
   const areaCode = ride?.billing?.paymentData?.areaCode;
@@ -254,7 +235,16 @@ const buildRequesterLabel = (ride: any) => {
 const buildInvoiceItemFromRide = (ride: any) => ({
   rideId: ride?.id,
   code: ride?.code || ride?.id || '-',
-  user: ride?.user?.name || ride?.user?.fullName || ride?.driver?.name || '-',
+  user: formatInvoiceUser(
+    ride?.user?.isVisitor
+      ? ride?.user?.visitorData?.name
+      : ride?.user?.name || ride?.user?.fullName || ride?.driver?.name,
+    Boolean(ride?.user?.isVisitor),
+  ),
+  isVisitor: Boolean(ride?.user?.isVisitor),
+  driver: ride?.driver?.name || ride?.driver?.fullName || ride?.driverName || '-',
+  origin: getRideAddressPart(ride?.travel?.originAddress),
+  destination: getRideAddressPart(ride?.travel?.destinationAddress),
   branch:
     ride?.billing?.paymentData?.branchName ||
     ride?.billing?.paymentData?.branch ||
@@ -262,11 +252,8 @@ const buildInvoiceItemFromRide = (ride: any) => ({
   costCenter: buildCostCenterLabel(ride),
   product: ride?.billing?.paymentData?.product || ride?.product?.name || '-',
   requester: buildRequesterLabel(ride),
-  finishedAt: rideCompletionDate(ride)
-    ? formatDate(rideCompletionDate(ride) as Date)
-    : '-',
-  dateTime: getRideDateTime(ride),
-  route: getRideRoute(ride),
+  openedAt: ride?.createdAt || null,
+  finalizedAt: rideCompletionDate(ride),
   tp:
     ride?.travel?.totalTimeStopped !== undefined &&
     ride?.travel?.totalTimeStopped !== null
@@ -321,12 +308,34 @@ const isRideSelected = (rideId: string) => {
 const resolveCandidateItem = (item: any) => {
   const rideId = getItemRideId(item);
   const ride = ridesById.value.get(rideId);
-  if (!ride) return item;
+  if (!ride) {
+    const [origin = '', ...destinationParts] = String(item?.route || '').split(' -> ');
+    return {
+      ...item,
+      user: formatInvoiceUser(item?.user, Boolean(item?.isVisitor)),
+      openedAt: item?.openedAt || null,
+      finalizedAt:
+        item?.finalizedAt ||
+        (item?.finishedAt && item?.finishedTime
+          ? `${item.finishedAt} - ${item.finishedTime}`
+          : item?.finishedAt || null),
+      driver: item?.driver || item?.driverName || '-',
+      origin: item?.origin || origin || '-',
+      destination: item?.destination || destinationParts.join(' -> ') || '-',
+    };
+  }
 
   const rideItem = buildInvoiceItemFromRide(ride);
   return {
     ...rideItem,
     ...item,
+    user: rideItem.user,
+    isVisitor: rideItem.isVisitor,
+    openedAt: rideItem.openedAt,
+    finalizedAt: rideItem.finalizedAt,
+    driver: rideItem.driver,
+    origin: rideItem.origin,
+    destination: rideItem.destination,
     baseTotal: item?.baseTotal ?? item?.grossTotal ?? rideItem.baseTotal,
     allocatedTotal:
       item?.allocatedTotal ?? item?.rateioTotal ?? item?.total ?? rideItem.total,
@@ -401,21 +410,24 @@ const csvColumns: Array<{ key: string; label: string }> = [
   { key: 'costCenter', label: 'CC' },
   { key: 'product', label: 'Produto' },
   { key: 'requester', label: 'Solicitante' },
-  { key: 'finishedAt', label: 'Finalizado' },
-  { key: 'dateTime', label: 'Data e Hora' },
-  { key: 'route', label: 'Rota' },
+  { key: 'openedAt', label: 'Aberto em' },
+  { key: 'finalizedAt', label: 'Finalizado' },
+  { key: 'origin', label: 'Origem' },
+  { key: 'destination', label: 'Destino' },
+  { key: 'driver', label: 'Motorista' },
   { key: 'tp', label: 'TP' },
   { key: 'kme', label: 'KME' },
   { key: 'kmePrice', label: 'Valor KME' },
   { key: 'he', label: 'HE' },
   { key: 'hePrice', label: 'Valor HE' },
+  { key: 'extraCharges', label: 'Adicionais' },
   { key: 'baseTotal', label: 'Valor Total' },
   { key: 'allocatedTotal', label: 'Valor Rateado' },
 ];
 
 const escapeCsvValue = (value: unknown) => {
   const stringValue = value === null || value === undefined ? '' : String(value);
-  if (/[";\n]/.test(stringValue)) {
+  if (/[";\r\n]/.test(stringValue)) {
     return `"${stringValue.replace(/"/g, '""')}"`;
   }
   return stringValue;
@@ -424,15 +436,42 @@ const escapeCsvValue = (value: unknown) => {
 const exportCsv = () => {
   const rows = candidateItems.value.map((item: any) => ({
     ...item,
+    openedAt: formatDateTimePtBR(item.openedAt),
+    finalizedAt: formatDateTimePtBR(item.finalizedAt),
     baseTotal: currencyFormat(item.baseTotal ?? item.total),
     allocatedTotal: currencyFormat(item.allocatedTotal ?? item.total),
   }));
 
-  const header = csvColumns.map((column) => escapeCsvValue(column.label)).join(';');
-  const lines = rows.map((row) =>
-    csvColumns.map((column) => escapeCsvValue(row[column.key])).join(';'),
-  );
-  const csvContent = [header, ...lines].join('\n');
+  const customer = (invoice.value?.customer as any) || {};
+  const invoiceNumber = invoice.value?.number || '-';
+  const metadataRows = [
+    [`Nº ${invoiceNumber}`],
+    [],
+    ['Cliente', '', '', 'Período'],
+    [customer.customerName || '-', '', '', invoice.value?.period || '-'],
+    [
+      'Centro de Custo:',
+      invoiceCostCenterCode.value,
+      '',
+      'Emissão:',
+      formatDate(invoice.value?.createdAt),
+    ],
+    [
+      'CNPJ:',
+      customer.document || '-',
+      '',
+      'Vencimento:',
+      formatDate(invoice.value?.dueDate),
+    ],
+    [],
+  ];
+  const tableRows = [
+    csvColumns.map((column) => column.label),
+    ...rows.map((row) => csvColumns.map((column) => row[column.key] ?? '')),
+  ];
+  const csvContent = [...metadataRows, ...tableRows]
+    .map((row) => row.map(escapeCsvValue).join(';'))
+    .join('\n');
 
   const blob = new Blob(['\uFEFF', csvContent], { type: 'text/csv;charset=utf-8;' });
   const url = URL.createObjectURL(blob);
@@ -807,9 +846,11 @@ onBeforeMount(async () => {
                     <th class="p-2 text-left">CC</th>
                     <th class="p-2 text-left">Produto</th>
                     <th class="p-2 text-left">Solicitante</th>
+                    <th class="p-2 text-left">Aberto em</th>
                     <th class="p-2 text-left">Finalizado</th>
-                    <th class="p-2 text-left">Data e Hora</th>
-                    <th class="p-2 text-left">Rota</th>
+                    <th class="p-2 text-left">Origem</th>
+                    <th class="p-2 text-left">Destino</th>
+                    <th class="p-2 text-left">Motorista</th>
                     <th class="p-2 text-center">TP</th>
                     <th class="p-2 text-left">KME</th>
                     <th class="p-2 text-left">Valor KME</th>
@@ -822,15 +863,18 @@ onBeforeMount(async () => {
                 </thead>
                 <tbody>
                   <tr v-if="isLoadingRides" class="border-t border-zinc-200">
-                    <td colspan="18" class="p-4 text-center text-sm text-zinc-600">
-                      Carregando atendimentos do contrato...
+                    <td colspan="20" class="p-4 text-center text-sm text-zinc-600">
+                      <div class="flex items-center justify-center mb-2 gap-2">
+                        <LoaderCircle class="animate-spin" :size="16" />
+                      </div>
+                      Carregando atendimentos do fechamento...
                     </td>
                   </tr>
                   <tr
                     v-else-if="candidateItems.length === 0"
                     class="border-t border-zinc-200"
                   >
-                    <td colspan="18" class="p-4 text-center text-sm text-zinc-600">
+                    <td colspan="20" class="p-4 text-center text-sm text-zinc-600">
                       Nenhum atendimento disponível para este fechamento.
                     </td>
                   </tr>
@@ -858,14 +902,17 @@ onBeforeMount(async () => {
                     <td class="p-2">{{ item.costCenter }}</td>
                     <td class="p-2">{{ item.product }}</td>
                     <td class="p-2">{{ item.requester }}</td>
-                    <td class="p-2">{{ item.finishedAt }}</td>
-                    <td class="p-2">{{ item.dateTime }}</td>
-                    <td class="p-2">{{ item.route }}</td>
+                    <td class="p-2">{{ formatDateTimePtBR(item.openedAt) }}</td>
+                    <td class="p-2">{{ formatDateTimePtBR(item.finalizedAt) }}</td>
+                    <td class="p-2">{{ item.origin || '-' }}</td>
+                    <td class="p-2">{{ item.destination || '-' }}</td>
+                    <td class="p-2">{{ item.driver || '-' }}</td>
                     <td class="p-2 text-center">{{ item.tp }}</td>
                     <td class="p-2">{{ item.kme }}</td>
                     <td class="p-2">{{ item.kmePrice }}</td>
                     <td class="p-2">{{ item.he }}</td>
                     <td class="p-2">{{ item.hePrice }}</td>
+                    <td class="p-2 text-center">{{ item.extraCharges || '-' }}</td>
                     <td class="p-2 text-center font-semibold">
                       {{ currencyFormat(item.baseTotal ?? item.total) }}
                     </td>
