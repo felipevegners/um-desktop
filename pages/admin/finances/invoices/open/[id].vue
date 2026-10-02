@@ -3,6 +3,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/components/ui/toast/use-toast';
 import { useSessionAccess } from '@/composables/auth/useSessionAccess';
+import { previewInvoiceItemsService } from '@/server/services/invoices';
 import {
   CheckCircle2,
   ChevronDown,
@@ -19,7 +20,6 @@ import {
   currencyFormat,
   formatDateTimePtBR,
   formatInvoiceUser,
-  sanitizeAmount,
 } from '~/lib/utils';
 import {
   resolveDisplayExtraHourPrice,
@@ -113,6 +113,11 @@ const originalItems = ref<any[]>([]);
 const editableItems = ref<any[]>([]);
 const originalRideIds = ref<string[]>([]);
 const editMode = ref(false);
+const canonicalInvoiceItemsByRideId = ref<Record<string, any>>({});
+const selectedPreview = ref<any>({ items: [], value: '0.00' });
+const isLoadingInvoiceAmounts = ref(false);
+let candidatePreviewSequence = 0;
+let selectedPreviewSequence = 0;
 
 const getItemRideId = (item: any) =>
   String(item?.rideId || item?.id || item?.code || '').trim();
@@ -125,15 +130,6 @@ const itemSignature = (items: any[]) =>
     .join('|');
 
 const cloneItems = (items: any[]) => JSON.parse(JSON.stringify(items || []));
-
-const parseRideMoney = (...values: Array<string | number | null | undefined>) => {
-  for (const value of values) {
-    const amount = sanitizeAmount(value);
-    if (amount > 0) return amount;
-  }
-
-  return 0;
-};
 
 const normalizeScopeId = (value: unknown) => {
   if (typeof value !== 'string') return '';
@@ -180,32 +176,21 @@ const invoiceCostCenterCode = computed(() => {
   return itemCostCenter ? String(itemCostCenter) : '-';
 });
 
+const invoicePreviewAreaCode = computed(() => {
+  if (invoiceCostCenterCode.value && invoiceCostCenterCode.value !== '-') {
+    return invoiceCostCenterCode.value;
+  }
+
+  const item = originalItems.value.find(
+    (candidate: any) => candidate?.allocationAreaCode || candidate?.costCenter,
+  );
+  return String(item?.allocationAreaCode || item?.costCenter || '').trim();
+});
+
 const rideCompletionDate = (ride: any) => {
   const candidate = ride?.progress?.finishedAt || ride?.finishedAt;
   const parsed = new Date(candidate);
   return Number.isNaN(parsed.getTime()) ? null : parsed;
-};
-
-const getRideLineTotal = (ride: any) => {
-  const extraChargesTotal = Array.isArray(ride?.extraCharges)
-    ? ride.extraCharges.reduce((acc: number, item: any) => {
-        return acc + sanitizeAmount(item?.amount);
-      }, 0)
-    : 0;
-
-  const withExtras =
-    ride?.billing?.ammountWithExtras ?? ride?.billing?.amountWithExtras ?? null;
-
-  const baseTotal =
-    sanitizeAmount(withExtras) ||
-    sanitizeAmount(ride?.rideFinalPrice) ||
-    sanitizeAmount(ride?.billing?.ammount);
-
-  if (sanitizeAmount(withExtras) > 0) {
-    return baseTotal;
-  }
-
-  return Math.max(baseTotal + extraChargesTotal, 0);
 };
 
 const getRideAddressPart = (address: unknown) =>
@@ -279,20 +264,14 @@ const buildInvoiceItemFromRide = (ride: any) => ({
     resolveDisplayExtraHourPrice(ride) > 0
       ? currencyFormat(resolveDisplayExtraHourPrice(ride))
       : '-',
-  extraCharges: currencyFormat(
-    Array.isArray(ride?.extraCharges)
-      ? ride.extraCharges.reduce((acc: number, curr: any) => {
-          return acc + sanitizeAmount(curr?.amount);
-        }, 0)
-      : 0,
-  ),
-  baseTotal: getRideLineTotal(ride),
-  allocatedTotal: getRideLineTotal(ride),
+  extraCharges: '',
+  baseTotal: null,
+  allocatedTotal: null,
   allocationPercentage: 100,
   allocationAreaCode:
     ride?.billing?.paymentData?.areaCode || ride?.billing?.paymentData?.areaName || '-',
   allocationMode: 'single',
-  total: getRideLineTotal(ride),
+  total: null,
 });
 
 const ridesById = computed(() => {
@@ -326,7 +305,7 @@ const resolveCandidateItem = (item: any) => {
   }
 
   const rideItem = buildInvoiceItemFromRide(ride);
-  return {
+  const resolvedItem = {
     ...rideItem,
     ...item,
     user: rideItem.user,
@@ -340,6 +319,22 @@ const resolveCandidateItem = (item: any) => {
     allocatedTotal:
       item?.allocatedTotal ?? item?.rateioTotal ?? item?.total ?? rideItem.total,
     total: item?.allocatedTotal ?? item?.rateioTotal ?? item?.total ?? rideItem.total,
+  };
+  const canonicalItem = canonicalInvoiceItemsByRideId.value[rideId];
+  if (!canonicalItem) return resolvedItem;
+
+  return {
+    ...resolvedItem,
+    baseTotal: canonicalItem.baseTotal,
+    allocatedTotal: canonicalItem.allocatedTotal,
+    total: canonicalItem.total,
+    allocationPercentage: canonicalItem.allocationPercentage,
+    allocationAreaCode: canonicalItem.allocationAreaCode,
+    allocationMode: canonicalItem.allocationMode,
+    extraCharges:
+      typeof canonicalItem.extraChargesTotal === 'number'
+        ? currencyFormat(canonicalItem.extraChargesTotal)
+        : resolvedItem.extraCharges,
   };
 };
 
@@ -373,11 +368,80 @@ const selectedItems = computed(() => {
   return candidateItems.value.filter((item: any) => isRideSelected(getItemRideId(item)));
 });
 
-const selectedItemsTotal = computed(() => {
-  return selectedItems.value.reduce((acc: number, item: any) => {
-    return acc + sanitizeAmount(item?.total);
-  }, 0);
-});
+const selectedItemsTotal = computed(() => selectedPreview.value.value || '0.00');
+
+watch(
+  () =>
+    [
+      itemSignature(candidateItems.value),
+      invoicePreviewAreaCode.value,
+      invoiceId.value,
+      isInvoiceLocked.value,
+    ].join('::'),
+  async (signature) => {
+    const requestId = ++candidatePreviewSequence;
+    const [rideSignature, areaCode, currentInvoiceId, locked] = signature.split('::');
+    const rideIds = (rideSignature || '').split('|').filter(Boolean);
+    if (locked === 'true' || rideIds.length === 0 || !areaCode) {
+      canonicalInvoiceItemsByRideId.value = {};
+      return;
+    }
+
+    isLoadingInvoiceAmounts.value = true;
+    try {
+      const preview = await previewInvoiceItemsService({
+        rideIds,
+        areaCode,
+        ...(currentInvoiceId ? { invoiceId: currentInvoiceId } : {}),
+      });
+      if (requestId !== candidatePreviewSequence) return;
+
+      canonicalInvoiceItemsByRideId.value = Object.fromEntries(
+        preview.items.map((item: any) => [String(item.rideId), item]),
+      );
+    } catch {
+      if (requestId === candidatePreviewSequence) {
+        canonicalInvoiceItemsByRideId.value = {};
+      }
+    } finally {
+      if (requestId === candidatePreviewSequence) isLoadingInvoiceAmounts.value = false;
+    }
+  },
+  { immediate: true },
+);
+
+watch(
+  () => itemSignature(selectedItems.value),
+  async (signature) => {
+    const requestId = ++selectedPreviewSequence;
+    const rideIds = signature.split('|').filter(Boolean);
+    if (isInvoiceLocked.value) {
+      selectedPreview.value = {
+        items: [],
+        value: String(invoice.value?.value ?? '0.00'),
+      };
+      return;
+    }
+    if (rideIds.length === 0 || !invoicePreviewAreaCode.value) {
+      selectedPreview.value = { items: [], value: '0.00' };
+      return;
+    }
+
+    try {
+      const preview = await previewInvoiceItemsService({
+        rideIds,
+        areaCode: invoicePreviewAreaCode.value,
+        ...(invoiceId.value ? { invoiceId: invoiceId.value } : {}),
+      });
+      if (requestId === selectedPreviewSequence) selectedPreview.value = preview;
+    } catch {
+      if (requestId === selectedPreviewSequence) {
+        selectedPreview.value = { items: [], value: '0.00' };
+      }
+    }
+  },
+  { immediate: true },
+);
 
 const toggleRideSelection = (rideId: string, checked: boolean) => {
   if (isInvoiceLocked.value) return;
@@ -888,7 +952,11 @@ onBeforeMount(async () => {
                       <Checkbox
                         :checked="isRideSelected(getItemRideId(item))"
                         :disabled="
-                          isInvoiceLocked || !editMode || isUpdating || isLoadingRides
+                          isInvoiceLocked ||
+                          !editMode ||
+                          isUpdating ||
+                          isLoadingRides ||
+                          isLoadingInvoiceAmounts
                         "
                         @update:checked="
                           (checked) =>
@@ -932,7 +1000,13 @@ onBeforeMount(async () => {
                 </div>
                 <div class="mt-2 flex items-center justify-between text-base font-bold">
                   <span>Total geral:</span>
-                  <span>{{ currencyFormat(selectedItemsTotal) }}</span>
+                  <span>
+                    {{
+                      isLoadingInvoiceAmounts
+                        ? 'Calculando...'
+                        : currencyFormat(selectedItemsTotal)
+                    }}
+                  </span>
                 </div>
               </div>
             </div>

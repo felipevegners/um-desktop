@@ -6,12 +6,7 @@ import { Button } from '@/components/ui/button';
 import { WPP_API } from '@/config/paths';
 import { createColumnHelper } from '@tanstack/vue-table';
 import { ArrowUpDown, MessageCircleMore } from 'lucide-vue-next';
-import {
-  currencyFormat,
-  sanitizeAmount,
-  sanitizePhone,
-  sanitizeRideDate,
-} from '~/lib/utils';
+import { currencyFormat, sanitizePhone, sanitizeRideDate } from '~/lib/utils';
 
 const columnHelper = createColumnHelper<any>();
 
@@ -242,12 +237,7 @@ export const columns: any = [
     header: () => h('div', { class: 'text-xs leading-none text-center' }, 'Adicionais'),
     cell: ({ row }) => {
       const data = row.original;
-      const extraChargesTotal =
-        data?.extraCharges && data?.extraCharges.length > 0
-          ? data.extraCharges?.reduce((acc: number, curr: any) => {
-              return acc + sanitizeAmount(curr?.amount);
-            }, 0)
-          : 0;
+      const extraChargesTotal = data?.financialSummary?.approvedExtraChargesAmount ?? 0;
       return h(
         'div',
         { class: 'flex items-center gap-1 text-xs font-bold text-amber-600' },

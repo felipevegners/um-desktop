@@ -3,6 +3,7 @@ import InvoicePreviewTable from '@/components/invoices/InvoicePreviewTable.vue';
 import DataTable from '@/components/shared/DataTable.vue';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/components/ui/toast/use-toast';
+import { getInvoiceSummaryService } from '@/server/services/invoices';
 import {
   Download,
   Info,
@@ -47,9 +48,23 @@ const { toast } = useToast();
 const invoicesStore = useInvoicesStore();
 const { getInvoicesAction } = invoicesStore;
 const { invoices, isLoading, isUpdating } = storeToRefs(invoicesStore);
+const invoiceSummary = ref<any>({
+  totalCount: 0,
+  totalAmount: 0,
+  pendingCount: 0,
+  pendingAmount: 0,
+  approvedCount: 0,
+  approvedAmount: 0,
+});
+let invoiceSummaryRequestId = 0;
 
 const searchNumber = ref('');
 const previewInvoice = ref<any>(null);
+const previewInvoiceSummary = ref<any>({
+  grossValue: 0,
+  allocatedValue: 0,
+  splitItemCount: 0,
+});
 const showPreviewModal = ref(false);
 const previewActionMode = ref<'view' | 'adjust'>('view');
 const adjustmentComment = ref('');
@@ -191,17 +206,52 @@ const openPreview = async (invoice: any) => {
   previewActionMode.value = 'view';
   adjustmentComment.value = '';
   showPreviewModal.value = true;
-
-  if (!needsRideEnrichment(invoice)) {
-    isLoadingPreviewData.value = false;
-    return;
-  }
-
   isLoadingPreviewData.value = true;
-  const contractRides = await loadInvoiceRides(invoice);
-  if (requestSequence === previewLoadSequence.value) {
-    previewInvoice.value = enrichInvoiceWithRides(invoice, contractRides);
-    isLoadingPreviewData.value = false;
+  try {
+    const [summary, contractRides] = await Promise.all([
+      getInvoiceSummaryService([String(invoice.id)]),
+      needsRideEnrichment(invoice) ? loadInvoiceRides(invoice) : Promise.resolve([]),
+    ]);
+    if (requestSequence !== previewLoadSequence.value) return;
+
+    previewInvoiceSummary.value = {
+      grossValue: summary.grossAmount,
+      allocatedValue: summary.totalAmount,
+      splitItemCount: summary.splitItemCount,
+    };
+    const invoiceWithFinancialSummary = {
+      ...invoice,
+      financialSummary: {
+        grossAmount: summary.grossAmount,
+        allocatedAmount: summary.totalAmount,
+        splitItemCount: summary.splitItemCount,
+      },
+    };
+    if (needsRideEnrichment(invoice)) {
+      previewInvoice.value = enrichInvoiceWithRides(
+        invoiceWithFinancialSummary,
+        contractRides,
+      );
+    } else {
+      previewInvoice.value = invoiceWithFinancialSummary;
+    }
+  } catch {
+    if (requestSequence === previewLoadSequence.value) {
+      previewInvoiceSummary.value = {
+        grossValue: 0,
+        allocatedValue: 0,
+        splitItemCount: 0,
+      };
+      toast({
+        title: 'Opss!',
+        variant: 'destructive',
+        description: 'Não foi possível carregar os totais do fechamento.',
+      });
+    }
+  } finally {
+    if (requestSequence === previewLoadSequence.value) {
+      isLoadingPreviewData.value = false;
+    }
   }
 };
 
@@ -303,9 +353,21 @@ const columns = computed(() =>
       : undefined,
     onDownload: async (invoice: any) => {
       try {
-        const invoiceForPdf = needsRideEnrichment(invoice)
-          ? enrichInvoiceWithRides(invoice, await loadInvoiceRides(invoice))
+        const [summary, contractRides] = await Promise.all([
+          getInvoiceSummaryService([String(invoice?.id)]),
+          needsRideEnrichment(invoice) ? loadInvoiceRides(invoice) : Promise.resolve([]),
+        ]);
+        const enrichedInvoice = needsRideEnrichment(invoice)
+          ? enrichInvoiceWithRides(invoice, contractRides)
           : invoice;
+        const invoiceForPdf = {
+          ...enrichedInvoice,
+          financialSummary: {
+            grossAmount: summary.grossAmount,
+            allocatedAmount: summary.totalAmount,
+            splitItemCount: summary.splitItemCount,
+          },
+        };
         await downloadInvoicePdf(invoiceForPdf);
       } catch (error) {
         toast({
@@ -357,36 +419,52 @@ const clearSearch = async () => {
   await handleSearch();
 };
 
-const invoiceStats = computed(() => {
-  const list = invoices.value || [];
-
-  const pending = list.filter((inv: any) =>
-    ['pending', 'open'].includes(String(inv?.status || '')),
-  );
-  const approved = list.filter((inv: any) =>
-    ['approved', 'paid'].includes(String(inv?.status || '')),
-  );
-
-  const toNumber = (v: any) => {
-    const n = parseFloat(String(v ?? 0).replace(',', '.'));
-    return Number.isNaN(n) ? 0 : n;
-  };
-
-  return {
-    pendingCount: pending.length,
-    pendingAmount: pending.reduce(
-      (acc: number, inv: any) => acc + toNumber(inv?.value),
-      0,
+watch(
+  () =>
+    JSON.stringify(
+      (invoices.value || []).map((item: any) => ({
+        id: String(item?.id || ''),
+        status: String(item?.status || ''),
+        value: String(item?.value ?? ''),
+      })),
     ),
-    approvedCount: approved.length,
-    approvedAmount: approved.reduce(
-      (acc: number, inv: any) => acc + toNumber(inv?.value),
-      0,
-    ),
-    totalCount: list.length,
-    totalAmount: list.reduce((acc: number, inv: any) => acc + toNumber(inv?.value), 0),
-  };
-});
+  async (signature) => {
+    const requestId = ++invoiceSummaryRequestId;
+    const invoiceIds = (JSON.parse(signature || '[]') as Array<{ id: string }>)
+      .map((item) => item.id)
+      .filter(Boolean);
+    if (invoiceIds.length === 0) {
+      invoiceSummary.value = {
+        totalCount: 0,
+        totalAmount: 0,
+        pendingCount: 0,
+        pendingAmount: 0,
+        approvedCount: 0,
+        approvedAmount: 0,
+      };
+      return;
+    }
+
+    try {
+      const summary = await getInvoiceSummaryService(invoiceIds);
+      if (requestId === invoiceSummaryRequestId) invoiceSummary.value = summary;
+    } catch {
+      if (requestId === invoiceSummaryRequestId) {
+        invoiceSummary.value = {
+          totalCount: 0,
+          totalAmount: 0,
+          pendingCount: 0,
+          pendingAmount: 0,
+          approvedCount: 0,
+          approvedAmount: 0,
+        };
+      }
+    }
+  },
+  { immediate: true },
+);
+
+const invoiceStats = computed(() => invoiceSummary.value);
 
 function formatDate(value?: string) {
   if (!value) return '-';
@@ -577,7 +655,11 @@ function resolveInvoiceCostCenterCode(invoice: any): string {
               <LoaderCircle class="h-5 w-5 animate-spin" />
               Carregando dados do fechamento...
             </div>
-            <InvoicePreviewTable v-else :items="previewInvoice.items || []" />
+            <InvoicePreviewTable
+              v-else
+              :items="previewInvoice.items || []"
+              :summary="previewInvoiceSummary"
+            />
 
             <section
               v-if="props.allowReviewActions && previewActionMode === 'adjust'"

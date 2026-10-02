@@ -64,39 +64,49 @@ export const formatInvoiceUser = (name: unknown, isVisitor: boolean) => {
   return `${userName} (visitante)`;
 };
 
-export const currencyFormat = (value: string | number) => {
+export const currencyFormat = (value: unknown) => {
   return new Intl.NumberFormat('pt-BR', {
     style: 'currency',
     currency: 'BRL',
-  }).format(parseFloat(value as any));
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  }).format(sanitizeAmount(value));
 };
 
-export const sanitizeAmount = (value: string | number | null | undefined): number => {
+export const sanitizeAmount = (value: unknown): number => {
   if (value === null || value === undefined) return 0;
-  if (typeof value === 'number') return isNaN(value) ? 0 : value;
+  if (typeof value === 'number') return Number.isFinite(value) ? value : 0;
+  if (typeof value !== 'string') return 0;
 
-  const str = value.toString().trim();
-  if (str === '' || str === '0' || str === '0,00' || str === '0.00') return 0;
+  let normalized = value.trim().replace(/R\$/gi, '').replace(/\s/g, '');
+  if (!normalized) return 0;
 
-  const normalized = str.replace(/\s/g, '');
-  let cleaned = normalized;
+  const lastComma = normalized.lastIndexOf(',');
+  const lastDot = normalized.lastIndexOf('.');
 
-  // If both '.' and ',' are present, assume '.' are thousand separators and ',' is decimal
-  if (cleaned.includes('.') && cleaned.includes(',')) {
-    cleaned = cleaned.replace(/\./g, '').replace(',', '.');
-  } else if (cleaned.includes(',')) {
-    // If only ',' present, treat it as decimal separator
-    cleaned = cleaned.replace(',', '.');
-  } else {
-    // If only '.' present, decide if they are thousand separators (more than one) or decimal (single)
-    const dots = (cleaned.match(/\./g) || []).length;
-    if (dots > 1) {
-      cleaned = cleaned.replace(/\./g, '');
+  if (lastComma >= 0 && lastDot >= 0) {
+    if (lastComma > lastDot) {
+      normalized = `${normalized.slice(0, lastComma).replace(/[.,]/g, '')}.${normalized.slice(lastComma + 1)}`;
+    } else {
+      normalized = `${normalized.slice(0, lastDot).replace(/[.,]/g, '')}.${normalized.slice(lastDot + 1)}`;
     }
+  } else if (lastComma >= 0 || lastDot >= 0) {
+    const separator = lastComma >= 0 ? ',' : '.';
+    const parts = normalized.split(separator);
+    const isGrouped =
+      (parts.length === 2 &&
+        parts[0].replace(/^[+-]/, '').length <= 3 &&
+        parts[1].length === 3) ||
+      (parts.length > 2 && parts.slice(1).every((part) => part.length === 3));
+    normalized = isGrouped
+      ? parts.join('')
+      : `${parts.slice(0, -1).join('')}.${parts.at(-1)}`;
   }
 
-  const parsed = parseFloat(cleaned);
-  return isNaN(parsed) ? 0 : parsed;
+  if (!/^[+-]?(?:\d+(?:\.\d*)?|\.\d+)$/.test(normalized)) return 0;
+
+  const parsed = Number(normalized);
+  return Number.isFinite(parsed) ? parsed : 0;
 };
 // To decode Google Maps Polyline into a Paths
 export const polyLineCodec = (polyline: string) => {

@@ -1,7 +1,8 @@
 <script setup lang="ts">
 import { Input } from '#components';
+import { calculateRideAllocationsService } from '@/server/services/rides';
 import { Plus, Trash, X } from 'lucide-vue-next';
-import { currencyFormat, sanitizeAmount } from '~/lib/utils';
+import { currencyFormat } from '~/lib/utils';
 
 import FormSelect from './FormSelect.vue';
 
@@ -16,6 +17,7 @@ const props = defineProps<{
 const totalRideRated = ref<any>('');
 const remainingRideAmount = ref<any>('0.00');
 const showAddCCToShareBtn = ref<boolean>(true);
+let allocationRequestId = 0;
 
 const splitPaymentCCAreas = defineModel<any>({
   default: [{ area: '', percentage: 0, amount: 0 }],
@@ -46,7 +48,7 @@ const availableContractBranchAreas = computed(() => {
   }));
 });
 
-const calculateCCPercentage = (index: number) => {
+const calculateCCPercentage = async (index: number) => {
   totalRideRated.value = 0;
   if (index < 0 || index >= splitPaymentCCAreas.value.length) return null;
 
@@ -54,11 +56,6 @@ const calculateCCPercentage = (index: number) => {
   const raw = splitPaymentCCAreas.value[index].percentage;
   const percentage = Number(String(raw).replace(/[^\d.-]/g, '')) || 0;
   splitPaymentCCAreas.value[index].percentage = percentage;
-
-  const estimatedTotal =
-    Number(String(props.estimates?.estimatedTotalPrice).replace(/[^\d.-]/g, '')) || 0;
-  const totalPercentage = estimatedTotal * (percentage / 100);
-  splitPaymentCCAreas.value[index].amount = Math.round(totalPercentage * 100) / 100;
 
   // Sum all percentages as numbers
   const checkAllPercentages = splitPaymentCCAreas.value.reduce(
@@ -84,26 +81,31 @@ const calculateCCPercentage = (index: number) => {
       props.form.resetField(`percentage-${index}`);
     }
 
-    const acumulatedCents = splitPaymentCCAreas.value.reduce((acc: number, curr: any) => {
-      const cents = Math.round(sanitizeAmount(curr?.amount || 0) * 100);
-      return acc + cents;
-    }, 0);
+    const requestId = ++allocationRequestId;
+    try {
+      const allocation = await calculateRideAllocationsService({
+        totalAmount: props.estimates.estimatedTotalPrice,
+        percentages: splitPaymentCCAreas.value.map(
+          (item: any) => Number(String(item.percentage).replace(/[^\d.-]/g, '')) || 0,
+        ),
+      });
+      if (requestId !== allocationRequestId) return null;
 
-    const acumulated = acumulatedCents / 100;
-    totalRideRated.value = acumulated.toFixed(2);
-
-    const estimatedCents = Math.round(
-      sanitizeAmount(props.estimates.estimatedTotalPrice) * 100,
-    );
-    const remainingCents = estimatedCents - acumulatedCents;
-    const remaining = remainingCents / 100;
-    remainingRideAmount.value = Math.max(0, remaining).toFixed(2);
-
-    splitPaymentCCAreas.value[index].amount = (
-      Math.round(totalPercentage * 100) / 100
-    ).toFixed(2);
-
-    return splitPaymentCCAreas.value[index].amount;
+      allocation.allocatedAmounts.forEach((amount: number, rowIndex: number) => {
+        splitPaymentCCAreas.value[rowIndex].amount = amount.toFixed(2);
+      });
+      totalRideRated.value = allocation.allocatedTotal.toFixed(2);
+      remainingRideAmount.value = allocation.remainingAmount.toFixed(2);
+      return splitPaymentCCAreas.value[index].amount;
+    } catch {
+      if (requestId === allocationRequestId && props.form?.setFieldError) {
+        props.form.setFieldError(
+          `percentage-${index}`,
+          'Não foi possível calcular o rateio.',
+        );
+      }
+      return null;
+    }
   }
 };
 

@@ -1,10 +1,5 @@
 <script setup lang="ts">
-import {
-  currencyFormat,
-  formatDateTimePtBR,
-  formatInvoiceUser,
-  sanitizeAmount,
-} from '~/lib/utils';
+import { currencyFormat, formatDateTimePtBR, formatInvoiceUser } from '~/lib/utils';
 
 type InvoicePreviewItem = {
   rideId?: string;
@@ -33,30 +28,16 @@ type InvoicePreviewItem = {
   isVisitor?: boolean;
 };
 
+type InvoicePreviewSummary = {
+  grossValue: string | number;
+  allocatedValue: string | number;
+  splitItemCount: number;
+};
+
 const props = defineProps<{
   items: InvoicePreviewItem[];
+  summary: InvoicePreviewSummary;
 }>();
-
-const computedTotal = (items: InvoicePreviewItem[]) => {
-  return items.reduce((acc: number, item: InvoicePreviewItem) => {
-    return acc + sanitizeAmount(item.allocatedTotal ?? item.total);
-  }, 0);
-};
-
-const computedGrossTotal = (items: InvoicePreviewItem[]) => {
-  return items.reduce((acc: number, item: InvoicePreviewItem) => {
-    return acc + sanitizeAmount(item.baseTotal ?? item.total);
-  }, 0);
-};
-
-const splitItemsCount = (items: InvoicePreviewItem[]) => {
-  return items.filter((item: InvoicePreviewItem) => {
-    const percentage = sanitizeAmount(item.allocationPercentage ?? 100);
-    const baseTotal = sanitizeAmount(item.baseTotal ?? item.total);
-    const allocatedTotal = sanitizeAmount(item.allocatedTotal ?? item.total);
-    return percentage !== 100 || baseTotal !== allocatedTotal;
-  }).length;
-};
 
 const getRoutePart = (item: InvoicePreviewItem, part: 'origin' | 'destination') => {
   const [origin = '', ...destinationParts] = String(item.route || '').split(' -> ');
@@ -69,7 +50,7 @@ const getRoutePart = (item: InvoicePreviewItem, part: 'origin' | 'destination') 
 <template>
   <section>
     <div
-      v-if="splitItemsCount(props.items) > 0"
+      v-if="props.summary.splitItemCount > 0"
       class="mb-4 rounded-md border border-amber-200 bg-amber-50 p-3 text-xs text-amber-900"
     >
       <p class="font-bold">Rateio identificado neste fechamento</p>
@@ -78,14 +59,14 @@ const getRoutePart = (item: InvoicePreviewItem, part: 'origin' | 'destination') 
         do fechamento considera apenas o valor rateado.
       </p>
       <div class="mt-2 flex flex-wrap gap-4">
-        <span><strong>Itens rateados:</strong> {{ splitItemsCount(props.items) }}</span>
+        <span><strong>Itens rateados:</strong> {{ props.summary.splitItemCount }}</span>
         <span
           ><strong>Valor bruto:</strong>
-          {{ currencyFormat(computedGrossTotal(props.items)) }}</span
+          {{ currencyFormat(props.summary.grossValue) }}</span
         >
         <span
           ><strong>Valor rateado:</strong>
-          {{ currencyFormat(computedTotal(props.items)) }}</span
+          {{ currencyFormat(props.summary.allocatedValue) }}</span
         >
       </div>
     </div>
@@ -292,7 +273,7 @@ const getRoutePart = (item: InvoicePreviewItem, part: 'origin' | 'destination') 
         </div>
         <div class="mt-2 flex items-center justify-between text-base font-bold">
           <span>Total geral</span>
-          <span>{{ currencyFormat(computedTotal(props.items)) }}</span>
+          <span>{{ currencyFormat(props.summary.allocatedValue) }}</span>
         </div>
       </div>
     </div>

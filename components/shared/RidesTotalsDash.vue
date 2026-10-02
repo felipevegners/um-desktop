@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { getRideFinancialSummaryService } from '@/server/services/rides';
 import { currencyFormat } from '~/lib/utils';
 
 defineOptions({
@@ -10,18 +11,31 @@ const props = withDefaults(defineProps<{ rides: any[]; theme?: 'light' | 'dark' 
   theme: 'dark',
 });
 
-const calculateRidesPrice = computed(() => {
-  return props.rides?.reduce((total: any, ride: any) => {
-    const amountWithExtras = ride?.billing?.ammountWithExtras;
-    const baseAmount = ride?.billing?.ammount;
-    const valueToUse =
-      amountWithExtras !== null && amountWithExtras !== ''
-        ? amountWithExtras
-        : baseAmount;
+const totalRideAmount = ref(0);
+let summaryRequestId = 0;
 
-    return total + parseFloat(String(valueToUse || 0));
-  }, 0);
-});
+watch(
+  () =>
+    props.rides
+      .map((ride: any) => String(ride?.id || ''))
+      .filter(Boolean)
+      .join('|'),
+  async (rideIds) => {
+    const requestId = ++summaryRequestId;
+    if (!rideIds) {
+      totalRideAmount.value = 0;
+      return;
+    }
+
+    try {
+      const summary = await getRideFinancialSummaryService(rideIds.split('|'));
+      if (requestId === summaryRequestId) totalRideAmount.value = summary.totalAmount;
+    } catch {
+      if (requestId === summaryRequestId) totalRideAmount.value = 0;
+    }
+  },
+  { immediate: true },
+);
 
 const getInProgressRides = computed(() => {
   return props.rides.filter((ride: any) => ride.status === 'in-progress').length;
@@ -52,7 +66,7 @@ const getPendingRides = computed(() => {
     />
     <SharedStatsCard
       label="Valor total dos atendimentos"
-      :value="currencyFormat(calculateRidesPrice as string)"
+      :value="currencyFormat(totalRideAmount)"
       variant="success"
     />
   </div>

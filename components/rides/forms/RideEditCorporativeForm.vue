@@ -8,7 +8,12 @@ import { useSessionAccess } from '@/composables/auth/useSessionAccess';
 import { extraChargesTypes } from '@/config/extraCharges';
 import { WPP_API } from '@/config/paths';
 import { paymentMethods } from '@/config/paymentMethods';
-import { deleteRideService, getRideRoutesService } from '@/server/services/rides';
+import {
+  deleteRideService,
+  estimateRidePriceService,
+  getRideFinancialAllocationsService,
+  getRideRoutesService,
+} from '@/server/services/rides';
 import { useAccountStore } from '@/stores/account.store';
 import { useContractsStore } from '@/stores/contracts.store';
 import { useProductsStore } from '@/stores/products.store';
@@ -359,42 +364,6 @@ const didDestinationChange = (nextDestination: string, currentDestination: strin
   );
 };
 
-const resolveEstimatedPrice = (
-  product: any,
-  estimatedDistanceMeters: number,
-  estimatedDurationSeconds: number,
-) => {
-  const parsedDistanceKm = (estimatedDistanceMeters || 0) / 1000;
-  const parsedDurationMinutes = Math.ceil(estimatedDurationSeconds || 0) / 60;
-  const basePrice = Number(product?.basePrice || 0);
-
-  if (product?.type === 'contract') {
-    let price = basePrice;
-    const includedKms = Number(product?.includedKms || 0);
-    const includedHours = Number(product?.includedHours || 0);
-    const kmPrice = Number(product?.kmPrice || 0);
-    const minutePrice = Number(product?.minutePrice || 0);
-
-    if (parsedDistanceKm > includedKms) {
-      price += (parsedDistanceKm - includedKms) * kmPrice;
-    }
-
-    if (parsedDurationMinutes > includedHours * 60) {
-      const extraMinutes = parsedDurationMinutes - includedHours * 60;
-      const extraHours = Math.ceil(extraMinutes / 60);
-      price += extraHours * minutePrice * 60;
-    }
-
-    return price;
-  }
-
-  return (
-    basePrice +
-    parsedDistanceKm * Number(product?.kmPrice || 0) +
-    parsedDurationMinutes * Number(product?.minutePrice || 0)
-  );
-};
-
 const requestRideRecalculation = async ({
   nextProduct,
   nextStops,
@@ -435,11 +404,13 @@ const requestRideRecalculation = async ({
     const firstRoute = routeResponse[0] || {};
     const routeDistance = Number(firstRoute?.distanceMeters || 0);
     const routeDuration = Number(String(firstRoute?.duration || '0').replace('s', ''));
-    const estimatedPrice = resolveEstimatedPrice(
-      nextProduct,
-      routeDistance,
-      routeDuration,
-    );
+    const estimate = await estimateRidePriceService({
+      product: nextProduct,
+      distanceMeters: routeDistance,
+      durationSeconds: routeDuration,
+      addons: [],
+    });
+    const estimatedPrice = estimate.estimatedServiceTotal;
 
     recalculationPreview.value = {
       estimatedDistance: routeDistance,
@@ -810,50 +781,64 @@ const getPaymentBranch = computed(() => {
   }
 });
 
-const toNumber = (value: unknown): number => {
-  if (typeof value === 'number') {
-    return Number.isFinite(value) ? value : 0;
-  }
+const rideFinancialAllocations = ref<any[]>([]);
+let rideFinancialAllocationsRequestId = 0;
 
-  if (typeof value === 'string') {
-    const normalized = value.replace(',', '.').trim();
-    const parsed = Number(normalized);
-    return Number.isFinite(parsed) ? parsed : 0;
-  }
+watch(
+  () =>
+    JSON.stringify({
+      rideId: ride?.value?.id,
+      amount: ride?.value?.billing?.ammount,
+      finalAmount: ride?.value?.billing?.ammountWithExtras,
+      totals: ride?.value?.billing?.totals,
+      splits: ride?.value?.billing?.paymentData?.splitedPayment,
+    }),
+  async (source) => {
+    const requestId = ++rideFinancialAllocationsRequestId;
+    const rideId = JSON.parse(source || '{}')?.rideId;
+    if (!rideId) {
+      rideFinancialAllocations.value = [];
+      return;
+    }
 
-  return 0;
-};
+    try {
+      const result = await getRideFinancialAllocationsService(String(rideId));
+      if (requestId === rideFinancialAllocationsRequestId) {
+        rideFinancialAllocations.value = result;
+      }
+    } catch {
+      if (requestId === rideFinancialAllocationsRequestId) {
+        rideFinancialAllocations.value = [];
+      }
+    }
+  },
+  { immediate: true },
+);
 
-const splitPaymentFinalBaseAmount = computed(() => {
+const resolveRideSplitAllocation = (splited: any, index: number) => {
+  const targetCode = String(splited?.areaCode || splited?.area || '')
+    .trim()
+    .toLowerCase();
   return (
-    toNumber(ride?.value?.billing?.totals?.customerChargeAmount) ||
-    toNumber(ride?.value?.billing?.realized?.serviceTotal) ||
-    toNumber(ride?.value?.billing?.ammountWithExtras) ||
-    toNumber(ride?.value?.billing?.ammount)
+    rideFinancialAllocations.value.find(
+      (entry: any) =>
+        String(entry.areaCode || '')
+          .trim()
+          .toLowerCase() === targetCode,
+    ) ?? rideFinancialAllocations.value[index]
   );
-});
-
-const resolveSplitEstimatedAmount = (splited: any): number => {
-  const fromSplit = toNumber(splited?.amount);
-  if (fromSplit > 0) {
-    return fromSplit;
-  }
-
-  const baseAmount = toNumber(ride?.value?.billing?.ammount);
-  const percentage = toNumber(splited?.percentage);
-  return (baseAmount * percentage) / 100;
 };
 
-const resolveSplitFinalAmount = (splited: any): number => {
-  const percentage = toNumber(splited?.percentage);
-  return (splitPaymentFinalBaseAmount.value * percentage) / 100;
-};
+const resolveSplitEstimatedAmount = (splited: any, index: number): number =>
+  resolveRideSplitAllocation(splited, index)?.estimatedAmount ?? 0;
+
+const resolveSplitFinalAmount = (splited: any, index: number): number =>
+  resolveRideSplitAllocation(splited, index)?.finalAmount ?? 0;
 
 const shouldShowSplitEstimatedAmount = computed(() => {
   return (
     ride?.value?.status === 'completed' &&
-    splitPaymentFinalBaseAmount.value > 0 &&
-    splitPaymentFinalBaseAmount.value !== toNumber(ride?.value?.billing?.ammount)
+    rideFinancialAllocations.value.some((entry: any) => entry.hasFinalDifference)
   );
 });
 
@@ -1596,14 +1581,18 @@ const handleAcceptBudgetOverQuota = () => {
                             v-if="shouldShowSplitEstimatedAmount"
                             class="text-sm text-muted-foreground line-through"
                           >
-                            {{ currencyFormat(resolveSplitEstimatedAmount(splited)) }}
+                            {{
+                              currencyFormat(
+                                resolveSplitEstimatedAmount(splited, Number(index)),
+                              )
+                            }}
                           </p>
                           <p class="font-bold">
                             {{
                               currencyFormat(
                                 shouldShowSplitEstimatedAmount
-                                  ? resolveSplitFinalAmount(splited)
-                                  : resolveSplitEstimatedAmount(splited),
+                                  ? resolveSplitFinalAmount(splited, Number(index))
+                                  : resolveSplitEstimatedAmount(splited, Number(index)),
                               )
                             }}
                           </p>

@@ -113,11 +113,10 @@ export const columns = [
     header: () => h('div', { class: 'text-xs text-left' }, 'Valor Total'),
     cell: ({ row }) => {
       const data = row.original;
-      const calculated = parseFloat(data.ammount) - parseFloat(data.discounts);
       return h(
         'div',
         { class: 'text-xs text-left font-bold' },
-        currencyFormat(calculated.toString()),
+        currencyFormat(data.netAmount),
       );
     },
   }),

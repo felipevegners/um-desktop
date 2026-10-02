@@ -39,6 +39,44 @@ export const getRideRoutesService = async (rideData: any) => {
   }
 };
 
+export const estimateRidePriceService = async (input: {
+  product: Record<string, unknown>;
+  distanceMeters: number;
+  durationSeconds: number;
+  addons: unknown[];
+}) => {
+  return await $fetch('/api/rides-estimate', {
+    method: 'POST',
+    timeout: REQUEST_TIMEOUT_MS,
+    body: input,
+  });
+};
+
+export const calculateRideAllocationsService = async (input: {
+  totalAmount: string | number;
+  percentages: number[];
+}) => {
+  return await $fetch('/api/rides-allocations', {
+    method: 'POST',
+    timeout: REQUEST_TIMEOUT_MS,
+    body: input,
+  });
+};
+
+export const getRideFinancialSummaryService = async (rideIds: string[]) => {
+  return await $fetch('/api/rides-financial-summary', {
+    method: 'POST',
+    timeout: REQUEST_TIMEOUT_MS,
+    body: { rideIds },
+  });
+};
+
+export const getRideFinancialAllocationsService = async (rideId: string) => {
+  return await $fetch(`/api/rides/${encodeURIComponent(rideId)}/allocations`, {
+    timeout: REQUEST_TIMEOUT_MS,
+  });
+};
+
 export const getRideDistanceService = async (payload: {
   origins: string[];
   destinations: string[];

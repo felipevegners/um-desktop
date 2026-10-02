@@ -67,6 +67,36 @@ export const createInvoiceService = async (invoiceData: any) => {
   }
 };
 
+export const previewInvoiceItemsService = async (input: {
+  rideIds: string[];
+  areaCode: string;
+  invoiceId?: string;
+}) => {
+  try {
+    return await $fetch('/api/invoices-preview', {
+      method: 'POST',
+      timeout: REQUEST_TIMEOUT_MS,
+      body: input,
+    });
+  } catch (error) {
+    console.debug('Error during invoice preview service POST -> ', error);
+    throw error;
+  }
+};
+
+export const getInvoiceSummaryService = async (invoiceIds: string[]) => {
+  try {
+    return await $fetch('/api/invoices-summary', {
+      method: 'POST',
+      timeout: REQUEST_TIMEOUT_MS,
+      body: { invoiceIds },
+    });
+  } catch (error) {
+    console.debug('Error during invoice summary service POST -> ', error);
+    throw error;
+  }
+};
+
 export const updateInvoiceService = async (invoiceId: string, payload: any) => {
   try {
     return await $fetch(`/api/invoices/${invoiceId}`, {

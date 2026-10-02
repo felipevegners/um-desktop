@@ -13,6 +13,8 @@ import { paymentMethods } from '@/config/paymentMethods';
 import {
   adjustRideCommissionService,
   deleteRideService,
+  estimateRidePriceService,
+  getRideFinancialAllocationsService,
   getRideRoutesService,
 } from '@/server/services/rides';
 import { useAccountStore } from '@/stores/account.store';
@@ -519,42 +521,6 @@ const didDestinationChange = (nextDestination: string, currentDestination: strin
   );
 };
 
-const resolveEstimatedPrice = (
-  product: any,
-  estimatedDistanceMeters: number,
-  estimatedDurationSeconds: number,
-) => {
-  const parsedDistanceKm = (estimatedDistanceMeters || 0) / 1000;
-  const parsedDurationMinutes = Math.ceil(estimatedDurationSeconds || 0) / 60;
-  const basePrice = Number(product?.basePrice || 0);
-
-  if (product?.type === 'contract') {
-    let price = basePrice;
-    const includedKms = Number(product?.includedKms || 0);
-    const includedHours = Number(product?.includedHours || 0);
-    const kmPrice = Number(product?.kmPrice || 0);
-    const minutePrice = Number(product?.minutePrice || 0);
-
-    if (parsedDistanceKm > includedKms) {
-      price += (parsedDistanceKm - includedKms) * kmPrice;
-    }
-
-    if (parsedDurationMinutes > includedHours * 60) {
-      const extraMinutes = parsedDurationMinutes - includedHours * 60;
-      const extraHours = Math.ceil(extraMinutes / 60);
-      price += extraHours * minutePrice * 60;
-    }
-
-    return price;
-  }
-
-  return (
-    basePrice +
-    parsedDistanceKm * Number(product?.kmPrice || 0) +
-    parsedDurationMinutes * Number(product?.minutePrice || 0)
-  );
-};
-
 const requestRideRecalculation = async ({
   nextProduct,
   nextStops,
@@ -595,11 +561,13 @@ const requestRideRecalculation = async ({
     const firstRoute = routeResponse[0] || {};
     const routeDistance = Number(firstRoute?.distanceMeters || 0);
     const routeDuration = Number(String(firstRoute?.duration || '0').replace('s', ''));
-    const estimatedPrice = resolveEstimatedPrice(
-      nextProduct,
-      routeDistance,
-      routeDuration,
-    );
+    const estimate = await estimateRidePriceService({
+      product: nextProduct,
+      distanceMeters: routeDistance,
+      durationSeconds: routeDuration,
+      addons: [],
+    });
+    const estimatedPrice = estimate.estimatedServiceTotal;
 
     recalculationPreview.value = {
       estimatedDistance: routeDistance,
@@ -884,50 +852,64 @@ const resolveSplitInvoicingStatus = (splited: any, index: number) => {
   return Boolean(resolvedEntry?.invoiced);
 };
 
-const toNumber = (value: unknown): number => {
-  if (typeof value === 'number') {
-    return Number.isFinite(value) ? value : 0;
-  }
+const rideFinancialAllocations = ref<any[]>([]);
+let rideFinancialAllocationsRequestId = 0;
 
-  if (typeof value === 'string') {
-    const normalized = value.replace(',', '.').trim();
-    const parsed = Number(normalized);
-    return Number.isFinite(parsed) ? parsed : 0;
-  }
+watch(
+  () =>
+    JSON.stringify({
+      rideId: ride?.value?.id,
+      amount: ride?.value?.billing?.ammount,
+      finalAmount: ride?.value?.billing?.ammountWithExtras,
+      totals: ride?.value?.billing?.totals,
+      splits: ride?.value?.billing?.paymentData?.splitedPayment,
+    }),
+  async (source) => {
+    const requestId = ++rideFinancialAllocationsRequestId;
+    const rideId = JSON.parse(source || '{}')?.rideId;
+    if (!rideId) {
+      rideFinancialAllocations.value = [];
+      return;
+    }
 
-  return 0;
-};
+    try {
+      const result = await getRideFinancialAllocationsService(String(rideId));
+      if (requestId === rideFinancialAllocationsRequestId) {
+        rideFinancialAllocations.value = result;
+      }
+    } catch {
+      if (requestId === rideFinancialAllocationsRequestId) {
+        rideFinancialAllocations.value = [];
+      }
+    }
+  },
+  { immediate: true },
+);
 
-const splitPaymentFinalBaseAmount = computed(() => {
+const resolveRideSplitAllocation = (splited: any, index: number) => {
+  const targetCode = String(splited?.areaCode || splited?.area || '')
+    .trim()
+    .toLowerCase();
   return (
-    toNumber(ride?.value?.billing?.totals?.customerChargeAmount) ||
-    toNumber(ride?.value?.billing?.realized?.serviceTotal) ||
-    toNumber(ride?.value?.billing?.ammountWithExtras) ||
-    toNumber(ride?.value?.billing?.ammount)
+    rideFinancialAllocations.value.find(
+      (entry: any) =>
+        String(entry.areaCode || '')
+          .trim()
+          .toLowerCase() === targetCode,
+    ) ?? rideFinancialAllocations.value[index]
   );
-});
-
-const resolveSplitEstimatedAmount = (splited: any): number => {
-  const fromSplit = toNumber(splited?.amount);
-  if (fromSplit > 0) {
-    return fromSplit;
-  }
-
-  const baseAmount = toNumber(ride?.value?.billing?.ammount);
-  const percentage = toNumber(splited?.percentage);
-  return (baseAmount * percentage) / 100;
 };
 
-const resolveSplitFinalAmount = (splited: any): number => {
-  const percentage = toNumber(splited?.percentage);
-  return (splitPaymentFinalBaseAmount.value * percentage) / 100;
-};
+const resolveSplitEstimatedAmount = (splited: any, index: number): number =>
+  resolveRideSplitAllocation(splited, index)?.estimatedAmount ?? 0;
+
+const resolveSplitFinalAmount = (splited: any, index: number): number =>
+  resolveRideSplitAllocation(splited, index)?.finalAmount ?? 0;
 
 const shouldShowSplitEstimatedAmount = computed(() => {
   return (
     ride?.value?.status === 'completed' &&
-    splitPaymentFinalBaseAmount.value > 0 &&
-    splitPaymentFinalBaseAmount.value !== toNumber(ride?.value?.billing?.ammount)
+    rideFinancialAllocations.value.some((entry: any) => entry.hasFinalDifference)
   );
 });
 
@@ -1336,77 +1318,6 @@ const onSubmit = form.handleSubmit(async (values) => {
 
   loadingSend.value = true;
 
-  // Calculate sum of extra charges
-  const extraChargesSum = (extraChargesData || []).reduce((sum: any, item: any) => {
-    const amount =
-      typeof item.amount === 'string'
-        ? parseFloat(item.amount.replace(',', '.'))
-        : Number(item.amount);
-    return sum + (isNaN(amount) ? 0 : amount);
-  }, 0);
-
-  // Use ride.billing.ammount as original price
-  let originalPrice = ride?.value.billing?.ammount
-    ? Number(ride.value.billing.ammount)
-    : 0;
-
-  /*
-   * Budget adjustment flow kept here only as historical reference.
-   * Extra ride charges must not change the user's branch usedBudget.
-   * If this behavior returns in the future, revalidate the auth/permission flow
-   * and the pricing rules before re-enabling it.
-   *
-   * const removedChargesSum = (removedCharges.value || []).reduce(
-   *   (sum: any, item: any) => {
-   *     const amount =
-   *       typeof item.amount === 'string'
-   *         ? parseFloat(item.amount.replace(',', '.'))
-   *         : Number(item.amount);
-   *     return sum + (isNaN(amount) ? 0 : amount);
-   *   },
-   *   0,
-   * );
-   *
-   * let currentUsedBudget = branch?.value.usedBudget
-   *   ? parseFloat(String(branch.value.usedBudget).replace(',', '.'))
-   *   : 0;
-   * const safeExtraChargesSum = isNaN(extraChargesSum)
-   *   ? 0
-   *   : parseFloat(String(extraChargesSum).toString().replace(',', '.'));
-   * const safeRemovedChargesSum = isNaN(removedChargesSum)
-   *   ? 0
-   *   : parseFloat(String(removedChargesSum).toString().replace(',', '.'));
-   *
-   * if (safeExtraChargesSum > 0) {
-   *   currentUsedBudget += safeExtraChargesSum;
-   * }
-   * if (safeRemovedChargesSum > 0) {
-   *   currentUsedBudget -= safeRemovedChargesSum;
-   *   if (currentUsedBudget < 0) currentUsedBudget = 0;
-   * }
-   *
-   * if (safeExtraChargesSum > 0 || safeRemovedChargesSum > 0) {
-   *   const { id, ...restBranchData } = branch?.value || {};
-   *   await updateBranchAction({
-   *     ...restBranchData,
-   *     branchId: id as string,
-   *     contract: restBranchData.contractId,
-   *     usedBudget: String(currentUsedBudget),
-   *   });
-   * }
-   */
-
-  // Extra charges only affect the ride total, never the branch budget.
-  const ammountWithExtras = Math.max(originalPrice + extraChargesSum, originalPrice);
-
-  // Calculate rideFinalPrice for completed rides
-  let rideFinalPrice = ride?.value.rideFinalPrice
-    ? Number(ride.value.rideFinalPrice)
-    : originalPrice;
-  if (ride?.value.status === 'completed') {
-    rideFinalPrice = Number(ammountWithExtras);
-  }
-
   const ridePayload = {
     ...ride?.value,
     id: ride?.value.id,
@@ -1431,11 +1342,6 @@ const onSubmit = form.handleSubmit(async (values) => {
     observations: values.observations,
     additionalInfo: serializeAdditionalInfoValue(additionalInfoDraft),
     extraCharges: extraChargesData || [],
-    rideFinalPrice: rideFinalPrice.toString(),
-    billing: {
-      ...ride?.value.billing,
-      ammountWithExtras: ammountWithExtras.toString(),
-    },
   };
   try {
     await updateRideAction(ridePayload);
@@ -2213,14 +2119,18 @@ const handleAcceptBudgetOverQuota = () => {
                               v-if="shouldShowSplitEstimatedAmount"
                               class="text-sm text-muted-foreground line-through"
                             >
-                              {{ currencyFormat(resolveSplitEstimatedAmount(splited)) }}
+                              {{
+                                currencyFormat(
+                                  resolveSplitEstimatedAmount(splited, Number(index)),
+                                )
+                              }}
                             </p>
                             <p class="font-bold">
                               {{
                                 currencyFormat(
                                   shouldShowSplitEstimatedAmount
-                                    ? resolveSplitFinalAmount(splited)
-                                    : resolveSplitEstimatedAmount(splited),
+                                    ? resolveSplitFinalAmount(splited, Number(index))
+                                    : resolveSplitEstimatedAmount(splited, Number(index)),
                                 )
                               }}
                             </p>
