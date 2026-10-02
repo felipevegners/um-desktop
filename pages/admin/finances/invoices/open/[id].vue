@@ -14,6 +14,7 @@ import {
   Trash,
 } from 'lucide-vue-next';
 import { storeToRefs } from 'pinia';
+import { downloadInvoiceCsv } from '~/lib/invoice-csv';
 import {
   convertSecondsToTime,
   currencyFormat,
@@ -403,83 +404,11 @@ const toggleEditMode = () => {
   editMode.value = !editMode.value;
 };
 
-const csvColumns: Array<{ key: string; label: string }> = [
-  { key: 'code', label: 'Código' },
-  { key: 'user', label: 'Usuário' },
-  { key: 'branch', label: 'Filial' },
-  { key: 'costCenter', label: 'CC' },
-  { key: 'product', label: 'Produto' },
-  { key: 'requester', label: 'Solicitante' },
-  { key: 'openedAt', label: 'Aberto em' },
-  { key: 'finalizedAt', label: 'Finalizado' },
-  { key: 'origin', label: 'Origem' },
-  { key: 'destination', label: 'Destino' },
-  { key: 'driver', label: 'Motorista' },
-  { key: 'tp', label: 'TP' },
-  { key: 'kme', label: 'KME' },
-  { key: 'kmePrice', label: 'Valor KME' },
-  { key: 'he', label: 'HE' },
-  { key: 'hePrice', label: 'Valor HE' },
-  { key: 'extraCharges', label: 'Adicionais' },
-  { key: 'baseTotal', label: 'Valor Total' },
-  { key: 'allocatedTotal', label: 'Valor Rateado' },
-];
-
-const escapeCsvValue = (value: unknown) => {
-  const stringValue = value === null || value === undefined ? '' : String(value);
-  if (/[";\r\n]/.test(stringValue)) {
-    return `"${stringValue.replace(/"/g, '""')}"`;
-  }
-  return stringValue;
-};
-
 const exportCsv = () => {
-  const rows = candidateItems.value.map((item: any) => ({
-    ...item,
-    openedAt: formatDateTimePtBR(item.openedAt),
-    finalizedAt: formatDateTimePtBR(item.finalizedAt),
-    baseTotal: currencyFormat(item.baseTotal ?? item.total),
-    allocatedTotal: currencyFormat(item.allocatedTotal ?? item.total),
-  }));
-
-  const customer = (invoice.value?.customer as any) || {};
-  const invoiceNumber = invoice.value?.number || '-';
-  const metadataRows = [
-    [`Nº ${invoiceNumber}`],
-    [],
-    ['Cliente', '', '', 'Período'],
-    [customer.customerName || '-', '', '', invoice.value?.period || '-'],
-    [
-      'Centro de Custo:',
-      invoiceCostCenterCode.value,
-      '',
-      'Emissão:',
-      formatDate(invoice.value?.createdAt),
-    ],
-    [
-      'CNPJ:',
-      customer.document || '-',
-      '',
-      'Vencimento:',
-      formatDate(invoice.value?.dueDate),
-    ],
-    [],
-  ];
-  const tableRows = [
-    csvColumns.map((column) => column.label),
-    ...rows.map((row) => csvColumns.map((column) => row[column.key] ?? '')),
-  ];
-  const csvContent = [...metadataRows, ...tableRows]
-    .map((row) => row.map(escapeCsvValue).join(';'))
-    .join('\n');
-
-  const blob = new Blob(['\uFEFF', csvContent], { type: 'text/csv;charset=utf-8;' });
-  const url = URL.createObjectURL(blob);
-  const link = document.createElement('a');
-  link.href = url;
-  link.download = `fechamento-UM-${invoice.value?.number || invoiceId.value || 'atendimentos'}.csv`;
-  link.click();
-  URL.revokeObjectURL(url);
+  downloadInvoiceCsv(
+    { ...invoice.value, items: candidateItems.value },
+    invoiceId.value || 'atendimentos',
+  );
 };
 
 const availableRides = computed(() => {

@@ -5,6 +5,7 @@ import { Input } from '@/components/ui/input';
 import { useToast } from '@/components/ui/toast/use-toast';
 import {
   Download,
+  FileSpreadsheet,
   Info,
   LoaderCircle,
   ReceiptText,
@@ -12,6 +13,7 @@ import {
   ThumbsUp,
 } from 'lucide-vue-next';
 import { storeToRefs } from 'pinia';
+import { downloadInvoiceCsv } from '~/lib/invoice-csv';
 import { downloadInvoicePdf } from '~/lib/invoice-pdf';
 import { currencyFormat } from '~/lib/utils';
 
@@ -289,9 +291,25 @@ const openAdjustmentMode = async () => {
   adjustArea.scrollIntoView({ behavior: 'smooth', block: 'start' });
 };
 
+const exportInvoiceCsv = async (invoice: any) => {
+  try {
+    const invoiceForCsv = needsRideEnrichment(invoice)
+      ? enrichInvoiceWithRides(invoice, await loadInvoiceRides(invoice))
+      : invoice;
+    downloadInvoiceCsv(invoiceForCsv);
+  } catch (error) {
+    toast({
+      title: 'Opss!',
+      variant: 'destructive',
+      description: 'Não foi possível exportar o CSV do fechamento.',
+    });
+  }
+};
+
 const columns = computed(() =>
   getColumns({
     onPreview: openPreview,
+    onExportCsv: exportInvoiceCsv,
     onEdit: props.canEdit
       ? (invoice: any) => {
           const editBasePath =
@@ -505,7 +523,7 @@ function resolveInvoiceCostCenterCode(invoice: any): string {
     >
       <DialogContent class="w-[80vw] max-w-[80vw] p-2 sm:p-3 lg:p-4">
         <DialogHeader>
-          <div class="flex items-start justify-between gap-4">
+          <div class="flex items-start justify-between gap-4 pr-8">
             <div>
               <DialogTitle>Preview do Fechamento Operacional</DialogTitle>
               <p v-if="previewInvoice" class="mt-1 text-xs text-zinc-500">
@@ -598,6 +616,17 @@ function resolveInvoiceCostCenterCode(invoice: any): string {
 
         <DialogFooter class="flex-col gap-2 sm:flex-row">
           <!-- <Button type="button" variant="outline" @click="closePreview"> Fechar </Button> -->
+          <Button
+            v-if="props.pageType === 'corporative' && previewActionMode === 'view'"
+            type="button"
+            variant="outline"
+            :disabled="!previewInvoice || isLoadingPreviewData"
+            class="border-green-600 text-green-700 hover:bg-green-50 hover:text-green-800"
+            @click="previewInvoice && exportInvoiceCsv(previewInvoice)"
+          >
+            <FileSpreadsheet class="w-4 h-4 mr-1" />
+            Exportar CSV
+          </Button>
           <Button
             v-if="props.allowReviewActions && previewActionMode === 'view'"
             type="button"
