@@ -13,7 +13,10 @@
     "start": "node .output/server/index.mjs",
     "typecheck": "nuxi typecheck",
     "postinstall": "nuxt prepare",
-    "vercel-build": "prisma generate && next build"
+    "vercel-build": "prisma generate && nuxt build"
+  },
+  "engines": {
+    "node": "24.x"
   },
   "dependencies": {
     "@fawmi/vue-google-maps": "^0.9.79",
@@ -23,7 +26,7 @@
     "@nuxtjs/color-mode": "3.5.2",
     "@nuxtjs/tailwindcss": "6.13.1",
     "@pinia/nuxt": "^0.9.0",
-    "@prisma/client": "^6.2.1",
+    "@prisma/client": "6.16.2",
     "@prisma/nuxt": "0.2.0",
     "@radix-ui/colors": "^3.0.0",
     "@sendgrid/mail": "^8.1.5",
@@ -50,7 +53,7 @@
     "nuxt": "^3.15.1",
     "papaparse": "^5.5.3",
     "pinia": "^2.3.1",
-    "prisma": "^6.2.1",
+    "prisma": "6.16.2",
     "radix-vue": "^1.9.12",
     "reka-ui": "^2.8.0",
     "shadcn-nuxt": "0.11.3",
