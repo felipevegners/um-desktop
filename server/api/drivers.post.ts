@@ -1,3 +1,4 @@
+import { sendVerificationEmailService } from '@/server/services/accounts/verification-email';
 import { Prisma, prisma } from '~/utils/prisma';
 
 export default defineEventHandler(async (event) => {
@@ -35,6 +36,7 @@ export default defineEventHandler(async (event) => {
     });
 
     if (newAccount) {
+      await sendVerificationEmailService(newAccount.email);
       const newDriver = await prisma.drivers.create({
         data: {
           id: newAccount.id,
