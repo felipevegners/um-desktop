@@ -497,7 +497,6 @@ const handleNfFileSelected = async (event: Event) => {
 };
 
 const removeCurrentNf = async () => {
-  if (isInvoiceLocked.value) return;
   if (!currentNfDocument.value?.url) return;
 
   try {
@@ -617,12 +616,17 @@ const saveInvoice = async () => {
     const saveWithItems = hasItemChanges.value;
     const statusToSave = saveWithItems ? 'pending' : selectedStatus.value;
 
-    await updateInvoiceAction(invoiceId.value, {
-      status: statusToSave,
-      observations: observations.value,
-      nfDocument: currentNfDocument.value ?? null,
-      items: selectedItems.value,
-    });
+    await updateInvoiceAction(
+      invoiceId.value,
+      isInvoiceLocked.value
+        ? { nfDocument: currentNfDocument.value ?? null }
+        : {
+            status: statusToSave,
+            observations: observations.value,
+            nfDocument: currentNfDocument.value ?? null,
+            items: selectedItems.value,
+          },
+    );
 
     toast({
       title: 'Sucesso!',
@@ -965,7 +969,7 @@ onBeforeMount(async () => {
                 type="button"
                 variant="ghost"
                 class="h-7 px-2 text-red-600"
-                :disabled="isInvoiceLocked || isRemovingNf"
+                :disabled="isUploadingNf || isRemovingNf"
                 @click="removeCurrentNf"
               >
                 <LoaderCircle v-if="isRemovingNf" class="mr-1 h-4 w-4 animate-spin" />
