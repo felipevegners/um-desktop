@@ -3,6 +3,7 @@ import ProductTag from '@/components/shared/ProductTag.vue';
 import { WPP_API } from '@/config/paths';
 import { createColumnHelper } from '@tanstack/vue-table';
 import { MessageCircleMore } from 'lucide-vue-next';
+import RideStatusFlag from '~/components/shared/RideStatusFlag.vue';
 import {
   convertSecondsToTime,
   currencyFormat,
@@ -28,6 +29,16 @@ export const columns: any = [
       const { code }: any = row.original;
       const sanitized = code.replace('UM-', '');
       return h('div', { class: 'capitalize text-xs' }, sanitized);
+    },
+  }),
+  columnHelper.accessor('status', {
+    meta: { width: '100px' },
+    header: () => h('div', { class: 'text-xs text-left' }, 'Status'),
+    cell: ({ row }) => {
+      const data = row.original;
+      return h(RideStatusFlag, {
+        rideStatus: data.status,
+      });
     },
   }),
   columnHelper.accessor('product', {
@@ -103,7 +114,7 @@ export const columns: any = [
     },
   }),
   columnHelper.accessor('time', {
-    meta: { label: 'Data e Hora', width: '100px' },
+    meta: { label: 'Data e Hora', width: '150px' },
     header: () => h('div', { class: 'text-xs leading-none text-left' }, 'Data e Hora'),
     cell: ({ row }) => {
       const data = row.original;
@@ -112,7 +123,7 @@ export const columns: any = [
     },
   }),
   columnHelper.accessor('route', {
-    meta: { label: 'Rota', width: '230px' },
+    meta: { label: 'Rota', width: '340px' },
     header: () => h('div', { class: 'text-xs leading-none text-left' }, 'Rota'),
     cell: ({ row }) => {
       const data = row.original;
@@ -227,14 +238,16 @@ export const columns: any = [
     },
   }),
   columnHelper.accessor('billing', {
-    meta: { label: 'Valor Total' },
-    header: () => h('div', { class: 'text-xs leading-none text-center' }, 'Valor Total'),
+    meta: { label: 'Valor Total', width: '150px' },
+    header: () => h('div', { class: 'text-xs leading-none text-left' }, 'Valor Total'),
     cell: ({ row }) => {
       const data = row.original;
       return h(
         'span',
-        { class: 'text-xs font-bold' },
-        currencyFormat(data.billing.ammount),
+        { class: 'text-xs font-bold text-green-600' },
+        currencyFormat(
+          data.billing.ammountWithExtras !== null ? data.billing.ammountWithExtras : 0,
+        ),
       );
     },
   }),

@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { WPP_API } from '@/config/paths';
 import { createColumnHelper } from '@tanstack/vue-table';
 import { ArrowUpDown, MessageCircleMore } from 'lucide-vue-next';
+import RideStatusFlag from '~/components/shared/RideStatusFlag.vue';
 import {
   convertSecondsToTime,
   currencyFormat,
@@ -31,6 +32,16 @@ export const columns: any = [
     meta: { width: '150px' },
     header: () => h('div', { class: 'text-xs text-left' }, 'Código'),
     cell: ({ row }) => h('div', { class: 'capitalize text-xs' }, row.getValue('code')),
+  }),
+  columnHelper.accessor('status', {
+    meta: { width: '100px' },
+    header: () => h('div', { class: 'text-xs text-left' }, 'Status'),
+    cell: ({ row }) => {
+      const data = row.original;
+      return h(RideStatusFlag, {
+        rideStatus: data.status,
+      });
+    },
   }),
   columnHelper.accessor('product', {
     header: () => h('div', { class: 'text-xs text-left' }, 'Produto'),
@@ -82,7 +93,7 @@ export const columns: any = [
   columnHelper.display({
     id: 'DateTime',
     enableHiding: false,
-    meta: { width: '200px' },
+    meta: { width: '150px' },
     header: () => h('div', { class: 'text-xs text-left' }, 'Data e Hora'),
     cell: ({ row }) => {
       const data = row.original;
@@ -178,7 +189,7 @@ export const columns: any = [
     },
   }),
   columnHelper.accessor('extraCharges', {
-    meta: { width: '200px' },
+    meta: { width: '100px' },
     header: () => h('div', { class: 'text-xs text-center' }, 'Adicionais'),
     cell: ({ row }) => {
       const data = row.original;
@@ -202,8 +213,10 @@ export const columns: any = [
       const data = row.original;
       return h(
         'span',
-        { class: 'text-xs font-bold' },
-        currencyFormat(data.billing.ammount),
+        { class: 'text-xs font-bold text-green-600' },
+        currencyFormat(
+          data.billing.ammountWithExtras !== null ? data.billing.ammountWithExtras : 0,
+        ),
       );
     },
   }),
