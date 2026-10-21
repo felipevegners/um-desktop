@@ -54,6 +54,7 @@ import {
   Waypoints,
   X,
 } from 'lucide-vue-next';
+import { vMaska } from 'maska/vue';
 import { storeToRefs } from 'pinia';
 import { useForm } from 'vee-validate';
 import FormSelect from '~/components/shared/FormSelect.vue';
@@ -63,6 +64,7 @@ import {
   convertMetersToDistance,
   convertSecondsToTime,
   currencyFormat,
+  sanitizeAmount,
   sanitizePhone,
   sanitizeRideDate,
 } from '~/lib/utils';
@@ -1243,12 +1245,12 @@ additionalInfoDraft.attachments = [...initialAdditionalInfo.attachments];
 
 const handleSaveCommission = async () => {
   try {
-    const commissionAmount = parseFloat(draftCommissionAmount.value);
+    const commissionAmount = sanitizeAmount(draftCommissionAmount.value);
 
-    if (isNaN(commissionAmount) || commissionAmount < 0) {
+    if (commissionAmount <= 0) {
       toast({
         title: 'Valor inválido',
-        description: 'Digite um valor de comissão válido e não-negativo.',
+        description: 'Digite um valor de comissão válido e maior que zero.',
         variant: 'destructive',
       });
       return;
@@ -2512,11 +2514,12 @@ const handleAcceptBudgetOverQuota = () => {
                       <div v-else class="space-y-3">
                         <input
                           v-model="draftCommissionAmount"
-                          type="number"
-                          step="0.01"
-                          min="0"
+                          v-maska="'R$ 9#.99#,##'"
+                          type="text"
+                          data-maska-tokens="9:[0-9]:repeated"
+                          data-maska-reversed
                           class="w-full px-3 py-2 border border-amber-300 rounded-md bg-white focus:outline-none focus:ring-2 focus:ring-amber-500"
-                          placeholder="0.00"
+                          placeholder="R$ 0,00"
                         />
                         <div class="flex gap-2">
                           <button
