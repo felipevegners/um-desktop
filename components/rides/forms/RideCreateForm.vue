@@ -9,7 +9,7 @@ import RenderIcon from '@/components/shared/RenderIcon.vue';
 import { Checkbox } from '@/components/ui/checkbox';
 import { useToast } from '@/components/ui/toast/use-toast';
 import { paymentMethods } from '@/config/paymentMethods';
-import { getRideRoutesService } from '@/server/services/rides';
+import { estimateRidePriceService, getRideRoutesService } from '@/server/services/rides';
 import { useAccountStore } from '@/stores/account.store';
 import { useBranchesStore } from '@/stores/branches.store';
 import { useContractsStore } from '@/stores/contracts.store';
@@ -770,64 +770,35 @@ const handleRideCalculation = async () => {
 
     const firstRoute = routeCalculation[0] || {};
     routePolyLine.value = firstRoute?.polyline?.encodedPolyline || '';
-    const basePrice = parseFloat(selectedProduct?.value.basePrice || '0');
     const durationStr = firstRoute?.duration ? String(firstRoute.duration) : null;
     if (!durationStr) throw new Error('Rota retornada sem duração');
     const sanitizeDurationResponse = durationStr.replace('s', '');
-    const duration = Math.ceil(Number(sanitizeDurationResponse)) / 60;
     const distance = (firstRoute?.distanceMeters || 0) / 1000;
+    const durationSeconds = Math.ceil(Number(sanitizeDurationResponse));
+    const filteredAddons = addonProducts.value.filter((item: Product) =>
+      form.values.rideAddons.includes(item.id),
+    );
+    selectedRideAddons.value = filteredAddons;
 
-    if (selectedProduct.value.type === 'contract') {
-      let ridePrice = parseFloat(basePrice.toFixed(2));
+    const estimate = await estimateRidePriceService({
+      product: selectedProduct.value as unknown as Record<string, unknown>,
+      distanceMeters: firstRoute?.distanceMeters || 0,
+      durationSeconds,
+      addons: filteredAddons,
+    });
 
-      if (distance > selectedProduct.value.includedKms) {
-        const extraKms = distance - selectedProduct.value.includedKms;
-        const diffPrice = extraKms * parseFloat(selectedProduct?.value.kmPrice);
-        rideExtraKmPrice.value = diffPrice.toFixed(2).toString();
-        rideExtraKms.value = extraKms;
-        ridePrice += diffPrice;
-      }
-      if (duration > selectedProduct.value.includedHours * 60) {
-        const extraMinutes = duration - selectedProduct.value.includedHours * 60;
-        const extraHours = Math.ceil(extraMinutes / 60);
-        const diffPriceDuration =
-          extraHours * parseFloat(selectedProduct?.value.minutePrice) * 60;
-        rideExtraHourPrice.value = diffPriceDuration.toFixed(2).toString();
-        rideExtraHours.value = extraHours;
-        ridePrice += diffPriceDuration;
-      }
-      calculatedEstimates.value.estimatedPrice = ridePrice.toFixed(2).toString();
-      calculatedEstimates.value.estimatedTotalPrice = ridePrice.toFixed(2).toString();
-      remainingRideAmount.value = ridePrice.toFixed(2).toString();
-      if (isCorporativeMode) {
-        showContractProductAlert.value = true;
-      }
-    } else {
-      const ridePrice =
-        basePrice +
-        distance * parseFloat(selectedProduct?.value.kmPrice) +
-        duration * parseFloat(selectedProduct?.value.minutePrice);
-      calculatedEstimates.value.estimatedPrice = ridePrice.toFixed(2).toString();
-      calculatedEstimates.value.estimatedTotalPrice = ridePrice.toFixed(2).toString();
-      remainingRideAmount.value = ridePrice.toFixed(2).toString();
-    }
+    rideExtraKms.value = estimate.extraKms;
+    rideExtraHours.value = estimate.extraHours;
+    rideExtraKmPrice.value = String(estimate.extraKmPrice);
+    rideExtraHourPrice.value = String(estimate.extraHourPrice);
+    calculatedEstimates.value.estimatedPrice = String(estimate.estimatedServiceTotal);
+    calculatedEstimates.value.estimatedTotalPrice = String(estimate.estimatedTotalPrice);
+    calculatedEstimates.value.estimatedDistance = estimate.estimatedDistanceMeters;
+    calculatedEstimates.value.estimatedDuration = estimate.estimatedDurationSeconds;
+    remainingRideAmount.value = String(estimate.estimatedTotalPrice);
 
-    calculatedEstimates.value.estimatedDistance = firstRoute?.distanceMeters || 0;
-    calculatedEstimates.value.estimatedDuration = parseInt(sanitizeDurationResponse);
-
-    if (form.values.rideAddons.length) {
-      const actualRidePrice = calculatedEstimates.value.estimatedPrice;
-      const filteredAddons = addonProducts.value.filter((item: Product) =>
-        form.values.rideAddons.includes(item.id),
-      );
-      selectedRideAddons.value = filteredAddons;
-      const calculateAddons = filteredAddons?.reduce((acc: any, curr: any) => {
-        return acc + parseFloat(curr.basePrice);
-      }, 0);
-
-      const finalPrice = parseFloat(actualRidePrice) + calculateAddons;
-      calculatedEstimates.value.estimatedTotalPrice = finalPrice.toFixed(2).toString();
-      remainingRideAmount.value = finalPrice.toFixed(2).toString();
+    if (isCorporativeMode && selectedProduct.value.type === 'contract') {
+      showContractProductAlert.value = true;
     }
   } catch (error) {
     console.error('Failed to calculate route:', error);

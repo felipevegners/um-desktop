@@ -2,8 +2,8 @@
 import DashBarChart from '@/components/shared/DashBarChart.vue';
 import RideStatusFlag from '@/components/shared/RideStatusFlag.vue';
 import { useSessionAccess } from '@/composables/auth/useSessionAccess';
+import { getRideFinancialSummaryService } from '@/server/services/rides';
 import { useCommissionsStore } from '@/stores/commissions.store';
-import { useFeeStore } from '@/stores/fees.store';
 import { useInvoicesStore } from '@/stores/invoices.store';
 import { useRidesStore } from '@/stores/rides.store';
 import {
@@ -23,12 +23,8 @@ const { getRidesAction } = ridesStore;
 const { rides } = storeToRefs(ridesStore);
 
 const commissionsStore = useCommissionsStore();
-const { getCommissionsAction } = commissionsStore;
-const { commissions } = storeToRefs(commissionsStore);
-
-const feeStore = useFeeStore();
-const { getFeeByTypeAction } = feeStore;
-const { fee } = storeToRefs(feeStore);
+const { getCommissionsAction, getCommissionsStatsAction } = commissionsStore;
+const { commissions, stats: commissionStats } = storeToRefs(commissionsStore);
 
 const invoicesStore = useInvoicesStore();
 const { getInvoicesAction } = invoicesStore;
@@ -38,9 +34,15 @@ const { data } = useAuth();
 const { hasSessionData, status } = useSessionAccess();
 
 const allRides = ref<any>([]);
-const accumulatedCommissions = ref<any>(0);
 const loadingRides = ref<boolean>(false);
 const totalRevenue = ref<string>('');
+const rideFinancialSummary = ref<any>({
+  activeAmount: 0,
+  openAmount: 0,
+  completedAmount: 0,
+  cancelledAmount: 0,
+  completedNetRevenue: 0,
+});
 
 const normalizeInvoiceStatus = (status: string | undefined | null) => {
   const raw = String(status || '').toLowerCase();
@@ -89,16 +91,6 @@ const isRideCancelled = (ride: any) => {
   return status === 'cancelled' || status === 'canceled';
 };
 
-const resolveRideBillingAmount = (ride: any) => {
-  const amountWithExtras = ride?.billing?.ammountWithExtras;
-  const baseAmount = ride?.billing?.ammount;
-  const valueToUse =
-    amountWithExtras !== null && amountWithExtras !== '' ? amountWithExtras : baseAmount;
-
-  const parsedAmount = parseFloat(String(valueToUse || 0));
-  return Number.isFinite(parsedAmount) ? parsedAmount : 0;
-};
-
 const resolveRideRecentTimestamp = (ride: any) => {
   const rawTimestamp =
     ride?.progress?.startedAt ||
@@ -121,10 +113,26 @@ const hydrateAdminDashboard = async () => {
   try {
     await Promise.allSettled([
       getCommissionsAction(),
+      getCommissionsStatsAction(),
       getRidesAction(),
       getInvoicesAction(),
-      getFeeByTypeAction('driver_fee'),
     ]);
+    const rideIds = (rides?.value || [])
+      .map((ride: any) => String(ride?.id || ''))
+      .filter(Boolean);
+    try {
+      rideFinancialSummary.value = await getRideFinancialSummaryService(rideIds);
+      totalRevenue.value = String(rideFinancialSummary.value.completedNetRevenue);
+    } catch {
+      rideFinancialSummary.value = {
+        activeAmount: 0,
+        openAmount: 0,
+        completedAmount: 0,
+        cancelledAmount: 0,
+        completedNetRevenue: 0,
+      };
+      totalRevenue.value = '0.00';
+    }
     allRides.value = [...(rides?.value || [])]
       .filter((ride: any) => !isRideCancelled(ride))
       .sort((first: any, second: any) => {
@@ -206,53 +214,22 @@ const getRideMonthData = computed(() => {
 });
 
 const calculateAllRidesPrices = computed(() => {
-  const filteredRides = rides?.value.filter((ride: any) => ride.status !== 'cancelled');
-  const total = filteredRides.reduce((acc: any, curr: any) => {
-    return acc + resolveRideBillingAmount(curr);
-  }, 0);
-
-  return total.toString();
+  return String(rideFinancialSummary.value.activeAmount);
 });
 
 const calculateOpenRidePrices = computed(() => {
-  const filteredRides = rides?.value.filter(
-    (ride: any) => ride.status !== 'completed' && ride.status !== 'cancelled',
-  );
-  const total = filteredRides.reduce((acc: any, curr: any) => {
-    return acc + resolveRideBillingAmount(curr);
-  }, 0);
-
-  return total.toString();
+  return String(rideFinancialSummary.value.openAmount);
 });
 const calculateFinishedRideAmmount = computed(() => {
-  const filteredRides = rides?.value.filter((ride: any) => ride.status === 'completed');
-  const total = filteredRides?.reduce((acc: any, curr: any) => {
-    return acc + resolveRideBillingAmount(curr);
-  }, 0);
-
-  const totalCommissions = (total * Number(fee.value.value)) / 100;
-  const totalNetRevenue = total - totalCommissions;
-  totalRevenue.value = totalNetRevenue.toString();
-
-  return total.toString();
+  return String(rideFinancialSummary.value.completedAmount);
 });
 
 const calculateCancelledRideAmmount = computed(() => {
-  const filteredRides = rides?.value.filter((ride: any) => ride.status === 'cancelled');
-  const total = filteredRides?.reduce((acc: any, curr: any) => {
-    return acc + resolveRideBillingAmount(curr);
-  }, 0);
-
-  return total.toString();
+  return String(rideFinancialSummary.value.cancelledAmount);
 });
 
 const calculateTotalCommissions = computed(() => {
-  const total = commissions.value.reduce((acc: any, curr: any) => {
-    const ammount = curr.ammount !== 'NaN' ? parseFloat(curr.ammount) : 0;
-    return acc + ammount;
-  }, 0);
-
-  return total.toString();
+  return String(commissionStats.value.totalAmount);
 });
 
 definePageMeta({

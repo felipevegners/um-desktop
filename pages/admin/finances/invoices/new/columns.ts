@@ -5,33 +5,8 @@ import { currencyFormat, sanitizeAmount } from '~/lib/utils';
 
 const columnHelper = createColumnHelper<any>();
 
-const getRideLineTotal = (ride: any) => {
-  const extraChargesTotal = Array.isArray(ride?.extraCharges)
-    ? ride.extraCharges.reduce((acc: number, charge: any) => {
-        return acc + sanitizeAmount(charge?.amount);
-      }, 0)
-    : 0;
-
-  const billingWithExtras =
-    ride?.billing?.ammountWithExtras ?? ride?.billing?.amountWithExtras;
-  const base =
-    sanitizeAmount(billingWithExtras) ||
-    sanitizeAmount(ride?.rideFinalPrice) ||
-    sanitizeAmount(ride?.billing?.ammount);
-
-  const finalTotal =
-    sanitizeAmount(billingWithExtras) > 0 ? base : Math.max(base + extraChargesTotal, 0);
-
-  return finalTotal;
-};
-
 const getSelectedCostCenterTotal = (ride: any) => {
-  const allocation = ride?.__allocation;
-  if (allocation) {
-    return sanitizeAmount(allocation?.allocatedTotal);
-  }
-
-  return getRideLineTotal(ride);
+  return sanitizeAmount(ride?.__allocation?.allocatedTotal);
 };
 
 export const columns: any = [
@@ -191,7 +166,7 @@ export const columns: any = [
       return h(
         'div',
         { class: 'text-xs font-bold' },
-        currencyFormat(getRideLineTotal(ride)),
+        currencyFormat(ride?.__allocation?.baseTotal ?? 0),
       );
     },
   }),

@@ -6,15 +6,11 @@ import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { useToast } from '@/components/ui/toast/use-toast';
 import { useSessionAccess } from '@/composables/auth/useSessionAccess';
+import { previewInvoiceItemsService } from '@/server/services/invoices';
 import { LoaderCircle, Receipt, Save } from 'lucide-vue-next';
 import { storeToRefs } from 'pinia';
 import DataTable from '~/components/shared/DataTable.vue';
-import {
-  convertSecondsToTime,
-  currencyFormat,
-  sanitizeAmount,
-  sanitizeRideDate,
-} from '~/lib/utils';
+import { convertSecondsToTime, currencyFormat, sanitizeRideDate } from '~/lib/utils';
 import {
   resolveDisplayExtraHourPrice,
   resolveDisplayExtraHours,
@@ -62,6 +58,12 @@ const invoicePeriods = ref<Array<{ label: string; value: string }>>([]);
 const loadingRides = ref<boolean>(false);
 const invoicesPerPeriod = ref<any>([]);
 const selectedRides = ref<any[]>([]);
+const selectedInvoicePreview = ref<any>({ items: [], value: '0.00' });
+const allocationsByRideId = ref<Record<string, any>>({});
+const isCalculatingAllocations = ref<boolean>(false);
+const isCalculatingPreview = ref<boolean>(false);
+let allocationRequestId = 0;
+let previewRequestId = 0;
 const selectedContractId = ref<string>('');
 const selectedBranchId = ref<string>('');
 const selectedAreaCode = ref<string>('');
@@ -89,28 +91,6 @@ const rideCompletionDate = (ride: any) => {
   const candidate = ride?.progress?.finishedAt || ride?.finishedAt;
   const parsed = new Date(candidate);
   return Number.isNaN(parsed.getTime()) ? null : parsed;
-};
-
-const getRideLineTotal = (ride: any) => {
-  const extraChargesTotal = Array.isArray(ride?.extraCharges)
-    ? ride.extraCharges.reduce((acc: number, item: any) => {
-        return acc + sanitizeAmount(item?.amount);
-      }, 0)
-    : 0;
-
-  const withExtras =
-    ride?.billing?.ammountWithExtras ?? ride?.billing?.amountWithExtras ?? null;
-
-  const baseTotal =
-    sanitizeAmount(withExtras) ||
-    sanitizeAmount(ride?.rideFinalPrice) ||
-    sanitizeAmount(ride?.billing?.ammount);
-
-  if (sanitizeAmount(withExtras) > 0) {
-    return baseTotal;
-  }
-
-  return Math.max(baseTotal + extraChargesTotal, 0);
 };
 
 const getRideRoute = (ride: any) => {
@@ -150,58 +130,6 @@ const getRideDateTime = (ride: any) => {
 const normalizeAllocationKey = (value: unknown) => {
   if (typeof value !== 'string') return '';
   return value.trim();
-};
-
-const getRideAllocationForArea = (ride: any, targetAreaCode: string) => {
-  const normalizedTargetAreaCode = normalizeAllocationKey(targetAreaCode);
-  if (!normalizedTargetAreaCode) return null;
-
-  const baseTotal = getRideLineTotal(ride);
-  const rideAreaCode = normalizeAllocationKey(ride?.billing?.paymentData?.areaCode);
-  const splitPayments = Array.isArray(ride?.billing?.paymentData?.splitedPayment)
-    ? ride.billing.paymentData.splitedPayment
-    : [];
-
-  const splitAllocation = splitPayments.find((entry: any) => {
-    const entryArea = normalizeAllocationKey(entry?.areaCode || entry?.area);
-    return entryArea === normalizedTargetAreaCode;
-  });
-
-  if (splitAllocation) {
-    // Check if this area is already covered by a previous invoice (partially_invoiced rides)
-    const splitInvoicing = Array.isArray(ride?.billing?.splitInvoicing)
-      ? ride.billing.splitInvoicing
-      : [];
-    const alreadyCovered = splitInvoicing.some(
-      (entry: any) =>
-        normalizeAllocationKey(entry?.areaCode) === normalizedTargetAreaCode &&
-        Boolean(entry?.invoiced),
-    );
-    if (alreadyCovered) return null;
-
-    const percentage = sanitizeAmount(splitAllocation?.percentage);
-    const allocatedTotal = Math.round(baseTotal * (percentage / 100) * 100) / 100;
-
-    return {
-      allocationMode: 'split',
-      allocationAreaCode: normalizedTargetAreaCode,
-      allocationPercentage: percentage,
-      baseTotal,
-      allocatedTotal,
-    };
-  }
-
-  if (rideAreaCode === normalizedTargetAreaCode) {
-    return {
-      allocationMode: 'single',
-      allocationAreaCode: normalizedTargetAreaCode,
-      allocationPercentage: 100,
-      baseTotal,
-      allocatedTotal: baseTotal,
-    };
-  }
-
-  return null;
 };
 
 const periodDescription = computed(() => {
@@ -255,7 +183,9 @@ const invoiceHeader = computed(() => {
 
 const previewItems = computed(() => {
   return selectedRides.value.flatMap((ride: any) => {
-    const allocation = getRideAllocationForArea(ride, selectedAreaCode.value);
+    const allocation = selectedInvoicePreview.value.items.find(
+      (item: any) => String(item.rideId) === String(ride?.id),
+    );
     if (!allocation) return [];
 
     const invoiceBranchName = ride?.billing?.paymentData?.branchName || '-';
@@ -290,12 +220,6 @@ const previewItems = computed(() => {
     const computedExtraHourPrice = resolveDisplayExtraHourPrice(ride);
     const hePrice =
       computedExtraHourPrice > 0 ? currencyFormat(computedExtraHourPrice) : '-';
-    const extraChargesTotal = Array.isArray(ride?.extraCharges)
-      ? ride.extraCharges.reduce((acc: number, curr: any) => {
-          return acc + sanitizeAmount(curr?.amount);
-        }, 0)
-      : 0;
-
     return [
       {
         rideId: ride?.id,
@@ -320,7 +244,7 @@ const previewItems = computed(() => {
         kmePrice,
         he,
         hePrice,
-        extraCharges: currencyFormat(extraChargesTotal),
+        extraCharges: currencyFormat(allocation.extraChargesTotal),
         baseTotal: allocation.baseTotal,
         allocatedTotal: allocation.allocatedTotal,
         allocationPercentage: allocation.allocationPercentage,
@@ -336,10 +260,7 @@ const previewItems = computed(() => {
 });
 
 const previewTotal = computed(() => {
-  return previewItems.value.reduce(
-    (acc: number, item: any) => acc + sanitizeAmount(item.total),
-    0,
-  );
+  return selectedInvoicePreview.value.value || '0.00';
 });
 
 const sanitizeContracts = computed(() => {
@@ -372,14 +293,23 @@ const canFilterByPeriod = computed(() => {
   return Boolean(selectedRange.value?.start && selectedRange.value?.end);
 });
 
-const canOpenPreview = computed(() => {
-  return selectedRides.value.length > 0;
-});
+const canOpenPreview = computed(
+  () =>
+    selectedRides.value.length > 0 &&
+    previewItems.value.length > 0 &&
+    !isCalculatingPreview.value,
+);
 
 const resetFilterResults = () => {
   hasAppliedFilters.value = false;
   invoicesPerPeriod.value = [];
   selectedRides.value = [];
+  selectedInvoicePreview.value = { items: [], value: '0.00' };
+  allocationsByRideId.value = {};
+  allocationRequestId += 1;
+  previewRequestId += 1;
+  isCalculatingAllocations.value = false;
+  isCalculatingPreview.value = false;
 };
 
 const generatePeriods = () => {
@@ -411,7 +341,7 @@ const generatePeriods = () => {
     .map(({ label, value }) => ({ label, value }));
 };
 
-const applyFilters = () => {
+const applyFilters = async () => {
   if (!selectedContractId.value || !canFilterByPeriod.value) {
     invoicesPerPeriod.value = [];
     selectedRides.value = [];
@@ -428,16 +358,6 @@ const applyFilters = () => {
     const rideBranchId = normalizeAllocationKey(ride?.billing?.paymentData?.branchId);
     return rideBranchId === selectedBranchId.value;
   });
-
-  filtered = filtered
-    .map((ride: any) => {
-      const allocation = getRideAllocationForArea(ride, selectedAreaCode.value);
-      return {
-        ...ride,
-        __allocation: allocation,
-      };
-    })
-    .filter((ride: any) => Boolean(ride?.__allocation));
 
   if (selectedPeriodMode.value === 'monthly') {
     const [year, month] = String(selectedMonthlyPeriod.value || '').split('-');
@@ -490,7 +410,43 @@ const applyFilters = () => {
     });
   }
 
-  invoicesPerPeriod.value = filtered;
+  if (filtered.length === 0) {
+    invoicesPerPeriod.value = [];
+    selectedRides.value = [];
+    allocationsByRideId.value = {};
+    return;
+  }
+
+  const requestId = ++allocationRequestId;
+  isCalculatingAllocations.value = true;
+  try {
+    const allocationPreview = await previewInvoiceItemsService({
+      rideIds: filtered.map((ride: any) => String(ride.id)),
+      areaCode: selectedAreaCode.value,
+    });
+    if (requestId !== allocationRequestId) return;
+
+    allocationsByRideId.value = Object.fromEntries(
+      allocationPreview.items.map((item: any) => [String(item.rideId), item]),
+    );
+    invoicesPerPeriod.value = filtered.flatMap((ride: any) => {
+      const allocation = allocationsByRideId.value[String(ride.id)];
+      return allocation ? [{ ...ride, __allocation: allocation }] : [];
+    });
+  } catch {
+    if (requestId === allocationRequestId) {
+      invoicesPerPeriod.value = [];
+      allocationsByRideId.value = {};
+      toast({
+        title: 'Opss!',
+        variant: 'destructive',
+        description: 'Não foi possível calcular os valores dos atendimentos.',
+      });
+    }
+  } finally {
+    if (requestId === allocationRequestId) isCalculatingAllocations.value = false;
+  }
+
   selectedRides.value = [];
 };
 
@@ -561,7 +517,7 @@ const onSelectMonthlyPeriod = (value: string) => {
   resetFilterResults();
 };
 
-const applyFiltersAndShow = () => {
+const applyFiltersAndShow = async () => {
   if (!selectedContractId.value) {
     toast({
       title: 'Atenção',
@@ -592,7 +548,7 @@ const applyFiltersAndShow = () => {
     return;
   }
 
-  applyFilters();
+  await applyFilters();
   hasAppliedFilters.value = true;
 };
 
@@ -605,8 +561,36 @@ watch(
   { deep: true },
 );
 
-const handleSelectionChange = (rows: any[]) => {
+const handleSelectionChange = async (rows: any[]) => {
   selectedRides.value = rows;
+  const requestId = ++previewRequestId;
+
+  if (rows.length === 0) {
+    selectedInvoicePreview.value = { items: [], value: '0.00' };
+    isCalculatingPreview.value = false;
+    return;
+  }
+
+  selectedInvoicePreview.value = { items: [], value: '0.00' };
+  isCalculatingPreview.value = true;
+  try {
+    const preview = await previewInvoiceItemsService({
+      rideIds: rows.map((ride: any) => String(ride.id)),
+      areaCode: selectedAreaCode.value,
+    });
+    if (requestId === previewRequestId) selectedInvoicePreview.value = preview;
+  } catch {
+    if (requestId === previewRequestId) {
+      selectedInvoicePreview.value = { items: [], value: '0.00' };
+      toast({
+        title: 'Opss!',
+        variant: 'destructive',
+        description: 'Não foi possível calcular o total selecionado.',
+      });
+    }
+  } finally {
+    if (requestId === previewRequestId) isCalculatingPreview.value = false;
+  }
 };
 
 const openPreview = () => {
@@ -635,7 +619,7 @@ const generateInvoiceNumber = () => {
 };
 
 const confirmGenerateInvoice = async () => {
-  if (previewItems.value.length === 0) {
+  if (previewItems.value.length === 0 || isCalculatingPreview.value) {
     toast({
       title: 'Atenção',
       variant: 'destructive',
@@ -690,7 +674,7 @@ const confirmGenerateInvoice = async () => {
             },
     },
     items: previewItems.value,
-    value: Number(previewTotal.value).toFixed(2),
+    value: previewTotal.value,
     dueDate: header.dueDate.toISOString(),
     observations: '',
     status: 'pending',
@@ -848,7 +832,9 @@ onBeforeMount(async () => {
                   <div class="mt-4">
                     <Button
                       type="button"
-                      :disabled="!canFilterByPeriod || loadingRides"
+                      :disabled="
+                        !canFilterByPeriod || loadingRides || isCalculatingAllocations
+                      "
                       @click="applyFiltersAndShow"
                     >
                       Aplicar filtros
@@ -890,7 +876,12 @@ onBeforeMount(async () => {
                         {{ selectedRides.length }} atendimento(s) selecionado(s)
                       </p>
                       <p class="text-sm font-bold">
-                        Total selecionado: {{ currencyFormat(previewTotal) }}
+                        Total selecionado:
+                        {{
+                          isCalculatingPreview
+                            ? 'Calculando...'
+                            : currencyFormat(previewTotal)
+                        }}
                       </p>
                     </div>
                   </div>
@@ -917,7 +908,7 @@ onBeforeMount(async () => {
           <Button
             v-if="hasAppliedFilters && invoicesPerPeriod.length > 0"
             type="button"
-            :disabled="!canOpenPreview"
+            :disabled="!canOpenPreview || isCalculatingPreview"
             @click="openPreview"
           >
             Preview do fechamento
@@ -971,7 +962,14 @@ onBeforeMount(async () => {
               </div>
             </section>
 
-            <InvoicePreviewTable :items="previewItems" />
+            <InvoicePreviewTable
+              :items="previewItems"
+              :summary="{
+                grossValue: selectedInvoicePreview.grossValue || '0.00',
+                allocatedValue: selectedInvoicePreview.value || '0.00',
+                splitItemCount: selectedInvoicePreview.splitItemCount || 0,
+              }"
+            />
           </div>
         </section>
 

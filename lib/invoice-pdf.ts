@@ -49,6 +49,11 @@ type InvoiceLike = {
   dueDate?: string;
   items?: InvoiceItem[];
   value?: string | number;
+  financialSummary?: {
+    grossAmount?: string | number;
+    allocatedAmount?: string | number;
+    splitItemCount?: number;
+  };
 };
 
 function formatDate(value?: string): string {
@@ -101,13 +106,6 @@ function formatCurrency(value: unknown): string {
     style: 'currency',
     currency: 'BRL',
   }).format(toNumber(value));
-}
-
-function hasSplitAllocation(item: InvoiceItem): boolean {
-  const percentage = toNumber(item.allocationPercentage ?? 100);
-  const baseTotal = toNumber(item.baseTotal ?? item.total);
-  const allocatedTotal = toNumber(item.allocatedTotal ?? item.total);
-  return percentage !== 100 || Math.abs(baseTotal - allocatedTotal) > 0.009;
 }
 
 function sanitizeFileName(name: string): string {
@@ -195,7 +193,7 @@ export async function downloadInvoicePdf(invoice: InvoiceLike): Promise<void> {
   const headerHeight = 156;
   const estimatedRowHeight = 24;
   const estimatedTableHeight = Math.max(48, (items.length + 1) * estimatedRowHeight);
-  const splitBannerHeight = items.some((item) => hasSplitAllocation(item)) ? 58 : 0;
+  const splitBannerHeight = invoice.financialSummary?.splitItemCount ? 58 : 0;
   const summaryHeight = 92;
 
   const pageWidth = pageMargin * 2 + tableWidth;
@@ -326,17 +324,13 @@ export async function downloadInvoicePdf(invoice: InvoiceLike): Promise<void> {
     ];
   });
 
-  const computedTotal =
-    items.length > 0
-      ? items.reduce((sum, item) => sum + toNumber(item.allocatedTotal ?? item.total), 0)
-      : toNumber(invoice.value);
-
-  const computedGrossTotal =
-    items.length > 0
-      ? items.reduce((sum, item) => sum + toNumber(item.baseTotal ?? item.total), 0)
-      : toNumber(invoice.value);
-
-  const splitItemsCount = items.filter((item) => hasSplitAllocation(item)).length;
+  const computedTotal = toNumber(
+    invoice.financialSummary?.allocatedAmount ?? invoice.value,
+  );
+  const computedGrossTotal = toNumber(
+    invoice.financialSummary?.grossAmount ?? invoice.value,
+  );
+  const splitItemsCount = invoice.financialSummary?.splitItemCount ?? 0;
 
   autoTable(doc, {
     startY: topCardY + cardHeight + 20,
