@@ -99,6 +99,7 @@ export default defineEventHandler(async (event) => {
       department: department,
       emailConfirmed: false,
       acceptTerms: false,
+      skipVerificationEmail: true,
     };
     const newAccount = await createUserAccountService(newAccountData);
     await prisma.contracts.update({

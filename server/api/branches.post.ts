@@ -93,6 +93,7 @@ export default defineEventHandler(async (event) => {
       },
       emailConfirmed: false,
       acceptTerms: false,
+      skipVerificationEmail: true,
     };
 
     const newAccount = await createUserAccountService(branchManagerData);

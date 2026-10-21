@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { Button } from '@/components/ui/button';
-import { Download, Edit, Eye, LoaderCircle, Trash } from 'lucide-vue-next';
+import { Download, Edit, Eye, FileSpreadsheet, LoaderCircle, Trash } from 'lucide-vue-next';
 import { computed, ref } from 'vue';
 
 defineOptions({
@@ -27,7 +27,7 @@ const toggleConfirmationModal = () => {
   showConfirmationModal.value = !showConfirmationModal.value;
 };
 
-const emit = defineEmits(['view', 'edit', 'delete', 'download']);
+const emit = defineEmits(['view', 'edit', 'delete', 'download', 'csv']);
 
 const viewFn = () => {
   emit('view', props.dataId);
@@ -43,6 +43,10 @@ const deleteFn = () => {
 
 const downloadFn = () => {
   emit('download', props.dataId);
+};
+
+const csvFn = () => {
+  emit('csv', props.dataId);
 };
 </script>
 <template>
@@ -88,6 +92,21 @@ const downloadFn = () => {
           </Button>
         </TooltipTrigger>
         <TooltipContent class="bg-zinc-700 text-white">Download</TooltipContent>
+      </Tooltip>
+
+      <Tooltip v-if="props.options?.includes('csv')">
+        <TooltipTrigger as-child>
+          <Button
+            variant="ghost"
+            size="icon"
+            class="text-zinc-700 hover:bg-green-600 hover:text-white"
+            aria-label="Exportar CSV"
+            @click="csvFn"
+          >
+            <FileSpreadsheet class="w-4 h-4" />
+          </Button>
+        </TooltipTrigger>
+        <TooltipContent class="bg-zinc-700 text-white">Exportar CSV</TooltipContent>
       </Tooltip>
 
       <Tooltip v-if="props.options?.includes('delete') && isAdmin">

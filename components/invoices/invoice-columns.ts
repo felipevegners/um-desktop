@@ -29,6 +29,7 @@ type InvoiceColumnsOptions = {
   onPreview?: (invoice: any) => void;
   onEdit?: (invoice: any) => void;
   onDownload?: (invoice: any) => void;
+  onExportCsv?: (invoice: any) => void;
 };
 
 export const getColumns = (options: InvoiceColumnsOptions = {}): any => [
@@ -202,11 +203,17 @@ export const getColumns = (options: InvoiceColumnsOptions = {}): any => [
     cell: ({ row }) => {
       const invoice = row.original;
       return h(TableActions, {
-        options: ['preview', ...(options.onEdit ? ['edit'] : []), 'download'],
+        options: [
+          'preview',
+          ...(options.onEdit ? ['edit'] : []),
+          'download',
+          ...(options.onExportCsv ? ['csv'] : []),
+        ],
         dataId: invoice?.id,
         onView: () => options.onPreview?.(invoice),
         onEdit: () => options.onEdit?.(invoice),
         onDownload: () => options.onDownload?.(invoice),
+        onCsv: () => options.onExportCsv?.(invoice),
       });
     },
   }),

@@ -282,6 +282,16 @@ const onSubmit = form.handleSubmit(async (values) => {
       // Check if all were successful
       const successCount = results.filter((r) => r?.success).length;
       const failCount = results.length - successCount;
+      const emailFailCount = results.filter(
+        (r) => r?.success && r.data?.emailSent === false,
+      ).length;
+      if (emailFailCount > 0) {
+        toast({
+          title: 'Atenção',
+          class: 'bg-yellow-600 border-0 text-white text-2xl',
+          description: `${emailFailCount} conta(s) criada(s) sem envio do e-mail de verificação. Reenvie pela tela de edição de cada conta.`,
+        });
+      }
 
       if (failCount === 0) {
         // All succeeded
@@ -348,6 +358,14 @@ const onSubmit = form.handleSubmit(async (values) => {
     };
     const result = await registerUserAccountAction(singleAccountData);
     if (result?.success) {
+      if (result.data?.emailSent === false) {
+        toast({
+          title: 'Atenção',
+          class: 'bg-yellow-600 border-0 text-white text-2xl',
+          description:
+            'Conta criada, mas o e-mail de verificação não pôde ser enviado. Use "Reenviar e-mail de verificação" na edição da conta.',
+        });
+      }
       toast({
         title: 'Sucesso!',
         class: 'bg-green-600 border-0 text-white text-2xl',

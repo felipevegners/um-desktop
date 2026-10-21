@@ -1,5 +1,4 @@
-import { mailer } from '@/server/providers/Mailer';
-import { tokenGenerator } from '@/server/providers/TokenGenerator';
+import { sendVerificationEmailService } from '@/server/services/accounts/verification-email';
 import { Prisma, prisma } from '@/utils/prisma';
 import bcrypt from 'bcryptjs';
 
@@ -30,6 +29,7 @@ export default defineEventHandler(async (event) => {
     birthDate,
     acceptTerms,
     emailConfirmed,
+    skipVerificationEmail,
   } = body;
 
   // Normalizar e-mail: remover espaços e forçar lowercase
@@ -118,27 +118,11 @@ export default defineEventHandler(async (event) => {
       });
     }
 
-    // Getting request object
-    const req = event.node.req;
+    const emailSent = skipVerificationEmail
+      ? null
+      : await sendVerificationEmailService(normalizedEmail);
 
-    // Get the host URL
-    const protocol = req.headers['x-forwarded-proto'] || 'http';
-    const host = req.headers.host;
-    const url = `${protocol}://${host}/validateaccount`;
-
-    // Generating token
-    const token = await tokenGenerator.generate(
-      newAccount as any,
-      process.env.JWT_SECRET as string,
-      {
-        expiresIn: '1d',
-      },
-    );
-
-    // Sending email verification
-    await mailer.sendEmail(normalizedEmail, `${url}?token=${token}`);
-
-    return newAccount;
+    return { ...newAccount, emailSent };
   } catch (error) {
     // Handle Prisma-specific errors
     if (error instanceof Prisma.PrismaClientKnownRequestError) {

@@ -7,10 +7,18 @@ import { rolesList, userRestrictions } from '@/config/roles';
 import { useAccountStore } from '@/stores/account.store';
 import { useContractsStore } from '@/stores/contracts.store';
 import { toTypedSchema } from '@vee-validate/zod';
-import { Eye, EyeOff, LoaderCircle, UserPen, WandSparkles } from 'lucide-vue-next';
+import {
+  Eye,
+  EyeOff,
+  LoaderCircle,
+  MailCheck,
+  UserPen,
+  WandSparkles,
+} from 'lucide-vue-next';
 import { vMaska } from 'maska/vue';
 import { storeToRefs } from 'pinia';
 import { useForm } from 'vee-validate';
+import { defineProps, withDefaults } from 'vue';
 import * as z from 'zod';
 import { generatePassword } from '~/lib/utils';
 
@@ -32,6 +40,7 @@ const currentUserRole = computed(() => String((data.value as any)?.user?.role ||
 
 const accountSituation = ref<boolean>(false);
 const loadingDelete = ref<boolean>(false);
+const isResendingVerification = ref<boolean>(false);
 const viewPassword = ref<boolean>(true);
 const contractName = ref<any>(null);
 const userManagerBranches = ref<any>([]);
@@ -293,6 +302,31 @@ const canEditTargetAccount = computed(() => {
   const targetRank = roleHierarchy[account.value.role] || 0;
   return editorRank >= targetRank;
 });
+
+const handleResendVerification = async () => {
+  isResendingVerification.value = true;
+  try {
+    await $fetch('/api/accounts-resend-verification', {
+      method: 'POST',
+      body: { accountId: props.accountId },
+    });
+    toast({
+      title: 'E-mail reenviado!',
+      class: 'bg-green-600 border-0 text-white text-2xl',
+      description: `E-mail de verificação reenviado para ${account.value?.email}.`,
+    });
+  } catch (error: any) {
+    toast({
+      title: 'Opss!',
+      class: 'bg-red-500 border-0 text-white text-2xl',
+      description:
+        error?.data?.message ||
+        'Não foi possível reenviar o e-mail de verificação. Tente novamente em instantes.',
+    });
+  } finally {
+    isResendingVerification.value = false;
+  }
+};
 
 const rolesSelectList = computed(() => {
   if (isAdminMode) {
@@ -746,6 +780,20 @@ const onSubmit = form.handleSubmit(async (values) => {
               }}
             </h1>
             <div class="flex gap-10 items-center">
+              <Button
+                v-if="account?.id && currentUserRole === 'admin'"
+                type="button"
+                variant="outline"
+                :disabled="account?.emailConfirmed || isResendingVerification"
+                @click.prevent="handleResendVerification"
+              >
+                <LoaderCircle
+                  v-if="isResendingVerification"
+                  class="mr-2 h-5 w-5 animate-spin"
+                />
+                <MailCheck />
+                Reenviar e-mail de verificação
+              </Button>
               <div>
                 <Label class="text-md font-bold"> Desativar Usuário </Label>
                 <div class="mt-2 flex items-center gap-3">

@@ -113,6 +113,16 @@ const onSubmit = form.handleSubmit(async (values) => {
   const newAccount: any = await registerUserAccountAction(accountData);
 
   if (newAccount.success) {
+    if (newAccount.data?.emailSent === false) {
+      toast({
+        title: 'Atenção',
+        class: 'bg-yellow-600 border-0 text-white text-2xl',
+        description:
+          'Conta criada, mas não foi possível enviar o e-mail de verificação. Entre em contato com o suporte.',
+      });
+      setTimeout(() => navigateTo('/registersuccess'), 1000);
+      return;
+    }
     toast({
       title: 'Tudo pronto!',
       class: 'bg-green-600 border-0 text-white text-2xl',
